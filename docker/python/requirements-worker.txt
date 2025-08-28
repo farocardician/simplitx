@@ -1,0 +1,17 @@
+# Core PDF processing
+pdfminer.six==20231228
+pdfplumber==0.11.4
+pytesseract==0.3.13
+
+# Camelot + OpenCV
+camelot-py==0.11.0
+opencv-python-headless==4.10.0.84
+ghostscript==0.7
+
+# Queue (optional – if you'll use Redis/RQ)
+redis==5.0.8
+rq==1.16.2
+
+# Utils
+python-dateutil==2.9.0.post0
+boto3==1.34.162

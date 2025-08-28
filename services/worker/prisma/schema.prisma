@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  id              String    @id @default(uuid())
+  ownerSessionId  String?   @map("owner_session_id")
+  userId          String?   @map("user_id")
+  
+  originalFilename String   @map("original_filename")
+  contentType     String    @default("application/pdf") @map("content_type")
+  bytes           BigInt
+  sha256          String    @db.Char(64)
+  mapping         String    @default("pt_simon_invoice_v1")
+  
+  status          JobStatus @default(uploaded)
+  uploadPath      String?   @map("upload_path")
+  resultPath      String?   @map("result_path")
+  errorCode       String?   @map("error_code")
+  errorMessage    String?   @map("error_message")
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  queuedAt        DateTime? @map("queued_at")
+  startedAt       DateTime? @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  failedAt        DateTime? @map("failed_at")
+  
+  leasedBy        String?   @map("leased_by")
+  leaseExpiresAt  DateTime? @map("lease_expires_at")
+  attemptCount    Int       @default(0) @map("attempt_count")
+  
+  expiresAt       DateTime? @map("expires_at")
+  downloadCount   Int       @default(0) @map("download_count")
+  firstDownloadAt DateTime? @map("first_downloaded_at")
+  
+  @@unique([ownerSessionId, sha256, mapping, bytes])
+  @@index([status, createdAt(sort: Desc)])
+  @@index([ownerSessionId, status])
+  @@index([ownerSessionId, createdAt(sort: Desc)])
+  @@index([leaseExpiresAt])
+  @@map("jobs")
+}
+
+enum JobStatus {
+  uploaded
+  queued
+  processing
+  complete
+  failed
+  @@map("job_status")
+}

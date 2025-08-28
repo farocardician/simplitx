@@ -1,0 +1,56 @@
+{
+  "root": {
+    "tag": "TaxInvoiceBulk",
+    "nsmap": {
+      "xsd": "http://www.w3.org/2001/XMLSchema",
+      "xsi": "http://www.w3.org/2001/XMLSchema-instance"
+    }
+  },
+  "structure": {
+    "TIN": "0715420659018000",
+    "ListOfTaxInvoice": {
+      "TaxInvoice": {
+        "TaxInvoiceDate": "$.data.invoice.date",
+        "TaxInvoiceOpt": "Normal",
+        "TrxCode": "04",
+        "AddInfo": "",
+        "CustomDoc": "",
+        "CustomDocMonthYear": "",
+        "RefDesc": "$.data.invoice.number", 
+        "FacilityStamp": "",
+        "SellerIDTKU": "0715420659018000000000",
+        "BuyerTin": "0849873807086000",
+        "BuyerDocument": "TIN",
+        "BuyerCountry": "IDN", 
+        "BuyerDocumentNumber": "-",
+        "BuyerName": "$.data.buyer.name",
+        "BuyerAdress": "KOMPLEK GREEN VILLE  Blok AV No.15B RT:008 RW:014 ",
+        "BuyerEmail": "",
+        "BuyerIDTKU": "0849873807086000000000",
+        "ListOfGoodService": {
+          "_array": "$.data.items[*]",
+          "GoodService": {
+            "Opt": "A",
+            "Code": {"_computed": "hs_code_to_full", "path": "$.hs_code"},
+            "Name": "$.description",
+            "Unit": "UM.0018", 
+            "Price": {"path": "$.unit_price", "format": {"type": "decimal", "scale": 2}},
+            "Qty": "$.qty",
+            "TotalDiscount": "0",
+            "TaxBase": {"path": "$.amount", "format": {"type": "decimal", "scale": 2}},
+            "OtherTaxBase": {"_computed": "other_tax_base", "path": "$.amount"},
+            "VATRate": "12",
+            "VAT": {"_computed": "vat_amount", "path": "$.amount"},
+            "STLGRate": "0",
+            "STLG": "0"
+          }
+        }
+      }
+    }
+  },
+  "computations": {
+    "hs_code_to_full": "lambda x: str(x) + '00'",
+    "other_tax_base": "lambda amount: str(round(float(amount) / 1.09, 2))",
+    "vat_amount": "lambda amount: str(round(float(amount) * 0.11, 2))"
+  }
+}
