@@ -13,9 +13,9 @@ from pathlib import Path
 from typing import List
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
-from processor import process_pdf
+from processor import process_pdf, process_pdf_with_artifacts
 
 app = FastAPI(
     title="PDF to JSON Processor",
@@ -52,6 +52,34 @@ async def process_single_pdf(file: UploadFile = File(...)):
         }
         
         return JSONResponse(content=result)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+
+@app.post("/process-with-artifacts")
+async def process_pdf_with_artifacts_endpoint(file: UploadFile = File(...)):
+    """Process a single PDF file and return artifacts as ZIP"""
+    
+    # Validate file type
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="File must be a PDF")
+    
+    try:
+        # Read file content
+        pdf_bytes = await file.read()
+        doc_id = Path(file.filename).stem
+        
+        # Process PDF through pipeline and get artifacts
+        processed_data, zip_bytes = process_pdf_with_artifacts(pdf_bytes, doc_id, include_refs=False)
+        
+        # Return ZIP file with artifacts
+        return Response(
+            content=zip_bytes,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f"attachment; filename=\"{doc_id}-artifacts.zip\""
+            }
+        )
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")

@@ -24,6 +24,7 @@ model Job {
   status          JobStatus @default(uploaded)
   uploadPath      String?   @map("upload_path")
   resultPath      String?   @map("result_path")
+  artifactPath    String?   @map("artifact_path")
   errorCode       String?   @map("error_code")
   errorMessage    String?   @map("error_message")
   

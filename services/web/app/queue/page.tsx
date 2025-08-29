@@ -16,6 +16,7 @@ interface Job {
   completedAt: string | null;
   error: { code: string; message: string } | null;
   canDownload: boolean;
+  hasArtifacts: boolean;
 }
 
 export default function QueuePage() {
@@ -85,6 +86,38 @@ export default function QueuePage() {
   const handleDownload = async (jobId: string) => {
     window.location.href = `/api/jobs/${jobId}/download`;
   };
+
+  const handleDownloadArtifact = async (jobId: string) => {
+    window.location.href = `/api/jobs/${jobId}/download-artifact`;
+  };
+
+  const handleDelete = async (jobId: string) => {
+    const job = jobs.find(j => j.id === jobId);
+    if (!job) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${job.filename}"?\n\nThis will permanently remove:\n• The XML result\n• The artifact files\n• The original PDF\n• All processing history\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/jobs/${jobId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error?.message || 'Failed to delete job');
+      }
+
+      // Remove job from the list
+      setJobs(prevJobs => prevJobs.filter(j => j.id !== jobId));
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert(`Failed to delete job: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
   
   if (loading && jobs.length === 0) {
     return <div className="flex justify-center p-8">Loading...</div>;
@@ -110,6 +143,8 @@ export default function QueuePage() {
         <JobList 
           jobs={jobs}
           onDownload={handleDownload}
+          onDownloadArtifact={handleDownloadArtifact}
+          onDelete={handleDelete}
         />
       )}
     </div>

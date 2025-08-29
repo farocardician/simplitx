@@ -34,7 +34,8 @@ export const GET = withSession(async (req: NextRequest, { sessionId }: { session
       completedAt: true,
       errorCode: true,
       errorMessage: true,
-      mapping: true
+      mapping: true,
+      artifactPath: true
     }
   });
   
@@ -62,7 +63,8 @@ export const GET = withSession(async (req: NextRequest, { sessionId }: { session
         code: job.errorCode,
         message: job.errorMessage
       } : null,
-      canDownload: job.status === 'complete'
+      canDownload: job.status === 'complete',
+      hasArtifacts: job.status === 'complete' && !!job.artifactPath
     })),
     activeCount,
     timestamp: new Date().toISOString() // For next incremental fetch

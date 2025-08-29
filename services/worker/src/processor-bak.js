@@ -40,9 +40,7 @@ async function processJob(job) {
     }
     
     // Update job as complete
-    // NOTE: artifactPath is intentionally not persisted from worker.
-// Persist via web API or update worker Prisma schema when ready.
-await prisma.job.update({
+    await prisma.job.update({
       where: { id: job.id },
       data: {
         status: 'complete',

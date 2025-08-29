@@ -197,3 +197,64 @@ async def unified_process(
             status_code=502,
             detail=f"Backend service HTTP error: {e.response.status_code} - {e.response.text}"
         )
+
+@app.post("/process-artifacts")
+async def process_artifacts(
+    request: Request,
+    file: UploadFile = File(...),
+    mapping: Optional[str] = Form(None)
+):
+    """Process PDF and return artifacts as ZIP file"""
+    
+    # Check file size limit
+    content = await file.read()
+    file_size = len(content)
+    await file.seek(0)  # Reset file pointer
+    
+    if file_size > MAX_UPLOAD_MB * 1024 * 1024:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is {MAX_UPLOAD_MB}MB"
+        )
+    
+    # Get file content type
+    content_type = file.content_type or ""
+    
+    # Only support PDF files for artifacts
+    if content_type != "application/pdf":
+        raise HTTPException(
+            status_code=415,
+            detail="Only PDF files are supported for artifact generation."
+        )
+    
+    try:
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            # Call PDF2JSON artifacts endpoint
+            files = {"file": (file.filename, content, file.content_type)}
+            response = await client.post(f"{PDF2JSON_URL}/process-with-artifacts", files=files)
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"PDF2JSON artifacts service error: {response.text}"
+                )
+            
+            return Response(
+                content=response.content,
+                media_type="application/zip",
+                headers={
+                    "Content-Type": "application/zip",
+                    "Content-Disposition": response.headers.get("Content-Disposition", "attachment; filename=\"artifacts.zip\"")
+                }
+            )
+                
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Backend service connection error: {str(e)}"
+        )
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Backend service HTTP error: {e.response.status_code} - {e.response.text}"
+        )
