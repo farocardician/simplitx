@@ -47,7 +47,7 @@ export const GET = withSession(async (req: NextRequest, { sessionId }: { session
   });
   
   return NextResponse.json({
-    jobs: jobs.map(job => ({
+    jobs: jobs.map((job: any) => ({
       id: job.id,
       filename: job.originalFilename,
       bytes: Number(job.bytes),

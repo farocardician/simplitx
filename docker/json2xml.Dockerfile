@@ -1,3 +1,4 @@
+# Base stage
 FROM python:3.11-slim as base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -12,17 +13,24 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 
 WORKDIR /app
 
-# Install base requirements first for better caching
+# Dependencies stage
+FROM base AS deps
 COPY docker/python/requirements-base.txt /tmp/requirements-base.txt
 RUN pip install --upgrade pip && pip install -r /tmp/requirements-base.txt
-
-# Install json2xml-specific requirements
 COPY docker/python/requirements-json2xml.txt /tmp/requirements-json2xml.txt
 RUN pip install -r /tmp/requirements-json2xml.txt
 
-# Create app user
+# Development stage
+FROM deps AS development
 RUN useradd -m appuser
 USER appuser
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
+# Production stage
+FROM deps AS production
+COPY services/json2xml/ ./
+RUN useradd -m appuser
+USER appuser
 EXPOSE 8000
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

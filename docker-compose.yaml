@@ -1,3 +1,6 @@
+# Base Docker Compose configuration
+# Use with docker-compose.development.yml or docker-compose.production.yml
+
 services:
   postgres:
     image: postgres:15-alpine
@@ -17,39 +20,22 @@ services:
       retries: 5
 
   pdf2json:
-    build:
-      context: .
-      dockerfile: docker/worker.Dockerfile
-    volumes:
-      - ./services/pdf2json:/app
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    # NO external port exposure
-    
+
   json2xml:
-    build:
-      context: .
-      dockerfile: docker/json2xml.Dockerfile
-    volumes:
-      - ./services/json2xml:/app
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
-    # NO external port exposure
-    
+
   gateway:
-    build:
-      context: .
-      dockerfile: docker/gateway.Dockerfile
-    volumes:
-      - ./services/gateway:/app
     ports:
       - "8002:8000"
     environment:
@@ -68,22 +54,14 @@ services:
         condition: service_healthy
 
   web:
-    build:
-      context: .
-      dockerfile: docker/web.Dockerfile
-    volumes:
-      - ./services/web:/app
-      - web_node_modules:/app/node_modules
-      - /app/.next  # Don't mount .next directory
-      - ./uploads:/app/uploads  # Mount uploads directory
-      - ./results:/app/results  # Mount results directory
     ports:
       - "3000:3000"
     environment:
       - GATEWAY_URL=http://gateway:8000
-      - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
+    volumes:
+      - ./uploads:/app/uploads
+      - ./results:/app/results
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/healthz"]
       interval: 30s
@@ -95,11 +73,9 @@ services:
         condition: service_healthy
 
   worker:
-    build: ./services/worker
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
       - GATEWAY_URL=http://gateway:8000
-      - NODE_ENV=development
       - WORKER_CONCURRENCY=1
       - GATEWAY_TIMEOUT=180000
     volumes:
@@ -110,7 +86,6 @@ services:
         condition: service_healthy
       gateway:
         condition: service_healthy
-    restart: unless-stopped
 
 volumes:
   web_node_modules:
