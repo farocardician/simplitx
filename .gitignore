@@ -82,8 +82,8 @@ __pycache__/
 # # -------------------------
 artifacts/
 !artifacts/.gitkeep
-result/
-result/*
+results/
+results/*
 uploads/
 storage/
 tmp/
