@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import type { UploadedFile, UploadState, UploadProgress } from '@/types/files'
 import { formatBytes, exceedsLimit } from '@/lib/bytes'
 import { isValidPDF, getPDFValidationError } from '@/lib/mime'
@@ -14,6 +14,8 @@ export function useUpload() {
     isUploading: false,
     error: null
   })
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null)
+  const redirectIntervalRef = useRef<NodeJS.Timeout>()
 
   const generateFileId = useCallback(() => {
     return `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -147,10 +149,18 @@ export function useUpload() {
             try {
               const response = JSON.parse(xhr.responseText)
               if (response.job) {
-                // Redirect to queue page on successful job creation
+                // Check if all uploads are complete after this one
                 setTimeout(() => {
-                  window.location.href = '/queue'
-                }, 500) // Small delay to show completion
+                  setUploadState(current => {
+                    const allCompleted = current.files.every(f => 
+                      f.id === fileId ? true : f.status === 'completed'
+                    )
+                    if (allCompleted) {
+                      startRedirectCountdown()
+                    }
+                    return current
+                  })
+                }, 100) // Small delay to ensure state updates
               }
             } catch (e) {
               console.log('Response parsing error:', e)
@@ -206,6 +216,34 @@ export function useUpload() {
     }
   }, [uploadState.files, updateFileProgress])
 
+  const startRedirectCountdown = useCallback(() => {
+    // Clear any existing interval
+    if (redirectIntervalRef.current) {
+      clearInterval(redirectIntervalRef.current)
+    }
+    
+    console.log('Starting countdown at 3')
+    setRedirectCountdown(3)
+    
+    redirectIntervalRef.current = setInterval(() => {
+      setRedirectCountdown((prev) => {
+        console.log('Countdown tick, prev:', prev)
+        if (prev === null) return null
+        
+        if (prev === 1) {
+          console.log('Countdown reached 1, redirecting...')
+          clearInterval(redirectIntervalRef.current!)
+          window.location.href = '/queue'
+          return null
+        }
+        
+        const nextValue = prev - 1
+        console.log('Setting countdown to:', nextValue)
+        return nextValue
+      })
+    }, 1000)
+  }, [])
+
   const startUploads = useCallback(async () => {
     const pendingFiles = uploadState.files.filter(f => f.status === 'pending')
     if (pendingFiles.length === 0) return
@@ -223,7 +261,7 @@ export function useUpload() {
     }
 
     setUploadState(prev => ({ ...prev, isUploading: false }))
-  }, [uploadState.files, realUpload])
+  }, [uploadState.files, realUpload, startRedirectCountdown])
 
   const clearError = useCallback(() => {
     setUploadState(prev => ({ ...prev, error: null }))
@@ -246,6 +284,7 @@ export function useUpload() {
 
   return {
     ...uploadState,
+    redirectCountdown,
     addFiles,
     removeFile,
     cancelUpload,

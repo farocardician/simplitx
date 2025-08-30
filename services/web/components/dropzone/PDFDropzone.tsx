@@ -14,6 +14,7 @@ export function PDFDropzone() {
     files,
     isUploading,
     error,
+    redirectCountdown,
     addFiles,
     removeFile,
     cancelUpload,
@@ -210,6 +211,17 @@ export function PDFDropzone() {
             >
               Clear All
             </button>
+          </div>
+        </div>
+      )}
+
+      {redirectCountdown !== null && (
+        <div className={styles.successMessage}>
+          <div className={styles.successTitle}>
+            ✅ PDF{files.length > 1 ? 's' : ''} uploaded successfully!
+          </div>
+          <div className={styles.successSubtitle}>
+            Redirecting to processing queue in <span className={styles.countdown}>{redirectCountdown}</span> second{redirectCountdown !== 1 ? 's' : ''}
           </div>
         </div>
       )}
