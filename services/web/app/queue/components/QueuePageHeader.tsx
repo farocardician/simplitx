@@ -84,7 +84,7 @@ export function QueuePageHeader({
               <button
                 onClick={onBulkDownload}
                 disabled={!hasDownloadableSelection}
-                className={`action-button px-3 py-2 text-sm font-semibold rounded-lg border-0 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                className={`action-button px-4 py-2 font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 min-w-[100px] ${
                   hasDownloadableSelection
                     ? 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -96,7 +96,7 @@ export function QueuePageHeader({
               
               <button
                 onClick={onBulkDelete}
-                className="action-button px-3 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg border-0 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                className="action-button px-4 py-2 font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 min-w-[100px]"
                 title={`Delete ${selectedJobIds.size} job${selectedJobIds.size !== 1 ? 's' : ''}`}
               >
                 Delete
@@ -107,7 +107,7 @@ export function QueuePageHeader({
           {/* Upload More Button - Always visible */}
           <button
             onClick={onUploadMore}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="bg-blue-500 text-white px-4 py-2 font-medium rounded-lg hover:bg-blue-600 transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 min-w-[100px]"
           >
             Upload More Files
           </button>
