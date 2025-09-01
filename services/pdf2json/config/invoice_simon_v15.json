@@ -1,0 +1,183 @@
+{
+  "name": "invoice_simon_v12_casefold",
+  "version": "1.3",
+  "header_aliases": {
+    "NO": [
+      "NO"
+    ],
+    "HS": [
+      "HS",
+      "HS CODE",
+      "HSCODE"
+    ],
+    "DESC": [
+      "DESC",
+      "DESCRIPTION",
+      "DESCRIPTION OF GOODS",
+      "GOODS"
+    ],
+    "QTY": [
+      "QTY",
+      "QUANTITY"
+    ],
+    "UOM": [
+      "PCS",
+      "UNIT",
+      "UOM"
+    ],
+    "PRICE": [
+      "PRICE",
+      "UNIT COST",
+      "UNIT PRICE"
+    ],
+    "AMOUNT": [
+      "AMOUNT",
+      "AMOUNT IDR",
+      "LINE TOTAL",
+      "TOTAL"
+    ],
+    "AMOUNT_EXCL_TAX": [],
+    "AMOUNT_INCL_TAX": [],
+    "BATCH": [],
+    "CODE": [],
+    "CURRENCY": [],
+    "DISCOUNT": [],
+    "GL_CODE": [],
+    "PERIOD": [],
+    "SERIAL": [],
+    "SKU": [],
+    "TAX": [],
+    "TAX_RATE": [],
+    "UNIT_PRICE_EXCL_TAX": [],
+    "UNIT_PRICE_INCL_TAX": []
+  },
+  "totals_keywords": [
+    "AMOUNT DUE",
+    "BASIS PAJAK",
+    "DASAR PAJAK",
+    "DPP",
+    "GRAND TOTAL",
+    "Grand Total incld. VAT 12%",
+    "PPN",
+    "SUB TOTAL",
+    "SUBTOTAL",
+    "TOTAL",
+    "TOTAL TAX BASED",
+    "VAT",
+    "VAT 12%",
+    "VAT12%"
+  ],
+  "currency_hints": [
+    "IDR",
+    "RP"
+  ],
+  "uom_hints": [
+    "PCS"
+  ],
+  "camelot": {
+    "flavor_order": [
+      "lattice",
+      "stream"
+    ],
+    "line_scale": 40,
+    "line_scale_stream": 15
+  },
+  "header_block_margin": 0.02,
+  "stop_after_totals": true,
+  "stage6": {
+    "index_fallback": {
+      "COL1": "NO",
+      "COL2": "HS",
+      "COL3": "SKU",
+      "COL4": "CODE",
+      "COL5": "DESC",
+      "COL6": "QTY",
+      "NO": "PRICE",
+      "COL8": "AMOUNT"
+    },
+    "required_families": {
+      "must_have_any": [
+        "DESC",
+        "AMOUNT",
+        "QTY",
+        "PRICE"
+      ],
+      "id_field": "NO"
+    },
+    "row_filters": {
+      "drop_if_matches": [
+        "SUBTOTAL",
+        "TOTAL",
+        "VAT",
+        "PPN",
+        "DPP",
+        "GRAND TOTAL",
+        "NOTE",
+        "TERMS"
+      ]
+    },
+    "number_format": {
+      "decimal": ".",
+      "thousands": ",",
+      "allow_parens": true
+    },
+    "derivation": {
+      "fill_amount_from_qty_price": true,
+      "fill_unit_price_from_amount_qty": true
+    },
+    "rounding": {
+      "money_decimals": 2
+    }
+  },
+  "stage7": {
+    "header_rows_to_scan": 40,
+    "seller_from_header_cols": [
+      1,
+      2
+    ],
+    "invoice_no_patterns": [
+      "([A-Z0-9]+-\\d{6}-\\d{4})"
+    ],
+    "date_patterns": [
+      "\\b(\\d{4}-\\d{2}-\\d{2})\\b",
+      "\\b(\\d{2}/\\d{2}/\\d{4})\\b"
+    ],
+    "po_patterns": [
+      "\\bPO[:\\s]*([A-Za-z0-9][A-Za-z0-9\\-/]*\\d[A-Za-z0-9\\-/]*)\\b"
+    ],
+    "customer_code_patterns": [
+      "cust\\.?\\s*code[: ]*\\s*([A-Za-z0-9\\-_\\/]+)",
+      "customer\\s*code[: ]*\\s*([A-Za-z0-9\\-_\\/]+)",
+      "customer\\s*id[: ]*\\s*([A-Za-z0-9\\-_\\/]+)",
+      "buyer\\s*id[: ]*\\s*([A-Za-z0-9\\-_\\/]+)"
+    ],
+    "payment_terms": {
+      "label_contains": [
+        "PAYMENT",
+        "TERMS"
+      ],
+      "include_next_n_rows": 2
+    },
+    "buyer_block": {
+      "start_label_contains": [
+        "2)BUYER",
+        "BUYER",
+        "BUYER:"
+      ],
+      "stop_when_contains": [
+        "9)NO",
+        "NO.",
+        "HS",
+        "DESCRIPTION",
+        "QTY",
+        "AMOUNT"
+      ],
+      "max_lines": 8
+    },
+    "currency_order": [
+      "IDR",
+      "USD",
+      "EUR"
+    ]
+  }
+}

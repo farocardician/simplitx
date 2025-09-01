@@ -132,11 +132,13 @@ def main():
     # ---------- Stage 4: camelot_grid ----------
     if args.force or not cells_raw_fp.exists():
         ensure_dir(cells_raw_fp)
+        config_path = stages_dir.parent / "config" / "invoice_simon_v15.json"
         run([
-            python_exec, str(stages_dir / "s04_camelot_grid.py"),
+            python_exec, str(stages_dir / "s04_camelot_grid_configV12.py"),
             "--pdf", str(pdf_path),
             "--tokens", str(normalized_fp),
             "--out", str(cells_raw_fp),
+            "--config", str(config_path),
         ])
 
     # ---------- Stage 5: normalize_cells ----------
@@ -152,9 +154,10 @@ def main():
     if args.force or not items_fp.exists():
         ensure_dir(items_fp)
         run([
-            python_exec, str(stages_dir / "s06_line_items_from_cells.py"),
+            python_exec, str(stages_dir / "s06_line_items_from_cellsV2.py"),
             "--cells", str(cells_norm_fp),
             "--out", str(items_fp),
+            "--config", str(config_path),
         ])
 
     # ---------- Stage 7: extractor (fields) ----------
