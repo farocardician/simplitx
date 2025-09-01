@@ -32,6 +32,7 @@ def _fix_wrapped(s: str) -> str:
         (r"\bTr ack\b", "Track"),
         (r"\bInternasi onal\b", "Internasional"),
         (r"\bG EM\b", "GEM"),
+        (r"-\s+", "-"),  # fix dash followed by space(s) -> dash only
         (r"\s+", " "),
     ]
     for pat, rep in subs:

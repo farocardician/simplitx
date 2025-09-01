@@ -69,11 +69,30 @@ def _parse_int(s: str) -> Optional[int]:
         return None
 
 def _fix_desc(s: str) -> str:
-    # Tidy a few wrap artifacts seen in sample docs; keep short
-    s = re.sub(r"\bD engan\b", "Dengan", s)
-    s = re.sub(r"\bPi ntar\b", "Pintar", s)
-    s = re.sub(r"\bTr ack\b", "Track", s)
-    return _clean_spaces(s)
+    """
+    Intelligent text normalization for PDF extraction artifacts.
+    Handles common issues from multi-line text extraction.
+    """
+    if not s:
+        return s
+    
+    # Step 1: Basic cleanup
+    s = _clean_spaces(s)
+    
+    # Step 2: Fix dash-space patterns (common in product names)
+    s = re.sub(r"-\s+", "-", s)
+    
+    # Step 3: Fix single character words that are likely line-break artifacts
+    # Pattern: single letter followed by lowercase word (e.g., "D engan" -> "Dengan")
+    s = re.sub(r"\b([A-Za-z])\s+([a-z]{2,})\b", r"\1\2", s)
+    
+    # Step 4: Fix space before punctuation
+    s = re.sub(r"\s+([.,:;!?])", r"\1", s)
+    
+    # Step 5: Fix double spaces that might remain
+    s = re.sub(r"\s{2,}", " ", s)
+    
+    return s.strip()
 
 # --------------- Config helpers (STRICT) ---------------
 def _load_config(cfg_path: Path) -> Dict[str,Any]:
@@ -151,7 +170,7 @@ def _map_columns(header_cells: List[Dict[str,Any]], cfg: Dict[str,Any]) -> Dict[
     for hc in header_cells:
         col = int(hc.get("col", len(out)))
         hname = str(hc.get("name") or "").upper()
-        htext = str(hc.get("text") or "")
+        htext = str(hc.get("text_norm") or hc.get("text") or "")
 
         # 1) layout-provided map by header name
         if hname in idx_fallback:
@@ -285,7 +304,7 @@ def extract_items(cells_path: Path, cfg_path: Path) -> Dict[str,Any]:
 
         for r in table.get("rows", []):
             cells = r.get("cells", [])
-            texts = [c.get("text","") for c in cells]
+            texts = [c.get("text_norm", c.get("text","")) for c in cells]
             maybe = _row_to_item_by_map(texts, colmap, uom_default, cfg)
             if maybe:
                 items.append(maybe)

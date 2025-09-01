@@ -45,7 +45,8 @@ def _fix_desc(s: str) -> str:
     s = re.sub(r"\bD engan\b", "Dengan", s)
     s = re.sub(r"\bPi ntar\b", "Pintar", s)
     s = re.sub(r"\bTr ack\b", "Track", s)
-    s = " ".join(s.split())
+    s = " ".join(s.split())  # normalize whitespace first
+    s = re.sub(r"-\s+", "-", s)  # then fix dash followed by space(s) -> dash only
     return s.strip()
 
 def _row_to_item(cells: List[str]) -> Optional[Dict[str, Any]]:
@@ -94,7 +95,7 @@ def extract_from_cells(cells_path: Path) -> Dict[str, Any]:
         # 1) Some pages (e.g., page 2) have the first item in header_cells.
         header_cells = table.get("header_cells") or []
         if header_cells and len(header_cells) >= 8:
-            hvals = [c.get("text", "") for c in header_cells]
+            hvals = [c.get("text_norm", c.get("text", "")) for c in header_cells]
             maybe_item = _row_to_item(hvals)
             if maybe_item:
                 items.append(maybe_item)
@@ -102,7 +103,7 @@ def extract_from_cells(cells_path: Path) -> Dict[str, Any]:
         # 2) Regular rows
         for r in table.get("rows", []):
             cells = r.get("cells", [])
-            texts = [c.get("text", "") for c in cells]
+            texts = [c.get("text_norm", c.get("text", "")) for c in cells]
             maybe_item = _row_to_item(texts)
             if maybe_item:
                 items.append(maybe_item)

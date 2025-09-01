@@ -149,10 +149,11 @@ def process_pdf(pdf_bytes: bytes, doc_id: str, include_refs: bool = False) -> Di
             # Stage 7: extractor (fields)
             ensure_dir(fields_fp)
             run([
-                python_exec, str(stages_dir / "s07_extractor.py"),
+                python_exec, str(stages_dir / "s07_extractorV2.py"),
                 "--cells", str(cells_norm_fp),
                 "--items", str(items_fp),
                 "--out", str(fields_fp),
+                "--config", str(config_path),
             ])
             
             # Stage 8: validator
@@ -325,10 +326,11 @@ def process_pdf_with_artifacts(pdf_bytes: bytes, doc_id: str, include_refs: bool
             # Stage 7: extractor (fields)
             ensure_dir(fields_fp)
             run([
-                python_exec, str(stages_dir / "s07_extractor.py"),
+                python_exec, str(stages_dir / "s07_extractorV2.py"),
                 "--cells", str(cells_norm_fp),
                 "--items", str(items_fp),
                 "--out", str(fields_fp),
+                "--config", str(config_path),
             ])
             
             # Stage 8: validator
