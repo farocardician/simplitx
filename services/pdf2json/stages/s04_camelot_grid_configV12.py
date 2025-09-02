@@ -102,28 +102,31 @@ def build_cells(pdf_path: Path, tokens_path: Path, out_path: Path, config_path: 
 
     import camelot  # type: ignore
 
-    # ----- Read tables with Camelot (as directed by config) -----
+    # ----- Read tables with Camelot (per-page flavor fallback) -----
     flavor_order = list(camelot_cfg.get("flavor_order"))
     lattice_ls = camelot_cfg.get("line_scale")
     stream_ls = camelot_cfg.get("line_scale_stream")
 
-    def safe_read(flavor: str):
+    def safe_read_page(flavor: str, page: int):
         try:
-            ls = lattice_ls if flavor=="lattice" else stream_ls
-            return camelot.read_pdf(str(pdf_path), pages="1-end", flavor=flavor, line_scale=ls)
+            ls = lattice_ls if flavor == "lattice" else stream_ls
+            return camelot.read_pdf(str(pdf_path), pages=str(page), flavor=flavor, line_scale=ls)
         except Exception:
             return []
 
-    all_tables = []
-    for fl in flavor_order:
-        all_tables = safe_read(fl)
-        if all_tables: break
-
-    # Group by page
-    by_page_tables: Dict[int, List[Any]] = {}
-    for tb in (all_tables or []):
-        page_no = int(getattr(tb, "parsing_report", {}).get("page", 1))
-        by_page_tables.setdefault(page_no, []).append(tb)
+    # Build tables per page, trying all flavors and selecting best later
+    by_page_tables: Dict[int, List[Tuple[Any, str]]] = {}
+    flavor_used: Dict[int, Optional[str]] = {}
+    for page_no in sorted(by_page_tokens.keys()):
+        any_found = False
+        for fl in flavor_order:
+            got = safe_read_page(fl, page_no) or []
+            if got:
+                any_found = True
+                for tb in got:
+                    by_page_tables.setdefault(page_no, []).append((tb, fl))
+        if not any_found:
+            by_page_tables.setdefault(page_no, [])
 
     pages_out: List[Dict[str,Any]] = []
 
@@ -172,16 +175,17 @@ def build_cells(pdf_path: Path, tokens_path: Path, out_path: Path, config_path: 
         tables = by_page_tables.get(page_no, [])
 
         best = None
-        best_score = -1
+        best_score = (-1, -1)  # (body_count, header_hits)
         best_header_idx = None
         best_dims = (None, None)
+        best_flavor = None
 
-        for tb in tables:
+        for tb, tb_flavor in tables:
             pw, ph = get_page_dims(tb, page_no)
             if not pw or not ph:
                 continue
             rows, cols = tb.shape
-            local_best = -1
+            local_best_tuple = (-1, -1)  # (body_count, header_hits)
             local_idx = None
             for r in range(min(rows, 12)):
                 parts = row_text(tb, r, page_no, pw, ph, page_tokens)
@@ -189,17 +193,31 @@ def build_cells(pdf_path: Path, tokens_path: Path, out_path: Path, config_path: 
                 for ptxt in parts:
                     fam = family_of_header(ptxt)
                     if fam: fam_hits.add(fam)
-                if len(fam_hits) > local_best:
-                    local_best = len(fam_hits)
+                # Estimate body rows by scanning for totals after header
+                # Determine stop_at just like below
+                def _row_text_list(rr: int) -> List[str]:
+                    return row_text(tb, rr, page_no, pw, ph, page_tokens)
+                stop_at_est = rows
+                if stop_after_totals:
+                    for rr in range(r+1, rows):
+                        joined = _canon(" ".join(_row_text_list(rr)))
+                        if joined and any(k in joined for k in TOTALS_KEYS_CANON):
+                            stop_at_est = rr
+                            break
+                body_count = max(0, stop_at_est - (r + 1))
+                cand_tuple = (body_count, len(fam_hits))
+                if cand_tuple > local_best_tuple:
+                    local_best_tuple = cand_tuple
                     local_idx = r
-            if local_best > best_score:
-                best_score = local_best
+            if local_idx is not None and local_best_tuple > best_score:
+                best_score = local_best_tuple
                 best = tb
                 best_header_idx = local_idx
                 best_dims = (pw, ph)
+                best_flavor = tb_flavor
 
         if best is None:
-            pages_out.append({"page": page_no, "tables": []})
+            pages_out.append({"page": page_no, "tables": [], "flavor_used": None})
             continue
 
         tb = best
@@ -262,6 +280,7 @@ def build_cells(pdf_path: Path, tokens_path: Path, out_path: Path, config_path: 
 
         pages_out.append({
             "page": page_no,
+            "flavor_used": best_flavor,
             "table": {
                 "bbox": table_bbox,
                 "header_row_index": h_idx,
@@ -276,11 +295,13 @@ def build_cells(pdf_path: Path, tokens_path: Path, out_path: Path, config_path: 
     print(json.dumps({
         "stage": "camelot_grid",
         "doc_id": doc_id,
-        "pages": [{"page": p["page"],
-                   "rows": len(p.get("table",{}).get("rows",[])),
-                   "header_idx": p.get("table",{}).get("header_row_index", None),
-                   "cols": len(p.get("table",{}).get("header_cells",[]))}
-                  for p in pages_out]
+        "pages": [{
+            "page": p.get("page"),
+            "rows": len(p.get("table",{}).get("rows",[])),
+            "header_idx": p.get("table",{}).get("header_row_index", None),
+            "cols": len(p.get("table",{}).get("header_cells",[])),
+            "flavor": p.get("flavor_used")
+        } for p in pages_out]
     }, ensure_ascii=False, separators=(",", ":")))
     return out
 

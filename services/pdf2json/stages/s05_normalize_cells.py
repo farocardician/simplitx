@@ -49,26 +49,11 @@ def _fix_wrapped(s: str, config: Optional[Dict[str, Any]] = None, common_words: 
         except re.error:
             continue
 
-    # Gather rules from config if available
-    rules: List[Tuple[str, str]] = []
-    tr = (config or {}).get("stage5", {}).get("text_reconstruction") if isinstance(config, dict) else None
-    if isinstance(tr, dict) and tr.get("enabled", True):
-        cw = tr.get("common_words") or []
-        for it in cw:
-            if isinstance(it, dict):
-                pat = it.get("pattern"); rep = it.get("replace")
-                if isinstance(pat, str) and isinstance(rep, str):
-                    rules.append((pat, rep))
-            elif isinstance(it, list) and len(it) == 2 and all(isinstance(x, str) for x in it):
-                rules.append((it[0], it[1]))
-
-    # Fallback defaults if no rules provided
-    if not rules:
-        rules = [
-            # Keep only generic spacing/hyphen fixes as defaults
-            (r"-\s+", "-"),
-            (r"\s+", " "),
-        ]
+    # Generic spacing/hyphen fixes
+    rules: List[Tuple[str, str]] = [
+        (r"-\s+", "-"),
+        (r"\s+", " "),
+    ]
 
     for pat, rep in rules:
         try:

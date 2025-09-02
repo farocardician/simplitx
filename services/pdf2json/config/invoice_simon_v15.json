@@ -131,21 +131,6 @@
       ],
       "output_format": "YYYY-MM-DD",
       "century_cutoff": 50
-    },
-    "text_reconstruction": {
-      "enabled": true,
-      "common_words": [
-        {"pattern": "\\bD engan\\b", "replace": "Dengan"},
-        {"pattern": "\\bPi ntar\\b", "replace": "Pintar"},
-        {"pattern": "\\bTr ack\\b", "replace": "Track"},
-        {"pattern": "\\bInternasi onal\\b", "replace": "Internasional"},
-        {"pattern": "\\bG EM\\b", "replace": "GEM"},
-        {"pattern": "-\\s+", "replace": "-"},
-        {"pattern": "\\s+", "replace": " "}
-      ],
-      "suffix_patterns": [],
-      "exclude_patterns": [],
-      "single_letter_prefixes": []
     }
   },
   "stage6": {
