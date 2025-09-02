@@ -84,6 +84,70 @@
   },
   "header_block_margin": 0.02,
   "stop_after_totals": true,
+  "stage5": {
+    "column_types": {
+      "by_family": {
+        "QTY": "number",
+        "PRICE": "number",
+        "UNIT_PRICE": "number",
+        "AMOUNT": "number",
+        "AMOUNT_EXCL_TAX": "number",
+        "AMOUNT_INCL_TAX": "number",
+        "TAX": "number",
+        "DISCOUNT": "number",
+        "NO": "integer",
+        "HS": "text",
+        "DESC": "text",
+        "SKU": "text",
+        "CODE": "text",
+        "UOM": "text",
+        "BATCH": "text",
+        "SERIAL": "text"
+      },
+      "by_position": {},
+      "date_columns": [
+        "INVOICE_DATE",
+        "CONTRACT_DATE",
+        "DELIVERY_DATE"
+      ],
+      "currency_columns": [
+        "PRICE",
+        "UNIT_PRICE",
+        "AMOUNT",
+        "TAX",
+        "DISCOUNT"
+      ]
+    },
+    "number_format": {
+      "decimal": ".",
+      "thousands": ",",
+      "allow_parens": true
+    },
+    "date_formats": {
+      "input_patterns": [
+        "YYYY-MM-DD",
+        "DD-MM-YYYY",
+        "MM/DD/YYYY"
+      ],
+      "output_format": "YYYY-MM-DD",
+      "century_cutoff": 50
+    },
+    "text_reconstruction": {
+      "enabled": true,
+      "common_words": [
+        {"pattern": "\\bD engan\\b", "replace": "Dengan"},
+        {"pattern": "\\bPi ntar\\b", "replace": "Pintar"},
+        {"pattern": "\\bTr ack\\b", "replace": "Track"},
+        {"pattern": "\\bInternasi onal\\b", "replace": "Internasional"},
+        {"pattern": "\\bG EM\\b", "replace": "GEM"},
+        {"pattern": "-\\s+", "replace": "-"},
+        {"pattern": "\\s+", "replace": " "}
+      ],
+      "suffix_patterns": [],
+      "exclude_patterns": [],
+      "single_letter_prefixes": []
+    }
+  },
   "stage6": {
     "index_fallback": {
       "COL1": "NO",

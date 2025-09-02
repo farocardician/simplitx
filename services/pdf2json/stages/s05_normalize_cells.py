@@ -13,78 +13,249 @@
 #       to each cell to preserve original text while providing normalized text.
 
 from __future__ import annotations
-import argparse, json, re
+import argparse, json, re, sys
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 
 # crude detectors
 NUM_RE = re.compile(r"^\s*[\(\)\d.,]+\s*$")
 DATE_YMD_RE = re.compile(r"^\s*(\d{4})[-/](\d{1,2})[-/](\d{1,2})\s*$")
 DATE_DMY_RE = re.compile(r"^\s*(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\s*$")
 
-def _fix_wrapped(s: str) -> str:
-    # remove soft hyphen
-    s = s.replace("\xad", "")
-    # common artifacts seen in this template
-    subs = [
-        (r"\bD engan\b", "Dengan"),
-        (r"\bPi ntar\b", "Pintar"),
-        (r"\bTr ack\b", "Track"),
-        (r"\bInternasi onal\b", "Internasional"),
-        (r"\bG EM\b", "GEM"),
-        (r"-\s+", "-"),  # fix dash followed by space(s) -> dash only
-        (r"\s+", " "),
-    ]
-    for pat, rep in subs:
-        s = re.sub(pat, rep, s)
+def _load_common_words(path: Optional[Path]) -> List[str]:
+    if not path:
+        return []
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        if isinstance(data, list):
+            return [str(w) for w in data if isinstance(w, str) and w]
+    except Exception:
+        pass
+    return []
+
+def _fix_wrapped(s: str, config: Optional[Dict[str, Any]] = None, common_words: Optional[List[str]] = None) -> str:
+    """Apply text reconstruction rules from config (common pattern fixes)."""
+    s = (s or "").replace("\xad", "")  # remove soft hyphen artifacts
+
+    # First, normalize broken common words from an external list
+    cw_list = [w for w in (common_words or []) if isinstance(w, str) and w]
+    for w in cw_list:
+        letters = list(w)
+        # Build pattern that tolerates spaces between letters, word-bounded
+        pat = r"\b" + r"\s*".join(re.escape(ch) for ch in letters) + r"\b"
+        try:
+            # Replace matched segment by removing whitespace inside, preserving original letter cases
+            s = re.sub(pat, lambda m: re.sub(r"\s+", "", m.group(0)), s, flags=re.IGNORECASE)
+        except re.error:
+            continue
+
+    # Gather rules from config if available
+    rules: List[Tuple[str, str]] = []
+    tr = (config or {}).get("stage5", {}).get("text_reconstruction") if isinstance(config, dict) else None
+    if isinstance(tr, dict) and tr.get("enabled", True):
+        cw = tr.get("common_words") or []
+        for it in cw:
+            if isinstance(it, dict):
+                pat = it.get("pattern"); rep = it.get("replace")
+                if isinstance(pat, str) and isinstance(rep, str):
+                    rules.append((pat, rep))
+            elif isinstance(it, list) and len(it) == 2 and all(isinstance(x, str) for x in it):
+                rules.append((it[0], it[1]))
+
+    # Fallback defaults if no rules provided
+    if not rules:
+        rules = [
+            # Keep only generic spacing/hyphen fixes as defaults
+            (r"-\s+", "-"),
+            (r"\s+", " "),
+        ]
+
+    for pat, rep in rules:
+        try:
+            s = re.sub(pat, rep, s)
+        except re.error:
+            # Skip invalid patterns
+            continue
     return s.strip()
 
-def _norm_number(s: str) -> Optional[str]:
-    t = s.strip()
+def _norm_number(s: str, config: Dict[str, Any]) -> Optional[str]:
+    """Normalize number based on config settings (stage5.number_format)."""
+    t = (s or "").strip()
     if not NUM_RE.match(t):
         return None
-    neg = t.startswith("(") and t.endswith(")")
-    core = t.strip("()").replace(",", "")
-    # if it's just "." as decimal, leave as is; if thousands-only with ".", we also strip
-    # (our Stage 9 will parse as Decimal; here we just standardize a string)
+
+    nf = (config.get("stage5", {}) or {}).get("number_format", {})
+    decimal = nf.get("decimal", ".")
+    thousands = nf.get("thousands", ",")
+    allow_parens = bool(nf.get("allow_parens", True))
+
+    neg = allow_parens and t.startswith("(") and t.endswith(")")
+    core = t[1:-1] if neg else t
+
+    if thousands:
+        core = core.replace(thousands, "")
+    if decimal != ".":
+        core = core.replace(decimal, ".")
+
     try:
-        float(core)  # probe
-        out = core
-        if neg:
-            out = "-" + out
-        return out
+        float(core)
+        return ("-" + core) if neg else core
     except Exception:
         return None
 
-def _norm_date(s: str) -> Optional[str]:
-    s = s.strip()
-    m = DATE_YMD_RE.match(s)
-    if m:
-        y, mo, d = m.groups()
-        return f"{int(y):04d}-{int(mo):02d}-{int(d):02d}"
-    m = DATE_DMY_RE.match(s)
-    if m:
-        d, mo, y = m.groups()
-        if len(y) == 2:
-            y = "20" + y  # deterministic assumption for modern docs
-        return f"{int(y):04d}-{int(mo):02d}-{int(d):02d}"
+def _norm_integer(s: str, config: Dict[str, Any]) -> Optional[str]:
+    """Normalize integer using number rules but ensure integral output."""
+    n = _norm_number(s, config)
+    if n is None:
+        return None
+    try:
+        f = float(n)
+        if f.is_integer():
+            return str(int(f))
+        # if it has decimals, not an integer
+        return None
+    except Exception:
+        return None
+
+def _compile_token_date_pattern(pat: str) -> Tuple[re.Pattern, Tuple[str, str, str]]:
+    """Compile token pattern like 'YYYY-MM-DD' to regex and return group order."""
+    pat = pat.strip().upper()
+    # Support common separators '-' or '/'
+    if pat == "YYYY-MM-DD":
+        return re.compile(r"^\s*(\d{4})-(\d{1,2})-(\d{1,2})\s*$"), ("Y","M","D")
+    if pat == "DD-MM-YYYY":
+        return re.compile(r"^\s*(\d{1,2})-(\d{1,2})-(\d{4})\s*$"), ("D","M","Y")
+    if pat == "MM/DD/YYYY":
+        return re.compile(r"^\s*(\d{1,2})/(\d{1,2})/(\d{4})\s*$"), ("M","D","Y")
+    if pat == "YYYY/MM/DD":
+        return re.compile(r"^\s*(\d{4})/(\d{1,2})/(\d{1,2})\s*$"), ("Y","M","D")
+    if pat == "DD/MM/YY":
+        return re.compile(r"^\s*(\d{1,2})/(\d{1,2})/(\d{2})\s*$"), ("D","M","Y")
+    # Fallback to strict Y-M-D and D-M-Y regex if unknown
+    return re.compile(r"^\s*(\d{4})[-/](\d{1,2})[-/](\d{1,2})\s*$"), ("Y","M","D")
+
+def _norm_date(s: str, config: Dict[str, Any]) -> Optional[str]:
+    """Normalize dates based on config (stage5.date_formats)."""
+    s = (s or "").strip()
+    if not s:
+        return None
+
+    date_cfg = (config.get("stage5", {}) or {}).get("date_formats")
+    patterns: List[Tuple[re.Pattern, Tuple[str,str,str]]] = []
+    output_fmt = "YYYY-MM-DD"
+    cutoff = 50
+    if isinstance(date_cfg, dict):
+        output_fmt = str(date_cfg.get("output_format", "YYYY-MM-DD"))
+        try:
+            cutoff = int(date_cfg.get("century_cutoff", 50))
+        except Exception:
+            cutoff = 50
+        for p in (date_cfg.get("input_patterns") or []):
+            if not isinstance(p, str):
+                continue
+            P = p.strip()
+            # If contains Y/M/D tokens, compile as token pattern
+            if any(tok in P.upper() for tok in ("YYYY","YY","MM","DD")):
+                rx, order = _compile_token_date_pattern(P)
+                patterns.append((rx, order))
+            else:
+                # Treat as regex; infer order heuristically after match
+                try:
+                    rx = re.compile(P)
+                    # Use placeholder; we will detect by group lengths
+                    patterns.append((rx, ("?","?","?")))
+                except re.error:
+                    continue
+    else:
+        # Defaults (regex-based): Y-M-D and D-M-Y
+        patterns = [
+            (DATE_YMD_RE, ("Y","M","D")),
+            (DATE_DMY_RE, ("D","M","Y")),
+        ]
+
+    def _century_fix(y: int) -> int:
+        if y < 100:
+            return (1900 + y) if y >= cutoff else (2000 + y)
+        return y
+
+    for rx, order in patterns:
+        m = rx.match(s)
+        if not m:
+            continue
+        g1, g2, g3 = m.groups()[:3]
+        # detect order if unknown using length heuristic
+        o1, o2, o3 = order
+        if o1 == o2 == o3 == "?":
+            if len(g1) == 4:
+                order = ("Y","M","D")
+            elif len(g3) == 4:
+                # Assume MDY as common if separator is '/'; otherwise DMY
+                sep = "/" if "/" in s else "-"
+                order = ("M","D","Y") if sep == "/" else ("D","M","Y")
+            else:
+                # Fallback
+                order = ("Y","M","D")
+        y = mo = d = None
+        mapping = {"Y": None, "M": None, "D": None}
+        mapping[order[0]] = g1
+        mapping[order[1]] = g2
+        mapping[order[2]] = g3
+        try:
+            y = _century_fix(int(mapping["Y"]))
+            mo = int(mapping["M"]) if mapping["M"] is not None else None
+            d = int(mapping["D"]) if mapping["D"] is not None else None
+        except Exception:
+            continue
+        if y and mo and d:
+            # Only output YYYY-MM-DD regardless of output_fmt for now (as specified)
+            return f"{int(y):04d}-{int(mo):02d}-{int(d):02d}"
     return None
 
-def _normalize_cell_text(txt: str, col_idx: int) -> str:
-    base = _fix_wrapped(txt or "")
-    # numeric columns by index in this template: [5]=QTY, [6]=UNIT_PRICE, [7]=AMOUNT
-    if col_idx in (5, 6, 7):
-        nn = _norm_number(base)
+def _normalize_cell_text(txt: str, col_idx: int, col_name: str, config: Dict[str, Any], common_words: Optional[List[str]] = None) -> str:
+    """Normalize a cell's text based on config-defined column types."""
+    base = _fix_wrapped(txt or "", config, common_words)
+
+    st5 = (config.get("stage5", {}) or {})
+    col_types = st5.get("column_types", {}) if isinstance(st5, dict) else {}
+    by_family = (col_types.get("by_family") or {}) if isinstance(col_types, dict) else {}
+    by_position = (col_types.get("by_position") or {}) if isinstance(col_types, dict) else {}
+
+    ctype = by_family.get(str(col_name))
+    # override by position if present
+    if str(col_idx) in by_position:
+        ctype = by_position.get(str(col_idx))
+
+    if ctype == "number":
+        nn = _norm_number(base, config)
         if nn is not None:
             return nn
-    # dates sometimes appear in header col 7 (index 7 on header row in our grid) or col 8 in a wider grid
-    maybe_date = _norm_date(base)
-    if maybe_date:
-        return maybe_date
+    elif ctype == "integer":
+        ni = _norm_integer(base, config)
+        if ni is not None:
+            return ni
+
+    # Handle dates when explicitly listed in date_columns
+    date_cols = (col_types.get("date_columns") or []) if isinstance(col_types, dict) else []
+    if col_name in date_cols:
+        maybe_date = _norm_date(base, config)
+        if maybe_date:
+            return maybe_date
+
     return base
 
-def normalize_cells(cells_in: Path, cells_out: Path) -> Dict[str, Any]:
+def _load_config(config_path: Optional[Path]) -> Dict[str, Any]:
+    if config_path is None:
+        return {}
+    try:
+        return json.loads(config_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"[WARN] Could not read config: {e}", file=sys.stderr)
+        return {}
+
+def normalize_cells(cells_in: Path, cells_out: Path, config_path: Optional[Path] = None, common_words_path: Optional[Path] = None) -> Dict[str, Any]:
     data = json.loads(cells_in.read_text(encoding="utf-8"))
+    config = _load_config(config_path)
+    common_words = _load_common_words(common_words_path)
 
     out_pages: List[Dict[str, Any]] = []
     for p in data.get("pages", []):
@@ -99,8 +270,9 @@ def normalize_cells(cells_in: Path, cells_out: Path) -> Dict[str, Any]:
         for c in hdr:
             txt = c.get("text", "")
             idx = c.get("col", 0)
+            name = c.get("name", f"COL{idx+1}")
             c2 = dict(c)
-            c2["text_norm"] = _normalize_cell_text(txt, idx)
+            c2["text_norm"] = _normalize_cell_text(txt, idx, name, config, common_words)
             hdr_norm.append(c2)
 
         # normalize body rows
@@ -111,8 +283,9 @@ def normalize_cells(cells_in: Path, cells_out: Path) -> Dict[str, Any]:
             for c in cells:
                 txt = c.get("text", "")
                 idx = c.get("col", 0)
+                name = c.get("name", f"COL{idx+1}")
                 c2 = dict(c)
-                c2["text_norm"] = _normalize_cell_text(txt, idx)
+                c2["text_norm"] = _normalize_cell_text(txt, idx, name, config, common_words)
                 cnorm.append(c2)
             rows_norm.append({"row": r.get("row"), "cells": cnorm})
 
@@ -141,11 +314,15 @@ def normalize_cells(cells_in: Path, cells_out: Path) -> Dict[str, Any]:
     return out
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Stage 8 — Heavy Cell Normalization")
+    ap = argparse.ArgumentParser(description="Stage 5 — Heavy Cell Normalization (config-driven)")
     ap.add_argument("--in", dest="inp", required=True, help="cells.json path")
     ap.add_argument("--out", required=True, help="cells_normalized.json path")
+    ap.add_argument("--config", required=False, help="Layout config JSON (same used by Stage 4/6)")
+    ap.add_argument("--common-words", dest="common_words", required=False, help="Path to JSON list of common words for de-spacing (e.g., ['dengan'])")
     args = ap.parse_args()
-    normalize_cells(Path(args.inp).resolve(), Path(args.out).resolve())
+    cfg = Path(args.config).resolve() if getattr(args, "config", None) else None
+    cw = Path(args.common_words).resolve() if getattr(args, "common_words", None) else None
+    normalize_cells(Path(args.inp).resolve(), Path(args.out).resolve(), cfg, cw)
 
 if __name__ == "__main__":
     main()

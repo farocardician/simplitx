@@ -144,10 +144,14 @@ def main():
     # ---------- Stage 5: normalize_cells ----------
     if args.force or not cells_norm_fp.exists():
         ensure_dir(cells_norm_fp)
+        config_path = stages_dir.parent / "config" / "invoice_simon_v15.json"
+        common_words_path = stages_dir.parent / "config" / "common-words.json"
         run([
             python_exec, str(stages_dir / "s05_normalize_cells.py"),
             "--in", str(cells_raw_fp),
             "--out", str(cells_norm_fp),
+            "--config", str(config_path),
+            "--common-words", str(common_words_path),
         ])
 
     # ---------- Stage 6: line_items_from_cells ----------
