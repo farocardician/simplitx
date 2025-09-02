@@ -145,7 +145,7 @@ def main():
     if args.force or not cells_norm_fp.exists():
         ensure_dir(cells_norm_fp)
         config_path = stages_dir.parent / "config" / "invoice_simon_v15.json"
-        common_words_path = stages_dir.parent / "config" / "common-words.json"
+        common_words_path = stages_dir.parent / "common" / "common-words.json"
         run([
             python_exec, str(stages_dir / "s05_normalize_cells.py"),
             "--in", str(cells_raw_fp),

@@ -34,7 +34,7 @@ Converts PDF invoices into structured JSON using a deterministic 10‑stage pipe
 - Input: `cells.json` + `--config invoice_simon_v15.json` + `--common-words common-words.json`
 - Output: `cells_normalized.json`
 - Behavior:
-  - Text reconstruction: case‑preserving de‑spacing for words in `config/common-words.json` (e.g., "d engan" → "dengan" while keeping original casing).
+  - Text reconstruction: case‑preserving de‑spacing for words in `common/common-words.json` (e.g., "d engan" → "dengan" while keeping original casing).
   - Column types: `stage5.column_types.by_family` (+ optional `by_position`) drive number vs integer vs text vs date handling.
   - Number format: `stage5.number_format` (decimal, thousands, allow_parens).
   - Dates: `stage5.date_formats` with token patterns like `YYYY-MM-DD`, `DD-MM-YYYY`, `MM/DD/YYYY`; output normalized to `YYYY-MM-DD`.
@@ -71,7 +71,7 @@ Per run outputs:
 - Stage 5:
   - `stage5.column_types` (`by_family`, optional `by_position`, `date_columns`, `currency_columns`).
   - `stage5.number_format` and `stage5.date_formats`.
-  - External: `services/pdf2json/config/common-words.json` for case‑preserving de‑spacing.
+  - External: `services/pdf2json/common/common-words.json` for case‑preserving de‑spacing.
 - Stage 6:
   - `stage6.required_families`, `index_fallback`, `row_filters`, `number_format`, `derivation`, `rounding`.
 

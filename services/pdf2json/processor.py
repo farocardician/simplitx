@@ -136,7 +136,7 @@ def process_pdf(pdf_bytes: bytes, doc_id: str, include_refs: bool = False) -> Di
                 "--in", str(cells_raw_fp),
                 "--out", str(cells_norm_fp),
                 "--config", str(config_path),
-                "--common-words", str(stages_dir.parent / "config" / "common-words.json"),
+                "--common-words", str(stages_dir.parent / "common" / "common-words.json"),
             ])
             
             # Stage 6: line_items_from_cells
@@ -315,7 +315,7 @@ def process_pdf_with_artifacts(pdf_bytes: bytes, doc_id: str, include_refs: bool
                 "--in", str(cells_raw_fp),
                 "--out", str(cells_norm_fp),
                 "--config", str(config_path),
-                "--common-words", str(stages_dir.parent / "config" / "common-words.json"),
+                "--common-words", str(stages_dir.parent / "common" / "common-words.json"),
             ])
             
             # Stage 6: line_items_from_cells

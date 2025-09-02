@@ -135,8 +135,8 @@ export function PDFDropzone() {
           {dragError 
             ? 'Only PDF files allowed!' 
             : isDragActive 
-              ? 'Drop your PDF here ✨' 
-              : 'Drop your PDF here ✨'
+              ? 'Drop any document(s) here ✨' 
+              : 'Drop any document(s) here ✨'
           }
         </h3>
         
