@@ -120,7 +120,7 @@ def process_pdf(pdf_bytes: bytes, doc_id: str, include_refs: bool = False) -> Di
             
             # Stage 4: camelot_grid
             ensure_dir(cells_raw_fp)
-            config_path = stages_dir.parent / "config" / "invoice_simon_v15.json"
+            config_path = stages_dir.parent / "config" / "invoice_simon_min.json"
             run([
                 python_exec, str(stages_dir / "s04_camelot_grid_configV12.py"),
                 "--pdf", str(pdf_path),
@@ -299,7 +299,7 @@ def process_pdf_with_artifacts(pdf_bytes: bytes, doc_id: str, include_refs: bool
             
             # Stage 4: camelot_grid
             ensure_dir(cells_raw_fp)
-            config_path = stages_dir.parent / "config" / "invoice_simon_v15.json"
+            config_path = stages_dir.parent / "config" / "invoice_simon_min.json"
             run([
                 python_exec, str(stages_dir / "s04_camelot_grid_configV12.py"),
                 "--pdf", str(pdf_path),

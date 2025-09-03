@@ -42,7 +42,7 @@ def _load_config(cfg_path: Path) -> Dict[str,Any]:
         sys.exit(2)
 
     # Validate minimal keys (keep it lean; everything else optional)
-    req_keys = ["invoice_no_patterns", "date_patterns", "buyer_block", "payment_terms"]
+    req_keys = ["invoice_no_patterns", "date_patterns"]
     missing = [k for k in req_keys if k not in st7]
     if missing:
         print(f"[ERROR] stage7 is missing required keys: {', '.join(missing)}", file=sys.stderr)
@@ -55,14 +55,18 @@ def _load_config(cfg_path: Path) -> Dict[str,Any]:
     st7.setdefault("po_patterns", [])
     st7.setdefault("customer_code_patterns", [])
     # buyer_block defaults
-    bb = st7["buyer_block"]
-    bb.setdefault("start_label_contains", [])
-    bb.setdefault("stop_when_contains", [])
-    bb.setdefault("max_lines", 10)
-    # payment terms defaults
-    pt = st7["payment_terms"]
-    pt.setdefault("label_contains", [])
-    pt.setdefault("include_next_n_rows", 0)
+    if "buyer_block" in st7:
+        bb = st7["buyer_block"]
+        bb.setdefault("start_label_contains", [])
+        bb.setdefault("stop_when_contains", [])
+        bb.setdefault("max_lines", 10)
+    # payment terms defaults  
+    if "payment_terms" in st7:
+        pt = st7["payment_terms"]
+        pt.setdefault("label_contains", [])
+        pt.setdefault("include_next_n_rows", 0)
+    # totals scan defaults
+    st7.setdefault("totals_scan", {"enabled": False})
 
     cfg["stage7"] = st7
     return cfg
@@ -138,6 +142,85 @@ def _extract_buyer(rows: List[Dict[str,Any]], bb_cfg: Dict[str,Any]) -> List[str
             lines.append(line)
     return lines
 
+def _scan_totals(rows: List[Dict[str,Any]], totals_cfg: Dict[str,Any]) -> Dict[str,Any]:
+    """Scan last rows of table for totals patterns and extract values"""
+    if not totals_cfg.get("enabled"):
+        return {}
+    
+    patterns = totals_cfg.get("patterns", {})
+    totals = {}
+    
+    # Scan last 10 rows for totals
+    for row in rows[-10:]:
+        row_text = " ".join(_row_texts(row)).upper()
+        cells = row.get("cells", [])
+        
+        # Look for tax base (DPP)
+        if any(pattern.upper() in row_text for pattern in patterns.get("tax_base", [])):
+            if len(cells) >= 7:  # COL7 is AMOUNT column
+                amount_text = _txt(cells[6])  # COL7 (0-indexed)
+                amount = _extract_number_from_text(amount_text)
+                if amount is not None:
+                    totals["tax_base"] = amount
+        
+        # Look for tax amount (PPN/VAT)
+        if any(pattern.upper() in row_text for pattern in patterns.get("tax_amount", [])):
+            if len(cells) >= 7:
+                amount_text = _txt(cells[6])  # COL7 (0-indexed)
+                amount = _extract_number_from_text(amount_text)
+                if amount is not None:
+                    totals["tax_amount"] = amount
+                    # Extract tax rate from text (e.g., "VAT 12%" -> 12)
+                    rate_match = re.search(r'(\d+)%', row_text)
+                    if rate_match:
+                        totals["tax_rate"] = float(rate_match.group(1))
+        
+        # Look for grand total
+        if any(pattern.upper() in row_text for pattern in patterns.get("grand_total", [])):
+            if len(cells) >= 7:
+                amount_text = _txt(cells[6])  # COL7 (0-indexed)
+                amount = _extract_number_from_text(amount_text)
+                if amount is not None:
+                    totals["grand_total"] = amount
+        
+        # Set tax label
+        if any(pattern.upper() in row_text for pattern in patterns.get("tax_label", [])):
+            for pattern in patterns.get("tax_label", []):
+                if pattern.upper() in row_text:
+                    totals["tax_label"] = pattern
+                    break
+    
+    return totals
+
+def _extract_number_from_text(text: str) -> Optional[float]:
+    """Extract numeric value from text, handling Indonesian formatting"""
+    if not text:
+        return None
+    
+    # Remove currency symbols and clean up
+    clean_text = re.sub(r'[A-Z]{2,3}\s*', '', text)  # Remove currency codes
+    clean_text = re.sub(r'[^\d\.,\-]', '', clean_text)  # Keep only digits, comma, dot, minus
+    
+    if not clean_text:
+        return None
+    
+    try:
+        # Handle Indonesian formatting (comma as thousands separator, dot as decimal)
+        if ',' in clean_text and '.' in clean_text:
+            # Both comma and dot present, assume comma is thousands separator
+            clean_text = clean_text.replace(',', '')
+        elif ',' in clean_text and clean_text.count(',') == 1:
+            # Single comma, check if it's decimal separator
+            parts = clean_text.split(',')
+            if len(parts[1]) <= 2:  # Likely decimal separator
+                clean_text = clean_text.replace(',', '.')
+            else:  # Likely thousands separator
+                clean_text = clean_text.replace(',', '')
+        
+        return float(clean_text)
+    except ValueError:
+        return None
+
 # ---------------- main extraction ----------------
 def extract_fields(cells_path: Path, items_path: Path, cfg_path: Path) -> Dict[str,Any]:
     cfg = _load_config(cfg_path)
@@ -178,12 +261,6 @@ def extract_fields(cells_path: Path, items_path: Path, cfg_path: Path) -> Dict[s
     # seller name from config-specified header columns (optional)
     seller_name = _seller_from_header(header_cells, st7.get("seller_from_header_cols") or [])
 
-    # buyer lines via configured block
-    buyer_lines = _extract_buyer(rows, st7.get("buyer_block") or {})
-
-    buyer_name = buyer_lines[0] if buyer_lines else None
-    buyer_address = " ".join(buyer_lines[1:]).strip() if len(buyer_lines) > 1 else None
-
     # currency: scan header area with preferences
     currency = _find_currency(header_scan, st7.get("currency_order") or [], cfg.get("currency_hints") or [])
 
@@ -194,6 +271,17 @@ def extract_fields(cells_path: Path, items_path: Path, cfg_path: Path) -> Dict[s
         amt = it.get("amount")
         if isinstance(amt, (int, float)):
             subtotal += Decimal(str(amt))
+
+    # scan for totals in table rows if enabled
+    scanned_totals = _scan_totals(rows, st7.get("totals_scan", {}))
+
+    # buyer lines via configured block (only if buyer_block exists)
+    buyer_lines = []
+    if "buyer_block" in st7:
+        buyer_lines = _extract_buyer(rows, st7.get("buyer_block") or {})
+
+    buyer_name = buyer_lines[0] if buyer_lines else None
+    buyer_address = " ".join(buyer_lines[1:]).strip() if len(buyer_lines) > 1 else None
 
     header = {
         "invoice_no": invoice_no,
@@ -209,9 +297,11 @@ def extract_fields(cells_path: Path, items_path: Path, cfg_path: Path) -> Dict[s
 
     totals = {
         "subtotal": float(subtotal),
-        "tax_rate": None,
-        "tax_amount": None,
-        "grand_total": None
+        "tax_rate": scanned_totals.get("tax_rate"),
+        "tax_amount": scanned_totals.get("tax_amount"),
+        "tax_base": scanned_totals.get("tax_base"),
+        "tax_label": scanned_totals.get("tax_label"),
+        "grand_total": scanned_totals.get("grand_total")
     }
 
     out = {

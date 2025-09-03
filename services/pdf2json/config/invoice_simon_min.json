@@ -1,0 +1,162 @@
+{
+  "name": "Invoice PT Simon Minimal",
+  "version": "1.0",
+  "header_aliases": {
+    "NO": [
+      "NO"
+    ],
+    "HS": [
+      "HS",
+      "HS CODE",
+      "HSCODE"
+    ],
+    "SKU": [
+      "SKU"
+    ],
+    "CODE": [
+      "CODE"
+    ],
+    "DESC": [
+      "DESC",
+      "DESCRIPTION",
+      "DESCRIPTION OF GOODS",
+      "GOODS"
+    ],
+    "QTY": [
+      "QTY",
+      "QUANTITY"
+    ],
+    "UOM": [
+      "PCS",
+      "UNIT",
+      "UOM"
+    ],
+    "PRICE": [
+      "PRICE",
+      "UNIT COST",
+      "UNIT PRICE"
+    ],
+    "AMOUNT": [
+      "AMOUNT",
+      "AMOUNT IDR",
+      "LINE TOTAL",
+      "TOTAL"
+    ]
+  },
+  "totals_keywords": [
+    "DPP",
+    "PPN", 
+    "VAT",
+    "GRAND TOTAL",
+    "SUB TOTAL",
+    "TOTAL TAX BASED",
+    "BASIS PAJAK"
+  ],
+  "currency_hints": [
+    "IDR",
+    "RP"
+  ],
+  "uom_hints": [
+    "PCS"
+  ],
+  "camelot": {
+    "flavor_order": [
+      "lattice",
+      "stream"
+    ],
+    "line_scale": 40,
+    "line_scale_stream": 15
+  },
+  "header_block_margin": 0.02,
+  "stop_after_totals": true,
+  "stage5": {
+    "column_types": {
+      "by_family": {
+        "QTY": "number",
+        "PRICE": "number",
+        "AMOUNT": "number",
+        "NO": "integer",
+        "HS": "text",
+        "SKU": "text",
+        "CODE": "text",
+        "DESC": "text",
+        "UOM": "text"
+      },
+      "by_position": {}
+    },
+    "number_format": {
+      "decimal": ".",
+      "thousands": ",",
+      "allow_parens": true
+    }
+  },
+  "stage6": {
+    "index_fallback": {
+      "COL1": "NO",
+      "COL2": "HS",
+      "COL3": "SKU",
+      "COL4": "CODE",
+      "COL5": "DESC",
+      "COL6": "QTY",
+      "NO": "PRICE",
+      "COL8": "AMOUNT"
+    },
+    "required_families": {
+      "must_have_any": [
+        "DESC",
+        "AMOUNT",
+        "QTY",
+        "PRICE"
+      ],
+      "id_field": "NO"
+    },
+    "row_filters": {
+      "drop_if_matches": [
+        "SUBTOTAL",
+        "TOTAL",
+        "VAT",
+        "PPN",
+        "DPP",
+        "GRAND TOTAL",
+        "NOTE",
+        "TERMS"
+      ]
+    },
+    "number_format": {
+      "decimal": ".",
+      "thousands": ",",
+      "allow_parens": true
+    },
+    "derivation": {
+      "fill_amount_from_qty_price": true,
+      "fill_unit_price_from_amount_qty": true
+    },
+    "rounding": {
+      "money_decimals": 2
+    }
+  },
+  "stage7": {
+    "header_rows_to_scan": 40,
+    "invoice_no_patterns": [
+      "([A-Z0-9]+-\\d{6}-\\d{4})"
+    ],
+    "date_patterns": [
+      "\\b(\\d{4}-\\d{2}-\\d{2})\\b",
+      "\\b(\\d{2}/\\d{2}/\\d{4})\\b"
+    ],
+    "totals_scan": {
+      "enabled": true,
+      "patterns": {
+        "tax_base": ["DPP", "DASAR PAJAK", "TOTAL TAX BASED"],
+        "tax_amount": ["PPN", "VAT"],
+        "grand_total": ["GRAND TOTAL"],
+        "tax_label": ["PPN", "VAT"]
+      }
+    },
+    "currency_order": [
+      "IDR",
+      "USD",
+      "EUR"
+    ]
+  }
+}
