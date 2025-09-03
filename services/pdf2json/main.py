@@ -8,6 +8,7 @@ Endpoints:
 """
 
 import io
+import json
 import tempfile
 from pathlib import Path
 from typing import List
@@ -27,6 +28,35 @@ app = FastAPI(
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "pdf2json"}
+
+@app.get("/templates")
+async def get_templates():
+    """Get available processing templates"""
+    try:
+        config_dir = Path("config")
+        templates = []
+        
+        if config_dir.exists():
+            for config_file in config_dir.glob("*.json"):
+                try:
+                    with open(config_file, 'r') as f:
+                        config_data = json.load(f)
+                        name = config_data.get('name', config_file.stem)
+                        version = config_data.get('version', '1')
+                        templates.append({
+                            'name': name,
+                            'version': version,
+                            'filename': config_file.name,
+                            'display_name': f"{name} V{version}"
+                        })
+                except (json.JSONDecodeError, FileNotFoundError) as e:
+                    # Skip invalid JSON files
+                    continue
+        
+        return {"templates": templates}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read templates: {str(e)}")
 
 @app.post("/process")
 async def process_single_pdf(file: UploadFile = File(...)):

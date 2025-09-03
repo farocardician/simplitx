@@ -1,6 +1,6 @@
 {
-  "name": "Invoice Dummy",
-  "version": "1",
+  "name": "Invoice Stahl",
+  "version": "3",
   "header_aliases": {
     "NO": [
       "NO"
@@ -49,7 +49,9 @@
     "TAX": [],
     "TAX_RATE": [],
     "UNIT_PRICE_EXCL_TAX": [],
-    "UNIT_PRICE_INCL_TAX": []
+    "UNIT_PRICE_INCL_TAX": [],
+    "BRUTO_KG": [],
+    "BERSIH_KG": []
   },
   "totals_keywords": [
     "AMOUNT DUE",
@@ -69,9 +71,11 @@
   ],
   "currency_hints": [
     "IDR",
-    "RP"
+    "RP",
+    "USD"
   ],
   "uom_hints": [
+    "KG",
     "PCS"
   ],
   "camelot": {
@@ -104,7 +108,10 @@
         "BATCH": "text",
         "SERIAL": "text"
       },
-      "by_position": {},
+      "by_position": {
+        "COL3": "number",
+        "COL7": "currency"
+      },
       "date_columns": [
         "INVOICE_DATE",
         "CONTRACT_DATE",
@@ -115,7 +122,8 @@
         "UNIT_PRICE",
         "AMOUNT",
         "TAX",
-        "DISCOUNT"
+        "DISCOUNT",
+        "COL7"
       ]
     },
     "number_format": {
@@ -136,20 +144,15 @@
   "stage6": {
     "index_fallback": {
       "COL1": "NO",
-      "COL2": "HS",
-      "COL3": "SKU",
-      "COL4": "CODE",
-      "COL5": "DESC",
-      "COL6": "QTY",
-      "NO": "PRICE",
-      "COL8": "AMOUNT"
+      "NO": "DESC",
+      "COL6": "PRICE",
+      "COL5": "QTY",
+      "COL7": "AMOUNT"
     },
     "required_families": {
       "must_have_any": [
-        "DESC",
-        "AMOUNT",
-        "QTY",
-        "PRICE"
+        "PRICE",
+        "DESC"
       ],
       "id_field": "NO"
     },
@@ -158,7 +161,6 @@
         "SUBTOTAL",
         "TOTAL",
         "VAT",
-        "PPN",
         "DPP",
         "GRAND TOTAL",
         "NOTE",
@@ -185,11 +187,14 @@
       2
     ],
     "invoice_no_patterns": [
-      "([A-Z0-9]+-\\d{6}-\\d{4})"
+      "([A-Z0-9]+-\\d{6}-\\d{4})",
+      ":?(\\d{8})"
     ],
     "date_patterns": [
       "\\b(\\d{4}-\\d{2}-\\d{2})\\b",
-      "\\b(\\d{2}/\\d{2}/\\d{4})\\b"
+      "\\b(\\d{2}/\\d{2}/\\d{4})\\b",
+      "Tanggal:?(\\d{4}-\\d{2}-\\d{2})",
+      "Tanggal:?(\\d{2}\\.\\d{2}\\.\\d{4})"
     ],
     "po_patterns": [
       "\\bPO[:\\s]*([A-Za-z0-9][A-Za-z0-9\\-\\s/]*\\d[A-Za-z0-9\\-\\s/]*)",
@@ -199,7 +204,8 @@
       "cust\\.?\\s*code[: ]*\\s*([A-Za-z0-9\\-_\\/]+)",
       "customer\\s*code[: ]*\\s*([A-Za-z0-9\\-_\\/]+)",
       "customer\\s*id[: ]*\\s*([A-Za-z0-9\\-_\\/]+)",
-      "buyer\\s*id[: ]*\\s*([A-Za-z0-9\\-_\\/]+)"
+      "buyer\\s*id[: ]*\\s*([A-Za-z0-9\\-_\\/]+)",
+      ":?(ID\\d{2}/\\d{8})"
     ],
     "payment_terms": {
       "label_contains": [
@@ -213,10 +219,12 @@
       ],
       "stop_when_contains": [
         "9)NO",
-        "HS Code",
-        "DESCRIPTION"
+        "HS Code", 
+        "DESCRIPTION",
+        "COL1",
+        "NO"
       ],
-      "max_lines": 6
+      "max_lines": 2
     },
     "currency_order": [
       "IDR",

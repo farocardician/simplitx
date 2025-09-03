@@ -28,6 +28,31 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "gateway"}
 
+@app.get("/pdf2json/templates")
+async def proxy_templates():
+    """Proxy templates endpoint to PDF2JSON service"""
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(f"{PDF2JSON_URL}/templates")
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"PDF2JSON service error: {response.text}"
+                )
+            
+            return Response(
+                content=response.content,
+                media_type="application/json",
+                headers={"Content-Type": "application/json"}
+            )
+            
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Backend service connection error: {str(e)}"
+        )
+
 @app.post("/process")
 async def unified_process(
     request: Request,

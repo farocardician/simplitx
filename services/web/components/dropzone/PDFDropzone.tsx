@@ -1,14 +1,24 @@
 'use client'
 
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { useUpload } from '@/hooks/useUpload'
 import { FileItem } from './FileItem'
 import styles from './PDFDropzone.module.css'
+
+interface Template {
+  name: string
+  version: string
+  filename: string
+  display_name: string
+}
 
 export function PDFDropzone() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragActive, setIsDragActive] = useState(false)
   const [dragError, setDragError] = useState(false)
+  const [templates, setTemplates] = useState<Template[]>([])
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('')
+  const [templatesLoading, setTemplatesLoading] = useState(true)
   
   const {
     files,
@@ -23,6 +33,29 @@ export function PDFDropzone() {
     reset,
     canUpload
   } = useUpload()
+
+  // Fetch available templates on component mount
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const response = await fetch('/api/gateway/pdf2json/templates')
+        if (response.ok) {
+          const data = await response.json()
+          setTemplates(data.templates || [])
+          // Set first template as default if available
+          if (data.templates && data.templates.length > 0) {
+            setSelectedTemplate(data.templates[0].filename)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch templates:', error)
+      } finally {
+        setTemplatesLoading(false)
+      }
+    }
+
+    fetchTemplates()
+  }, [])
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -101,6 +134,32 @@ export function PDFDropzone() {
 
   return (
     <div className="pdf-dropzone-container">
+      {/* Template Selector */}
+      <div className={styles.templateSelector}>
+        <label htmlFor="template-select" className={styles.templateLabel}>
+          Processing Template
+        </label>
+        <select
+          id="template-select"
+          value={selectedTemplate}
+          onChange={(e) => setSelectedTemplate(e.target.value)}
+          className={styles.templateDropdown}
+          disabled={templatesLoading}
+        >
+          {templatesLoading ? (
+            <option value="">Loading templates...</option>
+          ) : templates.length === 0 ? (
+            <option value="">No templates available</option>
+          ) : (
+            templates.map((template) => (
+              <option key={template.filename} value={template.filename}>
+                {template.display_name}
+              </option>
+            ))
+          )}
+        </select>
+      </div>
+
       <div
         className={getDropzoneClassName()}
         onDragEnter={handleDragEnter}
