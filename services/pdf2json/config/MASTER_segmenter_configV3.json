@@ -1,0 +1,284 @@
+{
+  "name": "MASTER_TEMPLATE_vMax",
+  "coords": {
+    "normalized": "boolean",
+    "y_origin": [
+      "top",
+      "bottom"
+    ],
+    "precision": "number"
+  },
+  "tolerances": {
+    "y_line_tol": "number"
+  },
+  "defaults": {
+    "min_height": "number",
+    "margin": {
+      "top": "number",
+      "right": "number",
+      "bottom": "number",
+      "left": "number"
+    }
+  },
+  "policies": {
+    "stay_within_parent": "boolean",
+    "allow_overlap_in_parent": "boolean"
+  },
+  "regions": [
+    {
+      "id": "parent_area",
+      "label": "string",
+      "on_pages": [
+        "all",
+        "first",
+        "last",
+        "odd",
+        "even"
+      ],
+      "keep": [
+        "all",
+        "first",
+        "last"
+      ],
+      "only_if_contains": [
+        "string",
+        "string"
+      ],
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "string",
+            "string"
+          ],
+          "flags": {
+            "ignore_case": "boolean",
+            "normalize_space": "boolean"
+          },
+          "select": [
+            "first",
+            "leftmost",
+            "rightmost",
+            "topmost",
+            "bottommost",
+            "next_below"
+          ]
+        },
+        "end_anchor": {
+          "patterns": [
+            "string"
+          ],
+          "flags": {
+            "ignore_case": "boolean",
+            "normalize_space": "boolean"
+          },
+          "select": [
+            "first",
+            "leftmost",
+            "rightmost",
+            "topmost",
+            "bottommost",
+            "next_below"
+          ]
+        },
+        "margin": {
+          "top": "number",
+          "right": "number",
+          "bottom": "number",
+          "left": "number"
+        },
+        "capture_window": {
+          "mode": [
+            "right_then_down",
+            "left_then_down",
+            "right_then_up",
+            "left_then_up",
+            "right_only",
+            "left_only",
+            "below_only",
+            "around",
+            "right_then_rows",
+            "left_then_rows",
+            "below_rows",
+            "above_rows"
+          ],
+          "start_edge": [
+            "right",
+            "left"
+          ],
+          "gap_x": "number",
+          "dx_max": "number",
+          "dy_max": "number",
+          "dy_tol": "number",
+          "rows": "number",
+          "row_tol": "number",
+          "width": [
+            "anchor",
+            "page"
+          ],
+          "pad_left": "number",
+          "pad_right": "number"
+        },
+        "fallbacks": [
+          {
+            "by": "by_table",
+            "position": [
+              "above",
+              "below"
+            ],
+            "which": [
+              "first",
+              "last"
+            ],
+            "margin": "number"
+          },
+          {
+            "y_cutoff": {
+              "edge": [
+                "top",
+                "bottom"
+              ],
+              "y": "number"
+            }
+          },
+          "y_cutoff",
+          {
+            "fixed_box": {
+              "bbox": [
+                "number",
+                "number",
+                "number",
+                "number"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "child_value_right",
+      "label": "string",
+      "inside": "@parent_area",
+      "on_pages": [
+        "all",
+        "first",
+        "last",
+        "odd",
+        "even"
+      ],
+      "only_if_contains": [
+        "string"
+      ],
+      "detect": "anchors",
+      "fallbacks": [
+        {
+          "by": "y_cutoff",
+          "edge": "top",
+          "y": "number"
+        }
+      ]
+    },
+    {
+      "id": "child_value_rows",
+      "inside": "@parent_area",
+      "on_pages": "all",
+      "detect": {
+        "anchors": {
+          "start_anchor": {
+            "patterns": [
+              "string"
+            ],
+            "flags": {
+              "ignore_case": "boolean"
+            },
+            "select": [
+              "first",
+              "leftmost",
+              "rightmost",
+              "topmost",
+              "bottommost",
+              "next_below"
+            ]
+          },
+          "capture_window": {
+            "mode": "right_then_rows",
+            "rows": "number",
+            "dx_max": "number",
+            "row_tol": "number",
+            "start_edge": [
+              "right",
+              "left"
+            ],
+            "gap_x": "number"
+          }
+        },
+        "fallbacks": {
+          "y_cutoff": {
+            "edge": [
+              "top",
+              "bottom"
+            ],
+            "y": "number"
+          }
+        }
+      }
+    },
+    {
+      "id": "header_band",
+      "label": "string",
+      "on_pages": "all",
+      "detect": {
+        "by": "by_table",
+        "position": [
+          "above",
+          "below"
+        ],
+        "which": [
+          "first",
+          "last"
+        ],
+        "margin": "number"
+      },
+      "fallbacks": [
+        {
+          "y_cutoff": {
+            "edge": "top",
+            "y": "number"
+          }
+        }
+      ]
+    },
+    {
+      "id": "top_strip",
+      "label": "string",
+      "on_pages": "all",
+      "detect": {
+        "by": "y_cutoff",
+        "edge": [
+          "top",
+          "bottom"
+        ],
+        "y": "number"
+      }
+    },
+    {
+      "id": "absolute_box",
+      "label": "string",
+      "on_pages": "first",
+      "keep": [
+        "all",
+        "first",
+        "last"
+      ],
+      "detect": {
+        "by": "fixed_box",
+        "bbox": [
+          "number",
+          "number",
+          "number",
+          "number"
+        ]
+      }
+    }
+  ]
+}

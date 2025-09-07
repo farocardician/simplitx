@@ -1,0 +1,158 @@
+{
+  "name": "Simon Invoice Segmenter Config V3",
+  "version": "3.0",
+  "coords": { "normalized": true, "y_origin": "top", "precision": 6 },
+  "defaults": { "min_height": 0.02 },
+  "regions": [
+    {
+      "id": "header",
+      "on_pages": "first",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["SIMON", "PT"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "end_anchor": {
+          "patterns": ["customer\\."],
+          "flags": { "ignore_case": true, "normalize_space": true },
+        "select": "first_in_reading_order"
+        },
+        "margin": { "top": 0.004, "right": 0.02, "bottom": 0.006, "left": 0.02 }
+      },
+      "fallbacks": [
+        { "by": "by_table", "position": "above", "margin": 0.008 },
+        { "by": "y_cutoff", "edge": "top", "y": 0.45 }
+      ]
+    },
+    {
+      "id": "footer",
+      "on_pages": "last",
+      "keep": "last",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["NOTE"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "end_anchor": {
+          "patterns": ["14\\)ISSUED"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "margin": { "top": 0.004, "right": 0.22, "bottom": 0.006, "left": 0.02 }
+      },
+      "fallbacks": [
+        { "by": "by_table", "position": "below", "margin": 0.010 },
+        { "by": "y_cutoff", "edge": "bottom", "y": 0.90 }
+      ]
+    },
+    {
+      "id": "seller",
+      "on_pages": "first",
+      "inside": "@header",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["SELLER"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "capture_window": {
+          "mode": "right_then_up",
+          "start_edge": "left",
+          "gap_x": 0,
+          "dx_max": 0.35,
+          "dy_max": 0.1,
+          "dy_tol": 0.008
+        },        
+        "margin": { "top": 0.002, "right": 0.01, "bottom": 0.004, "left": 0.01 }
+      },
+      "fallbacks": [
+        { "by": "y_cutoff", "edge": "top", "y": 0.25 }
+      ]
+    },
+    {
+      "id": "customer_id",
+      "on_pages": "first",
+      "inside": "@header",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["CUST.CODE:", "cust.code:"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "capture_window": {
+          "mode": "right_then_down",
+          "start_edge": "left",
+          "gap_x": 0,
+          "dx_max": 0.1,
+          "dy_max": 0.03,
+          "dy_tol": 0.008
+        },        
+        "margin": { "top": 0.002, "right": 0.01, "bottom": 0.004, "left": 0.01 }
+      },
+      "fallbacks": [
+        { "by": "y_cutoff", "edge": "top", "y": 0.25 }
+      ]
+    },
+    {
+      "id": "invoice_no",
+      "on_pages": "first",
+      "inside": "@header",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["3\\)INVOICE"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "capture_window": {
+          "mode": "right_then_down",
+          "start_edge": "left",
+          "gap_x": 0,
+          "dx_max": 0.1,
+          "dy_max": 0.03,
+          "dy_tol": 0.008
+        },        
+        "margin": { "top": 0.002, "right": 0.01, "bottom": 0.004, "left": 0.01 }
+      },
+      "fallbacks": [
+        { "by": "y_cutoff", "edge": "top", "y": 0.25 }
+      ]
+    },
+    {
+      "id": "invoice_date",
+      "on_pages": "first",
+      "inside": "@header",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["4\\)INVOICE"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "capture_window": {
+          "mode": "right_then_down",
+          "start_edge": "left",
+          "gap_x": 0,
+          "dx_max": 0.1,
+          "dy_max": 0.03,
+          "dy_tol": 0.008
+        },        
+        "margin": { "top": 0.002, "right": 0.01, "bottom": 0.004, "left": 0.01 }
+      },
+      "fallbacks": [
+        { "by": "y_cutoff", "edge": "top", "y": 0.25 }
+      ]
+    }        
+  ]
+}
