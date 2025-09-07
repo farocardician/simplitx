@@ -114,8 +114,9 @@ def process_pdf(pdf_bytes: bytes, doc_id: str, include_refs: bool = False) -> Di
             run([
                 python_exec, str(stages_dir / "s03_segmenter.py"),
                 "--in", str(normalized_fp),
-                "--pdf", str(pdf_path),
                 "--out", str(segments_fp),
+                "--config", str(stages_dir.parent / "config" / "simon_segmenter_configV3.json"),
+                "--overlay", str(pdf_path),
             ])
             
             # Stage 4: camelot_grid
@@ -141,11 +142,12 @@ def process_pdf(pdf_bytes: bytes, doc_id: str, include_refs: bool = False) -> Di
             
             # Stage 6: line_items_from_cells
             ensure_dir(items_fp)
+            stage6_config = stages_dir.parent / "config" / "invoice_stage6_simon.json"
             run([
-                python_exec, str(stages_dir / "s06_line_items_from_cellsV2.py"),
-                "--cells", str(cells_norm_fp),
+                python_exec, str(stages_dir / "s06_line_items_from_cells.py"),
+                "--input", str(cells_norm_fp),
+                "--config", str(stage6_config),
                 "--out", str(items_fp),
-                "--config", str(config_path),
             ])
             
             # Stage 7: extractor (fields)
@@ -293,8 +295,9 @@ def process_pdf_with_artifacts(pdf_bytes: bytes, doc_id: str, include_refs: bool
             run([
                 python_exec, str(stages_dir / "s03_segmenter.py"),
                 "--in", str(normalized_fp),
-                "--pdf", str(pdf_path),
                 "--out", str(segments_fp),
+                "--config", str(stages_dir.parent / "config" / "simon_segmenter_configV3.json"),
+                "--overlay", str(pdf_path),
             ])
             
             # Stage 4: camelot_grid
@@ -320,11 +323,12 @@ def process_pdf_with_artifacts(pdf_bytes: bytes, doc_id: str, include_refs: bool
             
             # Stage 6: line_items_from_cells
             ensure_dir(items_fp)
+            stage6_config = stages_dir.parent / "config" / "invoice_stage6_simon.json"
             run([
-                python_exec, str(stages_dir / "s06_line_items_from_cellsV2.py"),
-                "--cells", str(cells_norm_fp),
+                python_exec, str(stages_dir / "s06_line_items_from_cells.py"),
+                "--input", str(cells_norm_fp),
+                "--config", str(stage6_config),
                 "--out", str(items_fp),
-                "--config", str(config_path),
             ])
             
             # Stage 7: extractor (fields)
