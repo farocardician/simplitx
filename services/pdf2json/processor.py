@@ -154,7 +154,8 @@ def process_pdf(pdf_bytes: bytes, doc_id: str, include_refs: bool = False) -> Di
             ensure_dir(fields_fp)
             run([
                 python_exec, str(stages_dir / "s07_extractorV2.py"),
-                "--cells", str(cells_norm_fp),
+                "--tokens", str(normalized_fp),
+                "--segments", str(segments_fp),
                 "--items", str(items_fp),
                 "--out", str(fields_fp),
                 "--config", str(config_path),
@@ -335,7 +336,8 @@ def process_pdf_with_artifacts(pdf_bytes: bytes, doc_id: str, include_refs: bool
             ensure_dir(fields_fp)
             run([
                 python_exec, str(stages_dir / "s07_extractorV2.py"),
-                "--cells", str(cells_norm_fp),
+                "--tokens", str(normalized_fp),
+                "--segments", str(segments_fp),
                 "--items", str(items_fp),
                 "--out", str(fields_fp),
                 "--config", str(config_path),
@@ -398,15 +400,95 @@ def process_pdf_with_artifacts(pdf_bytes: bytes, doc_id: str, include_refs: bool
             # Read final result
             with open(final_fp, "r", encoding="utf-8") as f:
                 final_doc = json.load(f)
-            
-            # Optionally remove _refs
             if not include_refs:
                 final_doc = strip_refs(final_doc)
+            return final_doc
             
-            # Create artifacts ZIP
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Pipeline stage failed: {e}")
+        except Exception as e:
+            raise RuntimeError(f"Processing failed: {e}")
+
+
+def process_pdf_with_artifacts(pdf_bytes: bytes, doc_id: str, include_refs: bool = False) -> Tuple[Dict[str, Any], bytes]:
+    """
+    Process a PDF through the 10-stage pipeline and return both JSON result and a ZIP of artifacts.
+    """
+    python_exec = sys.executable
+    stages_dir = Path(__file__).resolve().parent / "stages"
+
+    with tempfile.TemporaryDirectory(prefix=f"pdf_process_{doc_id}_") as temp_dir:
+        temp_path = Path(temp_dir)
+        pdf_path = temp_path / f"{doc_id}.pdf"
+        pdf_path.write_bytes(pdf_bytes)
+
+        out_root = temp_path / "output"
+        out_root.mkdir(parents=True, exist_ok=True)
+
+        tokens_fp = out_root / "tokenizer" / f"{doc_id}.tokens.json"
+        normalized_fp = out_root / "normalize" / f"{doc_id}-normalized.json"
+        segments_fp = out_root / "segment" / f"{doc_id}-segmentized.json"
+        cells_raw_fp = out_root / "cells" / f"{doc_id}-cells.json"
+        cells_norm_fp = out_root / "cells" / f"{doc_id}-cells_normalized.json"
+        items_fp = out_root / "items" / f"{doc_id}-items.json"
+        fields_fp = out_root / "fields" / f"{doc_id}-fields.json"
+        validate_dir = out_root / "validate"
+        validation_fp = validate_dir / f"{doc_id}-validation.json"
+        confidence_fp = validate_dir / f"{doc_id}-confidence.json"
+        manifest_fp = out_root / "manifest" / f"{doc_id}-manifest.json"
+        final_fp = out_root / "final" / f"{doc_id}.json"
+
+        try:
+            ensure_dir(tokens_fp)
+            run([python_exec, str(stages_dir / "s01_tokenizer.py"), "--in", str(pdf_path), "--out", str(tokens_fp)])
+            ensure_dir(normalized_fp)
+            run([python_exec, str(stages_dir / "s02_normalizer.py"), "--in", str(tokens_fp), "--out", str(normalized_fp)])
+            ensure_dir(segments_fp)
+            run([python_exec, str(stages_dir / "s03_segmenter.py"), "--in", str(normalized_fp), "--out", str(segments_fp), "--config", str(stages_dir.parent / "config" / "simon_segmenter_configV3.json"), "--overlay", str(pdf_path)])
+            ensure_dir(cells_raw_fp)
+            config_path = stages_dir.parent / "config" / "invoice_simon_min.json"
+            run([python_exec, str(stages_dir / "s04_camelot_grid_configV12.py"), "--pdf", str(pdf_path), "--tokens", str(normalized_fp), "--out", str(cells_raw_fp), "--config", str(config_path)])
+            ensure_dir(cells_norm_fp)
+            run([python_exec, str(stages_dir / "s05_normalize_cells.py"), "--in", str(cells_raw_fp), "--out", str(cells_norm_fp), "--config", str(config_path), "--common-words", str(stages_dir.parent / "common" / "common-words.json")])
+            ensure_dir(items_fp)
+            stage6_config = stages_dir.parent / "config" / "invoice_stage6_simon.json"
+            run([python_exec, str(stages_dir / "s06_line_items_from_cells.py"), "--input", str(cells_norm_fp), "--config", str(stage6_config), "--out", str(items_fp)])
+            ensure_dir(fields_fp)
+            run([python_exec, str(stages_dir / "s07_extractorV2.py"), "--tokens", str(normalized_fp), "--segments", str(segments_fp), "--items", str(items_fp), "--out", str(fields_fp), "--config", str(config_path)])
+            ensure_dir(validation_fp)
+            run([python_exec, str(stages_dir / "s08_validator.py"), "--fields", str(fields_fp), "--items", str(items_fp), "--out", str(validation_fp)])
+            ensure_dir(confidence_fp)
+            run([python_exec, str(stages_dir / "s09_confidence.py"), "--fields", str(fields_fp), "--items", str(items_fp), "--validation", str(validation_fp), "--out", str(confidence_fp)])
+            ensure_dir(manifest_fp)
+            manifest = {
+                "doc_id": doc_id,
+                "created_at": datetime.utcnow().isoformat() + "Z",
+                "inputs": {
+                    "pdf": str(pdf_path),
+                    "tokens": str(tokens_fp),
+                    "normalized": str(normalized_fp),
+                    "segments": str(segments_fp),
+                    "cells": str(cells_norm_fp),
+                    "items": str(items_fp),
+                    "fields": str(fields_fp),
+                    "validation": str(validation_fp),
+                    "confidence": str(confidence_fp),
+                },
+                "outputs": {"final": str(final_fp)},
+                "version": "1.0",
+            }
+            with open(manifest_fp, "w", encoding="utf-8") as mf:
+                json.dump(manifest, mf, ensure_ascii=False, indent=2)
+            ensure_dir(final_fp)
+            run([python_exec, str(stages_dir / "s10_parser.py"), "--fields", str(fields_fp), "--items", str(items_fp), "--validation", str(validation_fp), "--confidence", str(confidence_fp), "--cells", str(cells_norm_fp), "--final", str(final_fp), "--manifest", str(manifest_fp)])
+
+            with open(final_fp, "r", encoding="utf-8") as f:
+                final_doc = json.load(f)
+            if not include_refs:
+                final_doc = strip_refs(final_doc)
+
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                # Add all stage files to the ZIP
                 stage_files = [
                     (tokens_fp, "01-tokens.json"),
                     (normalized_fp, "02-normalized.json"),
@@ -418,18 +500,14 @@ def process_pdf_with_artifacts(pdf_bytes: bytes, doc_id: str, include_refs: bool
                     (validation_fp, "08-validation.json"),
                     (confidence_fp, "09-confidence.json"),
                     (manifest_fp, "10-manifest.json"),
-                    (final_fp, "11-final.json")
+                    (final_fp, "11-final.json"),
                 ]
-                
                 for file_path, archive_name in stage_files:
                     if file_path.exists():
                         zip_file.write(file_path, archive_name)
-            
             zip_bytes = zip_buffer.getvalue()
             zip_buffer.close()
-            
             return final_doc, zip_bytes
-            
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Pipeline stage failed: {e}")
         except Exception as e:
