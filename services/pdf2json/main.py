@@ -9,6 +9,7 @@ Endpoints:
 
 import io
 import json
+import os
 import tempfile
 from pathlib import Path
 from typing import List
@@ -33,28 +34,57 @@ async def health_check():
 async def get_templates():
     """Get available processing templates"""
     try:
-        config_dir = Path("config")
+        candidates = [
+            Path(os.getenv("CONFIG_DIR", "/config")),  # external mount or explicit
+            Path("config"),                             # local/dev execution
+        ]
+
+        def list_templates(dir_path: Path):
+            items = []
+            if dir_path.exists():
+                for config_file in dir_path.glob("*.json"):
+                    try:
+                        with open(config_file, "r") as f:
+                            cfg = json.load(f)
+                            name = (
+                                cfg.get("name")
+                                or cfg.get("document", {}).get("vendor")
+                                or config_file.stem
+                            )
+                            version = (
+                                cfg.get("version")
+                                or cfg.get("document", {}).get("version")
+                                or "1"
+                            )
+                            items.append({
+                                "name": name,
+                                "version": version,
+                                "filename": config_file.name,
+                                "display_name": f"{name} V{version}",
+                            })
+                    except (json.JSONDecodeError, FileNotFoundError):
+                        continue
+            return items
+
         templates = []
-        
-        if config_dir.exists():
-            for config_file in config_dir.glob("*.json"):
-                try:
-                    with open(config_file, 'r') as f:
-                        config_data = json.load(f)
-                        name = config_data.get('name', config_file.stem)
-                        version = config_data.get('version', '1')
-                        templates.append({
-                            'name': name,
-                            'version': version,
-                            'filename': config_file.name,
-                            'display_name': f"{name} V{version}"
-                        })
-                except (json.JSONDecodeError, FileNotFoundError) as e:
-                    # Skip invalid JSON files
-                    continue
-        
+        chosen_dir = None
+        for p in candidates:
+            items = list_templates(p)
+            if items:
+                templates = items
+                chosen_dir = p
+                break
+        if not templates:
+            chosen_dir = next((p for p in candidates if p.exists()), candidates[0])
+            templates = list_templates(chosen_dir)
+
+        try:
+            print(f"[pdf2json] templates dir: {chosen_dir} count={len(templates)}")
+        except Exception:
+            pass
+
         return {"templates": templates}
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to read templates: {str(e)}")
 

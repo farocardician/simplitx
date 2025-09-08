@@ -32,9 +32,11 @@ services:
       target: development
     volumes:
       - ./services/pdf2json:/app
+      - ./services/config:/config
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
+      - CONFIG_DIR=/config
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   json2xml:
