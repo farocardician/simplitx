@@ -8,7 +8,7 @@ import { isValidPDF, getPDFValidationError } from '@/lib/mime'
 const MAX_FILE_SIZE_MB = 50
 const MAX_CONCURRENT_UPLOADS = 3
 
-export function useUpload() {
+export function useUpload(options?: { getTemplate?: () => string }) {
   const [uploadState, setUploadState] = useState<UploadState>({
     files: [],
     isUploading: false,
@@ -123,6 +123,13 @@ export function useUpload() {
     try {
       const formData = new FormData()
       formData.append('file', fileData.file)
+      // Forward selected template (if provided) so backend enqueues with it
+      try {
+        const tpl = options?.getTemplate?.() || ''
+        if (tpl) {
+          formData.append('template', tpl)
+        }
+      } catch {}
 
       // Use XMLHttpRequest for upload progress
       const xhr = new XMLHttpRequest()
@@ -214,7 +221,7 @@ export function useUpload() {
         error: 'Upload failed. Please try again.' 
       })
     }
-  }, [uploadState.files, updateFileProgress])
+  }, [uploadState.files, updateFileProgress, options?.getTemplate])
 
   const startRedirectCountdown = useCallback(() => {
     // Clear any existing interval

@@ -22,6 +22,7 @@ async function processJob(job) {
     }
     
     // Call gateway
+    // job.mapping stores the selected PDF template (frontend passes it as 'template')
     const xmlContent = await callGateway(pdfPath, job.mapping);
     
     // Save XML result
@@ -61,13 +62,18 @@ await prisma.job.update({
   }
 }
 
-async function callGateway(pdfPath, mapping) {
+async function callGateway(pdfPath, template) {
   const form = new FormData();
   form.append('file', createReadStream(pdfPath), {
     filename: 'document.pdf',
     contentType: 'application/pdf'
   });
-  form.append('mapping', `${mapping}.json`);
+  // PDF → JSON should use the selected template (forwarded as 'template')
+  if (template) {
+    form.append('template', template);
+  }
+  // JSON → XML uses fixed mapping (do not change XML flow)
+  form.append('mapping', `pt_simon_invoice_v1.json`);
   form.append('pretty', '1');
   
   const response = await axios.post(`${GATEWAY_URL}/process`, form, {
@@ -101,13 +107,15 @@ async function callGateway(pdfPath, mapping) {
   throw new GatewayError(error.code, error.message, response.status);
 }
 
-async function fetchArtifacts(pdfPath, mapping) {
+async function fetchArtifacts(pdfPath, template) {
   const form = new FormData();
   form.append('file', createReadStream(pdfPath), {
     filename: 'document.pdf',
     contentType: 'application/pdf'
   });
-  form.append('mapping', `${mapping}.json`);
+  if (template) {
+    form.append('template', template);
+  }
   
   const response = await axios.post(`${GATEWAY_URL}/process-artifacts`, form, {
     headers: {

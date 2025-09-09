@@ -14,10 +14,15 @@ import tempfile
 from pathlib import Path
 from typing import List
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.responses import JSONResponse, Response
 
-from processor import process_pdf, process_pdf_with_artifacts
+from processor import (
+    process_pdf,
+    process_pdf_with_artifacts,
+    process_pdf_from_pipeline_config,
+    process_pdf_from_pipeline_config_with_artifacts,
+)
 
 app = FastAPI(
     title="PDF to JSON Processor",
@@ -34,33 +39,43 @@ async def health_check():
 async def get_templates():
     """Get available processing templates"""
     try:
+        # Prefer pipeline-level configs under services/config, with fallbacks
+        here = Path(__file__).resolve()
+        pdf2json_dir = here.parent
+        services_dir = pdf2json_dir.parent
         candidates = [
-            Path(os.getenv("CONFIG_DIR", "/config")),  # external mount or explicit
-            Path("config"),                             # local/dev execution
+            Path(os.getenv("CONFIG_DIR", "")) if os.getenv("CONFIG_DIR") else None,
+            services_dir / "config",
+            pdf2json_dir / "config",
         ]
+        candidates = [p for p in candidates if p is not None]
 
         def list_templates(dir_path: Path):
             items = []
             if dir_path.exists():
                 for config_file in dir_path.glob("*.json"):
                     try:
-                        with open(config_file, "r") as f:
+                        with open(config_file, "r", encoding="utf-8") as f:
                             cfg = json.load(f)
-                            name = (
-                                cfg.get("name")
-                                or cfg.get("document", {}).get("vendor")
-                                or config_file.stem
-                            )
-                            version = (
-                                cfg.get("version")
-                                or cfg.get("document", {}).get("version")
-                                or "1"
-                            )
+                            # Build label from document fields if present
+                            doc = cfg.get("document", {}) if isinstance(cfg, dict) else {}
+                            dtype = doc.get("type")
+                            vendor = doc.get("vendor") or cfg.get("name")
+                            ver = doc.get("version") or cfg.get("version")
+                            if dtype and vendor and ver:
+                                label = f"{dtype} {vendor} {ver}"
+                            else:
+                                # Fallbacks
+                                base = vendor or config_file.stem
+                                label = f"{base} {ver}" if ver else base
                             items.append({
-                                "name": name,
-                                "version": version,
+                                "label": label,
+                                "file": config_file.name,
+                                # keep backward-compatible fields used by UI today
+                                "name": vendor or config_file.stem,
+                                "version": ver or "",
                                 "filename": config_file.name,
-                                "display_name": f"{name} V{version}",
+                                "display_name": label,
                             })
                     except (json.JSONDecodeError, FileNotFoundError):
                         continue
@@ -83,13 +98,15 @@ async def get_templates():
         except Exception:
             pass
 
+        # Sort by label for stable display
+        templates = sorted(templates, key=lambda x: x.get("display_name", x.get("label", "")))
         return {"templates": templates}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to read templates: {str(e)}")
 
 @app.post("/process")
-async def process_single_pdf(file: UploadFile = File(...)):
+async def process_single_pdf(file: UploadFile = File(...), template: str | None = Form(None)):
     """Process a single PDF file and return JSON"""
     
     # Validate file type
@@ -102,7 +119,10 @@ async def process_single_pdf(file: UploadFile = File(...)):
         doc_id = Path(file.filename).stem
         
         # Process PDF through pipeline
-        processed_data = process_pdf(pdf_bytes, doc_id, include_refs=False)
+        if template:
+            processed_data = process_pdf_from_pipeline_config(pdf_bytes, doc_id, template, include_refs=False)
+        else:
+            processed_data = process_pdf(pdf_bytes, doc_id, include_refs=False)
         
         result = {
             "doc_id": doc_id,
@@ -117,7 +137,7 @@ async def process_single_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
 @app.post("/process-with-artifacts")
-async def process_pdf_with_artifacts_endpoint(file: UploadFile = File(...)):
+async def process_pdf_with_artifacts_endpoint(file: UploadFile = File(...), template: str | None = Form(None)):
     """Process a single PDF file and return artifacts as ZIP"""
     
     # Validate file type
@@ -130,7 +150,10 @@ async def process_pdf_with_artifacts_endpoint(file: UploadFile = File(...)):
         doc_id = Path(file.filename).stem
         
         # Process PDF through pipeline and get artifacts
-        processed_data, zip_bytes = process_pdf_with_artifacts(pdf_bytes, doc_id, include_refs=False)
+        if template:
+            processed_data, zip_bytes = process_pdf_from_pipeline_config_with_artifacts(pdf_bytes, doc_id, template, include_refs=False)
+        else:
+            processed_data, zip_bytes = process_pdf_with_artifacts(pdf_bytes, doc_id, include_refs=False)
         
         # Return ZIP file with artifacts
         return Response(

@@ -8,11 +8,19 @@ import { withSession } from '@/lib/session'
 async function uploadHandler(req: NextRequest, { sessionId }: { sessionId: string }) {
   const formData = await req.formData();
   const file = formData.get('file') as File;
+  const template = formData.get('template') as string | null;
   
   // Validation
   if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
     return NextResponse.json(
       { error: { code: 'NOT_PDF', message: 'Only PDF files are supported' } },
+      { status: 400 }
+    );
+  }
+
+  if (!template || typeof template !== 'string' || template.trim() === '') {
+    return NextResponse.json(
+      { error: { code: 'NO_TEMPLATE', message: 'Missing template selection' } },
       { status: 400 }
     );
   }
@@ -33,7 +41,7 @@ async function uploadHandler(req: NextRequest, { sessionId }: { sessionId: strin
     where: {
       ownerSessionId: sessionId,
       sha256,
-      mapping: 'pt_simon_invoice_v1',
+      mapping: template,
       bytes: BigInt(file.size)
     }
   });
@@ -59,7 +67,7 @@ async function uploadHandler(req: NextRequest, { sessionId }: { sessionId: strin
       contentType: file.type || 'application/pdf',
       bytes: BigInt(file.size),
       sha256,
-      mapping: 'pt_simon_invoice_v1',
+      mapping: template,
       status: 'uploaded',
       uploadPath: null // Will be set after file write
     }

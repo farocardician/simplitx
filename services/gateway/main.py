@@ -58,6 +58,7 @@ async def unified_process(
     request: Request,
     file: UploadFile = File(...),
     mapping: Optional[str] = Form(None),
+    template: Optional[str] = Form(None),
     pretty: str = Form("0")
 ):
     """Unified endpoint for PDF→JSON, JSON→XML, and PDF→XML conversions"""
@@ -119,7 +120,10 @@ async def unified_process(
             if is_pdf and accept_header == "application/json":
                 # Route 1: PDF + Accept: application/json → Forward to pdf2json service
                 files = {"file": (file.filename, content, file.content_type)}
-                response = await client.post(f"{PDF2JSON_URL}/process", files=files)
+                data = {}
+                if template:
+                    data["template"] = template
+                response = await client.post(f"{PDF2JSON_URL}/process", files=files, data=data)
                 
                 if response.status_code != 200:
                     raise HTTPException(
@@ -138,7 +142,10 @@ async def unified_process(
                 
                 # Step 1: Call PDF2JSON
                 files = {"file": (file.filename, content, file.content_type)}
-                pdf_response = await client.post(f"{PDF2JSON_URL}/process", files=files)
+                data = {}
+                if template:
+                    data["template"] = template
+                pdf_response = await client.post(f"{PDF2JSON_URL}/process", files=files, data=data)
                 
                 if pdf_response.status_code != 200:
                     raise HTTPException(
@@ -227,7 +234,8 @@ async def unified_process(
 async def process_artifacts(
     request: Request,
     file: UploadFile = File(...),
-    mapping: Optional[str] = Form(None)
+    mapping: Optional[str] = Form(None),
+    template: Optional[str] = Form(None)
 ):
     """Process PDF and return artifacts as ZIP file"""
     
@@ -256,7 +264,10 @@ async def process_artifacts(
         async with httpx.AsyncClient(timeout=300.0) as client:
             # Call PDF2JSON artifacts endpoint
             files = {"file": (file.filename, content, file.content_type)}
-            response = await client.post(f"{PDF2JSON_URL}/process-with-artifacts", files=files)
+            data = {}
+            if template:
+                data["template"] = template
+            response = await client.post(f"{PDF2JSON_URL}/process-with-artifacts", files=files, data=data)
             
             if response.status_code != 200:
                 raise HTTPException(

@@ -32,7 +32,7 @@ export function PDFDropzone() {
     clearError,
     reset,
     canUpload
-  } = useUpload()
+  } = useUpload({ getTemplate: () => selectedTemplate })
 
   // Fetch available templates on component mount
   useEffect(() => {
