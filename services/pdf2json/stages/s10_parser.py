@@ -82,7 +82,7 @@ def map_item_rows_by_no(cells_doc: Dict[str, Any]) -> Dict[int, Dict[str, Any]]:
     return out
 
 def header_backrefs(cells_doc: Dict[str, Any], inv_no: Optional[str], inv_date: Optional[str]) -> Dict[str, Any]:
-    """Find the cell bbox for invoice number and date on the first page."""
+    """Find the cell bbox for invoice number and date on the first page (simple substring match)."""
     refs = {}
     if inv_no is None and inv_date is None:
         return refs
@@ -96,12 +96,25 @@ def header_backrefs(cells_doc: Dict[str, Any], inv_no: Optional[str], inv_date: 
             search_cells.extend(r.get("cells", []))
         for c in search_cells:
             t = cell_text(c)
-            if inv_no and ("70CH" in inv_no) and (inv_no in t) and "invoice_no" not in refs:
+            if inv_no and (inv_no in t) and "invoice_no" not in refs:
                 refs["invoice_no"] = {"page": page_no, "bbox": bbox_of(c)}
             if inv_date and inv_date in t and "invoice_date" not in refs:
                 refs["invoice_date"] = {"page": page_no, "bbox": bbox_of(c)}
         break
     return refs
+
+
+def s7_value_text(field_entry: Any) -> Optional[str]:
+    """Extract value_text from Stage-7 field entry (V3), or return the scalar if already a string."""
+    if field_entry is None:
+        return None
+    if isinstance(field_entry, dict):
+        val = field_entry.get("value_text") or field_entry.get("raw_text")
+        return val if isinstance(val, str) and val.strip() != "" else None
+    if isinstance(field_entry, str):
+        s = field_entry.strip()
+        return s if s else None
+    return None
 
 def main():
     ap = argparse.ArgumentParser(description="Stage 12 — Final Assembly")
@@ -131,11 +144,15 @@ def main():
 
     # Header
     hdr = f.get("header", {}) or {}
-    invoice_no = hdr.get("invoice_no")
-    invoice_date = hdr.get("invoice_date")
-    buyer_name = hdr.get("buyer_name")
-    seller_name = hdr.get("seller_name")
-    currency = hdr.get("currency") or "IDR"
+    # Support Stage-7 V3 (field objects with value_text) and legacy scalars
+    invoice_no = s7_value_text(hdr.get("invoice_no"))
+    invoice_date = s7_value_text(hdr.get("invoice_date"))
+    # Some profiles expose customer ID as 'customer_id' (map to buyer_id)
+    buyer_id = s7_value_text(hdr.get("buyer_id")) or s7_value_text(hdr.get("customer_id"))
+    # Buyer name/address may be absent in segment-only V3
+    buyer_name = s7_value_text(hdr.get("buyer_name"))
+    seller_name = s7_value_text(hdr.get("seller_name")) or s7_value_text(hdr.get("seller"))
+    currency = s7_value_text(hdr.get("currency")) or v.get("currency") or "IDR"
 
     # Items (already deterministic order in previous stage)
     items = i.get("items", [])
@@ -178,26 +195,23 @@ def main():
         }
         items_out.append(entry)
 
-    # Totals
-    tot_in = f.get("totals", {}) or {}
+    # Totals (prefer Stage‑8 printed; fallback to computed)
     tax_label = "VAT"
-    if any(tot_in.get(k) in (None, "") for k in ("tax_rate", "tax_amount", "grand_total")):
-        ttpl = v.get("template_totals", {}) or {}
-        totals = {
-            "subtotal": money(tot_in.get("subtotal")),
-            "tax_base": money(ttpl.get("tax_base")),
-            "tax_label": tax_label,
-            "tax_amount": money(ttpl.get("tax_amount")),
-            "grand_total": money(ttpl.get("grand_total")),
-        }
-    else:
-        totals = {
-            "subtotal": money(tot_in.get("subtotal")),
-            "tax_base": None,
-            "tax_label": tax_label,
-            "tax_amount": money(tot_in.get("tax_amount")),
-            "grand_total": money(tot_in.get("grand_total")),
-        }
+    v_tot = (v.get("totals") or {})
+    printed = (v_tot.get("printed") or {})
+    computed = (v_tot.get("computed") or {})
+    checks = (v_tot.get("checks") or {})
+    subtotal_val = printed.get("subtotal")
+    if subtotal_val is None:
+        # fallback to computed subtotal from checks if available
+        subtotal_val = (checks.get("subtotal") or {}).get("computed")
+    totals = {
+        "subtotal": money(subtotal_val),
+        "tax_base": money(printed.get("tax_base") if printed.get("tax_base") is not None else computed.get("tax_base")),
+        "tax_label": tax_label,
+        "tax_amount": money(printed.get("tax_amount") if printed.get("tax_amount") is not None else computed.get("tax_amount")),
+        "grand_total": money(printed.get("grand_total") if printed.get("grand_total") is not None else computed.get("grand_total")),
+    }
 
     # Issues & confidence
     flags = v.get("flags", []) or []
@@ -214,7 +228,7 @@ def main():
 
     final = {
         "doc_id": f.get("doc_id"),
-        "buyer_id": f.get("header", {}).get("buyer_id"),
+        "buyer_id": buyer_id,
         "invoice": {"number": invoice_no, "date": invoice_date},
         "seller": {"name": seller_name},
         "buyer": {"name": buyer_name},
