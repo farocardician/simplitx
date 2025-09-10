@@ -153,6 +153,28 @@
       "fallbacks": [
         { "by": "y_cutoff", "edge": "top", "y": 0.25 }
       ]
+    },
+    {
+      "id": "total",
+      "on_pages": "all",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["Total", "Grand"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "end_anchor": {
+          "patterns": ["14\\)ISSUED"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "margin": { "top": 0.025, "right": 0.25, "bottom": -0.015, "left": 0.02 }
+      },
+      "fallbacks": [
+        { "by": "y_cutoff", "edge": "bottom", "y": 0.75 }
+      ]
     }        
   ]
 }
