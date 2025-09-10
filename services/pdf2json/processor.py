@@ -1,8 +1,9 @@
 """
-PDF Processing Pipeline
+PDF Processing Pipeline (config‑driven)
 
-Extracted from pdf2json.py to be used as a reusable function
-for FastAPI service integration.
+This module exposes a fully config‑driven runner. All public entry points
+delegate to the JSON pipeline definition (e.g., services/config/invoice_pt_simon.json).
+Hardcoded stage orders are avoided so the pipeline file is the single source of truth.
 """
 
 import io
@@ -51,202 +52,17 @@ def strip_refs(obj: Any) -> Any:
 
 
 def process_pdf(pdf_bytes: bytes, doc_id: str, include_refs: bool = False) -> Dict[str, Any]:
-    """
-    Process a PDF through the 10-stage pipeline and return JSON result.
-    
-    Args:
-        pdf_bytes: PDF file content as bytes
-        doc_id: Document ID (typically filename stem)
-        include_refs: Whether to include _refs in output
-        
-    Returns:
-        Dict containing the processed JSON result
-        
-    Raises:
-        RuntimeError: If any stage fails
-    """
-    python_exec = sys.executable
-    stages_dir = Path(__file__).resolve().parent / "stages"
-    
-    # Create temporary directory for processing
-    with tempfile.TemporaryDirectory(prefix=f"pdf_process_{doc_id}_") as temp_dir:
-        temp_path = Path(temp_dir)
-        
-        # Write PDF to temporary file
-        pdf_path = temp_path / f"{doc_id}.pdf"
-        pdf_path.write_bytes(pdf_bytes)
-        
-        # Output file layout
-        out_root = temp_path / "output"
-        out_root.mkdir(parents=True, exist_ok=True)
-        
-        tokens_fp = out_root / "tokenizer" / f"{doc_id}.tokens.json"
-        normalized_fp = out_root / "normalize" / f"{doc_id}-normalized.json"
-        segments_fp = out_root / "segment" / f"{doc_id}-segmentized.json"
-        cells_raw_fp = out_root / "cells" / f"{doc_id}-cells.json"
-        cells_norm_fp = out_root / "cells" / f"{doc_id}-cells_normalized.json"
-        items_fp = out_root / "items" / f"{doc_id}-items.json"
-        fields_fp = out_root / "fields" / f"{doc_id}-fields.json"
-        validate_dir = out_root / "validate"
-        validation_fp = validate_dir / f"{doc_id}-validation.json"
-        confidence_fp = validate_dir / f"{doc_id}-confidence.json"
-        manifest_fp = out_root / "manifest" / f"{doc_id}-manifest.json"
-        final_fp = out_root / "final" / f"{doc_id}.json"
-        
-        try:
-            # Stage 1: tokenizer
-            ensure_dir(tokens_fp)
-            run([
-                python_exec, str(stages_dir / "s01_tokenizer.py"),
-                "--in", str(pdf_path),
-                "--out", str(tokens_fp),
-            ])
-            
-            # Stage 2: normalizer
-            ensure_dir(normalized_fp)
-            run([
-                python_exec, str(stages_dir / "s02_normalizer.py"),
-                "--in", str(tokens_fp),
-                "--out", str(normalized_fp),
-            ])
-            
-            # Stage 3: segmenter
-            ensure_dir(segments_fp)
-            run([
-                python_exec, str(stages_dir / "s03_segmenter.py"),
-                "--in", str(normalized_fp),
-                "--out", str(segments_fp),
-                "--config", str(stages_dir.parent / "config" / "simon_segmenter_configV3.json"),
-                "--overlay", str(pdf_path),
-            ])
-            
-            # Stage 4: camelot_grid
-            ensure_dir(cells_raw_fp)
-            config_path = stages_dir.parent / "config" / "invoice_simon_min.json"
-            run([
-                python_exec, str(stages_dir / "s04_camelot_grid_configV12.py"),
-                "--pdf", str(pdf_path),
-                "--tokens", str(normalized_fp),
-                "--out", str(cells_raw_fp),
-                "--config", str(config_path),
-            ])
-            
-            # Stage 5: normalize_cells
-            ensure_dir(cells_norm_fp)
-            run([
-                python_exec, str(stages_dir / "s05_normalize_cells.py"),
-                "--in", str(cells_raw_fp),
-                "--out", str(cells_norm_fp),
-                "--config", str(config_path),
-                "--common-words", str(stages_dir.parent / "common" / "common-words.json"),
-            ])
-            
-            # Stage 6: line_items_from_cells
-            ensure_dir(items_fp)
-            stage6_config = stages_dir.parent / "config" / "invoice_stage6_simon.json"
-            run([
-                python_exec, str(stages_dir / "s06_line_items_from_cells.py"),
-                "--input", str(cells_norm_fp),
-                "--config", str(stage6_config),
-                "--out", str(items_fp),
-            ])
-            
-            # Stage 7: extractor (fields)
-            ensure_dir(fields_fp)
-            run([
-                python_exec, str(stages_dir / "s07_extractorV2.py"),
-                "--tokens", str(normalized_fp),
-                "--segments", str(segments_fp),
-                "--items", str(items_fp),
-                "--out", str(fields_fp),
-                "--config", str(config_path),
-            ])
-            
-            # Stage 8: validator
-            ensure_dir(validation_fp)
-            run([
-                python_exec, str(stages_dir / "s08_validator.py"),
-                "--fields", str(fields_fp),
-                "--items", str(items_fp),
-                "--out", str(validation_fp),
-            ])
-            
-            # Stage 9: confidence
-            ensure_dir(confidence_fp)
-            run([
-                python_exec, str(stages_dir / "s09_confidence.py"),
-                "--fields", str(fields_fp),
-                "--items", str(items_fp),
-                "--validation", str(validation_fp),
-                "--out", str(confidence_fp),
-            ])
-            
-            # Create manifest for parser
-            ensure_dir(manifest_fp)
-            manifest = {
-                "doc_id": doc_id,
-                "created_at": datetime.utcnow().isoformat() + "Z",
-                "inputs": {
-                    "pdf": str(pdf_path),
-                    "tokens": str(tokens_fp),
-                    "normalized": str(normalized_fp),
-                    "segments": str(segments_fp),
-                    "cells": str(cells_norm_fp),
-                    "items": str(items_fp),
-                    "fields": str(fields_fp),
-                    "validation": str(validation_fp),
-                    "confidence": str(confidence_fp),
-                },
-                "outputs": {"final": str(final_fp)},
-                "version": "1.0",
-            }
-            with open(manifest_fp, "w", encoding="utf-8") as mf:
-                json.dump(manifest, mf, ensure_ascii=False, indent=2)
-            
-            # Stage 10: parser (final)
-            ensure_dir(final_fp)
-            run([
-                python_exec, str(stages_dir / "s10_parser.py"),
-                "--fields", str(fields_fp),
-                "--items", str(items_fp),
-                "--validation", str(validation_fp),
-                "--confidence", str(confidence_fp),
-                "--cells", str(cells_norm_fp),
-                "--final", str(final_fp),
-                "--manifest", str(manifest_fp),
-            ])
-            
-            # Read and return final result
-            with open(final_fp, "r", encoding="utf-8") as f:
-                final_doc = json.load(f)
-            
-            # Optionally remove _refs
-            if not include_refs:
-                final_doc = strip_refs(final_doc)
-            
-            return final_doc
-            
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Pipeline stage failed: {e}")
-        except Exception as e:
-            raise RuntimeError(f"Processing failed: {e}")
+    """Config‑driven wrapper: run using pipeline JSON (env: PIPELINE_CONFIG/DEFAULT_PIPELINE)."""
+    pipeline = os.getenv("PIPELINE_CONFIG") or os.getenv("DEFAULT_PIPELINE") or "invoice_pt_simon.json"
+    return process_pdf_from_pipeline_config(pdf_bytes, doc_id, pipeline, include_refs=include_refs)
 
 
 def process_pdf_with_artifacts(pdf_bytes: bytes, doc_id: str, include_refs: bool = False) -> Tuple[Dict[str, Any], bytes]:
-    """
-    Process a PDF through the 10-stage pipeline and return both JSON result and artifacts ZIP.
-    
-    Args:
-        pdf_bytes: PDF file content as bytes
-        doc_id: Document ID (typically filename stem)
-        include_refs: Whether to include _refs in output
-        
-    Returns:
-        Tuple of (JSON result dict, ZIP bytes containing stage artifacts)
-        
-    Raises:
-        RuntimeError: If any stage fails
-    """
+    """Config‑driven wrapper: run using pipeline JSON and return (final_json, zip_bytes)."""
+    pipeline = os.getenv("PIPELINE_CONFIG") or os.getenv("DEFAULT_PIPELINE") or "invoice_pt_simon.json"
+    return process_pdf_from_pipeline_config_with_artifacts(pdf_bytes, doc_id, pipeline, include_refs=include_refs)
+
+    # Legacy hardcoded pipeline (unreachable; kept for reference)
     python_exec = sys.executable
     stages_dir = Path(__file__).resolve().parent / "stages"
     
@@ -412,127 +228,37 @@ def process_pdf_with_artifacts(pdf_bytes: bytes, doc_id: str, include_refs: bool
 
 
 def process_pdf_with_artifacts(pdf_bytes: bytes, doc_id: str, include_refs: bool = False) -> Tuple[Dict[str, Any], bytes]:
-    """
-    Process a PDF through the 10-stage pipeline and return both JSON result and a ZIP of artifacts.
-    """
-    python_exec = sys.executable
-    stages_dir = Path(__file__).resolve().parent / "stages"
-
-    with tempfile.TemporaryDirectory(prefix=f"pdf_process_{doc_id}_") as temp_dir:
-        temp_path = Path(temp_dir)
-        pdf_path = temp_path / f"{doc_id}.pdf"
-        pdf_path.write_bytes(pdf_bytes)
-
-        out_root = temp_path / "output"
-        out_root.mkdir(parents=True, exist_ok=True)
-
-        tokens_fp = out_root / "tokenizer" / f"{doc_id}.tokens.json"
-        normalized_fp = out_root / "normalize" / f"{doc_id}-normalized.json"
-        segments_fp = out_root / "segment" / f"{doc_id}-segmentized.json"
-        cells_raw_fp = out_root / "cells" / f"{doc_id}-cells.json"
-        cells_norm_fp = out_root / "cells" / f"{doc_id}-cells_normalized.json"
-        items_fp = out_root / "items" / f"{doc_id}-items.json"
-        fields_fp = out_root / "fields" / f"{doc_id}-fields.json"
-        validate_dir = out_root / "validate"
-        validation_fp = validate_dir / f"{doc_id}-validation.json"
-        confidence_fp = validate_dir / f"{doc_id}-confidence.json"
-        manifest_fp = out_root / "manifest" / f"{doc_id}-manifest.json"
-        final_fp = out_root / "final" / f"{doc_id}.json"
-
-        try:
-            ensure_dir(tokens_fp)
-            run([python_exec, str(stages_dir / "s01_tokenizer.py"), "--in", str(pdf_path), "--out", str(tokens_fp)])
-            ensure_dir(normalized_fp)
-            run([python_exec, str(stages_dir / "s02_normalizer.py"), "--in", str(tokens_fp), "--out", str(normalized_fp)])
-            ensure_dir(segments_fp)
-            run([python_exec, str(stages_dir / "s03_segmenter.py"), "--in", str(normalized_fp), "--out", str(segments_fp), "--config", str(stages_dir.parent / "config" / "simon_segmenter_configV3.json"), "--overlay", str(pdf_path)])
-            ensure_dir(cells_raw_fp)
-            config_path = stages_dir.parent / "config" / "invoice_simon_min.json"
-            run([python_exec, str(stages_dir / "s04_camelot_grid_configV12.py"), "--pdf", str(pdf_path), "--tokens", str(normalized_fp), "--out", str(cells_raw_fp), "--config", str(config_path)])
-            ensure_dir(cells_norm_fp)
-            run([python_exec, str(stages_dir / "s05_normalize_cells.py"), "--in", str(cells_raw_fp), "--out", str(cells_norm_fp), "--config", str(config_path), "--common-words", str(stages_dir.parent / "common" / "common-words.json")])
-            ensure_dir(items_fp)
-            stage6_config = stages_dir.parent / "config" / "invoice_stage6_simon.json"
-            run([python_exec, str(stages_dir / "s06_line_items_from_cells.py"), "--input", str(cells_norm_fp), "--config", str(stage6_config), "--out", str(items_fp)])
-            ensure_dir(fields_fp)
-            run([python_exec, str(stages_dir / "s07_extractorV2.py"), "--tokens", str(normalized_fp), "--segments", str(segments_fp), "--items", str(items_fp), "--out", str(fields_fp), "--config", str(config_path)])
-            ensure_dir(validation_fp)
-            run([python_exec, str(stages_dir / "s08_validator.py"), "--fields", str(fields_fp), "--items", str(items_fp), "--out", str(validation_fp)])
-            ensure_dir(confidence_fp)
-            run([python_exec, str(stages_dir / "s09_confidence.py"), "--fields", str(fields_fp), "--items", str(items_fp), "--validation", str(validation_fp), "--out", str(confidence_fp)])
-            ensure_dir(manifest_fp)
-            manifest = {
-                "doc_id": doc_id,
-                "created_at": datetime.utcnow().isoformat() + "Z",
-                "inputs": {
-                    "pdf": str(pdf_path),
-                    "tokens": str(tokens_fp),
-                    "normalized": str(normalized_fp),
-                    "segments": str(segments_fp),
-                    "cells": str(cells_norm_fp),
-                    "items": str(items_fp),
-                    "fields": str(fields_fp),
-                    "validation": str(validation_fp),
-                    "confidence": str(confidence_fp),
-                },
-                "outputs": {"final": str(final_fp)},
-                "version": "1.0",
-            }
-            with open(manifest_fp, "w", encoding="utf-8") as mf:
-                json.dump(manifest, mf, ensure_ascii=False, indent=2)
-            ensure_dir(final_fp)
-            run([python_exec, str(stages_dir / "s10_parser.py"), "--fields", str(fields_fp), "--items", str(items_fp), "--validation", str(validation_fp), "--confidence", str(confidence_fp), "--cells", str(cells_norm_fp), "--final", str(final_fp), "--manifest", str(manifest_fp)])
-
-            with open(final_fp, "r", encoding="utf-8") as f:
-                final_doc = json.load(f)
-            if not include_refs:
-                final_doc = strip_refs(final_doc)
-
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                stage_files = [
-                    (tokens_fp, "01-tokens.json"),
-                    (normalized_fp, "02-normalized.json"),
-                    (segments_fp, "03-segments.json"),
-                    (cells_raw_fp, "04-cells-raw.json"),
-                    (cells_norm_fp, "05-cells-normalized.json"),
-                    (items_fp, "06-items.json"),
-                    (fields_fp, "07-fields.json"),
-                    (validation_fp, "08-validation.json"),
-                    (confidence_fp, "09-confidence.json"),
-                    (manifest_fp, "10-manifest.json"),
-                    (final_fp, "11-final.json"),
-                ]
-                for file_path, archive_name in stage_files:
-                    if file_path.exists():
-                        zip_file.write(file_path, archive_name)
-            zip_bytes = zip_buffer.getvalue()
-            zip_buffer.close()
-            return final_doc, zip_bytes
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Pipeline stage failed: {e}")
-        except Exception as e:
-            raise RuntimeError(f"Processing failed: {e}")
+    """Config‑driven wrapper: run using pipeline JSON and return (final_json, zip_bytes)."""
+    pipeline = os.getenv("PIPELINE_CONFIG") or os.getenv("DEFAULT_PIPELINE") or "invoice_pt_simon.json"
+    return process_pdf_from_pipeline_config_with_artifacts(pdf_bytes, doc_id, pipeline, include_refs=include_refs)
 
 
-# For testing purposes
+# For testing purposes (config‑driven CLI)
 if __name__ == "__main__":
     import argparse
-    
-    parser = argparse.ArgumentParser(description="Test PDF processor")
+
+    parser = argparse.ArgumentParser(description="Run PDF → JSON with a pipeline config")
     parser.add_argument("--pdf", required=True, help="PDF file path")
+    parser.add_argument("--config", "--pipeline", dest="pipeline", required=False,
+                        help="Pipeline config JSON filename (e.g., invoice_pt_simon.json). Defaults to $PIPELINE_CONFIG or invoice_pt_simon.json")
     parser.add_argument("--refs", action="store_true", help="Include refs in output")
+    parser.add_argument("--artifacts", action="store_true", help="Also produce artifacts ZIP (discarded in CLI)")
     args = parser.parse_args()
-    
+
     pdf_path = Path(args.pdf)
     if not pdf_path.exists():
         raise SystemExit(f"PDF not found: {pdf_path}")
-    
+
     pdf_bytes = pdf_path.read_bytes()
     doc_id = pdf_path.stem
-    
-    result = process_pdf(pdf_bytes, doc_id, include_refs=args.refs)
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    pipeline = args.pipeline or os.getenv("PIPELINE_CONFIG") or os.getenv("DEFAULT_PIPELINE") or "invoice_pt_simon.json"
+
+    if args.artifacts:
+        result, _zip = process_pdf_from_pipeline_config_with_artifacts(pdf_bytes, doc_id, pipeline, include_refs=args.refs)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        result = process_pdf_from_pipeline_config(pdf_bytes, doc_id, pipeline, include_refs=args.refs)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
 # -------------------------- Config-driven runner (V2) --------------------------
@@ -625,156 +351,94 @@ def process_pdf_from_pipeline_config(
         def resolve_stage_config(name: Optional[str]) -> Optional[str]:
             if not name:
                 return None
-            # Prefer service-local config dir for stage configs
             local = stages_dir.parent / "config" / Path(name).name
             if local.exists():
                 return str(local)
-            # Fallback to services/config
             svc = (stages_dir.parent.parent / "config" / Path(name).name)
             if svc.exists():
                 return str(svc)
-            # As last resort, accept raw name
             return str(name)
+
+        def placeholder_map() -> Dict[str, str]:
+            common_words = stages_dir.parent / "common" / "common-words.json"
+            return {
+                "pdf": str(pdf_path),
+                "tokens": str(tokens_fp),
+                "normalized": str(normalized_fp),
+                "segments": str(segments_fp),
+                "cells_raw": str(cells_raw_fp),
+                "cells": str(cells_norm_fp),
+                "items": str(items_fp),
+                "fields": str(fields_fp),
+                "validation": str(validation_fp),
+                "confidence": str(confidence_fp),
+                "final": str(final_fp),
+                "manifest": str(manifest_fp),
+                "common_words": str(common_words) if common_words.exists() else "",
+            }
+
+        def format_args(args_tmpl: List[str], mapping: Dict[str, str]) -> List[str]:
+            import re
+            out: List[str] = []
+            for token in args_tmpl:
+                def repl(m):
+                    key = m.group(1)
+                    if key not in mapping:
+                        raise RuntimeError(f"Unknown placeholder '{{{key}}}' in args token: {token}")
+                    return mapping[key]
+                new_token = re.sub(r"\{([A-Za-z0-9_]+)\}", repl, token)
+                out.append(new_token)
+            return out
 
         try:
             for step in stages:
                 script = step.get("script")
                 if not script:
                     raise RuntimeError("Stage entry missing 'script'")
+                args_tmpl = step.get("args")
+                if not isinstance(args_tmpl, list) or not args_tmpl:
+                    raise RuntimeError(f"Stage '{script}' missing non-empty 'args' array (data-driven mode)")
                 script_path = stages_dir / script
                 if not script_path.exists():
                     raise RuntimeError(f"Stage script not found: {script}")
 
+                # Build placeholders
+                mp = placeholder_map()
                 stage_cfg_path = resolve_stage_config(step.get("config"))
+                if stage_cfg_path:
+                    mp["config"] = stage_cfg_path
 
-                # Dispatch by script filename to assemble proper CLI
-                if script == "s01_tokenizer.py":
-                    ensure_dir(tokens_fp)
-                    run([python_exec, str(script_path), "--in", str(pdf_path), "--out", str(tokens_fp)])
+                # Ensure output directories exist
+                for k in ("tokens","normalized","segments","cells_raw","cells","items","fields","validation","confidence","final","manifest"):
+                    try:
+                        ensure_dir(Path(mp[k]))
+                    except Exception:
+                        pass
 
-                elif script == "s02_normalizer.py":
-                    ensure_dir(normalized_fp)
-                    run([python_exec, str(script_path), "--in", str(tokens_fp), "--out", str(normalized_fp)])
-
-                elif script == "s03_segmenter.py":
-                    ensure_dir(segments_fp)
-                    cmd = [
-                        python_exec, str(script_path),
-                        "--in", str(normalized_fp),
-                        "--out", str(segments_fp),
-                    ]
-                    if stage_cfg_path:
-                        cmd += ["--config", stage_cfg_path]
-                    # provide overlay for debugging/tracing
-                    cmd += ["--overlay", str(pdf_path)]
-                    run(cmd)
-
-                elif script == "s04_camelot_grid_configV12.py":
-                    ensure_dir(cells_raw_fp)
-                    cmd = [
-                        python_exec, str(script_path),
-                        "--pdf", str(pdf_path),
-                        "--tokens", str(normalized_fp),
-                        "--out", str(cells_raw_fp),
-                    ]
-                    if stage_cfg_path:
-                        cmd += ["--config", stage_cfg_path]
-                    run(cmd)
-
-                elif script == "s05_normalize_cells.py":
-                    ensure_dir(cells_norm_fp)
-                    cmd = [
-                        python_exec, str(script_path),
-                        "--in", str(cells_raw_fp),
-                        "--out", str(cells_norm_fp),
-                    ]
-                    if stage_cfg_path:
-                        cmd += ["--config", stage_cfg_path]
-                    # common words is optional but helpful when available
-                    common_words = stages_dir.parent / "common" / "common-words.json"
-                    if common_words.exists():
-                        cmd += ["--common-words", str(common_words)]
-                    run(cmd)
-
-                elif script == "s06_line_items_from_cells.py":
-                    ensure_dir(items_fp)
-                    cmd = [
-                        python_exec, str(script_path),
-                        "--input", str(cells_norm_fp),
-                        "--out", str(items_fp),
-                    ]
-                    if stage_cfg_path:
-                        cmd += ["--config", stage_cfg_path]
-                    run(cmd)
-
-                elif script == "s07_extractorV2.py":
-                    ensure_dir(fields_fp)
-                    cmd = [
-                        python_exec, str(script_path),
-                        "--tokens", str(normalized_fp),
-                        "--segments", str(segments_fp),
-                        "--items", str(items_fp),
-                        "--out", str(fields_fp),
-                    ]
-                    if stage_cfg_path:
-                        cmd += ["--config", stage_cfg_path]
-                    run(cmd)
-
-                elif script == "s08_validator.py":
-                    ensure_dir(validation_fp)
-                    run([
-                        python_exec, str(script_path),
-                        "--fields", str(fields_fp),
-                        "--items", str(items_fp),
-                        "--out", str(validation_fp),
-                    ])
-
-                elif script == "s09_confidence.py":
-                    ensure_dir(confidence_fp)
-                    run([
-                        python_exec, str(script_path),
-                        "--fields", str(fields_fp),
-                        "--items", str(items_fp),
-                        "--validation", str(validation_fp),
-                        "--out", str(confidence_fp),
-                    ])
-
-                elif script == "s10_parser.py":
-                    ensure_dir(manifest_fp)
+                # Write manifest before parser stage if referenced
+                if script == "s10_parser.py" and "manifest" in mp:
                     manifest = {
                         "doc_id": doc_id,
                         "created_at": datetime.utcnow().isoformat() + "Z",
                         "inputs": {
-                            "pdf": str(pdf_path),
-                            "tokens": str(tokens_fp),
-                            "normalized": str(normalized_fp),
-                            "segments": str(segments_fp),
-                            "cells": str(cells_norm_fp),
-                            "items": str(items_fp),
-                            "fields": str(fields_fp),
-                            "validation": str(validation_fp),
-                            "confidence": str(confidence_fp),
+                            "pdf": mp["pdf"],
+                            "tokens": mp["tokens"],
+                            "normalized": mp["normalized"],
+                            "segments": mp["segments"],
+                            "cells": mp["cells"],
+                            "items": mp["items"],
+                            "fields": mp["fields"],
+                            "validation": mp["validation"],
+                            "confidence": mp["confidence"],
                         },
-                        "outputs": {"final": str(final_fp)},
+                        "outputs": {"final": mp["final"]},
                         "version": "1.0",
                     }
-                    with open(manifest_fp, "w", encoding="utf-8") as mf:
+                    with open(mp["manifest"], "w", encoding="utf-8") as mf:
                         json.dump(manifest, mf, ensure_ascii=False, indent=2)
 
-                    ensure_dir(final_fp)
-                    run([
-                        python_exec, str(script_path),
-                        "--fields", str(fields_fp),
-                        "--items", str(items_fp),
-                        "--validation", str(validation_fp),
-                        "--confidence", str(confidence_fp),
-                        "--cells", str(cells_norm_fp),
-                        "--final", str(final_fp),
-                        "--manifest", str(manifest_fp),
-                    ])
-
-                else:
-                    raise RuntimeError(f"Unsupported stage script in config: {script}")
+                cmd = [python_exec, str(script_path)] + format_args(args_tmpl, mp)
+                run(cmd)
 
             # Read and return final result
             with open(final_fp, "r", encoding="utf-8") as f:
@@ -843,87 +507,82 @@ def process_pdf_from_pipeline_config_with_artifacts(
                 return str(svc)
             return str(name)
 
+        def placeholder_map() -> Dict[str, str]:
+            common_words = stages_dir.parent / "common" / "common-words.json"
+            return {
+                "pdf": str(pdf_path),
+                "tokens": str(tokens_fp),
+                "normalized": str(normalized_fp),
+                "segments": str(segments_fp),
+                "cells_raw": str(cells_raw_fp),
+                "cells": str(cells_norm_fp),
+                "items": str(items_fp),
+                "fields": str(fields_fp),
+                "validation": str(validation_fp),
+                "confidence": str(confidence_fp),
+                "final": str(final_fp),
+                "manifest": str(manifest_fp),
+                "common_words": str(common_words) if common_words.exists() else "",
+            }
+
+        def format_args(args_tmpl: List[str], mapping: Dict[str, str]) -> List[str]:
+            import re
+            out: List[str] = []
+            for token in args_tmpl:
+                def repl(m):
+                    key = m.group(1)
+                    if key not in mapping:
+                        raise RuntimeError(f"Unknown placeholder '{{{key}}}' in args token: {token}")
+                    return mapping[key]
+                new_token = re.sub(r"\{([A-Za-z0-9_]+)\}", repl, token)
+                out.append(new_token)
+            return out
+
         try:
             for step in stages:
                 script = step.get("script")
                 if not script:
                     raise RuntimeError("Stage entry missing 'script'")
+                args_tmpl = step.get("args")
+                if not isinstance(args_tmpl, list) or not args_tmpl:
+                    raise RuntimeError(f"Stage '{script}' missing non-empty 'args' array (data-driven mode)")
                 script_path = stages_dir / script
                 if not script_path.exists():
                     raise RuntimeError(f"Stage script not found: {script}")
+                mp = placeholder_map()
                 stage_cfg_path = resolve_stage_config(step.get("config"))
+                if stage_cfg_path:
+                    mp["config"] = stage_cfg_path
 
-                if script == "s01_tokenizer.py":
-                    ensure_dir(tokens_fp)
-                    run([python_exec, str(script_path), "--in", str(pdf_path), "--out", str(tokens_fp)])
-                elif script == "s02_normalizer.py":
-                    ensure_dir(normalized_fp)
-                    run([python_exec, str(script_path), "--in", str(tokens_fp), "--out", str(normalized_fp)])
-                elif script == "s03_segmenter.py":
-                    ensure_dir(segments_fp)
-                    cmd = [python_exec, str(script_path), "--in", str(normalized_fp), "--out", str(segments_fp)]
-                    if stage_cfg_path:
-                        cmd += ["--config", stage_cfg_path]
-                    cmd += ["--overlay", str(pdf_path)]
-                    run(cmd)
-                elif script == "s04_camelot_grid_configV12.py":
-                    ensure_dir(cells_raw_fp)
-                    cmd = [python_exec, str(script_path), "--pdf", str(pdf_path), "--tokens", str(normalized_fp), "--out", str(cells_raw_fp)]
-                    if stage_cfg_path:
-                        cmd += ["--config", stage_cfg_path]
-                    run(cmd)
-                elif script == "s05_normalize_cells.py":
-                    ensure_dir(cells_norm_fp)
-                    cmd = [python_exec, str(script_path), "--in", str(cells_raw_fp), "--out", str(cells_norm_fp)]
-                    if stage_cfg_path:
-                        cmd += ["--config", stage_cfg_path]
-                    common_words = stages_dir.parent / "common" / "common-words.json"
-                    if common_words.exists():
-                        cmd += ["--common-words", str(common_words)]
-                    run(cmd)
-                elif script == "s06_line_items_from_cells.py":
-                    ensure_dir(items_fp)
-                    cmd = [python_exec, str(script_path), "--input", str(cells_norm_fp), "--out", str(items_fp)]
-                    if stage_cfg_path:
-                        cmd += ["--config", stage_cfg_path]
-                    run(cmd)
-                elif script == "s07_extractorV2.py":
-                    ensure_dir(fields_fp)
-                    cmd = [python_exec, str(script_path), "--tokens", str(normalized_fp), "--segments", str(segments_fp), "--items", str(items_fp), "--out", str(fields_fp)]
-                    if stage_cfg_path:
-                        cmd += ["--config", stage_cfg_path]
-                    run(cmd)
-                elif script == "s08_validator.py":
-                    ensure_dir(validation_fp)
-                    run([python_exec, str(script_path), "--fields", str(fields_fp), "--items", str(items_fp), "--out", str(validation_fp)])
-                elif script == "s09_confidence.py":
-                    ensure_dir(confidence_fp)
-                    run([python_exec, str(script_path), "--fields", str(fields_fp), "--items", str(items_fp), "--validation", str(validation_fp), "--out", str(confidence_fp)])
-                elif script == "s10_parser.py":
-                    ensure_dir(manifest_fp)
+                for k in ("tokens","normalized","segments","cells_raw","cells","items","fields","validation","confidence","final","manifest"):
+                    try:
+                        ensure_dir(Path(mp[k]))
+                    except Exception:
+                        pass
+
+                if script == "s10_parser.py" and "manifest" in mp:
                     manifest = {
                         "doc_id": doc_id,
                         "created_at": datetime.utcnow().isoformat() + "Z",
                         "inputs": {
-                            "pdf": str(pdf_path),
-                            "tokens": str(tokens_fp),
-                            "normalized": str(normalized_fp),
-                            "segments": str(segments_fp),
-                            "cells": str(cells_norm_fp),
-                            "items": str(items_fp),
-                            "fields": str(fields_fp),
-                            "validation": str(validation_fp),
-                            "confidence": str(confidence_fp),
+                            "pdf": mp["pdf"],
+                            "tokens": mp["tokens"],
+                            "normalized": mp["normalized"],
+                            "segments": mp["segments"],
+                            "cells": mp["cells"],
+                            "items": mp["items"],
+                            "fields": mp["fields"],
+                            "validation": mp["validation"],
+                            "confidence": mp["confidence"],
                         },
-                        "outputs": {"final": str(final_fp)},
+                        "outputs": {"final": mp["final"]},
                         "version": "1.0",
                     }
-                    with open(manifest_fp, "w", encoding="utf-8") as mf:
+                    with open(mp["manifest"], "w", encoding="utf-8") as mf:
                         json.dump(manifest, mf, ensure_ascii=False, indent=2)
-                    ensure_dir(final_fp)
-                    run([python_exec, str(script_path), "--fields", str(fields_fp), "--items", str(items_fp), "--validation", str(validation_fp), "--confidence", str(confidence_fp), "--cells", str(cells_norm_fp), "--final", str(final_fp), "--manifest", str(manifest_fp)])
-                else:
-                    raise RuntimeError(f"Unsupported stage script in config: {script}")
+
+                cmd = [python_exec, str(script_path)] + format_args(args_tmpl, mp)
+                run(cmd)
 
             with open(final_fp, "r", encoding="utf-8") as f:
                 final_doc = json.load(f)
@@ -945,6 +604,10 @@ def process_pdf_from_pipeline_config_with_artifacts(
                     (manifest_fp, "10-manifest.json"),
                     (final_fp, "11-final.json"),
                 ]
+                # Include s03 overlay PDF when available
+                overlay_pdf = pdf_path.with_name(f"{pdf_path.stem}-overlay.pdf")
+                if overlay_pdf.exists():
+                    stage_files.append((overlay_pdf, "03-segments-overlay.pdf"))
                 for file_path, archive_name in stage_files:
                     if file_path.exists():
                         zip_file.write(file_path, archive_name)

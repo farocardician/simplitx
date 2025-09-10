@@ -1,15 +1,35 @@
 {
   "document": { "type": "invoice", "vendor": "PT Simon", "version": "1.4" },
   "stages": [
-    { "script": "s01_tokenizer.py" },
-    { "script": "s02_normalizer.py" },
-    { "script": "s03_segmenter.py", "config": "s03_invoice_simon_segmenter_v1.json" },
-    { "script": "s04_camelot_grid_configV12.py", "config": "invoice_simon_min.json" },
-    { "script": "s05_normalize_cells.py", "config": "invoice_simon_min.json" },
-    { "script": "s06_line_items_from_cells.py", "config": "s06_invoice_simon_lineItem.json" },
-    { "script": "s07_extractorV2.py", "config": "s07_invoice_simon_extractor_v1.json" },
-    { "script": "s08_validator.py" },
-    { "script": "s09_confidence.py" },
-    { "script": "s10_parser.py" }
+    { "script": "s01_tokenizer.py",
+      "args": ["--in", "{pdf}", "--out", "{tokens}"]
+    },
+    { "script": "s02_normalizer.py",
+      "args": ["--in", "{tokens}", "--out", "{normalized}"]
+    },
+    { "script": "s03_segmenter.py", "config": "s03_invoice_simon_segmenter_v1.json",
+      "args": ["--in", "{normalized}", "--out", "{segments}", "--config", "{config}", "--overlay", "{pdf}"]
+    },
+    { "script": "s04_camelot_grid_configV12.py", "config": "invoice_simon_min.json",
+      "args": ["--pdf", "{pdf}", "--tokens", "{normalized}", "--out", "{cells_raw}", "--config", "{config}"]
+    },
+    { "script": "s05_normalize_cells.py", "config": "invoice_simon_min.json",
+      "args": ["--in", "{cells_raw}", "--out", "{cells}", "--config", "{config}", "--common-words", "{common_words}"]
+    },
+    { "script": "s06_line_items_from_cellsV3.py", "config": "s06_invoice_simon_lineItem.json",
+      "args": ["--input", "{cells}", "--out", "{items}", "--config", "{config}"]
+    },
+    { "script": "s07_extractorV3.py", "config": "s07_invoice_simon_extractor_v1.json",
+      "args": ["--tokens", "{normalized}", "--segments", "{segments}", "--config", "{config}", "--out", "{fields}"]
+    },
+    { "script": "s08_validator.py",
+      "args": ["--stage7", "{fields}", "--items", "{items}", "--out", "{validation}"]
+    },
+    { "script": "s09_confidence.py",
+      "args": ["--stage7", "{fields}", "--items", "{items}", "--validation", "{validation}", "--out", "{confidence}", "--tokens", "{normalized}"]
+    },
+    { "script": "s10_parser.py",
+      "args": ["--fields", "{fields}", "--items", "{items}", "--validation", "{validation}", "--confidence", "{confidence}", "--cells", "{cells}", "--final", "{final}", "--manifest", "{manifest}"]
+    }
   ]
 }

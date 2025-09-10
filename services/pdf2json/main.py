@@ -18,8 +18,6 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.responses import JSONResponse, Response
 
 from processor import (
-    process_pdf,
-    process_pdf_with_artifacts,
     process_pdf_from_pipeline_config,
     process_pdf_from_pipeline_config_with_artifacts,
 )
@@ -118,11 +116,10 @@ async def process_single_pdf(file: UploadFile = File(...), template: str | None 
         pdf_bytes = await file.read()
         doc_id = Path(file.filename).stem
         
-        # Process PDF through pipeline
-        if template:
-            processed_data = process_pdf_from_pipeline_config(pdf_bytes, doc_id, template, include_refs=False)
-        else:
-            processed_data = process_pdf(pdf_bytes, doc_id, include_refs=False)
+        # Pick pipeline config (template param or default from env)
+        pipeline = template or os.getenv("PIPELINE_CONFIG") or os.getenv("DEFAULT_PIPELINE") or "invoice_pt_simon.json"
+        # Process PDF through pipeline (always config‑driven)
+        processed_data = process_pdf_from_pipeline_config(pdf_bytes, doc_id, pipeline, include_refs=False)
         
         result = {
             "doc_id": doc_id,
@@ -149,11 +146,10 @@ async def process_pdf_with_artifacts_endpoint(file: UploadFile = File(...), temp
         pdf_bytes = await file.read()
         doc_id = Path(file.filename).stem
         
-        # Process PDF through pipeline and get artifacts
-        if template:
-            processed_data, zip_bytes = process_pdf_from_pipeline_config_with_artifacts(pdf_bytes, doc_id, template, include_refs=False)
-        else:
-            processed_data, zip_bytes = process_pdf_with_artifacts(pdf_bytes, doc_id, include_refs=False)
+        # Choose pipeline config
+        pipeline = template or os.getenv("PIPELINE_CONFIG") or os.getenv("DEFAULT_PIPELINE") or "invoice_pt_simon.json"
+        # Process PDF through pipeline and get artifacts (always config‑driven)
+        processed_data, zip_bytes = process_pdf_from_pipeline_config_with_artifacts(pdf_bytes, doc_id, pipeline, include_refs=False)
         
         # Return ZIP file with artifacts
         return Response(
@@ -191,8 +187,9 @@ async def process_batch_pdfs(files: List[UploadFile] = File(...)):
             pdf_bytes = await file.read()
             doc_id = Path(file.filename).stem
             
-            # Process PDF through pipeline
-            processed_data = process_pdf(pdf_bytes, doc_id, include_refs=False)
+            # Process PDF through default pipeline
+            pipeline = os.getenv("PIPELINE_CONFIG") or os.getenv("DEFAULT_PIPELINE") or "invoice_pt_simon.json"
+            processed_data = process_pdf_from_pipeline_config(pdf_bytes, doc_id, pipeline, include_refs=False)
             
             result = {
                 "doc_id": doc_id,
