@@ -2,6 +2,31 @@
 """
 Stage 3 – Agnostic Region-Based Segmenter (Revised)
 A fully generic document segmenter with strict page grammar and keep policies.
+
+Stitching (post-processing)
+---------------------------
+After all detect/fallback passes and keep policies, fragments that belong to a
+single logical region (e.g., a total/footer split across pages) are stitched
+into a canonical region.
+
+Example (simplified):
+  "segments": [
+    {"id": "total_bottom", "page": 1, "bbox": [0.68, 0.86, 0.98, 0.97],
+     "metadata": {"split_group": "total"}},
+    {"id": "total_top",    "page": 2, "bbox": [0.68, 0.03, 0.98, 0.15],
+     "metadata": {"split_group": "total"}},
+
+    {"id": "total", "page": 1, "spanning": true, "label": "total",
+     "bbox": [0.68, 0.03, 0.98, 0.97],
+     "parts": [
+       {"id": "total_bottom", "page": 1, "bbox": [0.68,0.86,0.98,0.97]},
+       {"id": "total_top",    "page": 2, "bbox": [0.68,0.03,0.98,0.15]}
+     ],
+     "metadata": {"role": "canonical", "stitched_from": ["total_bottom","total_top"]}}
+  ]
+
+Fragments remain for debugging but are marked with metadata.role="fragment"; the
+canonical carries metadata.role="canonical".
 """
 
 from __future__ import annotations
@@ -11,7 +36,7 @@ import re
 import logging
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
+from typing import Any, Dict, List, Optional, Tuple, Union, Callable, Sequence
 from collections import defaultdict, deque
 
 # PDF overlay generation (optional dependency)
@@ -66,6 +91,38 @@ class BBox:
             round(self.x1, precision),
             round(self.y1, precision)
         ]
+    
+    @property
+    def area(self) -> float:
+        """Area of the box (normalized units)."""
+        return max(0.0, self.x1 - self.x0) * max(0.0, self.y1 - self.y0)
+    
+    def intersection(self, other: 'BBox') -> 'BBox':
+        """Intersection box (may degenerate to min-dim)."""
+        ix0 = max(self.x0, other.x0)
+        iy0 = max(self.y0, other.y0)
+        ix1 = min(self.x1, other.x1)
+        iy1 = min(self.y1, other.y1)
+        return BBox(ix0, iy0, ix1, iy1)
+    
+    def iou(self, other: 'BBox') -> float:
+        """Intersection over Union of two boxes."""
+        inter = self.intersection(other).area
+        union = self.area + other.area - inter
+        if union <= 0:
+            return 0.0
+        return inter / union
+    
+    @staticmethod
+    def union_many(boxes: List['BBox']) -> 'BBox':
+        """Union envelope across many boxes."""
+        if not boxes:
+            return BBox(0.0, 0.0, 0.0, 0.0)
+        x0 = min(b.x0 for b in boxes)
+        y0 = min(b.y0 for b in boxes)
+        x1 = max(b.x1 for b in boxes)
+        y1 = max(b.y1 for b in boxes)
+        return BBox(x0, y0, x1, y1)
     
     def clip_to(self, parent: 'BBox') -> 'BBox':
         """Return a new bbox clipped to parent bounds."""
@@ -858,6 +915,10 @@ class AgnosticSegmenter:
         self.config = self._load_config(config_path)
         self.table_provider = TableProvider()
         self.mode_handlers = self._build_mode_registry()
+        # Precompute region config index for quick lookups
+        self._region_index: Dict[str, Dict[str, Any]] = {
+            r.get("id"): r for r in self.config.get("regions", []) if isinstance(r, dict) and r.get("id")
+        }
     
     def _load_config(self, config_path: Path) -> Dict[str, Any]:
         """Load and validate configuration."""
@@ -961,9 +1022,46 @@ class AgnosticSegmenter:
         """Process a region across specified pages."""
         region_id = region_config["id"]
         keep_policy = region_config.get("keep", "all")
-        
+
         logger.info(f"Begin region '{region_id}' on pages {pages[:5]}{'...' if len(pages) > 5 else ''}")
-        
+
+        # Cross-page anchors path (document scope) — optional and backward compatible
+        detect_cfg = region_config.get("detect", {}) or {}
+        is_anchors = (detect_cfg.get("by") == "anchors")
+        if is_anchors:
+            anchor_scope = str(detect_cfg.get("anchor_scope", "auto")).lower()
+            max_gap = int(detect_cfg.get("max_page_gap", 1))
+            val_policy = str(detect_cfg.get("value_part_policy", "end")).lower()
+
+            try_cross_page = False
+            if anchor_scope == "document":
+                try_cross_page = True
+            elif anchor_scope == "auto" and detect_cfg.get("end_anchor") is not None:
+                # Heuristic: if a start anchor is found on some page but end is missing on same page
+                # then we attempt cross-page detection. Only applies when end_anchor is configured.
+                start_spec = detect_cfg.get("start_anchor")
+                end_spec = detect_cfg.get("end_anchor")
+                if start_spec and end_spec:
+                    for p in pages:
+                        page_tokens = [t for t in tokens if t.get("page") == p]
+                        sm = AnchorMatcher.match(page_tokens, start_spec)
+                        if sm:
+                            em = AnchorMatcher.match(page_tokens, end_spec, sm)
+                            if not em:
+                                try_cross_page = True
+                            break
+
+            if try_cross_page:
+                cross = self._detect_anchors_cross_page(
+                    region_config=region_config,
+                    pages=pages,
+                    tokens=tokens,
+                    total_pages=total_pages
+                )
+                if cross:
+                    logger.info(f"End region '{region_id}': cross-page anchors canonical emitted")
+                    return [cross]
+
         # Collect results from all pages
         page_results = []
         
@@ -1137,6 +1235,9 @@ class AgnosticSegmenter:
                     # Filter to only child segments (parents already added)
                     child_segments = [s for s in segments if s["id"] in {r["id"] for r in page_regions}]
                     all_segments.extend(child_segments)
+
+        # Post-process: stitch multi-page fragments when configured/eligible
+        all_segments = self._stitch_fragments(all_segments)
         
         # Build output
         output = {
@@ -1182,6 +1283,554 @@ class AgnosticSegmenter:
         }, indent=2))
         
         return output
+
+    # ---------------------------------------------------------------------
+    # Cross-page Anchors (document scope)
+    # ---------------------------------------------------------------------
+    def _detect_anchors_cross_page(self,
+                                   region_config: Dict[str, Any],
+                                   pages: List[int],
+                                   tokens: List[Dict[str, Any]],
+                                   total_pages: int) -> Optional[Dict[str, Any]]:
+        """
+        Document-scope anchor detector:
+          - Finds start_anchor on some page N.
+          - If end_anchor exists, search page N..N+max_page_gap for the first end.
+          - Build per-page slices (parts) using region-level margins.
+          - Choose the "value" part by policy and return ONE canonical segment.
+        """
+        detect = region_config.get("detect", {}) or {}
+        start_spec = detect.get("start_anchor")
+        end_spec = detect.get("end_anchor")
+        if not start_spec:
+            return None
+
+        # Config knobs with defaults
+        anchor_scope = str(detect.get("anchor_scope", "auto")).lower()
+        max_page_gap = int(detect.get("max_page_gap", 1))
+        value_part_policy = str(detect.get("value_part_policy", "end")).lower()
+        canonical_bbox_mode = str(detect.get("canonical_bbox", "value")).lower()  # "value"|"union"
+
+        # Margins and horizontal/row policy
+        defaults = self.config.get("defaults", {}) or {}
+        margin_cfg = detect.get("margin", {}) or {}
+        mt = float(margin_cfg.get("top", 0.0))
+        mb = float(margin_cfg.get("bottom", 0.0))
+        ml = float(margin_cfg.get("left", 0.0))
+        mr = float(margin_cfg.get("right", 0.0))
+        min_h = float(defaults.get("min_height", 0.0))
+
+        x_policy = str(detect.get("x_policy", "full")).lower()
+        pad_left = float(detect.get("pad_left", 0.0))
+        pad_right = float(detect.get("pad_right", 0.0))
+
+        # Row selection controls (optional)
+        start_rows_above = int(detect.get("start_rows_above", 0))
+        start_rows_below = int(detect.get("start_rows_below", 0))
+        end_rows_above = int(detect.get("end_rows_above", 0))
+        end_rows_below = int(detect.get("end_rows_below", 0))
+        row_tol = float(detect.get("row_tol", self.config.get("tolerances", {}).get("y_line_tol", 0.006)))
+        row_safety = float(detect.get("row_safety", 0.003))
+
+        # Token index by page
+        toks_by_page: Dict[int, List[Dict[str, Any]]] = {}
+        for t in tokens:
+            p = int(t.get("page", 0) or 0)
+            if p in pages:
+                toks_by_page.setdefault(p, []).append(t)
+
+        # Build row maps per page, using the segmenter's row grouper
+        rows_by_page: Dict[int, List[List[Dict[str, Any]]]] = {}
+        row_bounds_by_page: Dict[int, List[Tuple[float, float]]] = {}
+        for p in pages:
+            rows = self._group_rows(tokens, p)
+            rows_by_page[p] = rows
+            bounds = []
+            for r in rows:
+                if not r:
+                    continue
+                y0 = min(float(t["bbox"]["y0"]) for t in r)
+                y1 = max(float(t["bbox"]["y1"]) for t in r)
+                bounds.append((y0, y1))
+            row_bounds_by_page[p] = bounds
+
+        # Find start anchor on candidate pages in order
+        start_page = None
+        start_match = None
+        for p in pages:
+            page_toks = toks_by_page.get(p, [])
+            if not page_toks:
+                continue
+            sm = AnchorMatcher.match(page_toks, start_spec)
+            if sm:
+                start_page = p
+                start_match = sm
+                break
+
+        if not start_match or start_page is None:
+            return None
+
+        # Find end anchor, same page first then forward up to max_page_gap
+        end_page = None
+        end_match = None
+        if end_spec:
+            # same page
+            em = AnchorMatcher.match(toks_by_page.get(start_page, []), end_spec, start_match)
+            if em:
+                end_page, end_match = start_page, em
+            else:
+                # forward search
+                # Build a restricted list of pages after start_page within gap
+                try:
+                    idx = pages.index(start_page)
+                except ValueError:
+                    idx = 0
+                lookahead = [p for p in pages[idx+1:] if (p - start_page) <= max_page_gap]
+                for p in lookahead:
+                    em2 = AnchorMatcher.match(toks_by_page.get(p, []), end_spec)
+                    if em2:
+                        end_page, end_match = p, em2
+                        break
+
+        # Fallback closing if no end anchor
+        if end_page is None:
+            # Last page in scope
+            end_page = pages[-1]
+            # Try y_cutoff fallback if present, prefer a 'top' cutoff
+            cutoff_y = None
+            for fb in (region_config.get("fallbacks") or []):
+                fb = fb or {}
+                by = fb.get("by") or fb.get("detect")
+                if isinstance(by, dict):
+                    by = by.get("by")
+                if by == "y_cutoff":
+                    edge = fb.get("edge", "top")
+                    y = fb.get("y")
+                    if y is None:
+                        continue
+                    if edge == "top" and cutoff_y is None:
+                        cutoff_y = float(y)
+                        break
+                    if cutoff_y is None and edge == "bottom":
+                        cutoff_y = float(y)
+            # If still missing, close at bottom of page
+            if cutoff_y is None:
+                cutoff_y = 1.0
+
+        # Respect guards on start/end pages if configured
+        guard_patterns = region_config.get("only_if_contains") or []
+        if guard_patterns:
+            if not self._check_guard(toks_by_page.get(start_page, []), guard_patterns):
+                return None
+            if end_page != start_page and not self._check_guard(toks_by_page.get(end_page, []), guard_patterns):
+                return None
+
+        # Build page slices parts
+        precision = self.config.get("coords", {}).get("precision", 6)
+        parts: List[Dict[str, Any]] = []
+
+        # Determine x policy base then apply left/right margins as expansion
+        if x_policy == "anchor":
+            base_x0 = max(0.0, float(start_match["bbox"][0]) - pad_left)
+            base_x1 = min(1.0, float(start_match["bbox"][2]) + pad_right)
+        else:  # "full" or unknown
+            base_x0, base_x1 = 0.0, 1.0
+
+        x0_fixed = max(0.0, base_x0 - ml)
+        x1_fixed = min(1.0, base_x1 + mr)
+
+        def _clamp_bbox(x0: float, y0: float, x1: float, y1: float) -> List[float]:
+            b = BBox(x0, y0, x1, y1)
+            if min_h > 0 and (b.y1 - b.y0) < min_h:
+                b.y1 = min(1.0, b.y0 + min_h)
+            return b.to_list(precision)
+
+        # Iterate pages from start_page to end_page inclusive
+        if start_page > end_page:
+            return None
+
+        # Map page numbers range using given pages order subset
+        try:
+            start_idx = pages.index(start_page)
+            end_idx = pages.index(end_page)
+        except ValueError:
+            return None
+
+        walk = pages[start_idx:end_idx+1]
+
+        # Helper to find the row index containing the anchor (by center y)
+        def _row_index_for_anchor(page: int, anchor_bbox: List[float]) -> int:
+            bounds = row_bounds_by_page.get(page) or []
+            if not bounds:
+                return -1
+            ay0, ay1 = float(anchor_bbox[1]), float(anchor_bbox[3])
+            ac = 0.5 * (ay0 + ay1)
+            # choose row whose [y0,y1] contains ac, else nearest by center distance
+            best_i, best_d = 0, float("inf")
+            for i, (y0, y1) in enumerate(bounds):
+                if y0 <= ac <= y1:
+                    return i
+                yc = 0.5 * (y0 + y1)
+                d = abs(ac - yc)
+                if d < best_d:
+                    best_d, best_i = d, i
+            return best_i
+
+        for i, p in enumerate(walk):
+            if p == start_page and p == end_page:
+                # Single-page case in document-scope path: use exact start..end bounds
+                # Prefer row-aware bounds if configured
+                if (start_rows_above or start_rows_below or end_rows_above or end_rows_below) and row_bounds_by_page.get(p):
+                    ai = _row_index_for_anchor(p, start_match["bbox"]) if start_match else -1
+                    ei = _row_index_for_anchor(p, end_match["bbox"]) if end_match else ai
+                    bounds = row_bounds_by_page.get(p) or []
+                    if bounds:
+                        lo = max(0, min(ai, ei) - max(0, start_rows_above))
+                        hi = min(len(bounds) - 1, max(ai + start_rows_below, ei + end_rows_below))
+                        sy0 = bounds[lo][0] - row_safety
+                        ey1 = bounds[hi][1] + row_safety
+                    else:
+                        sy0 = float(start_match["bbox"][1]) - mt
+                        ey1 = float((end_match or start_match)["bbox"][3]) + mb
+                else:
+                    sy0 = float(start_match["bbox"][1]) - mt
+                    ey1 = float((end_match or start_match)["bbox"][3]) + mb
+                bbox = _clamp_bbox(x0_fixed, max(0.0, sy0), x1_fixed, min(1.0, ey1))
+            elif p == start_page:
+                if (start_rows_above or start_rows_below) and row_bounds_by_page.get(p):
+                    ai = _row_index_for_anchor(p, start_match["bbox"]) if start_match else -1
+                    bounds = row_bounds_by_page.get(p) or []
+                    if bounds and ai >= 0:
+                        lo = max(0, ai - max(0, start_rows_above))
+                        hi = min(len(bounds) - 1, ai + max(0, start_rows_below))
+                        sy0 = bounds[lo][0] - row_safety
+                        # Extend to bottom unless end is on same page
+                        bbox = _clamp_bbox(x0_fixed, max(0.0, sy0), x1_fixed, 1.0 - mb)
+                    else:
+                        sy0 = float(start_match["bbox"][1]) - mt
+                        bbox = _clamp_bbox(x0_fixed, max(0.0, sy0), x1_fixed, 1.0 - mb)
+                else:
+                    sy0 = float(start_match["bbox"][1]) - mt
+                    bbox = _clamp_bbox(x0_fixed, max(0.0, sy0), x1_fixed, 1.0 - mb)
+            elif p == end_page:
+                if (end_rows_above or end_rows_below) and row_bounds_by_page.get(p):
+                    ei = _row_index_for_anchor(p, (end_match or start_match)["bbox"]) if (end_match or start_match) else -1
+                    bounds = row_bounds_by_page.get(p) or []
+                    if bounds and ei >= 0:
+                        lo = max(0, ei - max(0, end_rows_above))
+                        hi = min(len(bounds) - 1, ei + max(0, end_rows_below))
+                        y0 = bounds[lo][0] - row_safety
+                        y1 = bounds[hi][1] + row_safety
+                        bbox = _clamp_bbox(x0_fixed, max(0.0, y0), x1_fixed, min(1.0, y1))
+                    else:
+                        if end_match is not None:
+                            ey1 = float(end_match["bbox"][3]) + mb
+                        else:
+                            ey1 = float(cutoff_y)
+                        bbox = _clamp_bbox(x0_fixed, mt, x1_fixed, min(1.0, ey1))
+                else:
+                    if end_match is not None:
+                        ey1 = float(end_match["bbox"][3]) + mb
+                    else:
+                        ey1 = float(cutoff_y)
+                    bbox = _clamp_bbox(x0_fixed, mt, x1_fixed, min(1.0, ey1))
+            else:
+                bbox = _clamp_bbox(x0_fixed, mt, x1_fixed, 1.0 - mb)
+
+            parts.append({
+                "id": f"{region_config['id']}__p{i+1}",
+                "page": int(p),
+                "bbox": bbox,
+                "metadata": {"role": "fragment"}
+            })
+
+        if not parts:
+            return None
+
+        # Choose value part per policy
+        value_idx = 0
+        if value_part_policy == "end":
+            value_idx = len(parts) - 1
+        elif value_part_policy == "start":
+            value_idx = 0
+        elif value_part_policy == "last_numeric":
+            num_rx = re.compile(r"\d{1,3}(?:[.,]\d{3})*(?:[.,]\d+)?")
+            value_idx = len(parts) - 1
+            for i in range(len(parts) - 1, -1, -1):
+                part = parts[i]
+                page = part["page"]
+                bx = part["bbox"]
+                # collect tokens intersecting bbox on that page
+                hit = False
+                for t in toks_by_page.get(page, []):
+                    tb = t.get("bbox", {})
+                    if tb.get("x1", 0) <= bx[0] or tb.get("x0", 0) >= bx[2]:
+                        continue
+                    if tb.get("y0", 1) >= bx[3] or tb.get("y1", 0) <= bx[1]:
+                        continue
+                    text = t.get("norm") or t.get("text") or ""
+                    if num_rx.search(text):
+                        hit = True
+                        break
+                if hit:
+                    value_idx = i
+                    break
+
+        value_part = parts[value_idx]
+
+        # Canonical bbox selection
+        if canonical_bbox_mode == "union" and len(parts) > 1:
+            # Union envelope of parts' bboxes
+            boxes = [BBox.from_list(p["bbox"]) for p in parts]
+            union_box = BBox.union_many(boxes)
+            canon_bbox = union_box.to_list(self.config.get("coords", {}).get("precision", 6))
+        else:
+            canon_bbox = value_part["bbox"]
+
+        # Canonical segment: page/bbox per selection
+        canonical = {
+            "id": region_config["id"],
+            "type": "region",
+            "page": int(value_part["page"]),
+            "bbox": canon_bbox,
+            "label": region_config.get("label", region_config["id"]),
+            "spanning": True,
+            "parts": parts,
+            "metadata": {
+                "role": "canonical",
+                "anchor_scope": "document",
+                "anchors": {
+                    "start": start_match.get("matched_text"),
+                    "end": (end_match or {}).get("matched_text") if end_match else None
+                },
+                "value_part_policy": value_part_policy
+            }
+        }
+
+        return canonical
+
+    # ---------------------------------------------------------------------
+    # Stitching Pass
+    # ---------------------------------------------------------------------
+    def _stitch_fragments(self, segments: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Stitch region fragments across adjacent pages into a single logical region.
+
+        Rules:
+        - Group by metadata.split_group if present; otherwise, by id prefix when a
+          region's config has stitch.group_by == "id_prefix".
+        - Only stitch when pages are adjacent or within a small gap and their
+          vertical placement is consistent (earlier page near bottom; next page near top).
+        - Keep original fragments but mark them with metadata.role = "fragment".
+        - Emit a canonical stitched region with metadata.role = "canonical",
+          spanning=true, parts=[...], and id equal to the group id. If a fragment
+          already uses the canonical id, rename it to avoid collision.
+
+        Config (per-region, non-breaking):
+          "stitch": {
+            "group_by": "split_group|id_prefix",  # default: split_group
+            "emit": "group|fragments_only",        # default: group
+            "value_policy": "prefer_last_numeric", # optional hint
+            "max_page_gap": 1,                      # default 1 (adjacent)
+            "bottom_min_y0": 0.60,                  # default 0.60
+            "top_max_y1": 0.40                      # default 0.40
+          }
+
+        If stitch block is absent but fragment metadata contains split_group,
+        we use split_group with default thresholds.
+        """
+        if not segments:
+            return segments
+
+        # Build quick index for region config and defaults
+        def _cfg_for_id(rid: str) -> Dict[str, Any]:
+            return self._region_index.get(rid) or {}
+
+        def _stitch_cfg_for_id(rid: str) -> Dict[str, Any]:
+            return dict(_cfg_for_id(rid).get("stitch", {}) or {})
+
+        def _group_by_for_id(rid: str) -> str:
+            scfg = _stitch_cfg_for_id(rid)
+            return str(scfg.get("group_by", "split_group")).lower()
+
+        # Thresholds with sensible defaults (may be overridden per region)
+        def _thresholds_for_id(rid: str) -> Tuple[int, float, float]:
+            scfg = _stitch_cfg_for_id(rid)
+            max_gap = int(scfg.get("max_page_gap", 1))
+            bottom_min = float(scfg.get("bottom_min_y0", 0.60))
+            top_max = float(scfg.get("top_max_y1", 0.40))
+            return max_gap, bottom_min, top_max
+
+        def _emit_mode_for_id(rid: str) -> str:
+            scfg = _stitch_cfg_for_id(rid)
+            return str(scfg.get("emit", "group")).lower()
+
+        def _value_policy_for_id(rid: str) -> Optional[str]:
+            scfg = _stitch_cfg_for_id(rid)
+            vp = scfg.get("value_policy")
+            return str(vp) if isinstance(vp, str) else None
+
+        def _id_base(id_: str) -> str:
+            # Use last underscore as separator and recognize common suffixes
+            # e.g., total_top -> total, total_bottom -> total, total_p1 -> total
+            m = re.match(r"^(.*)_(top|bottom|left|right|p\d+|part\d+)$", id_)
+            return m.group(1) if m else id_
+
+        def _bbox_from_list(b: List[float]) -> BBox:
+            return BBox(float(b[0]), float(b[1]), float(b[2]), float(b[3]))
+
+        # Pre-pass: tag every segment with its split_group if present
+        for s in segments:
+            md = s.setdefault("metadata", {})
+            if "split_group" in md and not isinstance(md["split_group"], str):
+                # normalize to string
+                md["split_group"] = str(md["split_group"])
+
+        # Build candidate groups
+        group_map: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        group_meta: Dict[str, Dict[str, Any]] = {}  # accrued meta per group
+
+        for s in segments:
+            rid = s.get("id")
+            md = s.get("metadata", {})
+            group_id: Optional[str] = None
+            grouping = None
+
+            # 1) Prefer explicit split_group on the fragment itself
+            sg = md.get("split_group")
+            if isinstance(sg, str) and sg.strip():
+                group_id = sg.strip()
+                grouping = "split_group"
+            else:
+                # 2) Try region-config stitch.group_by
+                gb = _group_by_for_id(rid)
+                if gb == "id_prefix":
+                    base = _id_base(rid)
+                    if base and base != rid:  # only if suffix detected
+                        group_id = base
+                        grouping = "id_prefix"
+
+            if not group_id:
+                continue
+
+            group_map[group_id].append(s)
+            # Track the most specific emit/policy seen for the group (first wins)
+            if group_id not in group_meta:
+                group_meta[group_id] = {
+                    "emit": _emit_mode_for_id(rid),
+                    "value_policy": _value_policy_for_id(rid),
+                    "grouping": grouping
+                }
+
+        if not group_map:
+            return segments
+
+        # Helper: verify if list of parts is stitchable w.r.t. adjacency and vertical order
+        def is_stitchable(parts: List[Dict[str, Any]], rid_hint: str) -> bool:
+            if len(parts) < 2:
+                return False
+            parts_sorted = sorted(parts, key=lambda s: (int(s.get("page", 0) or 0), s["bbox"][1]))
+            max_gap, bottom_min, top_max = _thresholds_for_id(rid_hint)
+
+            # Basic page adjacency monotonicity
+            pages = [int(p.get("page", 0) or 0) for p in parts_sorted]
+            if any(p <= 0 for p in pages):
+                return False
+            if any(pages[i+1] < pages[i] for i in range(len(pages)-1)):
+                return False
+            if any((pages[i+1] - pages[i]) > max_gap for i in range(len(pages)-1)):
+                return False
+
+            # Vertical placement: first part near bottom, last part near top.
+            first_box = _bbox_from_list(parts_sorted[0]["bbox"])
+            last_box  = _bbox_from_list(parts_sorted[-1]["bbox"])
+            if first_box.y0 < bottom_min:
+                return False
+            if last_box.y1 > top_max:
+                return False
+
+            # Same-page pairs are only permissible with explicit split_group
+            for i in range(len(parts_sorted) - 1):
+                a, b = parts_sorted[i], parts_sorted[i + 1]
+                pa, pb = int(a.get("page", 0) or 0), int(b.get("page", 0) or 0)
+                if pa == pb:
+                    grouping = group_meta.get(rid_hint, {}).get("grouping")
+                    if grouping != "split_group":
+                        return False
+            return True
+
+        # Prepare augmented list of segments we will mutate and append to
+        out: List[Dict[str, Any]] = list(segments)
+
+        # For stable renaming when needed
+        frag_suffix_counters: Dict[str, int] = defaultdict(int)
+
+        for group_id, parts in group_map.items():
+            # Determine a representative region id for config lookups
+            rid_hint = parts[0].get("id") if parts else group_id
+            meta = group_meta.get(group_id, {})
+            emit_mode = meta.get("emit", "group")
+
+            # Only consider stitching if enough parts and stitchable order
+            if not is_stitchable(parts, rid_hint):
+                continue
+
+            # Sort by page then by top y
+            parts_sorted = sorted(parts, key=lambda s: (int(s.get("page", 0) or 0), float(s["bbox"][1])))
+
+            # Mark fragments and rename if any fragment already has the canonical id
+            for p in parts_sorted:
+                md = p.setdefault("metadata", {})
+                md["role"] = "fragment"
+                md.setdefault("split_group", group_id)
+                if p.get("id") == group_id:
+                    frag_suffix_counters[group_id] += 1
+                    p["id"] = f"{group_id}__frag{frag_suffix_counters[group_id]}"
+
+            # Compute union bbox across all parts (note: normalized units; page-agnostic)
+            union_box = BBox.union_many([_bbox_from_list(p["bbox"]) for p in parts_sorted])
+
+            # Prepare canonical region (after any renaming above)
+            first_page = int(parts_sorted[0].get("page", 0) or 0)
+            last_page = int(parts_sorted[-1].get("page", 0) or 0)
+            stitched_from_ids = [p.get("id") for p in parts_sorted]
+            # Prefer last part's page so downstream consumers capture the final values
+            canonical: Dict[str, Any] = {
+                "id": group_id,
+                "type": "region",
+                "page": last_page or first_page,
+                "bbox": union_box.to_list(self.config.get("coords", {}).get("precision", 6)),
+                "label": group_id,
+                "spanning": True,
+                "parts": [
+                    {
+                        "id": p.get("id"),
+                        "page": int(p.get("page", 0) or 0),
+                        "bbox": p.get("bbox"),
+                        "metadata": p.get("metadata", {})
+                    }
+                    for p in parts_sorted
+                ],
+                "metadata": {
+                    "role": "canonical",
+                    "stitched_from": stitched_from_ids,
+                    "split_group": group_id
+                }
+            }
+            vp = _value_policy_for_id(rid_hint)
+            if vp:
+                canonical["metadata"]["value_policy"] = vp
+
+            # Emit canonical according to policy, but avoid duplicate if a canonical with same id already exists
+            if emit_mode != "fragments_only":
+                existing = any(s for s in out if s.get("id") == group_id)
+                if not existing:
+                    out.append(canonical)
+                    logger.info(f"Stitched {len(parts_sorted)} fragment(s) into canonical '{group_id}'")
+                else:
+                    logger.info(f"Skip stitching canonical for '{group_id}' (already present)")
+
+        return out
     
     def _generate_overlay(self, segments_data: Dict[str, Any], pdf_path: Path) -> bool:
         """Generate PDF overlay with visual segments."""
@@ -1189,12 +1838,28 @@ class AgnosticSegmenter:
             doc = fitz.open(str(pdf_path))
             
             # Group segments by page
-            by_page = {}
-            for segment in segments_data["segments"]:
-                page = segment["page"]
-                if page not in by_page:
-                    by_page[page] = []
-                by_page[page].append(segment)
+            by_page: Dict[int, List[Dict[str, Any]]] = {}
+            raw_segments = segments_data["segments"]
+            for segment in raw_segments:
+                page = int(segment.get("page", 0) or 0)
+                if page > 0:
+                    by_page.setdefault(page, []).append(segment)
+            # Also draw cross-page parts if present
+            for segment in raw_segments:
+                if segment.get("spanning") and segment.get("parts"):
+                    for idx, part in enumerate(segment["parts"], start=1):
+                        ppage = int(part.get("page", 0) or 0)
+                        if ppage <= 0:
+                            continue
+                        ghost = {
+                            "id": f"{segment.get('id')}#part{idx}",
+                            "type": "region",
+                            "page": ppage,
+                            "bbox": part.get("bbox"),
+                            "label": f"{segment.get('id')} [p{idx}]",
+                            "metadata": {"role": "fragment", "ghost": True}
+                        }
+                        by_page.setdefault(ppage, []).append(ghost)
             
             # Draw on each page
             for page_num, segments in by_page.items():
@@ -1237,7 +1902,11 @@ class AgnosticSegmenter:
             "invoice_no": (0, 1, 0),
             "amount": (1, 0, 1),
         }
-        color = colors.get(segment["id"], (0.5, 0.5, 0.5))
+        # Alternate color for ghost parts
+        if segment.get("metadata", {}).get("ghost"):
+            color = (0.2, 0.7, 0.2)
+        else:
+            color = colors.get(segment["id"], (0.5, 0.5, 0.5))
         
         # Draw rectangle
         page.draw_rect(pdf_rect, color=color, width=2)

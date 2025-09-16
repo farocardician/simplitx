@@ -158,23 +158,63 @@
       "id": "total",
       "on_pages": "all",
       "keep": "first",
+      "only_if_contains": ["TOTAL", "VAT", "AMOUNT", "GRAND"],
+      "detect": {
+        "by": "anchors",
+        "anchor_scope": "document",
+        "max_page_gap": 1,
+        "value_part_policy": "end",
+        "canonical_bbox": "union",
+        "x_policy": "full",
+        "start_rows_above": 1,
+        "start_rows_below": 2,
+        "end_rows_above": 0,
+        "end_rows_below": 0,
+        "row_tol": 0.008,
+        "row_safety": 0.003,
+        "margin": { "top": 0.060, "right": 0.000, "bottom": 0.010, "left": 0.000 },
+        "start_anchor": {
+          "patterns": [
+            "amount/12\\*11\\):"
+          ],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "bottommost"
+        },
+        "end_anchor": {
+          "patterns": [
+            "^GRAND$"
+          ],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        }
+      },
+      "fallbacks": [
+        { "by": "y_cutoff", "edge": "bottom", "y": 0.70 }
+      ]
+    },
+    {
+      "id": "currency",
+      "on_pages": "first",
+      "keep": "first",
       "detect": {
         "by": "anchors",
         "start_anchor": {
-          "patterns": ["Total", "Grand"],
-          "flags": { "ignore_case": true, "normalize_space": true },
-          "select": "topmost"
-        },
-        "end_anchor": {
-          "patterns": ["14\\)ISSUED"],
+          "patterns": [
+            "13\\)\\s*AMOUNT"
+          ],
           "flags": { "ignore_case": true, "normalize_space": true },
           "select": "first_in_reading_order"
         },
-        "margin": { "top": 0.025, "right": 0.25, "bottom": -0.015, "left": 0.02 }
-      },
-      "fallbacks": [
-        { "by": "y_cutoff", "edge": "bottom", "y": 0.75 }
-      ]
-    }        
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "gap_x": 0.001,
+          "dx_max": 0.01,
+          "rows": 1,
+          "row_tol": 0.010
+        },
+        "margin": { "top": 0.004, "right": 0.060, "bottom": 0.020, "left": 0.014 }
+      }
+    }
   ]
 }

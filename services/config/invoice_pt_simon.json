@@ -7,10 +7,10 @@
     { "script": "s02_normalizer.py",
       "args": ["--in", "{tokens}", "--out", "{normalized}"]
     },
-    { "script": "s03_segmenter.py", "config": "s03_invoice_simon_segmenter_v1.json",
+    { "script": "s03_segmenter.py", "config": "s03_invoice_simon_segmenter_v2.json",
       "args": ["--in", "{normalized}", "--out", "{segments}", "--config", "{config}", "--overlay", "{pdf}"]
     },
-    { "script": "s04_camelot_grid_configV12.py", "config": "invoice_simon_min.json",
+    { "script": "s04_camelot_grid_configV13.py", "config": "s04_invoice_simon_camelot_v1.json",
       "args": ["--pdf", "{pdf}", "--tokens", "{normalized}", "--out", "{cells_raw}", "--config", "{config}"]
     },
     { "script": "s05_normalize_cells.py", "config": "invoice_simon_min.json",
@@ -28,8 +28,8 @@
     { "script": "s09_confidence.py",
       "args": ["--stage7", "{fields}", "--items", "{items}", "--validation", "{validation}", "--out", "{confidence}", "--tokens", "{normalized}"]
     },
-    { "script": "s10_parser.py",
-      "args": ["--fields", "{fields}", "--items", "{items}", "--validation", "{validation}", "--confidence", "{confidence}", "--cells", "{cells}", "--final", "{final}", "--manifest", "{manifest}"]
+    { "script": "s10_parser.py", "config": "s10_invoice_simon_parser_v1.json",
+      "args": ["--fields", "{fields}", "--items", "{items}", "--validation", "{validation}", "--confidence", "{confidence}", "--cells", "{cells}", "--final", "{final}", "--manifest", "{manifest}", "--config", "{config}"]
     }
   ]
 }
