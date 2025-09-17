@@ -940,20 +940,32 @@ class AgnosticSegmenter:
             "fixed_box": DetectionModes.fixed_box,
         }
     
-    def _group_rows(self, tokens: List[Dict[str, Any]], page: int) -> List[List[Dict[str, Any]]]:
+    def _group_rows(self, tokens: List[Dict[str, Any]], page: int,
+                    limit_bbox: Optional[BBox] = None) -> List[List[Dict[str, Any]]]:
         """Group tokens into rows by Y coordinate."""
         page_tokens = [t for t in tokens if t["page"] == page]
+
+        if limit_bbox:
+            tol = self.config.get("tolerances", {}).get("parent_overlap_tol", 0.0)
+            page_tokens = [
+                t for t in page_tokens
+                if self._token_intersects_bbox(t, limit_bbox, tol)
+            ]
+
+        return self._group_rows_from_tokens(page_tokens)
+
+    def _group_rows_from_tokens(self, page_tokens: List[Dict[str, Any]]) -> List[List[Dict[str, Any]]]:
         if not page_tokens:
             return []
-        
-        page_tokens.sort(key=lambda t: (t["bbox"]["y0"], t["bbox"]["x0"]))
-        
+
+        page_tokens = sorted(page_tokens, key=lambda t: (t["bbox"]["y0"], t["bbox"]["x0"]))
+
         # Group by Y with tolerance
         y_tol = self.config.get("tolerances", {}).get("y_line_tol", 0.006)
-        rows = []
-        current_row = []
-        last_y = None
-        
+        rows: List[List[Dict[str, Any]]] = []
+        current_row: List[Dict[str, Any]] = []
+        last_y: Optional[float] = None
+
         for token in page_tokens:
             y = token["bbox"]["y0"]
             if last_y is None or abs(y - last_y) <= y_tol:
@@ -964,15 +976,31 @@ class AgnosticSegmenter:
                     rows.append(current_row)
                 current_row = [token]
                 last_y = y
-        
+
         if current_row:
             rows.append(current_row)
-        
+
         # Sort tokens within rows by X
         for row in rows:
             row.sort(key=lambda t: t["bbox"]["x0"])
-        
+
         return rows
+
+    @staticmethod
+    def _token_intersects_bbox(token: Dict[str, Any], bbox: BBox, tol: float = 0.0) -> bool:
+        """Check whether a token's bbox intersects (with tolerance) the given bbox."""
+        tb = token.get("bbox") or {}
+        if not tb:
+            return False
+        if tb["x1"] <= (bbox.x0 - tol):
+            return False
+        if tb["x0"] >= (bbox.x1 + tol):
+            return False
+        if tb["y1"] <= (bbox.y0 - tol):
+            return False
+        if tb["y0"] >= (bbox.y1 + tol):
+            return False
+        return True
     
     def _check_guard(self, tokens: List[Dict[str, Any]], patterns: List[str]) -> bool:
         """Check if page contains any of the guard patterns."""
@@ -1097,22 +1125,33 @@ class AgnosticSegmenter:
         return results
     
     def _process_region_on_page(self, region_config: Dict[str, Any], page: int,
-                                tokens: List[Dict[str, Any]], total_pages: int) -> Optional[Dict[str, Any]]:
+                                tokens: List[Dict[str, Any]], total_pages: int,
+                                parent_bbox: Optional[BBox] = None) -> Optional[Dict[str, Any]]:
         """Process a single region on a specific page."""
         region_id = region_config["id"]
-        
+
+        # Prepare tokens scoped to the optional parent bbox
+        page_tokens = [t for t in tokens if t["page"] == page]
+        if parent_bbox:
+            tol = self.config.get("tolerances", {}).get("parent_overlap_tol", 0.0)
+            page_tokens = [
+                t for t in page_tokens
+                if self._token_intersects_bbox(t, parent_bbox, tol)
+            ]
+
         # Group tokens into rows
-        rows = self._group_rows(tokens, page)
-        
+        rows = self._group_rows_from_tokens(page_tokens)
+
         # Build context with defaults
         ctx = Context(
             page=page,
             total_pages=total_pages,
-            tokens=[t for t in tokens if t["page"] == page],
+            tokens=page_tokens,
             rows=rows,
             table_provider=self.table_provider,
             config=self.config,
             logger=logger,
+            parent_bbox=parent_bbox,
             defaults=self.config.get("defaults", {})
         )
         
@@ -1159,7 +1198,13 @@ class AgnosticSegmenter:
                 parent_bbox = parent_results[parent_id].bbox
             
             # Process region
-            segment = self._process_region_on_page(region_config, page, tokens, total_pages)
+            segment = self._process_region_on_page(
+                region_config,
+                page,
+                tokens,
+                total_pages,
+                parent_bbox
+            )
             if not segment:
                 continue
             

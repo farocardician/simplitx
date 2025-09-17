@@ -1,5 +1,5 @@
 {
-  "document": { "type": "invoice", "vendor": "PT Simon", "version": "1.4" },
+  "document": { "type": "invoice", "vendor": "PT Rittal", "version": "1" },
   "stages": [
     { "script": "s01_tokenizer.py",
       "args": ["--in", "{pdf}", "--out", "{tokens}"]
@@ -7,16 +7,16 @@
     { "script": "s02_normalizer.py",
       "args": ["--in", "{tokens}", "--out", "{normalized}"]
     },
-    { "script": "s03_segmenter.py", "config": "s03_invoice_simon_segmenter_v2.json",
+    { "script": "s03_segmenter.py", "config": "s03_invoice_rittal_segmenter_v1.json",
       "args": ["--in", "{normalized}", "--out", "{segments}", "--config", "{config}", "--overlay", "{pdf}"]
     },
-    { "script": "s04_camelot_grid_configV13.py", "config": "s04_invoice_simon_camelot_v1.json",
+    { "script": "s04_camelot_grid_configV13.py", "config": "s04_invoice_rittal_camelot_v1.json",
       "args": ["--pdf", "{pdf}", "--tokens", "{normalized}", "--out", "{cells_raw}", "--config", "{config}"]
     },
     { "script": "s05_normalize_cells.py", "config": "invoice_simon_min.json",
       "args": ["--in", "{cells_raw}", "--out", "{cells}", "--config", "{config}", "--common-words", "{common_words}"]
     },
-    { "script": "s06_line_items_from_cellsV3.py", "config": "s06_invoice_simon_lineItem.json",
+    { "script": "s06_line_items_from_cellsV3.py", "config": "s06_invoice_rittal_lineItem.json",
       "args": ["--input", "{cells}", "--out", "{items}", "--config", "{config}"]
     },
     { "script": "s07_extractorV3.py", "config": "s07_invoice_simon_extractor_v1.json",

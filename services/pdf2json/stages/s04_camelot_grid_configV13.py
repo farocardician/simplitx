@@ -86,9 +86,18 @@ def build_cells(pdf_path: Path, tokens_path: Path, out_path: Path, config_path: 
     totals_keywords: List[str] = cfg["totals_keywords"]
     camelot_cfg: Dict[str,Any] = cfg["camelot"]
     stop_after_totals: bool = bool(cfg.get("stop_after_totals", True))
+    page_stop_keywords: Dict[str, List[str]] = cfg.get("page_stop_keywords", {}) or {}
+    page_row_limit: Dict[str, int] = cfg.get("page_row_limit", {}) or {}
 
     family_of_header = _build_family_matcher(header_aliases)
     TOTALS_KEYS_CANON = { _canon(k) for k in totals_keywords if k }
+    PAGE_TOTALS_KEYS_CANON: Dict[int, set[str]] = {}
+    for k, v in page_stop_keywords.items():
+        try:
+            pn = int(k)
+        except Exception:
+            continue
+        PAGE_TOTALS_KEYS_CANON[pn] = { _canon(s) for s in (v or []) if s }
 
     # ----- Load normalized tokens -----
     tdata = json.loads(tokens_path.read_text(encoding="utf-8"))
@@ -105,12 +114,18 @@ def build_cells(pdf_path: Path, tokens_path: Path, out_path: Path, config_path: 
     # ----- Read tables with Camelot (per-page flavor fallback) -----
     flavor_order = list(camelot_cfg.get("flavor_order"))
     lattice_ls = camelot_cfg.get("line_scale")
-    stream_ls = camelot_cfg.get("line_scale_stream")
+    stream_row_tol = camelot_cfg.get("row_tol_stream")
 
     def safe_read_page(flavor: str, page: int):
         try:
-            ls = lattice_ls if flavor == "lattice" else stream_ls
-            return camelot.read_pdf(str(pdf_path), pages=str(page), flavor=flavor, line_scale=ls)
+            if flavor == "lattice":
+                return camelot.read_pdf(str(pdf_path), pages=str(page), flavor="lattice", line_scale=lattice_ls)
+            else:
+                # For stream flavor, Camelot does not accept line_scale; use defaults
+                kwargs = {}
+                if isinstance(stream_row_tol, (int, float)) and stream_row_tol is not None:
+                    kwargs["row_tol"] = stream_row_tol
+                return camelot.read_pdf(str(pdf_path), pages=str(page), flavor="stream", **kwargs)
         except Exception:
             return []
 
@@ -272,22 +287,30 @@ def build_cells(pdf_path: Path, tokens_path: Path, out_path: Path, config_path: 
                 else:
                     header_texts = [col_map[c] for c in range(cols)]
 
+        # Determine data start before totals scanning
+        data_start = h_idx + 1
+        if reuse_prev_header:
+            data_start = h_idx
+
         # Stop at totals
         def row_text_list(r: int) -> List[str]:
             return row_text(tb, r, page_no, pw, ph, page_tokens)
 
         stop_at = rows
         if stop_after_totals:
-            for r in range(h_idx+1, rows):
+            scan_start = data_start  # include reused-header rows when previous header is reused
+            for r in range(scan_start, rows):
                 joined = _canon(" ".join(row_text_list(r)))
                 if joined and any(k in joined for k in TOTALS_KEYS_CANON):
                     stop_at = r
                     break
+                # Per-page extra stop keys (e.g., to cut headers on continuation pages)
+                extra_keys = PAGE_TOTALS_KEYS_CANON.get(page_no)
+                if joined and extra_keys and any(k in joined for k in extra_keys):
+                    stop_at = r
+                    break
 
         grid_rows: List[Dict[str,Any]] = []
-        data_start = h_idx + 1
-        if reuse_prev_header:
-            data_start = h_idx
         for r in range(data_start, stop_at):
             texts = row_text_list(r)
             cells = []
@@ -300,6 +323,18 @@ def build_cells(pdf_path: Path, tokens_path: Path, out_path: Path, config_path: 
                     "text": texts[c]
                 })
             grid_rows.append({"row": r, "cells": cells})
+
+        # Apply per-page row limit override if configured
+        limit = None
+        try:
+            if str(page_no) in page_row_limit:
+                v = page_row_limit[str(page_no)]
+                if isinstance(v, int) and v >= 0:
+                    limit = v
+        except Exception:
+            limit = None
+        if limit is not None:
+            grid_rows = grid_rows[:limit]
 
         pages_out.append({
             "page": page_no,

@@ -1,0 +1,67 @@
+{
+  "name": "Invoice Rittal Camelot Grid",
+  "version": "1.0",
+  "header_aliases": {
+    "ARTICLE": [
+      "ARTICLE",
+      "ARTICLE NO",
+      "ARTICLE NO.",
+      "ART NO",
+      "ART. NO"
+    ],
+    "ITEM": [
+      "ITEM",
+      "ITEM NAME",
+      "NAME",
+      "DESCRIPTION"
+    ],
+    "QTY": [
+      "QTY",
+      "QTY.",
+      "QUANTITY"
+    ],
+    "UNIT_PRICE": [
+      "@PRICE",
+      "PRICE",
+      "UNIT PRICE",
+      "UNIT COST",
+      "PRICE/UNIT",
+      "PRICE PER UNIT"
+    ],
+    "DISCOUNT": [
+      "DISCOUNT",
+      "DISC",
+      "DISC."
+    ],
+    "TOTAL_PRICE": [
+      "TOTAL PRICE",
+      "TOTAL",
+      "LINE TOTAL",
+      "AMOUNT",
+      "TOTAL AMOUNT"
+    ]
+  },
+  "totals_keywords": [
+    "SUBTOTAL",
+    "SUB TOTAL",
+    "SUB-TOTAL",
+    "TOTAL",
+    "GRAND TOTAL",
+    "AMOUNT",
+    "PPN",
+    "VAT",
+    "DPP",
+    "TOTAL DUE",
+    "TOTAL PRICE"
+  ],
+  "camelot": {
+    "flavor_order": ["stream", "lattice"],
+    "line_scale": 40,
+    "line_scale_stream": 15,
+    "row_tol_stream": 15
+  },
+  "page_row_limit": {
+    "2": 2
+  },
+  "stop_after_totals": true
+}
