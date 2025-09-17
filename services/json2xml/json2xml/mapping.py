@@ -34,6 +34,17 @@ def load_mapping(mapping_path: str) -> Dict[str, Any]:
     # Must have either 'fields' (old format) or 'structure' (new format)
     if 'fields' not in mapping and 'structure' not in mapping:
         raise MappingError("Mapping must have either 'fields' or 'structure' section")
+
+    computations = mapping.get('computations')
+    if computations is not None:
+        if not isinstance(computations, dict):
+            raise MappingError("'computations' section must be an object")
+        for name, definition in computations.items():
+            if not isinstance(definition, dict):
+                raise MappingError(f"Computation '{name}' must be an object")
+            expression = definition.get('expression')
+            if not isinstance(expression, str) or not expression.strip():
+                raise MappingError(f"Computation '{name}' must define a non-empty 'expression'")
     
     return mapping
 
