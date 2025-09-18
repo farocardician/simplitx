@@ -84,6 +84,12 @@ def main() -> None:
     ap.add_argument("--out", required=True, help="Output validation JSON path")
     ap.add_argument("--config", required=False, help="Validator config JSON (tolerances, tax, etc.)")
     ap.add_argument("--tokens", required=False, help="Stage 2 normalized tokens JSON (optional cross-check)")
+    ap.add_argument(
+        "--tokenizer",
+        required=False,
+        choices=["plumber", "pymupdf"],
+        help="Tokenizer engine to use when cross-checking tokens",
+    )
     args = ap.parse_args()
 
     stage7_path = Path(args.stage7).resolve()
@@ -96,6 +102,9 @@ def main() -> None:
     s7 = load_json(stage7_path)
     items_doc = load_json(items_path) if items_path.exists() else {"items": []}
     cfg = load_json(cfg_path) if cfg_path and cfg_path.exists() else {}
+    if tokens_path and not args.tokenizer:
+        raise SystemExit("--tokenizer is required when --tokens is provided")
+
     tokens_doc = load_json(tokens_path) if tokens_path and tokens_path.exists() else None
 
     # Config defaults
@@ -209,7 +218,14 @@ def main() -> None:
     # Optional token cross-check
     token_cross: Dict[str, Any] = {}
     if enable_token_cross and tokens_doc is not None:
-        token_ids = {int(t.get("id")) for t in tokens_doc.get("tokens", []) if isinstance(t.get("id"), int)}
+        engine_block = tokens_doc.get(args.tokenizer) if args.tokenizer else None
+        if not isinstance(engine_block, dict) or not isinstance(engine_block.get("tokens"), list):
+            raise SystemExit(f"Tokenizer '{args.tokenizer}' tokens not found in {tokens_path}")
+        token_ids = {
+            int(t.get("id"))
+            for t in engine_block.get("tokens", [])
+            if isinstance(t.get("id"), int)
+        }
         for fname in cross_fields:
             ent = (s7.get("header") or {}).get(fname) or {}
             span = ent.get("token_span") or []

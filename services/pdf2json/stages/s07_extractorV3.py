@@ -195,12 +195,16 @@ def _build_region_map(sdata: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
  
 
 
-def extract_strict(tokens_p: Path, segments_p: Path, cfg_p: Path) -> Dict[str, Any]:
+def extract_strict(tokens_p: Path, segments_p: Path, cfg_p: Path, tokenizer: str) -> Dict[str, Any]:
     cfg = load_config(cfg_p)
     prof = get_profile(cfg)
 
     tdata = load_json(tokens_p)
     sdata = load_json(segments_p)
+
+    engine_block = tdata.get(tokenizer)
+    if not isinstance(engine_block, dict) or not isinstance(engine_block.get("tokens"), list):
+        raise SystemExit(f"Tokenizer '{tokenizer}' tokens not found in {tokens_p}")
 
     prefer_norm = bool(cfg.get("use_stage2_normalized", True))
     guards = (cfg.get("guards") or {})
@@ -238,7 +242,7 @@ def extract_strict(tokens_p: Path, segments_p: Path, cfg_p: Path) -> Dict[str, A
         warnings.extend(errors)
 
     # Token index by page
-    tbyp = tokens_by_page(tdata.get("tokens", []))
+    tbyp = tokens_by_page(engine_block["tokens"])
 
     # Track strategies actually used (for meta clarity)
     strategies_used: Dict[str, str] = {}
@@ -435,6 +439,12 @@ def main() -> None:
     ap.add_argument("--segments", required=True, help="Stage‑3 segments JSON path")
     ap.add_argument("--config", required=True, help="Stage‑7 config JSON path")
     ap.add_argument("--out", required=True, help="Output fields JSON path")
+    ap.add_argument(
+        "--tokenizer",
+        required=True,
+        choices=["plumber", "pymupdf"],
+        help="Tokenizer engine to consume from Stage 2 output",
+    )
     args = ap.parse_args()
 
     tokens_p = Path(args.tokens).resolve()
@@ -443,7 +453,7 @@ def main() -> None:
     out_p = Path(args.out).resolve()
     out_p.parent.mkdir(parents=True, exist_ok=True)
 
-    out = extract_strict(tokens_p, segments_p, cfg_p)
+    out = extract_strict(tokens_p, segments_p, cfg_p, args.tokenizer)
     out_p.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
     # Per-field compact summary for logs
@@ -464,6 +474,7 @@ def main() -> None:
     print(json.dumps({
         "stage": "stage7_strict",
         "doc_id": out.get("doc_id"),
+        "tokenizer": args.tokenizer,
         "header": summarize(out.get("header", {})),
         "totals": summarize(out.get("totals_extracted", {})),
         "version": out.get("version"),

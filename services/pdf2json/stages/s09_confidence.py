@@ -248,6 +248,12 @@ def main():
     ap.add_argument("--out", required=True, help="Output confidence JSON")
     ap.add_argument("--tokens", required=False, help="Stage 2 normalized tokens (optional cross-check)")
     ap.add_argument("--config", required=False, help="Stage 9 config (weights, header fields, penalties)")
+    ap.add_argument(
+        "--tokenizer",
+        required=False,
+        choices=["plumber", "pymupdf"],
+        help="Tokenizer engine to use when cross-checking tokens",
+    )
     args = ap.parse_args()
 
     fields_path = Path(args.fields).resolve()
@@ -262,6 +268,8 @@ def main():
     cfg = _load_config(Path(args.config).resolve() if args.config else None)
     tokens_doc = None
     if args.tokens:
+        if not args.tokenizer:
+            raise SystemExit("--tokenizer is required when --tokens is provided")
         tpath = Path(args.tokens).resolve()
         if tpath.exists():
             try:
@@ -433,7 +441,14 @@ def main():
     # Optional: token span cross-check (verify Stage‑7 header token ids exist in Stage‑2 tokens)
     token_span_missing = False
     if tokens_doc is not None:
-        token_ids = {int(t.get("id")) for t in tokens_doc.get("tokens", []) if isinstance(t.get("id"), int)}
+        engine_block = tokens_doc.get(args.tokenizer) if args.tokenizer else None
+        if not isinstance(engine_block, dict) or not isinstance(engine_block.get("tokens"), list):
+            raise SystemExit(f"Tokenizer '{args.tokenizer}' tokens not found in {Path(args.tokens).resolve()}")
+        token_ids = {
+            int(t.get("id"))
+            for t in engine_block.get("tokens", [])
+            if isinstance(t.get("id"), int)
+        }
         for k in header_keys:
             ent = (f.get("header") or {}).get(k) or {}
             span = ent.get("token_span") if isinstance(ent, dict) else None

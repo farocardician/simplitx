@@ -1225,11 +1225,22 @@ class AgnosticSegmenter:
         
         return segments
     
-    def segment(self, in_path: Path, out_path: Path, overlay_pdf: Optional[Path] = None) -> Dict[str, Any]:
+    def segment(
+        self,
+        in_path: Path,
+        out_path: Path,
+        tokenizer: str,
+        overlay_pdf: Optional[Path] = None,
+    ) -> Dict[str, Any]:
         """Main segmentation entry point."""
         # Load input
         data = json.loads(in_path.read_text(encoding="utf-8"))
-        tokens = data.get("tokens", [])
+
+        engine_block = data.get(tokenizer)
+        if not isinstance(engine_block, dict) or not isinstance(engine_block.get("tokens"), list):
+            raise SystemExit(f"Tokenizer '{tokenizer}' tokens not found in input JSON")
+
+        tokens = engine_block["tokens"]
         page_count = data.get("page_count", 0)
         
         # Resolve region dependencies
@@ -1324,6 +1335,7 @@ class AgnosticSegmenter:
             "total_segments": len(all_segments),
             "pages_processed": page_count,
             "config": self.config.get("name"),
+            "tokenizer": tokenizer,
             "output": str(out_path)
         }, indent=2))
         
@@ -1971,6 +1983,12 @@ def main():
     parser = argparse.ArgumentParser(description="Agnostic Region-Based Segmenter")
     parser.add_argument("--in", dest="inp", required=True, help="Input normalized JSON")
     parser.add_argument("--out", required=True, help="Output segmented JSON")
+    parser.add_argument(
+        "--tokenizer",
+        required=True,
+        choices=["plumber", "pymupdf"],
+        help="Tokenizer engine to consume from Stage 2 output",
+    )
     parser.add_argument("--config", help="Configuration file")
     parser.add_argument("--overlay", help="Source PDF for overlay generation")
     
@@ -1983,6 +2001,7 @@ def main():
     segmenter.segment(
         Path(args.inp),
         Path(args.out),
+        args.tokenizer,
         Path(args.overlay) if args.overlay else None
     )
 
