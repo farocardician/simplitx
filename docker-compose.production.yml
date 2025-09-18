@@ -24,6 +24,7 @@ services:
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
     restart: unless-stopped
 
   json2xml:

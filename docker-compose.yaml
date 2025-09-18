@@ -26,6 +26,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
 
   json2xml:
     healthcheck:

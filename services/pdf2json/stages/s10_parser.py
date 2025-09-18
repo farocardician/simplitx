@@ -18,7 +18,7 @@
 # - Schema matches PLAN.md Stage 12 skeleton.  (final.json + manifest)  [PLAN]  # noqa
 
 from __future__ import annotations
-import argparse, json, hashlib, re
+import argparse, json, hashlib, os, re, sys
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -58,6 +58,52 @@ def load_config(p: Path) -> Dict[str, Any]:
     cfg.setdefault("totals", {})
     cfg.setdefault("manifest", {})
     return cfg
+
+
+def persist_to_database(doc_id: str, final_doc: Dict[str, Any], manifest: Dict[str, Any]) -> None:
+    """Persist the parser output to Postgres when DATABASE_URL is configured."""
+    if not doc_id:
+        return
+
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        return
+
+    try:
+        import psycopg
+        from psycopg.types.json import Json
+    except ImportError:
+        print("[s10_parser] psycopg not installed; skipping database persistence", file=sys.stderr)
+        return
+
+    try:
+        with psycopg.connect(database_url, autocommit=True) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS parser_results (
+                        doc_id TEXT PRIMARY KEY,
+                        final JSONB NOT NULL,
+                        manifest JSONB NOT NULL,
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    )
+                    """
+                )
+                cur.execute(
+                    """
+                    INSERT INTO parser_results (doc_id, final, manifest)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (doc_id) DO UPDATE
+                    SET final = EXCLUDED.final,
+                        manifest = EXCLUDED.manifest,
+                        updated_at = NOW()
+                    """,
+                    (doc_id, Json(final_doc), Json(manifest))
+                )
+    except Exception as exc:
+        print(f"[s10_parser] failed to persist results for doc_id={doc_id}: {exc}", file=sys.stderr)
+
 
 def get_nested(data: Any, path: List[str]) -> Any:
     cur = data
@@ -478,6 +524,8 @@ def main():
 
     final_p.write_text(json.dumps(final, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     manifest_p.write_text(json.dumps(manifest, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+
+    persist_to_database(final.get("doc_id"), final, manifest)
 
     print(json.dumps({
         "stage": "final",
