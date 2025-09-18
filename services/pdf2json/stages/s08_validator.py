@@ -57,6 +57,13 @@ def parse_number(text: Any) -> Optional[Decimal]:
         if "," in s and "." not in s:
             # Use comma as decimal
             s = s.replace(",", ".")
+        elif "." in s and "," not in s:
+            # Treat dot as thousands unless it appears to be a decimal separator (single dot, <=2 decimals)
+            if s.count(".") == 1 and len(s.split(".")[-1]) <= 2:
+                # keep as decimal separator
+                pass
+            else:
+                s = s.replace(".", "")
         else:
             # Remove thousand separators (commas)
             s = s.replace(",", "")

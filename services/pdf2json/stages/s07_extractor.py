@@ -1,286 +1,485 @@
 #!/usr/bin/env python3
-# Stage 7 — Field Extraction
-# Inputs :
-#   --cells  /path/to/2508070002-cells_normalized.json
-#   --items  /path/to/2508070002-items.json
-# Output :
-#   --out    /path/to/2508070002-fields.json
-#
-# Deterministic parsing:
-# - Header values are taken from the first page header rows (invoice no/date, seller, buyer).
-# - Buyer address lines collected until the table header ("9)NO.") row.
-# - Currency inferred from header labels (IDR).
-# - Subtotal = sum(item.amount) from items file.
-# - Tax/Grand totals are left None if not visible in the grid (grid stops before totals).
-#
-# Notes:
-# - We cite values directly from normalized cells; items are taken as-is from Stage 4b.
+"""
+Stage‑7 — Strict Region‑First Extractor (V3)
 
+Contract (from extractorRefactorV3.md):
+- Reads only tokens inside declared segments. No roaming.
+- No math. Totals are printed-only from dedicated segments.
+- Evidence per field: region id, bbox, page, token span, confidence, warnings.
+- Python logic is rigid; behavior controlled only via config file.
+
+Inputs:
+  --tokens   Stage 2 normalized tokens JSON
+  --segments Stage 3 segments JSON
+  --config   Stage 7 config (see sample config & schema stub)
+Outputs:
+  --out      fields JSON with header & totals_extracted
+"""
 from __future__ import annotations
-import argparse, json, re
-from decimal import Decimal
+
+import argparse
+import json
+import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-INV_NO_RE = re.compile(r"[A-Z0-9]+-[0-9]{6}-[0-9]{4}")
-DATE_RE   = re.compile(r"\b[12]\d{3}-\d{2}-\d{2}\b")  # ISO (already normalized)
-CUST_PATTERNS = [
-    re.compile(r"cust\.?\s*code[: ]*\s*([A-Za-z0-9\-_\/]+)", re.IGNORECASE),
-    re.compile(r"customer\s*code[: ]*\s*([A-Za-z0-9\-_\/]+)", re.IGNORECASE),
-    re.compile(r"customer\s*id[: ]*\s*([A-Za-z0-9\-_\/]+)",   re.IGNORECASE),
-    re.compile(r"buyer\s*id[: ]*\s*([A-Za-z0-9\-_\/]+)",      re.IGNORECASE),
-]
 
+# -------------------- IO helpers --------------------
 def load_json(p: Path) -> Dict[str, Any]:
     return json.loads(p.read_text(encoding="utf-8"))
 
-def _celltxt(c: Dict[str,Any]) -> str:
-    # prefer normalized text if present
-    return (c.get("text_norm") or c.get("text") or "").strip()
 
-def _row_texts(row: Dict[str,Any]) -> List[str]:
-    return [_celltxt(c) for c in row.get("cells", [])]
+# -------------------- Geometry & tokens --------------------
+def tokens_by_page(tokens: List[Dict[str, Any]]) -> Dict[int, List[Dict[str, Any]]]:
+    byp: Dict[int, List[Dict[str, Any]]] = {}
+    for t in tokens:
+        byp.setdefault(int(t.get("page", 1)), []).append(t)
+    return byp
 
-def _find_invoice_fields(page_tbl: Dict[str,Any]) -> Tuple[Optional[str], Optional[str], Optional[str], List[str], Optional[str], Optional[str], Optional[str]]:
-    """
-    Returns:
-      (invoice_no, invoice_date, seller_name, buyer_lines, po_ref, customer_code, payment_terms)
-    """
-    invoice_no = None
-    invoice_date = None
-    seller_name = None
-    buyer_lines: List[str] = []
-    po_ref = None
-    cust_code = None
-    payment_terms = None
 
-    rows = page_tbl.get("rows", [])
-    header_cells = page_tbl.get("header_cells", [])
+def token_text(t: Dict[str, Any], prefer_norm: bool) -> str:
+    if prefer_norm:
+        v = (t.get("norm") or t.get("text") or "").strip()
+    else:
+        v = (t.get("text") or t.get("norm") or "").strip()
+    return v
 
-    # 1) Seller name (usually in header row 0: columns 1..2) and try to spot customer code in header, too
-    if header_cells:
-        seller_bits = []
-        header_joined = []
-        for hc in header_cells:
-            t = _celltxt(hc)
-            if t:
-                header_joined.append(t)
-            if hc.get("col") in (1, 2):  # "PT Simon", "Elektrik-Indonesia"
-                if t:
-                    seller_bits.append(t)
-        if seller_bits:
-            seller_name = " ".join(seller_bits).strip()
-        if cust_code is None and header_joined:
-            hj = " ".join(header_joined)
-            for pat in CUST_PATTERNS:
-                m = pat.search(hj)
-                if m:
-                    cust_code = m.group(1).strip(" :#").rstrip(",.;")
-                    break
 
-    # 2) Walk the header block (first ~30 rows) for invoice no/date, PO reference, cust.code, payment terms
-    for r in rows[:30]:
-        txts = _row_texts(r)
-        joined = " ".join(t for t in txts if t)
-        # invoice no
-        if invoice_no is None:
-            m = INV_NO_RE.search(joined)
-            if m:
-                invoice_no = m.group(0)
-        # invoice date
-        if invoice_date is None:
-            m = DATE_RE.search(joined)
-            if m:
-                invoice_date = m.group(0)
-        # PO reference (look for a single token like "#104 Rev2" or nearby)
-        if po_ref is None and ("PO" in joined.upper() or "REFERENCE" in joined.upper() or joined.startswith("#")):
-            # if a cell looks like a code with '#'
-            for t in txts:
-                if t.startswith("#") and len(t) >= 3:
-                    po_ref = t
-                    break
+def tokens_in_bbox(tokens_by_page: Dict[int, List[Dict[str, Any]]], page: int, bbox: List[float]) -> List[Dict[str, Any]]:
+    x0, y0, x1, y1 = bbox
+    out: List[Dict[str, Any]] = []
+    for t in tokens_by_page.get(page, []):
+        b = t.get("bbox") or {}
+        if b.get("x1", 0) <= x0 or b.get("x0", 0) >= x1:
+            continue
+        if b.get("y0", 0) >= y1 or b.get("y1", 0) <= y0:
+            continue
+        out.append(t)
+    # Stable reading order
+    out.sort(key=lambda tt: (float(tt["bbox"]["y0"]), float(tt["bbox"]["x0"])) )
+    return out
 
-        # customer code (robust: try multiple label variants and next-cell fallback)
-        if cust_code is None:
-            # try regex patterns against the whole row
-            for pat in CUST_PATTERNS:
-                m = pat.search(joined)
-                if m:
-                    cust_code = m.group(1).strip(" :#").rstrip(",.;")
-                    break
-            # fallback: if the label is in one cell and value in the next cell
-            if cust_code is None:
-                lowered = [t.lower().replace(" ", "") for t in txts]
-                for i, t in enumerate(lowered):
-                    if t in ("cust.code:", "cust.code", "customercode:", "customercode",
-                            "customerid:", "customerid", "buyerid:", "buyerid"):
-                        if i + 1 < len(txts):
-                            val = txts[i + 1].strip(" :#").rstrip(",.;")
-                            if val:
-                                cust_code = val
-                                break
 
-        # payment terms: capture lines after the "8)PAYMENT TERMS" label
-        if "8)PAYMENT" in joined.upper() or "TERMS" in joined.upper():
-            # also take the next one or two lines if present
-            payment_terms = joined
-    # try to extend payment terms from the next couple rows if short
-    if payment_terms:
-        idxs = [i for i,r in enumerate(rows[:15]) if "PAYMENT" in " ".join(_row_texts(r)).upper()]
-        if idxs:
-            i0 = idxs[0]
-            ext = []
-            for k in range(i0+1, min(i0+3, len(rows[:15]))):
-                line = " ".join([t for t in _row_texts(rows[k]) if t])
-                if line: ext.append(line)
-            if ext:
-                payment_terms = " ".join([payment_terms] + ext)
+def group_lines(tokens: List[Dict[str, Any]], y_tol: float = 0.004) -> List[List[Dict[str, Any]]]:
+    if not tokens:
+        return []
+    lines: List[List[Dict[str, Any]]] = []
+    cur: List[Dict[str, Any]] = []
+    cur_y: Optional[float] = None
+    for t in tokens:
+        y0 = float(t["bbox"]["y0"])
+        if cur_y is None or abs(y0 - cur_y) <= y_tol:
+            cur.append(t)
+            cur_y = y0 if cur_y is None else cur_y
+        else:
+            lines.append(cur)
+            cur = [t]
+            cur_y = y0
+    if cur:
+        lines.append(cur)
+    return lines
 
-    # 3) Buyer block: find row where col0 has "2)BUYER", then collect address/name lines until the table header "9)NO."
-    begin = None
-    end = None
-    for i, r in enumerate(rows):
-        txts = _row_texts(r)
-        if txts and (txts[0].upper().startswith("2)BUYER")):
-            begin = i
-            break
-    if begin is not None:
-        for j in range(begin+1, len(rows)):
-            txts = _row_texts(rows[j])
-            if any("9)NO" in (t.upper()) for t in txts):
-                end = j
-                break
-        if end is None:
-            end = min(begin+6, len(rows))
-        # gather non-empty cells (skip labels)
-        for r in rows[begin:end]:
-            parts = [t for t in _row_texts(r)[1:] if t]  # skip col0 label
-            if parts:
-                buyer_lines.append(" ".join(parts).strip())
 
-    # Clean buyer_lines
-    buyer_lines = [s for s in buyer_lines if s]  # drop empties
+def join_line(tokens: List[Dict[str, Any]], prefer_norm: bool) -> str:
+    return " ".join(token_text(t, prefer_norm) for t in tokens if token_text(t, prefer_norm))
 
-    return invoice_no, invoice_date, seller_name, buyer_lines, po_ref, cust_code, (payment_terms.strip() if payment_terms else None)
 
-def _infer_currency_from_headers(page_tbl: Dict[str,Any]) -> Optional[str]:
-    # Look in the header row above the item table for "IDR"
-    rows = page_tbl.get("rows", [])
-    for r in rows[:20]:
-        joined = " ".join(_row_texts(r)).upper()
-        if "AMOUNT IDR" in joined or "PRICE IDR" in joined or "IDR" in joined:
-            return "IDR"
+# -------------------- Config model --------------------
+@dataclass
+class Profile:
+    name: str
+    fail_mode: str  # 'hard' | 'soft'
+    required: List[str]
+    expected: List[str]
+    optional: List[str]
+
+
+def load_config(cfg_path: Path) -> Dict[str, Any]:
+    cfg = load_json(cfg_path)
+    # Minimal schema checks
+    if not isinstance(cfg, dict):
+        raise SystemExit("Config must be a JSON object")
+
+    totals = (cfg.get("totals") or {})
+    mode = totals.get("mode")
+    if mode and mode != "segments_only":
+        raise SystemExit("Unsupported totals.mode. Only 'segments_only' is implemented.")
+
+    if cfg.get("strict_segments") is False:
+        # Implementation is strict by design. Warn if config says otherwise.
+        pass
+
+    return cfg
+
+
+def get_profile(cfg: Dict[str, Any]) -> Profile:
+    prof = cfg.get("profile") or {}
+    return Profile(
+        name=str(prof.get("name")) if prof.get("name") else "default",
+        fail_mode=(prof.get("fail_mode") or "hard").lower(),
+        required=list(prof.get("required_fields") or []),
+        expected=list(prof.get("expected_fields") or []),
+        optional=list(prof.get("optional_fields") or []),
+    )
+
+
+# -------------------- Cleaning & guards --------------------
+# (No global cleaning in segment-only mode)
+
+
+def apply_guards(field: str, text: str, guards: Dict[str, Any], warnings: List[str]) -> Optional[str]:
+    g = (guards or {}).get(field) or {}
+    if not g:
+        return text
+    val = text
+    # allowed_chars: treat as character class without brackets
+    allowed = g.get("allowed_chars")
+    if allowed:
+        rx = re.compile(rf"^[{allowed}\s]+$")
+        if val and not rx.match(val):
+            warnings.append(f"guard_failed.allowed_chars:{allowed}")
+            return None
+    min_len = g.get("min_len")
+    if isinstance(min_len, int) and val and len(val) < min_len:
+        warnings.append(f"guard_failed.min_len:{min_len}")
+        return None
+    max_len = g.get("max_len")
+    if isinstance(max_len, int) and val and len(val) > max_len:
+        warnings.append(f"guard_failed.max_len:{max_len}")
+        return None
+    return val
+
+
+def parse_trivial_number(text: str) -> Optional[float]:
+    # Trivial parse only: plain digits with optional leading '-' or surrounding parentheses, optional single '.'
+    # Reject thousands separators or mixed punctuation.
+    s = text.strip()
+    if not s:
+        return None
+    if re.fullmatch(r"\(?-?\d+(?:\.\d+)?\)?", s):
+        neg = s.startswith("(") and s.endswith(")")
+        core = s[1:-1] if neg else s
+        try:
+            v = float(core)
+            return -v if neg else v
+        except Exception:
+            return None
     return None
 
-def extract_fields(cells_path: Path, items_path: Path) -> Dict[str, Any]:
-    cdata = load_json(cells_path)
-    idata = load_json(items_path)
 
-    pages = cdata.get("pages", [])
-    first_tbl = (pages[0] or {}).get("table", {}) if pages else {}
+# -------------------- Confidence --------------------
+def confidence_bucket(token_count: int, line_count: int, thresholds: Dict[str, Any]) -> str:
+    if token_count == 0:
+        return "none"
+    th_high = (thresholds or {}).get("high") or {"max_lines": 1, "max_tokens": 15}
+    th_med = (thresholds or {}).get("medium") or {"max_lines": 3, "max_tokens": 60}
 
-    invoice_no, invoice_date, seller_name, buyer_lines, po_ref, cust_code, payment_terms = _find_invoice_fields(first_tbl)
-    currency = _infer_currency_from_headers(first_tbl) or "IDR"
+    if line_count <= int(th_high.get("max_lines", 1)) and token_count <= int(th_high.get("max_tokens", 15)):
+        return "high"
+    if line_count <= int(th_med.get("max_lines", 3)) and token_count <= int(th_med.get("max_tokens", 60)):
+        return "medium"
+    return "low"
 
-    # Buyer name: first non-empty buyer_lines token that starts with "PT" or capital words
-    buyer_name = None
-    buyer_address = None
-    if buyer_lines:
-        # typical: first line is the name, following lines are address
-        buyer_name = buyer_lines[0]
-        if len(buyer_lines) > 1:
-            buyer_address = " ".join(buyer_lines[1:]).strip()
 
-    # Subtotal from items
-    items = idata.get("items", [])
-    subtotal = Decimal("0")
-    missing_amounts = 0
-    for it in items:
-        amt = it.get("amount")
-        if isinstance(amt, (int, float)):
-            subtotal += Decimal(str(amt))
+# -------------------- Core extraction --------------------
+def _build_region_map(sdata: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    region_map: Dict[str, Dict[str, Any]] = {}
+    for seg in sdata.get("segments", []) or []:
+        key = seg.get("label") or seg.get("id")
+        if key:
+            region_map[str(key)] = seg
+    return region_map
+
+
+ 
+
+
+def extract_strict(tokens_p: Path, segments_p: Path, cfg_p: Path, tokenizer: str) -> Dict[str, Any]:
+    cfg = load_config(cfg_p)
+    prof = get_profile(cfg)
+
+    tdata = load_json(tokens_p)
+    sdata = load_json(segments_p)
+
+    engine_block = tdata.get(tokenizer)
+    if not isinstance(engine_block, dict) or not isinstance(engine_block.get("tokens"), list):
+        raise SystemExit(f"Tokenizer '{tokenizer}' tokens not found in {tokens_p}")
+
+    prefer_norm = bool(cfg.get("use_stage2_normalized", True))
+    guards = (cfg.get("guards") or {})
+    conf_th = (cfg.get("confidence", {}) or {}).get("thresholds", {})
+
+    # Build region map from segments (by label or id)
+    region_map = _build_region_map(sdata)
+
+    field_map_raw = cfg.get("fields") or {}
+
+    # Preflight checks
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    # Verify totals mode
+    if (cfg.get("totals") or {}).get("mode", "segments_only") != "segments_only":
+        errors.append("totals.mode must be 'segments_only'")
+
+    # Verify mapping points to existing segments
+    # Don't preflight per‑field mapping yet; strategy may not use a single segment id
+    # Legacy check when value is a direct segment id string
+    for f, spec in field_map_raw.items():
+        if isinstance(spec, str):
+            if spec not in region_map:
+                errors.append(f"segment_missing:{f}:{spec}")
+
+    # Check required vs expected vs optional existence
+    for f in prof.required:
+        if f not in field_map_raw:
+            errors.append(f"required_field_not_mapped:{f}")
+
+    if errors and prof.fail_mode == "hard":
+        raise SystemExit("Preflight failed: " + "; ".join(errors))
+    elif errors:
+        warnings.extend(errors)
+
+    # Token index by page
+    tbyp = tokens_by_page(engine_block["tokens"])
+
+    # Track strategies actually used (for meta clarity)
+    strategies_used: Dict[str, str] = {}
+
+    def extract_one(field: str) -> Dict[str, Any]:
+        out_warn: List[str] = []
+        spec = field_map_raw.get(field)
+        if spec is None:
+            out_warn.append("segment_not_mapped")
+            return {
+                "raw_text": None,
+                "value_text": None,
+                "page": None,
+                "source_region": None,
+                "region_bbox": None,
+                "token_span": [],
+                "confidence": "none",
+                "warnings": out_warn,
+            }
+        # Resolve strategy
+        field_post = {}
+        if isinstance(spec, dict):
+            strategy = (spec.get("strategy") or "strict_full_text").lower()
+            field_post = spec.get("post") or {}
+            seg_ref = spec.get("segment") or None
         else:
-            missing_amounts += 1
+            strategy = "strict_full_text"
+            field_post = {}
+            seg_ref = None
+        # Record the chosen strategy for this field
+        strategies_used[field] = strategy
 
-    # Assemble fields
-    header = {
-        "invoice_no": invoice_no,
-        "invoice_date": invoice_date,
-        "seller_name": seller_name,
-        "buyer_name": buyer_name,
-        "buyer_address": buyer_address,
-        "po_reference": po_ref,
-        "buyer_id": cust_code,  # expose as buyer_id for downstream consumers
-        "payment_terms": payment_terms,
-        "currency": currency
-    }
+        def summarize_value(page: Optional[int], bbox: Optional[List[float]], toks: List[Dict[str, Any]], lines: List[str], raw_text: Optional[str], value_override: Optional[str] = None) -> Dict[str, Any]:
+            # value_text defaults to raw_text unless overridden (e.g., regex capture)
+            value_text = value_override if value_override is not None else (raw_text or None)
+            if value_text is not None:
+                guarded = apply_guards(field, value_text, guards, out_warn)
+                if guarded is None:
+                    value_text = None
+            value_numeric: Optional[float] = None
+            if field in {"subtotal", "tax_base", "tax_amount", "grand_total"} and value_text:
+                value_numeric = parse_trivial_number(value_text)
+            span_ids = [int(t.get("id")) for t in toks if isinstance(t.get("id"), int)]
+            span_ids.sort()
+            conf = confidence_bucket(len(toks), len([ln for ln in lines if ln]), conf_th)
+            # Required handling
+            if (field in prof.required) and (not value_text or str(value_text).strip() == ""):
+                msg = "required_field_empty"
+                if prof.fail_mode == "hard":
+                    raise SystemExit(f"Preflight failed: {field}:{msg}")
+                out_warn.append(msg)
+            entry = {
+                "raw_text": raw_text,
+                "value_text": value_text,
+                "page": page,
+                "source_region": None,
+                "region_bbox": bbox,
+                "token_span": span_ids,
+                "confidence": conf,
+                "strategy": strategy,
+            }
+            if value_numeric is not None:
+                entry["value_numeric"] = value_numeric
+            if out_warn:
+                entry["warnings"] = out_warn
+            return entry
 
-    totals = {
-        "subtotal": float(subtotal),
-        "tax_rate": None,      # grid stops before totals; can be filled in a later step if needed
-        "tax_amount": None,
-        "grand_total": None
-    }
+        # Strategy implementations
+        if strategy == "strict_full_text":
+            # Legacy path using a single segment id
+            if isinstance(spec, str):
+                seg_id = spec
+            elif seg_ref:
+                seg_id = str(seg_ref)
+            else:
+                out_warn.append("segment_not_mapped")
+                return summarize_value(None, None, [], [], None)
+            seg = region_map.get(seg_id)
+            if not seg:
+                out_warn.append("segment_not_found")
+                return summarize_value(None, None, [], [], None)
+            page = int(seg.get("page", 1))
+            bbox = seg.get("bbox", [0, 0, 1, 1])
+            toks = tokens_in_bbox(tbyp, page, bbox)
+            lines = [join_line(g, prefer_norm) for g in group_lines(toks)]
+            raw_text = " ".join([s for s in lines if s]).strip() or None
+            entry = summarize_value(page, bbox, toks, lines, raw_text)
+            entry["source_region"] = seg_id
+            entry["region_bbox"] = bbox
+            return entry
 
-    validations = {
-        "item_count": len(items),
-        "missing_item_amounts": missing_amounts,
-        "notes": []
-    }
+        elif strategy == "first_line":
+            out_warn.append("unsupported_strategy:first_line")
+            return summarize_value(None, None, [], [], None)
 
-    if not invoice_no: validations["notes"].append("invoice_no not found in header grid")
-    if not invoice_date: validations["notes"].append("invoice_date not found in header grid")
-    if not buyer_name: validations["notes"].append("buyer_name not found")
-    if not seller_name: validations["notes"].append("seller_name not found")
-    if len(items) == 0: validations["notes"].append("no items parsed")
+        elif strategy == "anchor_value":
+            out_warn.append("unsupported_strategy:anchor_value")
+            return summarize_value(None, None, [], [], None)
+
+        elif strategy == "regex_capture":
+            # Apply regex pattern(s) to text inside a segment bbox
+            patterns = field_post.get("regex_pattern")
+            if patterns is None:
+                legacy = field_post.get("capture_regex")
+                if legacy is not None:
+                    patterns = [legacy]
+            if isinstance(patterns, str):
+                patterns = [patterns]
+            seg_id = str(seg_ref) if seg_ref else (spec if isinstance(spec, str) else None)
+            if not seg_id:
+                out_warn.append("segment_not_mapped")
+                return summarize_value(None, None, [], [], None)
+            seg = region_map.get(seg_id)
+            if not seg:
+                out_warn.append("segment_not_found")
+                return summarize_value(None, None, [], [], None)
+            page = int(seg.get("page", 1))
+            bbox = seg.get("bbox", [0, 0, 1, 1])
+            toks = tokens_in_bbox(tbyp, page, bbox)
+            line_text = " ".join([join_line(g, prefer_norm) for g in group_lines(toks) if join_line(g, prefer_norm)])
+            raw_text = line_text or None
+            extracted = None
+            matched_index = None
+            matched_pattern = None
+            match_span = None
+            total_patterns = len(patterns or [])
+            if patterns:
+                for idx, pat in enumerate(patterns):
+                    try:
+                        m = re.search(pat, line_text or "", flags=re.IGNORECASE)
+                        if m:
+                            extracted = m.group(1) if m.groups() else m.group(0)
+                            matched_index = idx
+                            matched_pattern = pat
+                            match_span = list(m.span(0))
+                            break
+                    except re.error:
+                        continue
+            entry = summarize_value(page, bbox, toks, [line_text], raw_text, extracted)
+            entry["source_region"] = seg_id
+            # Add concise regex meta for transparency
+            entry["regex"] = {
+                "total_patterns": total_patterns,
+                "pattern_index": matched_index,
+                "matched_pattern": matched_pattern,
+                "match_span": match_span,
+            }
+            return entry
+
+        else:
+            out_warn.append(f"unknown_strategy:{strategy}")
+            return summarize_value(None, None, [], [], None)
+
+    # Build outputs
+    # Header fields
+    header_fields = [
+        "invoice_no",
+        "invoice_date",
+        "po_reference",
+        "customer_id",
+        "customer_name",
+        "seller",
+        "currency",
+        "uom",
+    ]
+    header: Dict[str, Any] = {}
+    for f in header_fields:
+        if f in field_map_raw:
+            header[f] = extract_one(f)
+
+    # Totals (printed only)
+    totals_names = ["subtotal", "tax_base", "tax_amount", "grand_total", "total_qty", "vat_rate"]
+    totals_extracted: Dict[str, Any] = {}
+    for f in totals_names:
+        if f in field_map_raw:
+            totals_extracted[f] = extract_one(f)
 
     out = {
-        "doc_id": cdata.get("doc_id"),
-        "stage": "fields",
-        "version": "1.0",
+        "doc_id": tdata.get("doc_id"),
+        "version": "3.4-segment-only",
+        "meta": {
+            "profile": prof.name,
+            "fail_mode": prof.fail_mode
+        },
         "header": header,
-        "buyer_id": cust_code,
-        "totals": totals,
-        "items_ref": {
-            "path": str(items_path)
-        },
-        "summary": {
-            "item_count": len(items),
-            "currency": currency
-        },
-        "validations": validations
+        "totals_extracted": totals_extracted,
     }
     return out
 
+
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Stage 9 — Field Extraction")
-    ap.add_argument("--cells", required=True, help="Path to cells_normalized.json")
-    ap.add_argument("--items", required=True, help="Path to items.json")
-    ap.add_argument("--out", required=True, help="Path to write fields.json")
+    ap = argparse.ArgumentParser(description="Stage‑7 — Strict Region‑First Extractor")
+    ap.add_argument("--tokens", required=True, help="Stage‑2 normalized tokens JSON path")
+    ap.add_argument("--segments", required=True, help="Stage‑3 segments JSON path")
+    ap.add_argument("--config", required=True, help="Stage‑7 config JSON path")
+    ap.add_argument("--out", required=True, help="Output fields JSON path")
+    ap.add_argument(
+        "--tokenizer",
+        required=True,
+        choices=["plumber", "pymupdf"],
+        help="Tokenizer engine to consume from Stage 2 output",
+    )
     args = ap.parse_args()
 
-    cells_path = Path(args.cells).resolve()
-    items_path = Path(args.items).resolve()
-    out_path = Path(args.out).resolve()
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+    tokens_p = Path(args.tokens).resolve()
+    segments_p = Path(args.segments).resolve()
+    cfg_p = Path(args.config).resolve()
+    out_p = Path(args.out).resolve()
+    out_p.parent.mkdir(parents=True, exist_ok=True)
 
-    out = extract_fields(cells_path, items_path)
-    out_path.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    out = extract_strict(tokens_p, segments_p, cfg_p, args.tokenizer)
+    out_p.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
-    # print a compact one-line summary
+    # Per-field compact summary for logs
+    def summarize(section: Dict[str, Any]) -> List[Dict[str, Any]]:
+        rows = []
+        for k, v in section.items():
+            rows.append({
+                "field": k,
+                "region": v.get("source_region"),
+                "page": v.get("page"),
+                "tokens": len(v.get("token_span", []) or []),
+                "confidence": v.get("confidence"),
+                "raw_preview": (v.get("raw_text") or "")[:64],
+                "warnings": v.get("warnings", []),
+            })
+        return rows
+
     print(json.dumps({
-        "stage": out["stage"],
+        "stage": "stage7_strict",
         "doc_id": out.get("doc_id"),
-        "invoice_no": out.get("header", {}).get("invoice_no"),
-        "invoice_date": out.get("header", {}).get("invoice_date"),
-        "buyer": out.get("header", {}).get("buyer_name"),
-        "buyer_id": out.get("buyer_id"),
-        "seller": out.get("header", {}).get("seller_name"),
-        "currency": out.get("header", {}).get("currency"),
-        "item_count": out.get("summary", {}).get("item_count"),
-        "subtotal": out.get("totals", {}).get("subtotal"),
-        "out": str(out_path)
+        "tokenizer": args.tokenizer,
+        "header": summarize(out.get("header", {})),
+        "totals": summarize(out.get("totals_extracted", {})),
+        "version": out.get("version"),
     }, ensure_ascii=False, separators=(",", ":")))
+
 
 if __name__ == "__main__":
     main()

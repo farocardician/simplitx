@@ -1,0 +1,91 @@
+{
+  "metadata": {
+    "template": "PT Rittal Indonesia (IDR)",
+    "money_rounding": 2
+  },
+  "defaults": {
+    "currency": "IDR",
+    "tax_label": "VAT"
+  },
+  "header": {
+    "pages": [1],
+    "search_row_limit": 25,
+    "fields": {
+      "invoice_no": { "match": "contains" },
+      "invoice_date": { "match": "contains" }
+    }
+  },
+  "items": {
+    "min_columns": 8,
+    "header_rows_can_hold_items": true,
+    "key_field": "no",
+    "fields": [
+      { "name": "no", "column": null, "type": "int" },
+      { "name": "sku", "column": 0 },
+      { "name": "description", "column": 1 },
+      { "name": "qty", "column": 2 },
+      { "name": "unit_price", "column": 4, "transform": "money" },
+      { "name": "amount", "column": 7, "transform": "money" }
+    ]
+  },
+  "totals": {
+    "tax_label": "VAT",
+    "fields": {
+      "subtotal": [
+        "printed.subtotal",
+        "checks.subtotal.computed"
+      ],
+      "tax_base": [
+        "printed.tax_base",
+        "computed.tax_base"
+      ],
+      "tax_amount": [
+        "printed.tax_amount",
+        "computed.tax_amount"
+      ],
+      "grand_total": [
+        "printed.grand_total",
+        "computed.grand_total"
+      ]
+    }
+  },
+  "overlay": {
+    "header_color": [0.1, 0.55, 0.95],
+    "header_fields": [
+      { "field": "invoice_no", "label": "Invoice No" },
+      { "field": "invoice_date", "label": "Invoice Date" }
+    ],
+    "totals": {
+      "color": [0.95, 0.35, 0.2],
+      "fields": [
+        {
+          "name": "subtotal",
+          "label": "Subtotal",
+          "label_match": { "text": "Subtotal", "match": "contains" },
+          "limit": 1
+        },
+        {
+          "name": "tax_base",
+          "label": "Tax Base",
+          "label_match": { "text": "Tax Base", "match": "contains" },
+          "limit": 1
+        },
+        {
+          "name": "tax_amount",
+          "label": "VAT",
+          "label_match": { "text": "VAT", "match": "contains" },
+          "limit": 1
+        },
+        {
+          "name": "grand_total",
+          "label": "Grand Total",
+          "label_match": { "text": "Grand Total", "match": "contains" },
+          "limit": 1
+        }
+      ]
+    }
+  },
+  "manifest": {
+    "schema_template": "PT Rittal Indonesia (IDR)"
+  }
+}

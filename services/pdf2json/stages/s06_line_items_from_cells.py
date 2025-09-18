@@ -32,6 +32,7 @@ python s06_line_items.py \
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import re
 import sys
@@ -126,6 +127,23 @@ def _to_decimal(s: Optional[str], thousands: str = ",", decimal: str = ".", allo
     return -v if neg else v
 
 
+def _first_numeric_token(s: Optional[str]) -> Optional[str]:
+    if s is None:
+        return None
+    z = _clean(str(s))
+    if z == "":
+        return None
+    m = re.search(r"-?\d[\d.,]*", z)
+    if not m:
+        return None
+    token = m.group(0)
+    start, end = m.span()
+    if start > 0 and z[start - 1] == "(":
+        if end < len(z) and z[end] == ")":
+            token = "(" + token + ")"
+    return token
+
+
 def _round_half_up(d: Decimal, places: int) -> Decimal:
     q = Decimal(1).scaleb(-places)  # 10^-places
     return d.quantize(q, rounding=ROUND_HALF_UP)
@@ -168,6 +186,29 @@ def parse_money(ctx: ParseContext, cfg: Dict[str, Any]) -> None:
     nf = cfg.get("number_format", {})
     cur_hints = cfg.get("currency_hints") or []
     v = _to_decimal(ctx.raw, thousands=nf.get("thousands", ","), decimal=nf.get("decimal", "."),
+                    allow_parens=nf.get("allow_parens", True), currency_hints=cur_hints)
+    if v is not None:
+        ctx.values[ctx.values.get("_target_field", "")] = v
+
+
+def parse_first_number(ctx: ParseContext, cfg: Dict[str, Any]) -> None:
+    token = _first_numeric_token(ctx.raw)
+    if token is None:
+        return
+    nf = cfg.get("number_format", {})
+    v = _to_decimal(token, thousands=nf.get("thousands", ","), decimal=nf.get("decimal", "."),
+                    allow_parens=nf.get("allow_parens", True))
+    if v is not None:
+        ctx.values[ctx.values.get("_target_field", "")] = v
+
+
+def parse_first_money(ctx: ParseContext, cfg: Dict[str, Any]) -> None:
+    token = _first_numeric_token(ctx.raw)
+    if token is None:
+        return
+    nf = cfg.get("number_format", {})
+    cur_hints = cfg.get("currency_hints") or []
+    v = _to_decimal(token, thousands=nf.get("thousands", ","), decimal=nf.get("decimal", "."),
                     allow_parens=nf.get("allow_parens", True), currency_hints=cur_hints)
     if v is not None:
         ctx.values[ctx.values.get("_target_field", "")] = v
@@ -264,6 +305,8 @@ PARSER_FUNCS = {
     "parse_int": parse_int,
     "parse_number": parse_number,
     "parse_money": parse_money,
+    "parse_first_number": parse_first_number,
+    "parse_first_money": parse_first_money,
     "parse_percent": parse_percent,
     "split_qty_uom": split_qty_uom,
     "strip_nonprint": strip_nonprint,
@@ -564,7 +607,8 @@ def _parse_field_value(raw: str, field_name: str, field_spec: FieldSpec, cfg: Di
 
 
 def _build_item_from_row(row_cells: List[Dict[str, Any]], colmap: Dict[int, str], cfg: Dict[str, Any],
-                         header_text: str, field_specs: Dict[str, FieldSpec], notes: List[str]) -> Optional[Dict[str, Any]]:
+                         header_text: str, field_specs: Dict[str, FieldSpec], notes: List[str],
+                         from_header: bool = False) -> Optional[Dict[str, Any]]:
     # Gather raw text per mapped field
     raw_by_field: Dict[str, str] = {}
     for c in row_cells:
@@ -576,7 +620,7 @@ def _build_item_from_row(row_cells: List[Dict[str, Any]], colmap: Dict[int, str]
 
     # Row-level filtering
     row_text = " ".join(_clean(c.get("text_norm") or c.get("text") or "") for c in row_cells)
-    if _is_drop_row(row_text, cfg):
+    if not from_header and _is_drop_row(row_text, cfg):
         return None
 
     # Parse fields
@@ -651,6 +695,9 @@ def _build_item_from_row(row_cells: List[Dict[str, Any]], colmap: Dict[int, str]
         "_discount_amount_d": disc_amt_d,
     }
 
+    if (cfg.get("row_split") or {}).get("enabled", False):
+        item["_raw_fields"] = raw_by_field
+
     # Normalize empty strings to None for text fields
     for key in ("hs_code", "sku", "code", "description"):
         if isinstance(item.get(key), str) and item.get(key) == "":
@@ -667,6 +714,91 @@ def _build_item_from_row(row_cells: List[Dict[str, Any]], colmap: Dict[int, str]
     return item
 
 
+def _split_multivalue_item(item: Dict[str, Any], cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
+    split_cfg = cfg.get("row_split") or {}
+    if not split_cfg.get("enabled", False):
+        item.pop("_raw_fields", None)
+        return [item]
+
+    fields_cfg: Dict[str, str] = split_cfg.get("fields") or {}
+    if not fields_cfg:
+        item.pop("_raw_fields", None)
+        return [item]
+
+    raw_fields: Dict[str, str] = item.get("_raw_fields") or {}
+    splits: Dict[str, List[str]] = {}
+    max_len = 0
+    for field, pattern in fields_cfg.items():
+        raw = raw_fields.get(field)
+        if not raw:
+            continue
+        pat = pattern or r"\s+"
+        tokens = [tok for tok in re.split(pat, raw) if tok and _clean(tok)]
+        if not tokens:
+            continue
+        if field != "sku":
+            numeric_tokens = [tok for tok in tokens if any(ch.isdigit() for ch in tok)]
+            if numeric_tokens:
+                tokens = numeric_tokens
+            else:
+                continue
+        if field == "sku":
+            tokens = [tok for tok in tokens if any(ch.isalnum() for ch in tok)]
+            if not tokens:
+                continue
+            if any(not any(ch.isdigit() for ch in tok) for tok in tokens):
+                continue
+        if len(tokens) > 1:
+            splits[field] = tokens
+            if len(tokens) > max_len:
+                max_len = len(tokens)
+
+    if max_len <= 1:
+        item.pop("_raw_fields", None)
+        return [item]
+
+    nf = cfg.get("number_format") or {}
+    thousands = nf.get("thousands", ",")
+    decimal_sep = nf.get("decimal", ".")
+    allow_parens = nf.get("allow_parens", True)
+    currency_decimals = int(cfg.get("currency_decimals", 2) or 0)
+    currency_hints = cfg.get("currency_hints") or []
+
+    results: List[Dict[str, Any]] = []
+    for idx in range(max_len):
+        clone = copy.deepcopy(item)
+        for field, tokens in splits.items():
+            token = tokens[idx] if idx < len(tokens) else tokens[-1]
+            token = token.strip()
+            if field in ("sku", "description", "code"):
+                clone[field] = token or clone.get(field)
+                continue
+            if field == "qty":
+                val = _to_decimal(token, thousands=thousands, decimal=decimal_sep, allow_parens=allow_parens)
+                clone["_qty_d"] = val
+                clone["qty"] = _num_out(val) if val is not None else None
+                continue
+            if field in ("unit_price", "amount", "discount_amount"):
+                val = _to_decimal(token, thousands=thousands, decimal=decimal_sep,
+                                  allow_parens=allow_parens, currency_hints=currency_hints)
+                if field == "unit_price":
+                    clone["_unit_price_d"] = val
+                    clone["unit_price"] = _num_out(_round_half_up(val, currency_decimals)) if val is not None else None
+                elif field == "amount":
+                    clone["_amount_d"] = val
+                    clone["amount"] = _num_out(_round_half_up(val, currency_decimals)) if val is not None else None
+                else:  # discount_amount
+                    clone["_discount_amount_d"] = val
+                    clone["discount_amount"] = _num_out(_round_half_up(val, currency_decimals)) if val is not None else None
+                continue
+            # Fallback text field
+            clone[field] = token or clone.get(field)
+        clone.pop("_raw_fields", None)
+        results.append(clone)
+
+    return results
+
+
 def _finalize_amounts_and_validate(items: List[Dict[str, Any]], cfg: Dict[str, Any], notes: List[str]) -> None:
     tolerances = ((cfg.get("tolerances") or {}).get("amount_from_qty_price") or {"abs": 0, "rel": 0})
     abs_tol = Decimal(str(tolerances.get("abs", 0)))
@@ -674,6 +806,7 @@ def _finalize_amounts_and_validate(items: List[Dict[str, Any]], cfg: Dict[str, A
     currency_decimals = int(cfg.get("currency_decimals", 2) or 0)
 
     for it in items:
+        it.pop("_raw_fields", None)
         qty = it.get("_qty_d")
         up = it.get("_unit_price_d")
         amt_src = it.get("_amount_d")
@@ -692,14 +825,15 @@ def _finalize_amounts_and_validate(items: List[Dict[str, Any]], cfg: Dict[str, A
         it["amount"] = _num_out(computed)
 
 
-def _maybe_parse_header_as_row(table: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _maybe_parse_header_as_row(table: Dict[str, Any], cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
     # Convert header_cells into a pseudo-row only when it clearly contains line data
     header_cells = table.get("header_cells") or []
     if not header_cells:
         return []
     header_text = _join_header_texts(header_cells)
-    # Heuristics (config-free): presence of qty/uom token like "6.90/KG" or currency amounts
-    looks_like_line = bool(
+    header_opts = cfg.get("header_row") or {}
+    force_as_row = bool(header_opts.get("as_data", False))
+    looks_like_line = force_as_row or bool(
         _regex_search(r"\b\d+(?:[.,]\d+)?\s*/\s*[A-Za-z]{1,6}\b", header_text) or
         _regex_search(r"\bUSD\b\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?", header_text)
     )
@@ -712,7 +846,7 @@ def _maybe_parse_header_as_row(table: Dict[str, Any]) -> List[Dict[str, Any]]:
             "text": hc.get("text"),
             "text_norm": hc.get("text_norm"),
         })
-    return [{"cells": hdr}]
+    return [{"cells": hdr, "_from_header": True}]
 
 
 def process(input_path: Path, config_path: Path) -> Dict[str, Any]:
@@ -751,12 +885,21 @@ def process(input_path: Path, config_path: Path) -> Dict[str, Any]:
             )
 
         # Try header row as a potential data row first (handles one-row tables)
-        pseudo_rows = _maybe_parse_header_as_row(table)
+        pseudo_rows = _maybe_parse_header_as_row(table, cfg)
         for r in pseudo_rows + (table.get("rows") or []):
             cells = r.get("cells") or []
-            item = _build_item_from_row(cells, colmap, cfg, header_text, field_specs, notes)
+            item = _build_item_from_row(
+                cells,
+                colmap,
+                cfg,
+                header_text,
+                field_specs,
+                notes,
+                from_header=bool(r.get("_from_header"))
+            )
             if item:
-                items.append(item)
+                for expanded in _split_multivalue_item(item, cfg):
+                    items.append(expanded)
 
     # Assign sequential NO if missing
     seq = 1

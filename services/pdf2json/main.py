@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import List
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
+import traceback
 from fastapi.responses import JSONResponse, Response
 
 from processor import (
@@ -131,6 +132,7 @@ async def process_single_pdf(file: UploadFile = File(...), template: str | None 
         return JSONResponse(content=result)
         
     except Exception as e:
+        _log_processing_error("/process", file.filename, pipeline, e)
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
 @app.post("/process-with-artifacts")
@@ -161,6 +163,7 @@ async def process_pdf_with_artifacts_endpoint(file: UploadFile = File(...), temp
         )
         
     except Exception as e:
+        _log_processing_error("/process-with-artifacts", file.filename, pipeline, e)
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
 @app.post("/batch")
@@ -212,3 +215,14 @@ async def process_batch_pdfs(files: List[UploadFile] = File(...)):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+def _log_processing_error(endpoint: str, filename: str, pipeline: str, exc: Exception) -> None:
+    try:
+        log_dir = Path(__file__).resolve().parent
+        log_path = log_dir / "processing_errors.log"
+        with log_path.open("a", encoding="utf-8") as fh:
+            fh.write("=" * 80 + "\n")
+            fh.write(f"endpoint={endpoint} file={filename} pipeline={pipeline}\n")
+            fh.write(traceback.format_exc())
+            fh.write("\n")
+    except Exception:
+        pass
