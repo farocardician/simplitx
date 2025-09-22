@@ -48,6 +48,7 @@ export const GRID_COLUMNS = [
   { key: 'select', label: '', width: 'w-12', align: 'text-center' },
   { key: 'file', label: 'File', width: 'w-2/5', align: '' },
   { key: 'status', label: 'Status', width: 'w-24', align: '' },
+  { key: 'approved', label: 'Approved', width: 'w-24', align: 'text-center' },
   { key: 'mapping', label: 'Mapping', width: 'w-32', align: '' },
   { key: 'size', label: 'Size / Type', width: 'w-32', align: '' },
   { key: 'age', label: 'Age', width: 'w-24', align: '' },

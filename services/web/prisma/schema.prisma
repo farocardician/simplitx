@@ -42,6 +42,8 @@ model Job {
   expiresAt       DateTime? @map("expires_at")
   downloadCount   Int       @default(0) @map("download_count")
   firstDownloadAt DateTime? @map("first_downloaded_at")
+  approved        Boolean   @default(false)
+  approvedAt      DateTime? @map("approved_at")
   
   @@unique([ownerSessionId, sha256, mapping, bytes])
   @@index([status, createdAt(sort: Desc)])
@@ -58,4 +60,46 @@ enum JobStatus {
   complete
   failed
   @@map("job_status")
+}
+
+model Vendor {
+  id              String    @id @default(uuid())
+  name            String    @unique
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  productInfo     ProductInformation[]
+
+  @@map("vendors")
+}
+
+model Uom {
+  code            String    @id // e.g., "UM.0021"
+  name            String    // e.g., "Piece"
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  productInfo     ProductInformation[]
+
+  @@map("uom_codes")
+}
+
+model ProductInformation {
+  id              String    @id @default(uuid())
+  vendorId        String    @map("vendor_id")
+  sku             String?
+  description     String    @db.Text
+  uomCode         String    @map("uom_code")
+  optCode         String    @map("opt_code")
+  hsCode          String    @map("hs_code")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  vendor          Vendor    @relation(fields: [vendorId], references: [id])
+  uom             Uom       @relation(fields: [uomCode], references: [code])
+
+  @@unique([vendorId, sku])
+  @@unique([vendorId, description])
+  @@index([vendorId])
+  @@map("product_information")
 }

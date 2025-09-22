@@ -14,6 +14,8 @@ interface Job {
   error: { code: string; message: string } | null;
   canDownload: boolean;
   hasArtifacts: boolean;
+  approved: boolean;
+  approvedAt: string | null;
 }
 
 interface QueueGridRowProps {
@@ -57,7 +59,18 @@ export function QueueGridRow({
       <td className="px-4 py-3">
         <StatusChip status={job.status} />
       </td>
-      
+
+      {/* Approved */}
+      <td className="px-4 py-3 text-center">
+        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+          job.approved
+            ? 'bg-green-100 text-green-800'
+            : 'bg-gray-100 text-gray-600'
+        }`}>
+          {job.approved ? 'Yes' : 'No'}
+        </span>
+      </td>
+
       {/* Mapping */}
       <td className="px-4 py-3 text-sm text-gray-600">
         {job.mapping}

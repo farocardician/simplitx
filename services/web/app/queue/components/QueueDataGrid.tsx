@@ -12,6 +12,8 @@ interface Job {
   error: { code: string; message: string } | null;
   canDownload: boolean;
   hasArtifacts: boolean;
+  approved: boolean;
+  approvedAt: string | null;
 }
 
 interface QueueDataGridProps {
