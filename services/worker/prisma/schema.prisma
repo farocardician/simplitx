@@ -89,14 +89,14 @@ model ProductInformation {
   vendorId        String    @map("vendor_id")
   sku             String?
   description     String    @db.Text
-  uomCode         String    @map("uom_code")
-  optCode         String    @map("opt_code")
-  hsCode          String    @map("hs_code")
+  uomCode         String?   @map("uom_code")
+  optCode         String?   @map("opt_code")
+  hsCode          String?   @map("hs_code")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   vendor          Vendor    @relation(fields: [vendorId], references: [id])
-  uom             Uom       @relation(fields: [uomCode], references: [code])
+  uom             Uom?      @relation(fields: [uomCode], references: [code])
 
   @@unique([vendorId, sku])
   @@unique([vendorId, description])

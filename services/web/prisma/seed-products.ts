@@ -53,8 +53,8 @@ async function seedProducts() {
           continue;
         }
 
-        // Map UOM to UOM code - try to find existing UOM, otherwise use a default
-        let uomCode = 'UM.0021'; // Default to "Piece"
+        // Map UOM to UOM code - try to find existing UOM, otherwise leave null for MVP
+        let uomCode: string | null = null;
 
         // Try to find matching UOM
         const existingUom = await prisma.uom.findFirst({
@@ -69,7 +69,7 @@ async function seedProducts() {
         if (existingUom) {
           uomCode = existingUom.code;
         } else {
-          console.log(`⚠️ UOM "${uom}" not found, using default: ${uomCode}`);
+          console.log(`⚠️ UOM "${uom}" not found, leaving null for MVP partial data`);
         }
 
         // Create product information record
@@ -79,16 +79,16 @@ async function seedProducts() {
             : { vendorId_description: { vendorId: vendor.id, description } },
           update: {
             uomCode,
-            hsCode,
-            optCode: '1', // Default to item (1), can be adjusted later
+            hsCode: hsCode || null, // Allow null for MVP partial data
+            optCode: '1', // Default to item (1), can be adjusted later or set to null
           },
           create: {
             vendorId: vendor.id,
             sku,
             description,
             uomCode,
-            hsCode,
-            optCode: '1', // Default to item (1), can be adjusted later
+            hsCode: hsCode || null, // Allow null for MVP partial data
+            optCode: '1', // Default to item (1), can be adjusted later or set to null
           },
         });
 
