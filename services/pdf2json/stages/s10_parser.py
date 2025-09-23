@@ -60,8 +60,9 @@ def load_config(p: Path) -> Dict[str, Any]:
     return cfg
 
 
-def persist_to_database(doc_id: str, final_doc: Dict[str, Any], manifest: Dict[str, Any]) -> None:
-    """Persist the parser output to Postgres when DATABASE_URL is configured."""
+def persist_to_database(doc_id: str, final_doc: Dict[str, Any],
+                        manifest: Dict[str, Any], job_id: str = None) -> None:
+    """Persist the parser output to Postgres with optional job_id."""
     if not doc_id:
         return
 
@@ -73,16 +74,19 @@ def persist_to_database(doc_id: str, final_doc: Dict[str, Any], manifest: Dict[s
         import psycopg
         from psycopg.types.json import Json
     except ImportError:
-        print("[s10_parser] psycopg not installed; skipping database persistence", file=sys.stderr)
+        print("[s10_parser] psycopg not installed; skipping database persistence",
+              file=sys.stderr)
         return
 
     try:
         with psycopg.connect(database_url, autocommit=True) as conn:
             with conn.cursor() as cur:
+                # Ensure table has job_id column
                 cur.execute(
                     """
                     CREATE TABLE IF NOT EXISTS parser_results (
                         doc_id TEXT PRIMARY KEY,
+                        job_id TEXT,
                         final JSONB NOT NULL,
                         manifest JSONB NOT NULL,
                         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -90,19 +94,27 @@ def persist_to_database(doc_id: str, final_doc: Dict[str, Any], manifest: Dict[s
                     )
                     """
                 )
+
+                # Insert with job_id (can be None for backward compatibility)
                 cur.execute(
                     """
-                    INSERT INTO parser_results (doc_id, final, manifest)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO parser_results (doc_id, job_id, final, manifest)
+                    VALUES (%s, %s, %s, %s)
                     ON CONFLICT (doc_id) DO UPDATE
-                    SET final = EXCLUDED.final,
+                    SET job_id = EXCLUDED.job_id,
+                        final = EXCLUDED.final,
                         manifest = EXCLUDED.manifest,
                         updated_at = NOW()
                     """,
-                    (doc_id, Json(final_doc), Json(manifest))
+                    (doc_id, job_id, Json(final_doc), Json(manifest))
                 )
+
+                if job_id:
+                    print(f"[s10_parser] Saved results for doc_id={doc_id}, job_id={job_id}")
+
     except Exception as exc:
-        print(f"[s10_parser] failed to persist results for doc_id={doc_id}: {exc}", file=sys.stderr)
+        print(f"[s10_parser] failed to persist results for doc_id={doc_id}: {exc}",
+              file=sys.stderr)
 
 
 def get_nested(data: Any, path: List[str]) -> Any:
@@ -525,11 +537,16 @@ def main():
     final_p.write_text(json.dumps(final, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     manifest_p.write_text(json.dumps(manifest, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
-    persist_to_database(final.get("doc_id"), final, manifest)
+    # Get job_id from environment variable
+    job_id = os.getenv('JOB_ID')
 
-    print(json.dumps({
+    persist_to_database(final.get("doc_id"), final, manifest, job_id=job_id)
+
+    # Include job_id in output for logging
+    output = {
         "stage": "final",
         "doc_id": final["doc_id"],
+        "job_id": job_id,  # Add this
         "items": len(items_out),
         "subtotal": totals["subtotal"],
         "grand_total": totals["grand_total"],
@@ -538,6 +555,7 @@ def main():
         "final": str(final_p),
         "manifest": str(manifest_p),
         "config": str(config_p)
-    }, ensure_ascii=False, separators=(",", ":")))
+    }
+    print(json.dumps(output, ensure_ascii=False, separators=(",", ":")))
 if __name__ == "__main__":
     main()

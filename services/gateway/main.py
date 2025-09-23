@@ -59,7 +59,8 @@ async def unified_process(
     file: UploadFile = File(...),
     mapping: Optional[str] = Form(None),
     template: Optional[str] = Form(None),
-    pretty: str = Form("0")
+    pretty: str = Form("0"),
+    job_id: Optional[str] = Form(None)
 ):
     """Unified endpoint for PDF→JSON, JSON→XML, and PDF→XML conversions"""
     
@@ -123,6 +124,8 @@ async def unified_process(
                 data = {}
                 if template:
                     data["template"] = template
+                if job_id:
+                    data["job_id"] = job_id
                 response = await client.post(f"{PDF2JSON_URL}/process", files=files, data=data)
                 
                 if response.status_code != 200:
@@ -145,6 +148,8 @@ async def unified_process(
                 data = {}
                 if template:
                     data["template"] = template
+                if job_id:
+                    data["job_id"] = job_id
                 pdf_response = await client.post(f"{PDF2JSON_URL}/process", files=files, data=data)
                 
                 if pdf_response.status_code != 200:
@@ -235,7 +240,8 @@ async def process_artifacts(
     request: Request,
     file: UploadFile = File(...),
     mapping: Optional[str] = Form(None),
-    template: Optional[str] = Form(None)
+    template: Optional[str] = Form(None),
+    job_id: Optional[str] = Form(None)
 ):
     """Process PDF and return artifacts as ZIP file"""
     
@@ -267,6 +273,8 @@ async def process_artifacts(
             data = {}
             if template:
                 data["template"] = template
+            if job_id:
+                data["job_id"] = job_id
             response = await client.post(f"{PDF2JSON_URL}/process-with-artifacts", files=files, data=data)
             
             if response.status_code != 200:

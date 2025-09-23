@@ -105,7 +105,7 @@ async def get_templates():
         raise HTTPException(status_code=500, detail=f"Failed to read templates: {str(e)}")
 
 @app.post("/process")
-async def process_single_pdf(file: UploadFile = File(...), template: str | None = Form(None)):
+async def process_single_pdf(file: UploadFile = File(...), template: str | None = Form(None), job_id: str | None = Form(None)):
     """Process a single PDF file and return JSON"""
     
     # Validate file type
@@ -119,8 +119,21 @@ async def process_single_pdf(file: UploadFile = File(...), template: str | None 
         
         # Pick pipeline config (template param or default from env)
         pipeline = template or os.getenv("PIPELINE_CONFIG") or os.getenv("DEFAULT_PIPELINE") or "invoice_pt_simon.json"
-        # Process PDF through pipeline (always config‑driven)
-        processed_data = process_pdf_from_pipeline_config(pdf_bytes, doc_id, pipeline, include_refs=False)
+
+        # Set job_id environment variable if provided
+        original_job_id = os.environ.get("JOB_ID")
+        if job_id:
+            os.environ["JOB_ID"] = job_id
+
+        try:
+            # Process PDF through pipeline (always config‑driven)
+            processed_data = process_pdf_from_pipeline_config(pdf_bytes, doc_id, pipeline, include_refs=False)
+        finally:
+            # Restore original JOB_ID environment variable
+            if original_job_id is not None:
+                os.environ["JOB_ID"] = original_job_id
+            elif "JOB_ID" in os.environ:
+                del os.environ["JOB_ID"]
         
         result = {
             "doc_id": doc_id,
@@ -136,7 +149,7 @@ async def process_single_pdf(file: UploadFile = File(...), template: str | None 
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
 @app.post("/process-with-artifacts")
-async def process_pdf_with_artifacts_endpoint(file: UploadFile = File(...), template: str | None = Form(None)):
+async def process_pdf_with_artifacts_endpoint(file: UploadFile = File(...), template: str | None = Form(None), job_id: str | None = Form(None)):
     """Process a single PDF file and return artifacts as ZIP"""
     
     # Validate file type
@@ -150,8 +163,21 @@ async def process_pdf_with_artifacts_endpoint(file: UploadFile = File(...), temp
         
         # Choose pipeline config
         pipeline = template or os.getenv("PIPELINE_CONFIG") or os.getenv("DEFAULT_PIPELINE") or "invoice_pt_simon.json"
-        # Process PDF through pipeline and get artifacts (always config‑driven)
-        processed_data, zip_bytes = process_pdf_from_pipeline_config_with_artifacts(pdf_bytes, doc_id, pipeline, include_refs=False)
+
+        # Set job_id environment variable if provided
+        original_job_id = os.environ.get("JOB_ID")
+        if job_id:
+            os.environ["JOB_ID"] = job_id
+
+        try:
+            # Process PDF through pipeline and get artifacts (always config‑driven)
+            processed_data, zip_bytes = process_pdf_from_pipeline_config_with_artifacts(pdf_bytes, doc_id, pipeline, include_refs=False)
+        finally:
+            # Restore original JOB_ID environment variable
+            if original_job_id is not None:
+                os.environ["JOB_ID"] = original_job_id
+            elif "JOB_ID" in os.environ:
+                del os.environ["JOB_ID"]
         
         # Return ZIP file with artifacts
         return Response(

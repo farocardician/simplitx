@@ -23,7 +23,7 @@ async function processJob(job) {
     
     // Call gateway
     // job.mapping stores the selected PDF template (frontend passes it as 'template')
-    const xmlContent = await callGateway(pdfPath, job.mapping);
+    const xmlContent = await callGateway(pdfPath, job.mapping, job.id);
     
     // Save XML result
     const resultPath = `results/${job.id}.xml`;
@@ -32,7 +32,7 @@ async function processJob(job) {
     // Fetch and save artifacts
     let artifactPath = null;
     try {
-      const artifactZip = await fetchArtifacts(pdfPath, job.mapping);
+      const artifactZip = await fetchArtifacts(pdfPath, job.mapping, job.id);
       artifactPath = `results/${job.id}-artifacts.zip`;
       await saveResult(artifactPath, artifactZip);
       logger.info(`Job ${job.id} artifacts saved to ${artifactPath}`);
@@ -62,12 +62,18 @@ await prisma.job.update({
   }
 }
 
-async function callGateway(pdfPath, template) {
+async function callGateway(pdfPath, template, jobId) {
   const form = new FormData();
   form.append('file', createReadStream(pdfPath), {
     filename: 'document.pdf',
     contentType: 'application/pdf'
   });
+
+  // Pass job_id to gateway
+  if (jobId) {
+    form.append('job_id', jobId);
+  }
+
   // PDF → JSON should use the selected template (forwarded as 'template')
   if (template) {
     form.append('template', template);
@@ -107,12 +113,18 @@ async function callGateway(pdfPath, template) {
   throw new GatewayError(error.code, error.message, response.status);
 }
 
-async function fetchArtifacts(pdfPath, template) {
+async function fetchArtifacts(pdfPath, template, jobId) {
   const form = new FormData();
   form.append('file', createReadStream(pdfPath), {
     filename: 'document.pdf',
     contentType: 'application/pdf'
   });
+
+  // Pass job_id to gateway
+  if (jobId) {
+    form.append('job_id', jobId);
+  }
+
   if (template) {
     form.append('template', template);
   }
