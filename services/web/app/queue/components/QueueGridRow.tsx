@@ -14,6 +14,7 @@ interface Job {
   error: { code: string; message: string } | null;
   canDownload: boolean;
   hasArtifacts: boolean;
+  canReview?: boolean;
 }
 
 interface QueueGridRowProps {
@@ -88,6 +89,7 @@ export function QueueGridRow({
           onDownloadArtifact={onDownloadArtifact}
           onDelete={onDelete}
           filename={job.filename}
+          canReview={job.canReview}
         />
       </td>
     </tr>

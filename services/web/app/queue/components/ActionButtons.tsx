@@ -6,6 +6,7 @@ interface ActionButtonsProps {
   onDownloadArtifact: (id: string) => void;
   onDelete: (id: string) => void;
   filename: string;
+  canReview?: boolean;
 }
 
 export function ActionButtons({
@@ -15,10 +16,28 @@ export function ActionButtons({
   onDownload,
   onDownloadArtifact,
   onDelete,
-  filename
+  filename,
+  canReview = false
 }: ActionButtonsProps) {
+  const handleReview = () => {
+    window.open(`/review/${jobId}`, '_blank');
+  };
+
   return (
     <div className="flex items-center gap-2">
+      <button
+        onClick={handleReview}
+        disabled={!canReview}
+        className={canReview
+          ? "action-button px-3 py-1.5 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1"
+          : "action-button px-3 py-1.5 text-xs font-semibold text-gray-500 bg-gray-300 rounded-md shadow-sm cursor-not-allowed"
+        }
+        title={canReview ? `Review invoice for ${filename}` : 'Processing not complete'}
+        aria-label={canReview ? `Review invoice for ${filename}` : 'Processing not complete'}
+      >
+        Review
+      </button>
+
       <button
         onClick={() => canDownload ? onDownload(jobId) : undefined}
         disabled={!canDownload}

@@ -64,7 +64,8 @@ export const GET = withSession(async (req: NextRequest, { sessionId }: { session
         message: job.errorMessage
       } : null,
       canDownload: job.status === 'complete',
-      hasArtifacts: job.status === 'complete' && !!job.artifactPath
+      hasArtifacts: job.status === 'complete' && !!job.artifactPath,
+      canReview: job.status === 'complete'
     })),
     activeCount,
     timestamp: new Date().toISOString() // For next incremental fetch
