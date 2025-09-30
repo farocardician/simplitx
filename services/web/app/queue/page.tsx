@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { QueuePageHeader } from './components/QueuePageHeader';
 import { QueueDataGrid } from './components/QueueDataGrid';
 
@@ -26,7 +26,9 @@ export default function QueuePage() {
   const [error, setError] = useState<string | null>(null);
   const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   // Simple polling with direct control
   const intervalRef = useRef<NodeJS.Timeout>();
@@ -93,7 +95,19 @@ export default function QueuePage() {
     }
     setRedirectCountdown(null);
   };
-  
+
+  // Check for success message from review page
+  useEffect(() => {
+    if (searchParams.get('saved') === 'true') {
+      setShowSuccessToast(true);
+      // Auto-hide after 3 seconds
+      const timer = setTimeout(() => {
+        setShowSuccessToast(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     console.log('Queue page mounted, starting polling');
     shouldPollRef.current = true;
@@ -344,6 +358,18 @@ export default function QueuePage() {
           )}
         </div>
       </div>
+
+      {/* Success Toast */}
+      {showSuccessToast && (
+        <div className="fixed bottom-4 right-4 z-50 animate-fade-in">
+          <div className="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium">XML saved.</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

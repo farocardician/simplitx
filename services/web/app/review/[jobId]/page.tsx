@@ -121,6 +121,21 @@ export default function ReviewPage() {
     return errors;
   };
 
+  // Validate all items on initial load
+  useEffect(() => {
+    if (!initialSnapshot || items.length === 0) return;
+
+    const newErrors: Record<number, ItemErrors> = {};
+    items.forEach((item, index) => {
+      const itemErrors = validateItem(item, index);
+      if (Object.keys(itemErrors).length > 0) {
+        newErrors[index] = itemErrors;
+      }
+    });
+
+    setErrors(newErrors);
+  }, [initialSnapshot, items]);
+
   const updateItem = (index: number, field: keyof LineItem, value: any) => {
     setItems(prev => {
       const updated = [...prev];
@@ -189,8 +204,39 @@ export default function ReviewPage() {
   };
 
   const handleSave = async () => {
-    // TODO: Phase E - implement save logic
-    console.log('Save clicked', { invoiceDate, items });
+    try {
+      const response = await fetch(`/api/review/${jobId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          invoice_date: invoiceDate,
+          items: items.map(item => ({
+            description: item.description,
+            qty: item.qty,
+            unit_price: item.unit_price,
+            amount: item.amount,
+            sku: item.sku,
+            hs_code: item.hs_code,
+            uom: item.uom,
+            type: item.type
+          }))
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.error?.message || 'Failed to save XML';
+        throw new Error(errorMessage);
+      }
+
+      // Success - redirect to queue with success message
+      router.push('/queue?saved=true');
+    } catch (err) {
+      console.error('Save error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save XML');
+    }
   };
 
   const formatCurrency = (value: number) => {
