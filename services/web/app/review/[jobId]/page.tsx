@@ -44,6 +44,7 @@ export default function ReviewPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
   const [invoiceDate, setInvoiceDate] = useState('');
   const [items, setItems] = useState<LineItem[]>([]);
@@ -204,6 +205,7 @@ export default function ReviewPage() {
   };
 
   const handleSave = async () => {
+    setSaveError(null); // Clear any previous save errors
     try {
       const response = await fetch(`/api/review/${jobId}`, {
         method: 'POST',
@@ -235,7 +237,7 @@ export default function ReviewPage() {
       router.push('/queue?saved=true');
     } catch (err) {
       console.error('Save error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save XML');
+      setSaveError(err instanceof Error ? err.message : 'Failed to save XML');
     }
   };
 
@@ -330,6 +332,33 @@ export default function ReviewPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Save Error Banner */}
+        {saveError && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg className="w-5 h-5 text-red-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-red-800">Failed to save XML</h3>
+                  <p className="mt-1 text-sm text-red-700">{saveError}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSaveError(null)}
+                className="flex-shrink-0 ml-3 inline-flex text-red-400 hover:text-red-600 focus:outline-none transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Invoice Meta */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
           <div className="flex items-center gap-3">

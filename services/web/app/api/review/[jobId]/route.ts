@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withSession } from '@/lib/session';
 import { buildInvoiceXml } from '@/lib/xmlBuilder';
-import { writeFile } from 'fs/promises';
+import { parseInvoiceXml } from '@/lib/xmlParser';
+import { writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
+import { existsSync } from 'fs';
 
 export const GET = withSession(async (
   req: NextRequest,
@@ -47,7 +49,22 @@ export const GET = withSession(async (
       );
     }
 
-    // Load from parser_results.final (source of truth)
+    // PHASE F: Try reading XML from resultPath first (reflects saved edits)
+    let xmlData = null;
+    if (job.resultPath) {
+      const xmlPath = join(process.cwd(), job.resultPath);
+      if (existsSync(xmlPath)) {
+        try {
+          const xmlContent = await readFile(xmlPath, 'utf-8');
+          xmlData = parseInvoiceXml(xmlContent);
+          console.log(`Loaded saved XML for job ${jobId} from ${job.resultPath}`);
+        } catch (xmlError) {
+          console.warn(`Failed to parse XML for job ${jobId}, falling back to parser_results:`, xmlError);
+        }
+      }
+    }
+
+    // Load from parser_results.final (source of truth for metadata)
     // Try by jobId first, then fallback to original filename
     let parserResult = await prisma.parserResult.findUnique({
       where: { docId: jobId },
@@ -83,6 +100,22 @@ export const GET = withSession(async (
       }
     }
 
+    // PHASE F: If XML was parsed, use it as primary source
+    if (xmlData) {
+      // Merge seller_name from parser_results if available
+      const final = parserResult?.final as any;
+      const sellerName = final?.seller?.name || 'Seller';
+
+      return NextResponse.json({
+        invoice_no: xmlData.invoice_no,
+        seller_name: sellerName,
+        buyer_name: xmlData.buyer_name,
+        invoice_date: xmlData.invoice_date,
+        items: xmlData.items
+      });
+    }
+
+    // Fallback: Use parser_results.final if XML not available
     if (!parserResult) {
       console.error(`No parser_result found for job ${jobId}. Check stage 10 pipeline.`);
       return NextResponse.json(
@@ -248,9 +281,28 @@ export const POST = withSession(async (
 
     // Write to resultPath
     const filePath = join(process.cwd(), job.resultPath);
-    await writeFile(filePath, xmlContent, 'utf-8');
 
-    console.log(`Saved edited XML for job ${jobId} to ${job.resultPath}`);
+    try {
+      await writeFile(filePath, xmlContent, 'utf-8');
+      console.log(`Saved edited XML for job ${jobId} to ${job.resultPath}`);
+    } catch (writeError: any) {
+      console.error('Error writing XML file:', writeError);
+
+      // Provide specific error messages based on error code
+      let errorMessage = 'Failed to write XML file';
+      if (writeError.code === 'EACCES') {
+        errorMessage = 'Permission denied: Cannot write to file';
+      } else if (writeError.code === 'ENOENT') {
+        errorMessage = 'File path does not exist';
+      } else if (writeError.code === 'ENOSPC') {
+        errorMessage = 'Insufficient disk space';
+      }
+
+      return NextResponse.json(
+        { error: { code: 'WRITE_ERROR', message: errorMessage } },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
