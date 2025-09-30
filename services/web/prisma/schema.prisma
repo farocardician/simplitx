@@ -62,3 +62,20 @@ enum JobStatus {
   failed
   @@map("job_status")
 }
+
+model ParserResult {
+  docId     String   @id @map("doc_id")
+  final     Json
+  manifest  Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("parser_results")
+}
+
+model UnitOfMeasure {
+  code String @id
+  name String
+
+  @@map("unit_of_measures")
+}
