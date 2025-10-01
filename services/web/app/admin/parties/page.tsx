@@ -9,6 +9,9 @@ interface Party {
   countryCode: string | null;
   addressFull: string | null;
   email: string | null;
+  buyerDocument: string | null;
+  buyerDocumentNumber: string | null;
+  buyerIdtku: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -359,6 +362,15 @@ export default function PartiesManagementPage() {
                     Email
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Buyer Document
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Buyer Doc Number
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Buyer IDTKU
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Address
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -541,6 +553,21 @@ function PartyRow({
       </td>
       <td className="px-4 py-3">
         <span className="text-sm text-gray-700">
+          {renderCell('buyerDocument', party.buyerDocument)}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <span className="text-sm text-gray-700">
+          {renderCell('buyerDocumentNumber', party.buyerDocumentNumber)}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <code className="text-xs text-gray-600">
+          {renderCell('buyerIdtku', party.buyerIdtku)}
+        </code>
+      </td>
+      <td className="px-4 py-3">
+        <span className="text-sm text-gray-700">
           {renderCell('addressFull', party.addressFull)}
         </span>
       </td>
@@ -572,6 +599,9 @@ function AddPartyForm({
   const [countryCode, setCountryCode] = useState('');
   const [email, setEmail] = useState('');
   const [addressFull, setAddressFull] = useState('');
+  const [buyerDocument, setBuyerDocument] = useState('TIN');
+  const [buyerDocumentNumber, setBuyerDocumentNumber] = useState('');
+  const [buyerIdtku, setBuyerIdtku] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const displayNameRef = useRef<HTMLInputElement>(null);
@@ -595,7 +625,10 @@ function AddPartyForm({
         tinDisplay: tinDisplay.trim(),
         countryCode: countryCode.trim() || null,
         email: email.trim() || null,
-        addressFull: addressFull.trim() || null
+        addressFull: addressFull.trim() || null,
+        buyerDocument: buyerDocument.trim() || null,
+        buyerDocumentNumber: buyerDocumentNumber.trim() || null,
+        buyerIdtku: buyerIdtku.trim() || null
       });
 
       // Reset form
@@ -604,6 +637,9 @@ function AddPartyForm({
       setCountryCode('');
       setEmail('');
       setAddressFull('');
+      setBuyerDocument('TIN');
+      setBuyerDocumentNumber('');
+      setBuyerIdtku('');
     } catch (err) {
       // Error handled by parent
     } finally {
@@ -701,6 +737,53 @@ function AddPartyForm({
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             maxLength={1000}
           />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="buyer-document" className="block text-sm font-medium text-gray-700 mb-1">
+              Buyer Document
+            </label>
+            <input
+              id="buyer-document"
+              type="text"
+              value={buyerDocument}
+              onChange={(e) => setBuyerDocument(e.target.value)}
+              placeholder="TIN"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              maxLength={50}
+            />
+            <p className="text-xs text-gray-500 mt-1">Defaults to "TIN", can be edited or cleared</p>
+          </div>
+          <div>
+            <label htmlFor="buyer-document-number" className="block text-sm font-medium text-gray-700 mb-1">
+              Buyer Document Number
+            </label>
+            <input
+              id="buyer-document-number"
+              type="text"
+              value={buyerDocumentNumber}
+              onChange={(e) => setBuyerDocumentNumber(e.target.value)}
+              placeholder="Optional"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              maxLength={100}
+            />
+          </div>
+          <div>
+            <label htmlFor="buyer-idtku" className="block text-sm font-medium text-gray-700 mb-1">
+              Buyer IDTKU
+            </label>
+            <input
+              id="buyer-idtku"
+              type="text"
+              value={buyerIdtku}
+              onChange={(e) => setBuyerIdtku(e.target.value)}
+              placeholder="Auto-calculated from TIN"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              maxLength={100}
+            />
+            <p className="text-xs text-gray-500 mt-1">Leave empty to auto-calculate (TIN + 000000)</p>
+          </div>
         </div>
 
         <div className="flex gap-3">

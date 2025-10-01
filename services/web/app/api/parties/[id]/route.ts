@@ -21,6 +21,9 @@ export async function PUT(
       countryCode,
       addressFull,
       email,
+      buyerDocument,
+      buyerDocumentNumber,
+      buyerIdtku,
       updatedBy,
       updatedAt: clientUpdatedAt // For optimistic concurrency
     } = body;
@@ -210,6 +213,9 @@ export async function PUT(
         countryCode: countryCode || null,
         addressFull: addressFull || null,
         email: email || null,
+        buyerDocument: buyerDocument !== undefined ? buyerDocument : undefined,
+        buyerDocumentNumber: buyerDocumentNumber !== undefined ? buyerDocumentNumber : undefined,
+        buyerIdtku: buyerIdtku !== undefined ? buyerIdtku : undefined,
         updatedBy: updatedBy || null
       }
     });

@@ -55,6 +55,9 @@ export async function GET(req: NextRequest) {
           countryCode: true,
           addressFull: true,
           email: true,
+          buyerDocument: true,
+          buyerDocumentNumber: true,
+          buyerIdtku: true,
           createdAt: true,
           updatedAt: true
         },
@@ -89,7 +92,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { displayName, tinDisplay, countryCode, addressFull, email, createdBy } = body;
+    const { displayName, tinDisplay, countryCode, addressFull, email, buyerDocument, buyerDocumentNumber, buyerIdtku, createdBy } = body;
 
     // Validate required fields
     if (!displayName || !tinDisplay) {
@@ -239,6 +242,9 @@ export async function POST(req: NextRequest) {
         countryCode: countryCode || null,
         addressFull: addressFull || null,
         email: email || null,
+        buyerDocument: buyerDocument || null, // Defaults to 'TIN' in DB
+        buyerDocumentNumber: buyerDocumentNumber || null,
+        buyerIdtku: buyerIdtku || null, // Will be auto-calculated if null
         createdBy: createdBy || null
       }
     });
