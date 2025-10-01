@@ -310,7 +310,9 @@ export default function ReviewPage() {
                 <span className="mx-2 text-gray-400">•</span>
                 <span>{invoiceData.seller_name}</span>
                 <span className="mx-2 text-gray-400">→</span>
-                <span>{invoiceData.buyer_name}</span>
+                <a href="/admin/parties" target="_blank" className="text-blue-600 hover:text-blue-700 hover:underline">
+                  {invoiceData.buyer_name}
+                </a>
               </p>
             </div>
             <div className="flex items-center gap-2 ml-4">
@@ -496,7 +498,9 @@ export default function ReviewPage() {
                     {/* UOM */}
                     <div className="col-span-3">
                       <label className="block text-xs font-medium text-gray-600 mb-1">
-                        UOM <span className="text-red-500">*</span>
+                        <a href="/admin/uom" target="_blank" className="text-blue-600 hover:text-blue-700 hover:underline">
+                          UOM
+                        </a> <span className="text-red-500">*</span>
                       </label>
                       <select
                         value={item.uom}
