@@ -74,8 +74,20 @@ model ParserResult {
 }
 
 model UnitOfMeasure {
-  code String @id
-  name String
+  code    String     @id
+  name    String
+  aliases UomAlias[]
 
   @@map("unit_of_measures")
+}
+
+model UomAlias {
+  alias     String        @id
+  uomCode   String        @map("uom_code")
+  uom       UnitOfMeasure @relation(fields: [uomCode], references: [code], onDelete: Cascade)
+  isPrimary Boolean       @default(false) @map("is_primary")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@index([uomCode])
+  @@map("uom_aliases")
 }
