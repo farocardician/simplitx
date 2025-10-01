@@ -102,16 +102,25 @@ export const GET = withSession(async (
 
     // PHASE F: If XML was parsed, use it as primary source
     if (xmlData) {
-      // Merge seller_name from parser_results if available
+      // Merge seller_name and SKU from parser_results if available
       const final = parserResult?.final as any;
       const sellerName = final?.seller?.name || 'Seller';
+
+      // Merge SKU from parser_results (SKU not stored in XML)
+      const mergedItems = xmlData.items.map((xmlItem: any, index: number) => {
+        const originalItem = final?.items?.[index];
+        return {
+          ...xmlItem,
+          sku: originalItem?.sku || xmlItem.sku || ''
+        };
+      });
 
       return NextResponse.json({
         invoice_no: xmlData.invoice_no,
         seller_name: sellerName,
         buyer_name: xmlData.buyer_name,
         invoice_date: xmlData.invoice_date,
-        items: xmlData.items
+        items: mergedItems
       });
     }
 

@@ -33,7 +33,7 @@
             "Opt": "A",
             "Code": {"path": "$.hs_code", "compute": "hs_code_to_full"},
             "Name": "$.description",
-            "Unit": "UM.0018",
+            "Unit": "$.uom",
             "Price": {"path": "$.unit_price", "format": {"type": "decimal", "scale": 2}},
             "Qty": "$.qty",
             "TotalDiscount": "0",

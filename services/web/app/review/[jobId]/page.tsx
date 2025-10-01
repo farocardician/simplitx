@@ -295,63 +295,82 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gray-50">
       {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-3">
+          {/* Top Row */}
+          <div className="flex items-center justify-between mb-2">
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-semibold text-gray-900 truncate">
+              <h1 className="text-base font-semibold text-gray-900 truncate">
                 Review Invoice
               </h1>
               <p className="text-sm text-gray-600 truncate">
                 <span className="font-medium">{invoiceData.invoice_no}</span>
-                <span className="mx-2">•</span>
+                <span className="mx-2 text-gray-400">•</span>
                 <span>{invoiceData.seller_name}</span>
-                <span className="mx-1">→</span>
+                <span className="mx-2 text-gray-400">→</span>
                 <span>{invoiceData.buyer_name}</span>
               </p>
             </div>
-            <div className="flex items-center gap-3 ml-4">
+            <div className="flex items-center gap-2 ml-4">
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={!isDirty || hasErrors}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-300"
+                className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 Save XML
               </button>
             </div>
           </div>
+
+          {/* Bottom Row - Invoice Date and Total */}
+          <div className="flex items-center gap-6 pt-2 border-t">
+            <div className="flex items-center gap-2">
+              <label htmlFor="invoice-date" className="text-xs font-medium text-gray-600">
+                Invoice Date
+              </label>
+              <input
+                id="invoice-date"
+                type="date"
+                value={invoiceDate}
+                onChange={(e) => setInvoiceDate(e.target.value)}
+                className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-xs font-medium text-gray-600">Total Amount</span>
+              <span className="text-base font-bold text-gray-900">{formatCurrency(totalAmount)}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Save Error Banner */}
         {saveError && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-3">
             <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <svg className="w-5 h-5 text-red-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 <div className="flex-1">
-                  <h3 className="text-sm font-medium text-red-800">Failed to save XML</h3>
-                  <p className="mt-1 text-sm text-red-700">{saveError}</p>
+                  <h3 className="text-xs font-medium text-red-800">Failed to save XML</h3>
+                  <p className="mt-0.5 text-xs text-red-700">{saveError}</p>
                 </div>
               </div>
               <button
                 onClick={() => setSaveError(null)}
-                className="flex-shrink-0 ml-3 inline-flex text-red-400 hover:text-red-600 focus:outline-none transition-colors"
+                className="flex-shrink-0 ml-2 text-red-400 hover:text-red-600 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -359,35 +378,15 @@ export default function ReviewPage() {
           </div>
         )}
 
-        {/* Invoice Meta */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
-          <div className="flex items-center gap-3">
-            <label htmlFor="invoice-date" className="text-sm font-medium text-gray-700 whitespace-nowrap">
-              Invoice Date
-            </label>
-            <input
-              id="invoice-date"
-              type="date"
-              value={invoiceDate}
-              onChange={(e) => setInvoiceDate(e.target.value)}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
-            />
-            <div className="ml-auto text-right">
-              <div className="text-xs text-gray-500 mb-0.5">Total Amount</div>
-              <div className="text-lg font-semibold text-gray-900">{formatCurrency(totalAmount)}</div>
-            </div>
-          </div>
-        </div>
-
         {/* Line Items Header */}
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-700">
-            Line Items <span className="text-gray-400 font-normal">({items.length})</span>
+          <h2 className="text-sm font-medium text-gray-700">
+            Line Items <span className="text-gray-500 font-normal">({items.length})</span>
           </h2>
         </div>
 
-        {/* Line Items Grid */}
-        <div className="space-y-3 mb-6">
+        {/* Line Items */}
+        <div className="space-y-2 mb-6">
           {items.map((item, index) => {
             const itemErrors = errors[index] || {};
             const hasItemErrors = Object.keys(itemErrors).length > 0;
@@ -395,85 +394,68 @@ export default function ReviewPage() {
             return (
               <div
                 key={index}
-                className={`bg-white rounded-xl shadow-sm border transition-all duration-150 overflow-hidden ${
+                className={`bg-white rounded-lg border transition-colors ${
                   hasItemErrors ? 'border-red-300' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                {/* Card Header */}
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-2.5 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-semibold text-gray-600 bg-white rounded-full border border-gray-300">
-                        {item.no || index + 1}
-                      </span>
+                <div className="p-3">
+                  {/* Header Row - Item Number and Amount */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-medium text-gray-500">
+                      #{item.no || index + 1}
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {formatCurrency(item.amount)}
+                    </span>
+                  </div>
 
-                      {/* Type chips */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => updateItem(index, 'type', 'Barang')}
-                          className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors ${
-                            item.type === 'Barang'
-                              ? 'bg-blue-600 text-white border border-blue-600'
-                              : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          Barang
-                        </button>
-                        <button
-                          onClick={() => updateItem(index, 'type', 'Jasa')}
-                          className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors ${
-                            item.type === 'Jasa'
-                              ? 'bg-green-600 text-white border border-green-600'
-                              : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          Jasa
-                        </button>
-                      </div>
-                      {itemErrors.type && (
-                        <span className="text-xs text-red-600">{itemErrors.type}</span>
+                  {/* Main Row - Description, SKU, Qty, Unit Price */}
+                  <div className="grid grid-cols-12 gap-2 mb-2">
+                    {/* Description */}
+                    <div className="col-span-5">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Description <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={item.description}
+                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                        placeholder="Item description"
+                        className={`w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-1 ${
+                          itemErrors.description
+                            ? 'border-red-300 focus:ring-red-500'
+                            : 'border-gray-300 focus:ring-blue-500'
+                        }`}
+                      />
+                      {itemErrors.description && (
+                        <p className="mt-0.5 text-xs text-red-600">{itemErrors.description}</p>
                       )}
                     </div>
-                    <div className="text-sm font-semibold text-gray-900">
-                      {formatCurrency(item.amount)}
+
+                    {/* SKU (optional) */}
+                    <div className="col-span-3">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        SKU <span className="text-gray-400">(optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={item.sku || ''}
+                        onChange={(e) => updateItem(index, 'sku', e.target.value)}
+                        placeholder="SKU"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
                     </div>
-                  </div>
-                </div>
 
-                {/* Card Body */}
-                <div className="px-4 py-3 space-y-3">
-                  {/* Description */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Description <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={item.description}
-                      onChange={(e) => updateItem(index, 'description', e.target.value)}
-                      className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
-                        itemErrors.description
-                          ? 'border-red-300 focus:ring-red-500'
-                          : 'border-gray-300 focus:ring-blue-500'
-                      }`}
-                    />
-                    {itemErrors.description && (
-                      <p className="mt-1 text-xs text-red-600">{itemErrors.description}</p>
-                    )}
-                  </div>
-
-                  {/* Fields Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                    {/* Quantity */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                    {/* Qty */}
+                    <div className="col-span-2">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
                         Qty <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
                         value={item.qty}
                         onChange={(e) => updateItem(index, 'qty', parseFloat(e.target.value) || 0)}
-                        className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
+                        className={`w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-1 ${
                           itemErrors.qty
                             ? 'border-red-300 focus:ring-red-500'
                             : 'border-gray-300 focus:ring-blue-500'
@@ -482,20 +464,20 @@ export default function ReviewPage() {
                         step="any"
                       />
                       {itemErrors.qty && (
-                        <p className="mt-1 text-xs text-red-600">{itemErrors.qty}</p>
+                        <p className="mt-0.5 text-xs text-red-600">{itemErrors.qty}</p>
                       )}
                     </div>
 
                     {/* Unit Price */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <div className="col-span-2">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
                         Unit Price <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
                         value={item.unit_price}
                         onChange={(e) => updateItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                        className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
+                        className={`w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-1 ${
                           itemErrors.unit_price
                             ? 'border-red-300 focus:ring-red-500'
                             : 'border-gray-300 focus:ring-blue-500'
@@ -504,19 +486,22 @@ export default function ReviewPage() {
                         step="any"
                       />
                       {itemErrors.unit_price && (
-                        <p className="mt-1 text-xs text-red-600">{itemErrors.unit_price}</p>
+                        <p className="mt-0.5 text-xs text-red-600">{itemErrors.unit_price}</p>
                       )}
                     </div>
+                  </div>
 
+                  {/* Second Row - UOM, HS Code, Type */}
+                  <div className="grid grid-cols-12 gap-2">
                     {/* UOM */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <div className="col-span-3">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
                         UOM <span className="text-red-500">*</span>
                       </label>
                       <select
                         value={item.uom}
                         onChange={(e) => updateItem(index, 'uom', e.target.value)}
-                        className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
+                        className={`w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-1 ${
                           itemErrors.uom
                             ? 'border-red-300 focus:ring-red-500'
                             : 'border-gray-300 focus:ring-blue-500'
@@ -530,55 +515,62 @@ export default function ReviewPage() {
                         ))}
                       </select>
                       {itemErrors.uom && (
-                        <p className="mt-1 text-xs text-red-600">{itemErrors.uom}</p>
+                        <p className="mt-0.5 text-xs text-red-600">{itemErrors.uom}</p>
                       )}
                     </div>
 
                     {/* HS Code */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <div className="col-span-3">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
                         HS Code <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={item.hs_code}
                         onChange={(e) => updateItem(index, 'hs_code', e.target.value)}
-                        className={`w-full px-3 py-2 text-sm font-mono border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
+                        placeholder="000000"
+                        className={`w-full px-2 py-1.5 text-sm font-mono border rounded focus:outline-none focus:ring-1 ${
                           itemErrors.hs_code
                             ? 'border-red-300 focus:ring-red-500'
                             : 'border-gray-300 focus:ring-blue-500'
                         }`}
                       />
                       {itemErrors.hs_code && (
-                        <p className="mt-1 text-xs text-red-600">{itemErrors.hs_code}</p>
+                        <p className="mt-0.5 text-xs text-red-600">{itemErrors.hs_code}</p>
                       )}
                     </div>
 
-                    {/* Amount (read-only) */}
-                    <div>
-                      <label className="block text-xs font-medium text-blue-600 mb-1">
-                        Amount
+                    {/* Type chips */}
+                    <div className="col-span-3">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Type <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
-                        value={formatCurrency(item.amount)}
-                        readOnly
-                        className="w-full px-3 py-2 text-sm font-semibold text-blue-900 bg-blue-50 border border-blue-100 rounded-lg"
-                      />
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => updateItem(index, 'type', 'Barang')}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                            item.type === 'Barang'
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          Barang
+                        </button>
+                        <button
+                          onClick={() => updateItem(index, 'type', 'Jasa')}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                            item.type === 'Jasa'
+                              ? 'bg-green-600 text-white shadow-sm'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          Jasa
+                        </button>
+                      </div>
+                      {itemErrors.type && (
+                        <p className="mt-0.5 text-xs text-red-600">{itemErrors.type}</p>
+                      )}
                     </div>
-                  </div>
-
-                  {/* SKU (optional) */}
-                  <div className="max-w-xs">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      SKU (optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={item.sku || ''}
-                      onChange={(e) => updateItem(index, 'sku', e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
-                    />
                   </div>
                 </div>
               </div>
