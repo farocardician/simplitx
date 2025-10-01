@@ -7,6 +7,22 @@ import { writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import { createUomResolverSnapshot } from '@/lib/uomResolver';
+import { resolveBuyerParty, validateBuyerPartyId, type ResolvedParty, type CandidateParty } from '@/lib/partyResolver';
+import { auditResolutionAttempt } from '@/lib/auditLogger';
+
+function normalizeType(raw: unknown): 'Barang' | 'Jasa' {
+  if (raw === null || raw === undefined) {
+    return 'Barang';
+  }
+
+  const value = String(raw).trim().toUpperCase();
+
+  if (value === 'JASA' || value === 'J' || value === 'B') {
+    return 'Jasa';
+  }
+
+  return 'Barang';
+}
 
 export const GET = withSession(async (
   req: NextRequest,
@@ -23,7 +39,11 @@ export const GET = withSession(async (
         id: true,
         ownerSessionId: true,
         status: true,
-        resultPath: true
+        resultPath: true,
+        buyerPartyId: true,
+        buyerResolutionStatus: true,
+        buyerResolutionConfidence: true,
+        buyerResolutionDecidedAt: true
       }
     });
 
@@ -134,6 +154,7 @@ export const GET = withSession(async (
 
           return {
             ...xmlItem,
+            type: normalizeType(xmlItem.type),
             sku: originalItem?.sku || xmlItem.sku || '',
             uom: canonical,
             uom_raw: rawUom || null,
@@ -143,12 +164,78 @@ export const GET = withSession(async (
         })
       );
 
+      // BUYER RESOLUTION: Check if buyer already resolved (locked)
+      let buyerResolved: ResolvedParty | null = null;
+      let buyerCandidates: CandidateParty[] = [];
+      let buyerResolutionStatus: string = 'unresolved';
+      let buyerUnresolved = true;
+      let buyerResolutionConfidence: number | null = null;
+
+      if (job.buyerPartyId) {
+        // Buyer already resolved - validate it still exists
+        buyerResolved = await validateBuyerPartyId(job.buyerPartyId);
+
+        if (!buyerResolved) {
+          return NextResponse.json(
+            { error: { code: 'PARTY_DELETED', message: 'Resolved buyer party was deleted, requires re-resolution' } },
+            { status: 410 }
+          );
+        }
+
+        buyerResolutionStatus = 'locked';
+        buyerUnresolved = false;
+        buyerResolutionConfidence = job.buyerResolutionConfidence || 1.0;
+
+        auditResolutionAttempt(jobId, 'locked', buyerResolutionConfidence, 0, false);
+      } else {
+        // Run buyer resolution
+        const buyerName = xmlData.buyer_name || 'Buyer';
+        const resolutionResult = await resolveBuyerParty(buyerName);
+
+        if (resolutionResult.status === 'resolved') {
+          buyerResolved = resolutionResult.party;
+          buyerResolutionStatus = 'auto';
+          buyerUnresolved = false;
+          buyerResolutionConfidence = resolutionResult.confidence;
+
+          auditResolutionAttempt(jobId, 'resolved', resolutionResult.confidence, 0, false);
+        } else if (resolutionResult.status === 'candidates') {
+          buyerCandidates = resolutionResult.candidates;
+          buyerResolutionStatus = 'pending_confirmation';
+          buyerUnresolved = true;
+          buyerResolutionConfidence = resolutionResult.topConfidence;
+
+          auditResolutionAttempt(jobId, 'candidates', resolutionResult.topConfidence, resolutionResult.candidates.length, false);
+        } else if (resolutionResult.status === 'unresolved') {
+          buyerCandidates = resolutionResult.candidates;
+          buyerResolutionStatus = 'pending_selection';
+          buyerUnresolved = true;
+
+          auditResolutionAttempt(jobId, 'unresolved', null, resolutionResult.candidates.length, false);
+        } else if (resolutionResult.status === 'conflict') {
+          return NextResponse.json(
+            { error: { code: 'NAME_COLLISION', message: 'Name collision detected, requires manual resolution' } },
+            { status: 409 }
+          );
+        } else if (resolutionResult.status === 'data_error') {
+          return NextResponse.json(
+            { error: { code: 'DATA_ERROR', message: resolutionResult.message } },
+            { status: 500 }
+          );
+        }
+      }
+
       return NextResponse.json({
         invoice_no: xmlData.invoice_no,
         seller_name: sellerName,
         buyer_name: xmlData.buyer_name,
         invoice_date: xmlData.invoice_date,
-        items: mergedItems
+        items: mergedItems,
+        buyer_resolved: buyerResolved,
+        buyer_candidates: buyerCandidates,
+        buyer_resolution_status: buyerResolutionStatus,
+        buyer_unresolved: buyerUnresolved,
+        buyer_resolution_confidence: buyerResolutionConfidence
       });
     }
 
@@ -203,17 +290,83 @@ export const GET = withSession(async (
           uom_raw: rawUom || null,  // Original parsed value
           uom_resolved: resolved,   // Explicit state
           uom_warning: warning,     // Explicit error
-          type: item.type || 'Barang' as const
+          type: normalizeType(item.type)
         };
       })
     );
+
+    // BUYER RESOLUTION: Check if buyer already resolved (locked)
+    let buyerResolved: ResolvedParty | null = null;
+    let buyerCandidates: CandidateParty[] = [];
+    let buyerResolutionStatus: string = 'unresolved';
+    let buyerUnresolved = true;
+    let buyerResolutionConfidence: number | null = null;
+
+    if (job.buyerPartyId) {
+      // Buyer already resolved - validate it still exists
+      buyerResolved = await validateBuyerPartyId(job.buyerPartyId);
+
+      if (!buyerResolved) {
+        return NextResponse.json(
+          { error: { code: 'PARTY_DELETED', message: 'Resolved buyer party was deleted, requires re-resolution' } },
+          { status: 410 }
+        );
+      }
+
+      buyerResolutionStatus = 'locked';
+      buyerUnresolved = false;
+      buyerResolutionConfidence = job.buyerResolutionConfidence || 1.0;
+
+      auditResolutionAttempt(jobId, 'locked', buyerResolutionConfidence, 0, false);
+    } else {
+      // Run buyer resolution
+      const buyerName = final.buyer?.name || 'Buyer';
+      const resolutionResult = await resolveBuyerParty(buyerName);
+
+      if (resolutionResult.status === 'resolved') {
+        buyerResolved = resolutionResult.party;
+        buyerResolutionStatus = 'auto';
+        buyerUnresolved = false;
+        buyerResolutionConfidence = resolutionResult.confidence;
+
+        auditResolutionAttempt(jobId, 'resolved', resolutionResult.confidence, 0, false);
+      } else if (resolutionResult.status === 'candidates') {
+        buyerCandidates = resolutionResult.candidates;
+        buyerResolutionStatus = 'pending_confirmation';
+        buyerUnresolved = true;
+        buyerResolutionConfidence = resolutionResult.topConfidence;
+
+        auditResolutionAttempt(jobId, 'candidates', resolutionResult.topConfidence, resolutionResult.candidates.length, false);
+      } else if (resolutionResult.status === 'unresolved') {
+        buyerCandidates = resolutionResult.candidates;
+        buyerResolutionStatus = 'pending_selection';
+        buyerUnresolved = true;
+
+        auditResolutionAttempt(jobId, 'unresolved', null, resolutionResult.candidates.length, false);
+      } else if (resolutionResult.status === 'conflict') {
+        return NextResponse.json(
+          { error: { code: 'NAME_COLLISION', message: 'Name collision detected, requires manual resolution' } },
+          { status: 409 }
+        );
+      } else if (resolutionResult.status === 'data_error') {
+        return NextResponse.json(
+          { error: { code: 'DATA_ERROR', message: resolutionResult.message } },
+          { status: 500 }
+        );
+      }
+    }
 
     return NextResponse.json({
       invoice_no: final.invoice?.number || final.invoice_no || '',
       seller_name: final.seller?.name || 'Seller',
       buyer_name: final.buyer?.name || 'Buyer',
       invoice_date: final.invoice?.date || final.invoice_date || '',
-      items
+      items,
+      buyer_resolved: buyerResolved,
+      buyer_candidates: buyerCandidates,
+      buyer_resolution_status: buyerResolutionStatus,
+      buyer_unresolved: buyerUnresolved,
+      buyer_resolution_confidence: buyerResolutionConfidence
     });
 
   } catch (error) {
@@ -235,7 +388,7 @@ export const POST = withSession(async (
   try {
     // Parse request body
     const body = await req.json();
-    const { invoice_date, items } = body;
+    const { invoice_date, items, buyer_party_id } = body;
 
     if (!invoice_date || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -251,7 +404,11 @@ export const POST = withSession(async (
         id: true,
         ownerSessionId: true,
         status: true,
-        resultPath: true
+        resultPath: true,
+        buyerPartyId: true,
+        buyerResolutionStatus: true,
+        buyerResolutionConfidence: true,
+        updatedAt: true
       }
     });
 
@@ -322,6 +479,77 @@ export const POST = withSession(async (
 
     const original = parserResult.final as any;
 
+    // BUYER RESOLUTION VALIDATION: Ensure buyer is resolved before generating XML
+    let buyerResolved: ResolvedParty | null = null;
+    let buyerPartyIdToSave = buyer_party_id || job.buyerPartyId;
+    let buyerConfidence: number | null = null;
+    let buyerStatus: string | null = null;
+
+    if (buyerPartyIdToSave) {
+      // Validate buyer party exists
+      buyerResolved = await validateBuyerPartyId(buyerPartyIdToSave);
+
+      if (!buyerResolved) {
+        return NextResponse.json(
+          { error: { code: 'INVALID_BUYER_PARTY', message: 'Selected buyer party not found or has been deleted' } },
+          { status: 400 }
+        );
+      }
+
+      // Determine status and confidence
+      if (buyer_party_id && buyer_party_id !== job.buyerPartyId) {
+        // User manually selected/changed buyer
+        buyerStatus = 'confirmed';
+        buyerConfidence = 0.85; // Manual selection
+      } else if (job.buyerPartyId) {
+        // Reusing existing resolution
+        buyerStatus = job.buyerResolutionStatus || 'confirmed';
+        buyerConfidence = job.buyerResolutionConfidence || 1.0;
+      } else {
+        // First-time save with auto-resolved buyer
+        buyerStatus = 'auto';
+        buyerConfidence = 1.0;
+      }
+    } else {
+      // No buyer party selected - check if resolution is required
+      const buyerName = original.buyer?.name || 'Buyer';
+      const resolutionResult = await resolveBuyerParty(buyerName);
+
+      if (resolutionResult.status === 'resolved') {
+        // Auto-resolved - use it
+        buyerResolved = resolutionResult.party;
+        buyerPartyIdToSave = buyerResolved.id;
+        buyerConfidence = resolutionResult.confidence;
+        buyerStatus = 'auto';
+      } else {
+        // Buyer must be manually resolved before saving
+        return NextResponse.json(
+          { error: { code: 'BUYER_UNRESOLVED', message: 'Buyer must be resolved before saving XML. Please select a buyer from the dropdown.' } },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Update job with buyer resolution
+    await prisma.job.update({
+      where: { id: jobId },
+      data: {
+        buyerPartyId: buyerPartyIdToSave,
+        buyerResolutionStatus: buyerStatus,
+        buyerResolutionConfidence: buyerConfidence,
+        buyerResolutionDecidedAt: new Date()
+      }
+    });
+
+    // Audit log the confirmation
+    const { auditResolutionConfirmation } = await import('@/lib/auditLogger');
+    auditResolutionConfirmation(
+      jobId,
+      buyerPartyIdToSave!,
+      buyerConfidence!,
+      buyer_party_id !== job.buyerPartyId
+    );
+
     // Merge edited data with original metadata
     const mergedData = {
       ...original,
@@ -337,14 +565,14 @@ export const POST = withSession(async (
         sku: item.sku || '',
         hs_code: item.hs_code,
         uom: item.uom,
-        type: item.type
+        type: normalizeType(item.type)
       }))
     };
 
-    // Transform to XML (with UOM validation)
+    // Transform to XML (with UOM and buyer validation)
     let xmlContent: string;
     try {
-      xmlContent = await buildInvoiceXml(mergedData);
+      xmlContent = await buildInvoiceXml(mergedData, buyerResolved!);
     } catch (xmlError: any) {
       console.error('Error building XML:', xmlError);
       return NextResponse.json(

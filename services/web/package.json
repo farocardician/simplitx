@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "@prisma/client": "^6.14.0",
+    "@types/string-similarity": "^4.0.2",
     "archiver": "^7.0.1",
     "date-fns": "^3.0.0",
     "next": "^14.0.0",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "string-similarity": "^4.0.4"
   },
   "devDependencies": {
     "@types/archiver": "^6.0.2",

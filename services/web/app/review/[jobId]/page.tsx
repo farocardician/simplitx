@@ -15,12 +15,33 @@ interface LineItem {
   type: 'Barang' | 'Jasa';
 }
 
+interface ResolvedParty {
+  id: string;
+  displayName: string;
+  tinDisplay: string;
+  countryCode: string | null;
+  addressFull: string | null;
+  email: string | null;
+  buyerDocument: string | null;
+  buyerDocumentNumber: string | null;
+  buyerIdtku: string | null;
+}
+
+interface CandidateParty extends ResolvedParty {
+  confidence: number;
+}
+
 interface InvoiceData {
   invoice_no: string;
   seller_name: string;
   buyer_name: string;
   invoice_date: string;
   items: LineItem[];
+  buyer_resolved?: ResolvedParty | null;
+  buyer_candidates?: CandidateParty[];
+  buyer_resolution_status?: string;
+  buyer_unresolved?: boolean;
+  buyer_resolution_confidence?: number | null;
 }
 
 interface UOM {
@@ -59,6 +80,7 @@ export default function ReviewPage() {
     itemIndex: number;
     uomCode: string;
   } | null>(null);
+  const [selectedBuyerPartyId, setSelectedBuyerPartyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!jobId) return;
@@ -264,6 +286,23 @@ export default function ReviewPage() {
     return Object.values(errors).some(itemErrors => Object.keys(itemErrors).length > 0);
   }, [errors]);
 
+  // Check if buyer is unresolved
+  const buyerUnresolved = useMemo(() => {
+    if (!invoiceData) return false;
+    return invoiceData.buyer_unresolved && !selectedBuyerPartyId;
+  }, [invoiceData, selectedBuyerPartyId]);
+
+  // Check if buyer selection has changed
+  const buyerSelectionChanged = useMemo(() => {
+    if (!invoiceData) return false;
+    // If buyer was unresolved and user selected one
+    if (invoiceData.buyer_unresolved && selectedBuyerPartyId) return true;
+    // If buyer was resolved and user changed it
+    if (invoiceData.buyer_resolved && selectedBuyerPartyId &&
+        invoiceData.buyer_resolved.id !== selectedBuyerPartyId) return true;
+    return false;
+  }, [invoiceData, selectedBuyerPartyId]);
+
   const handleCancel = () => {
     router.push('/queue');
   };
@@ -287,7 +326,8 @@ export default function ReviewPage() {
             hs_code: item.hs_code,
             uom: item.uom,
             type: item.type
-          }))
+          })),
+          buyer_party_id: selectedBuyerPartyId
         })
       });
 
@@ -388,7 +428,7 @@ export default function ReviewPage() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={!isDirty || hasErrors}
+                disabled={(!isDirty && !buyerSelectionChanged) || hasErrors || buyerUnresolved}
                 className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 Save XML
@@ -440,6 +480,81 @@ export default function ReviewPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Buyer Resolution Section */}
+        {invoiceData && invoiceData.buyer_resolution_status && (
+          <div className="mb-4 bg-white border rounded-lg p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                {invoiceData.buyer_resolution_status === 'auto' && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                    ✓ Auto-matched
+                  </span>
+                )}
+                {invoiceData.buyer_resolution_status === 'locked' && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                    🔒 Confirmed
+                  </span>
+                )}
+                {invoiceData.buyer_resolution_status === 'pending_confirmation' && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800">
+                    ⚠ Confirm Match
+                  </span>
+                )}
+                {invoiceData.buyer_resolution_status === 'pending_selection' && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800">
+                    ⚠ Select Buyer
+                  </span>
+                )}
+              </div>
+
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-gray-900 mb-1">Buyer Company</h3>
+
+                {/* Auto-resolved or Locked */}
+                {(invoiceData.buyer_resolution_status === 'auto' || invoiceData.buyer_resolution_status === 'locked') && invoiceData.buyer_resolved && (
+                  <div className="text-sm text-gray-700">
+                    <p className="font-medium">{invoiceData.buyer_resolved.displayName}</p>
+                    <p className="text-xs text-gray-500">
+                      TIN: {invoiceData.buyer_resolved.tinDisplay}
+                      {invoiceData.buyer_resolved.countryCode && ` • ${invoiceData.buyer_resolved.countryCode}`}
+                      {invoiceData.buyer_resolution_confidence && ` • Confidence: ${(invoiceData.buyer_resolution_confidence * 100).toFixed(1)}%`}
+                    </p>
+                  </div>
+                )}
+
+                {/* Pending confirmation or selection */}
+                {(invoiceData.buyer_resolution_status === 'pending_confirmation' || invoiceData.buyer_resolution_status === 'pending_selection') && (
+                  <div>
+                    <p className="text-xs text-gray-600 mb-2">
+                      {invoiceData.buyer_resolution_status === 'pending_confirmation'
+                        ? 'Please confirm the buyer match:'
+                        : 'Please select the buyer company:'}
+                    </p>
+                    <select
+                      value={selectedBuyerPartyId || ''}
+                      onChange={(e) => setSelectedBuyerPartyId(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">-- Select Buyer Company --</option>
+                      {invoiceData.buyer_candidates?.map((candidate) => (
+                        <option key={candidate.id} value={candidate.id}>
+                          {candidate.displayName} ({candidate.tinDisplay})
+                          {candidate.confidence && ` - ${(candidate.confidence * 100).toFixed(1)}% match`}
+                        </option>
+                      ))}
+                    </select>
+                    {buyerUnresolved && (
+                      <p className="mt-1 text-xs text-red-600">
+                        ⚠ You must select a buyer before saving
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

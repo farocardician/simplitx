@@ -46,6 +46,11 @@ model Job {
   approved        Boolean   @default(false)
   approvedAt      DateTime? @map("approved_at")
 
+  buyerPartyId              String?   @map("buyer_party_id") @db.Uuid
+  buyerResolutionStatus     String?   @map("buyer_resolution_status")
+  buyerResolutionConfidence Float?    @map("buyer_resolution_confidence")
+  buyerResolutionDecidedAt  DateTime? @map("buyer_resolution_decided_at")
+
   @@unique([ownerSessionId, sha256, mapping, bytes])
   @@index([status, createdAt(sort: Desc)])
   @@index([ownerSessionId, status])

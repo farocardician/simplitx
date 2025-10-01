@@ -30,6 +30,14 @@ function extractTextBetweenTags(xml: string, tagName: string): string {
   return match ? match[1].trim() : '';
 }
 
+function mapOptToType(opt: string): 'Barang' | 'Jasa' {
+  const normalized = opt.trim().toUpperCase();
+  if (normalized === 'B' || normalized === 'J') {
+    return 'Jasa';
+  }
+  return 'Barang';
+}
+
 /**
  * Extract all GoodService items from XML
  */
@@ -59,7 +67,7 @@ function extractGoodServiceItems(xml: string): ParsedInvoiceItem[] {
       sku: '', // SKU not stored in XML
       hs_code: code || '',
       uom: unit || '',
-      type: opt === 'J' ? 'Jasa' : 'Barang'
+      type: mapOptToType(opt)
     });
   }
 

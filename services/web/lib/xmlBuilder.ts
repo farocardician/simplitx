@@ -3,6 +3,7 @@
  */
 
 import { createUomResolverSnapshot } from './uomResolver';
+import { type ResolvedParty } from './partyResolver';
 
 interface InvoiceItem {
   description: string;
@@ -13,6 +14,18 @@ interface InvoiceItem {
   hs_code: string;
   uom: string;
   type: 'Barang' | 'Jasa';
+}
+
+const TYPE_TO_OPT_MAP: Record<'Barang' | 'Jasa', 'A' | 'B'> = {
+  Barang: 'A',
+  Jasa: 'B'
+};
+
+function mapTypeToOpt(type: string): 'A' | 'B' {
+  if (type === 'Jasa' || type === 'B') {
+    return TYPE_TO_OPT_MAP.Jasa;
+  }
+  return TYPE_TO_OPT_MAP.Barang;
 }
 
 interface InvoiceData {
@@ -64,7 +77,15 @@ function calculateTaxFields(taxBase: number) {
   };
 }
 
-export async function buildInvoiceXml(data: InvoiceData): Promise<string> {
+export async function buildInvoiceXml(data: InvoiceData, buyerResolved: ResolvedParty): Promise<string> {
+  // PRE-VALIDATION: Check buyer is resolved
+  if (!buyerResolved) {
+    throw new Error(
+      `Cannot generate XML: Buyer party not resolved. ` +
+      `Please resolve the buyer before saving.`
+    );
+  }
+
   // PRE-VALIDATION: Check all UOMs before generating XML
   const resolver = await createUomResolverSnapshot();
   const invalidUoms: string[] = [];
@@ -92,13 +113,18 @@ export async function buildInvoiceXml(data: InvoiceData): Promise<string> {
   // XML GENERATION: All UOMs are valid, proceed
   const sellerTin = data.seller?.tin || '0715420659018000';
   const sellerIdtku = data.seller?.idtku || `${sellerTin}000000`;
-  const buyerTin = data.buyer?.tin || '0849873807086000';
-  const buyerIdtku = data.buyer?.idtku || `${buyerTin}000000`;
   const invoiceDate = data.invoice?.date || '';
   const refDesc = data.invoice?.number || '';
-  const buyerName = data.buyer?.name || '';
-  const buyerAddress = data.buyer?.address || '';
-  const buyerEmail = data.buyer?.email || '';
+
+  // Buyer fields from resolved party (no hardcoding)
+  const buyerTin = buyerResolved.tinDisplay;
+  const buyerCountry = buyerResolved.countryCode || 'IDN';
+  const buyerName = buyerResolved.displayName;
+  const buyerAddress = buyerResolved.addressFull || '';
+  const buyerEmail = buyerResolved.email || '';
+  const buyerIdtku = buyerResolved.buyerIdtku || `${buyerResolved.tinDisplay}000000`;
+  const buyerDocument = buyerResolved.buyerDocument || 'TIN';
+  const buyerDocumentNumber = buyerResolved.buyerDocumentNumber || '-';
 
   let xml = `<?xml version='1.0' encoding='utf-8'?>
 <TaxInvoiceBulk xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -115,9 +141,9 @@ export async function buildInvoiceXml(data: InvoiceData): Promise<string> {
       <FacilityStamp></FacilityStamp>
       <SellerIDTKU>${escapeXml(sellerIdtku)}</SellerIDTKU>
       <BuyerTin>${escapeXml(buyerTin)}</BuyerTin>
-      <BuyerDocument>TIN</BuyerDocument>
-      <BuyerCountry>IDN</BuyerCountry>
-      <BuyerDocumentNumber>-</BuyerDocumentNumber>
+      <BuyerDocument>${escapeXml(buyerDocument)}</BuyerDocument>
+      <BuyerCountry>${escapeXml(buyerCountry)}</BuyerCountry>
+      <BuyerDocumentNumber>${escapeXml(buyerDocumentNumber)}</BuyerDocumentNumber>
       <BuyerName>${escapeXml(buyerName)}</BuyerName>
       <BuyerAdress>${escapeXml(buyerAddress)}</BuyerAdress>
       <BuyerEmail>${escapeXml(buyerEmail)}</BuyerEmail>
@@ -129,7 +155,7 @@ export async function buildInvoiceXml(data: InvoiceData): Promise<string> {
   data.items.forEach((item) => {
     const { otherTaxBase, vat } = calculateTaxFields(item.amount);
     const hsCode = padHsCode(item.hs_code);
-    const opt = item.type === 'Jasa' ? 'J' : '';
+    const opt = mapTypeToOpt(item.type);
 
     // Resolve UOM to canonical code (guaranteed to exist after validation)
     const resolution = resolver.resolve(item.uom);

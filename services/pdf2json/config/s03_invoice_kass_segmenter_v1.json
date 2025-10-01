@@ -58,7 +58,7 @@
     },
     {
       "id": "buyer",
-      "label": "Buyer",
+      "label": "buyer",
       "inside": "@header",
       "detect": {
         "by": "anchors",
