@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { invalidateUomCache, normalizeUom } from '@/lib/uomResolver';
 
 export async function GET(req: NextRequest) {
   try {
@@ -55,8 +56,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Normalize code and name
-    const normalizedCode = code.trim().toUpperCase();
+    // Normalize code and name using standard normalization
+    const normalizedCode = normalizeUom(code);
     const normalizedName = name.trim();
 
     // Validate code format
@@ -88,7 +89,7 @@ export async function POST(req: NextRequest) {
     // Add additional aliases if provided
     if (Array.isArray(aliases) && aliases.length > 0) {
       for (const alias of aliases) {
-        const normalized = alias.trim().toUpperCase();
+        const normalized = normalizeUom(alias);
         if (normalized && !aliasesToCreate.some(a => a.alias === normalized)) {
           aliasesToCreate.push({ alias: normalized, isPrimary: false });
         }
@@ -110,6 +111,9 @@ export async function POST(req: NextRequest) {
         aliases: true
       }
     });
+
+    // Invalidate cache immediately
+    invalidateUomCache();
 
     return NextResponse.json(uom, { status: 201 });
 

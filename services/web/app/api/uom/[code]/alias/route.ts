@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
-function normalizeAlias(input: string): string {
-  return input.trim().toUpperCase().replace(/\s+/g, ' ');
-}
+import { normalizeUom, invalidateUomCache } from '@/lib/uomResolver';
 
 export async function POST(
   req: NextRequest,
@@ -21,8 +18,8 @@ export async function POST(
       );
     }
 
-    // Normalize alias
-    const normalized = normalizeAlias(alias);
+    // Normalize alias using standard normalization
+    const normalized = normalizeUom(alias);
 
     // Validate format
     if (!normalized || normalized.length > 50) {
@@ -86,6 +83,9 @@ export async function POST(
       },
       include: { uom: true }
     });
+
+    // Invalidate cache immediately
+    invalidateUomCache();
 
     return NextResponse.json(newAlias, { status: 201 });
 

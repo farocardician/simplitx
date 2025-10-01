@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { invalidateUomCache } from '@/lib/uomResolver';
 
 export async function DELETE(
   req: NextRequest,
@@ -33,6 +34,9 @@ export async function DELETE(
     await prisma.uomAlias.delete({
       where: { alias }
     });
+
+    // Invalidate cache immediately
+    invalidateUomCache();
 
     return NextResponse.json({ success: true, deleted: alias });
 

@@ -6,6 +6,7 @@ import { parseInvoiceXml } from '@/lib/xmlParser';
 import { writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { createUomResolverSnapshot } from '@/lib/uomResolver';
 
 export const GET = withSession(async (
   req: NextRequest,
@@ -106,14 +107,41 @@ export const GET = withSession(async (
       const final = parserResult?.final as any;
       const sellerName = final?.seller?.name || 'Seller';
 
-      // Merge SKU from parser_results (SKU not stored in XML)
-      const mergedItems = xmlData.items.map((xmlItem: any, index: number) => {
-        const originalItem = final?.items?.[index];
-        return {
-          ...xmlItem,
-          sku: originalItem?.sku || xmlItem.sku || ''
-        };
-      });
+      // Create request-scoped UOM resolver snapshot
+      const resolver = await createUomResolverSnapshot();
+
+      // Merge SKU and resolve UOMs from parser_results (SKU/UOM not always in XML)
+      const mergedItems = await Promise.all(
+        xmlData.items.map(async (xmlItem: any, index: number) => {
+          const originalItem = final?.items?.[index];
+
+          // Resolve UOM from XML (should already be canonical, but verify)
+          const rawUom = xmlItem.uom || originalItem?.uom;
+          let canonical = '';
+          let resolved = false;
+          let warning = null;
+
+          if (rawUom) {
+            const resolution = resolver.resolve(rawUom);
+            if (resolution) {
+              canonical = resolution.code;
+              resolved = true;
+            } else {
+              warning = `Unrecognized UOM: "${rawUom}". Please select from dropdown.`;
+              canonical = '';
+            }
+          }
+
+          return {
+            ...xmlItem,
+            sku: originalItem?.sku || xmlItem.sku || '',
+            uom: canonical,
+            uom_raw: rawUom || null,
+            uom_resolved: resolved,
+            uom_warning: warning
+          };
+        })
+      );
 
       return NextResponse.json({
         invoice_no: xmlData.invoice_no,
@@ -140,17 +168,45 @@ export const GET = withSession(async (
 
     const final = parserResult.final as any;
 
-    const items = (final.items || []).map((item: any, index: number) => ({
-      no: item.no || index + 1,
-      description: item.description || '',
-      qty: item.qty || 0,
-      unit_price: item.unit_price || 0,
-      amount: item.amount || 0,
-      sku: item.sku || '',
-      hs_code: item.hs_code || '',
-      uom: item.uom || '',
-      type: 'Barang' as const
-    }));
+    // Create request-scoped UOM resolver snapshot
+    const resolver = await createUomResolverSnapshot();
+
+    // Resolve UOMs for all items (batch operation)
+    const items = await Promise.all(
+      (final.items || []).map(async (item: any, index: number) => {
+        const rawUom = item.uom;
+        let canonical = '';
+        let resolved = false;
+        let warning = null;
+
+        if (rawUom) {
+          const resolution = resolver.resolve(rawUom);
+          if (resolution) {
+            canonical = resolution.code;
+            resolved = true;
+          } else {
+            warning = `Unrecognized UOM: "${rawUom}". Please select from dropdown.`;
+            // Do NOT pass through raw value
+            canonical = '';
+          }
+        }
+
+        return {
+          no: item.no || index + 1,
+          description: item.description || '',
+          qty: item.qty || 0,
+          unit_price: item.unit_price || 0,
+          amount: item.amount || 0,
+          sku: item.sku || '',
+          hs_code: item.hs_code || '',
+          uom: canonical,           // Canonical code or empty
+          uom_raw: rawUom || null,  // Original parsed value
+          uom_resolved: resolved,   // Explicit state
+          uom_warning: warning,     // Explicit error
+          type: item.type || 'Barang' as const
+        };
+      })
+    );
 
     return NextResponse.json({
       invoice_no: final.invoice?.number || final.invoice_no || '',
@@ -285,8 +341,17 @@ export const POST = withSession(async (
       }))
     };
 
-    // Transform to XML
-    const xmlContent = buildInvoiceXml(mergedData);
+    // Transform to XML (with UOM validation)
+    let xmlContent: string;
+    try {
+      xmlContent = await buildInvoiceXml(mergedData);
+    } catch (xmlError: any) {
+      console.error('Error building XML:', xmlError);
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: xmlError.message || 'Failed to build XML' } },
+        { status: 400 }
+      );
+    }
 
     // Write to resultPath
     const filePath = join(process.cwd(), job.resultPath);

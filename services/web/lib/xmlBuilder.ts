@@ -2,6 +2,8 @@
  * Transforms invoice JSON to XML format (pt_simon_invoice_v1 mapping)
  */
 
+import { createUomResolverSnapshot } from './uomResolver';
+
 interface InvoiceItem {
   description: string;
   qty: number;
@@ -62,7 +64,32 @@ function calculateTaxFields(taxBase: number) {
   };
 }
 
-export function buildInvoiceXml(data: InvoiceData): string {
+export async function buildInvoiceXml(data: InvoiceData): Promise<string> {
+  // PRE-VALIDATION: Check all UOMs before generating XML
+  const resolver = await createUomResolverSnapshot();
+  const invalidUoms: string[] = [];
+
+  for (const item of data.items) {
+    if (!item.uom) {
+      invalidUoms.push(`Item "${item.description || '(unnamed)'}": missing UOM`);
+      continue;
+    }
+
+    const resolution = resolver.resolve(item.uom);
+    if (!resolution) {
+      invalidUoms.push(`Item "${item.description || '(unnamed)'}": UOM "${item.uom}" not recognized`);
+    }
+  }
+
+  if (invalidUoms.length > 0) {
+    throw new Error(
+      `Cannot generate XML: Invalid UOMs detected:\n` +
+      invalidUoms.map(err => `  - ${err}`).join('\n') +
+      `\n\nPlease correct these in the review page before saving.`
+    );
+  }
+
+  // XML GENERATION: All UOMs are valid, proceed
   const sellerTin = data.seller?.tin || '0715420659018000';
   const sellerIdtku = data.seller?.idtku || `${sellerTin}000000`;
   const buyerTin = data.buyer?.tin || '0849873807086000';
@@ -98,17 +125,21 @@ export function buildInvoiceXml(data: InvoiceData): string {
       <ListOfGoodService>
 `;
 
-  // Add each item
+  // Add each item (UOMs already validated above)
   data.items.forEach((item) => {
     const { otherTaxBase, vat } = calculateTaxFields(item.amount);
     const hsCode = padHsCode(item.hs_code);
     const opt = item.type === 'Jasa' ? 'J' : '';
 
+    // Resolve UOM to canonical code (guaranteed to exist after validation)
+    const resolution = resolver.resolve(item.uom);
+    const canonicalUom = resolution!.code; // Safe: validated above
+
     xml += `        <GoodService>
           <Opt>${escapeXml(opt)}</Opt>
           <Code>${escapeXml(hsCode)}</Code>
           <Name>${escapeXml(item.description)}</Name>
-          <Unit>${escapeXml(item.uom)}</Unit>
+          <Unit>${escapeXml(canonicalUom)}</Unit>
           <Price>${item.unit_price}</Price>
           <Qty>${item.qty}</Qty>
           <TotalDiscount>0</TotalDiscount>
