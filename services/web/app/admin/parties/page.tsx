@@ -362,13 +362,13 @@ export default function PartiesManagementPage() {
                     Email
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Buyer Document
+                    Document
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Buyer Doc Number
+                    Document Number
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Buyer IDTKU
+                    IDTKU
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Address
@@ -742,7 +742,7 @@ function AddPartyForm({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label htmlFor="buyer-document" className="block text-sm font-medium text-gray-700 mb-1">
-              Buyer Document
+              Document
             </label>
             <input
               id="buyer-document"
@@ -757,7 +757,7 @@ function AddPartyForm({
           </div>
           <div>
             <label htmlFor="buyer-document-number" className="block text-sm font-medium text-gray-700 mb-1">
-              Buyer Document Number
+              Document Number
             </label>
             <input
               id="buyer-document-number"
@@ -771,7 +771,7 @@ function AddPartyForm({
           </div>
           <div>
             <label htmlFor="buyer-idtku" className="block text-sm font-medium text-gray-700 mb-1">
-              Buyer IDTKU
+              IDTKU
             </label>
             <input
               id="buyer-idtku"
