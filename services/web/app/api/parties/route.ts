@@ -8,16 +8,46 @@ export async function GET(req: NextRequest) {
     const countryCode = searchParams.get('country_code') || undefined;
     const search = searchParams.get('search');
 
-    // If search query provided, do fuzzy search
+    // Pagination parameters
+    const DEFAULT_PAGE_SIZE = 50;
+    const MAX_PAGE_SIZE = 100;
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(
+      parseInt(searchParams.get('limit') || String(DEFAULT_PAGE_SIZE)),
+      MAX_PAGE_SIZE
+    );
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const where: any = {
+      deletedAt: null
+    };
+
     if (search) {
       const normalized = normalizePartyName(search);
-      const parties = await prisma.party.findMany({
-        where: {
+      // Search in both display name and TIN
+      where.OR = [
+        {
           nameNormalized: {
             contains: normalized
-          },
-          deletedAt: null
+          }
         },
+        {
+          tinNormalized: {
+            contains: normalizeTin(search)
+          }
+        }
+      ];
+    }
+
+    if (countryCode) {
+      where.countryCode = countryCode;
+    }
+
+    // Execute query with count for pagination
+    const [parties, totalCount] = await Promise.all([
+      prisma.party.findMany({
+        where,
         select: {
           id: true,
           displayName: true,
@@ -25,21 +55,28 @@ export async function GET(req: NextRequest) {
           countryCode: true,
           addressFull: true,
           email: true,
-          createdAt: true
+          createdAt: true,
+          updatedAt: true
         },
-        take: 50,
+        skip,
+        take: limit,
         orderBy: {
           displayName: 'asc'
         }
-      });
+      }),
+      prisma.party.count({ where })
+    ]);
 
-      return NextResponse.json(parties);
-    }
-
-    // Otherwise, list all parties
-    const parties = await getAllActiveParties(countryCode);
-
-    return NextResponse.json(parties);
+    return NextResponse.json({
+      parties,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        hasMore: skip + limit < totalCount
+      }
+    });
   } catch (error) {
     console.error('Error fetching parties:', error);
     return NextResponse.json(
@@ -62,10 +99,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate country code format
-    if (countryCode && (countryCode.length !== 3 || countryCode !== countryCode.toUpperCase())) {
+    // Length validation
+    if (displayName.length > 255) {
       return NextResponse.json(
-        { error: { code: 'INVALID_COUNTRY_CODE', message: 'Country code must be 3-letter ISO code (uppercase)' } },
+        { error: { code: 'INVALID_REQUEST', message: 'Display name too long (max 255 characters)' } },
+        { status: 400 }
+      );
+    }
+
+    if (tinDisplay.length > 50) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_REQUEST', message: 'TIN too long (max 50 characters)' } },
+        { status: 400 }
+      );
+    }
+
+    if (addressFull && addressFull.length > 1000) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_REQUEST', message: 'Address too long (max 1000 characters)' } },
+        { status: 400 }
+      );
+    }
+
+    if (email && email.length > 255) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_REQUEST', message: 'Email too long (max 255 characters)' } },
+        { status: 400 }
+      );
+    }
+
+    // Validate country code format
+    if (countryCode && (countryCode.length !== 3 || countryCode !== countryCode.toUpperCase() || !/^[A-Z]{3}$/.test(countryCode))) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_COUNTRY_CODE', message: 'Country code must be 3-letter uppercase ISO code (e.g., USA, BRA, IDN)' } },
         { status: 400 }
       );
     }
@@ -73,6 +139,14 @@ export async function POST(req: NextRequest) {
     // Normalize for pre-checks (database will also normalize via trigger)
     const nameNormalized = normalizePartyName(displayName);
     const tinNormalized = normalizeTin(tinDisplay);
+
+    // Validate TIN is not empty after normalization
+    if (tinNormalized.length === 0) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_TIN', message: 'TIN cannot be empty or contain only formatting characters' } },
+        { status: 400 }
+      );
+    }
 
     // Check for existing party with same normalized name
     const existingByName = await prisma.party.findFirst({
