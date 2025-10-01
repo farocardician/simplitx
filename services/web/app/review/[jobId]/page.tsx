@@ -51,6 +51,10 @@ export default function ReviewPage() {
   const [initialSnapshot, setInitialSnapshot] = useState<{ invoiceDate: string; items: LineItem[] } | null>(null);
   const [uomList, setUomList] = useState<UOM[]>([]);
   const [errors, setErrors] = useState<Record<number, ItemErrors>>({});
+  const [applyToAllState, setApplyToAllState] = useState<{
+    itemIndex: number;
+    type: 'Barang' | 'Jasa';
+  } | null>(null);
 
   useEffect(() => {
     if (!jobId) return;
@@ -137,6 +141,16 @@ export default function ReviewPage() {
     setErrors(newErrors);
   }, [initialSnapshot, items]);
 
+  // Auto-reset "Apply to All" state after 2 seconds
+  useEffect(() => {
+    if (applyToAllState) {
+      const timer = setTimeout(() => {
+        setApplyToAllState(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [applyToAllState]);
+
   const updateItem = (index: number, field: keyof LineItem, value: any) => {
     setItems(prev => {
       const updated = [...prev];
@@ -165,6 +179,24 @@ export default function ReviewPage() {
       ...prev,
       [index]: itemErrors
     }));
+  };
+
+  const handleTypeSelect = (index: number, type: 'Barang' | 'Jasa') => {
+    // Update the current item
+    updateItem(index, 'type', type);
+
+    // Show "Apply to All" only if multiple items exist
+    if (items.length > 1) {
+      setApplyToAllState({ itemIndex: index, type });
+    }
+  };
+
+  const handleApplyToAll = (type: 'Barang' | 'Jasa') => {
+    // Apply the type to all items
+    setItems(prev => prev.map(item => ({ ...item, type })));
+
+    // Clear the "Apply to All" state immediately
+    setApplyToAllState(null);
   };
 
   // Dirty tracking
@@ -550,26 +582,47 @@ export default function ReviewPage() {
                         Type <span className="text-red-500">*</span>
                       </label>
                       <div className="flex gap-1.5">
-                        <button
-                          onClick={() => updateItem(index, 'type', 'Barang')}
-                          className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                            item.type === 'Barang'
-                              ? 'bg-blue-600 text-white shadow-sm'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          Barang
-                        </button>
-                        <button
-                          onClick={() => updateItem(index, 'type', 'Jasa')}
-                          className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                            item.type === 'Jasa'
-                              ? 'bg-green-600 text-white shadow-sm'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          Jasa
-                        </button>
+                        {(() => {
+                          const showApplyToAll = items.length > 1 && applyToAllState?.itemIndex === index;
+                          const applyToAllType = applyToAllState?.type;
+
+                          return (
+                            <>
+                              <button
+                                onClick={() => {
+                                  if (showApplyToAll && applyToAllType === 'Barang') {
+                                    handleApplyToAll('Barang');
+                                  } else {
+                                    handleTypeSelect(index, 'Barang');
+                                  }
+                                }}
+                                className={`min-w-[100px] px-3 py-1 rounded-full text-xs font-medium transition-all text-center ${
+                                  item.type === 'Barang'
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {showApplyToAll && applyToAllType === 'Barang' ? 'Apply to All' : 'Barang'}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (showApplyToAll && applyToAllType === 'Jasa') {
+                                    handleApplyToAll('Jasa');
+                                  } else {
+                                    handleTypeSelect(index, 'Jasa');
+                                  }
+                                }}
+                                className={`min-w-[100px] px-3 py-1 rounded-full text-xs font-medium transition-all text-center ${
+                                  item.type === 'Jasa'
+                                    ? 'bg-green-600 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {showApplyToAll && applyToAllType === 'Jasa' ? 'Apply to All' : 'Jasa'}
+                              </button>
+                            </>
+                          );
+                        })()}
                       </div>
                       {itemErrors.type && (
                         <p className="mt-0.5 text-xs text-red-600">{itemErrors.type}</p>
