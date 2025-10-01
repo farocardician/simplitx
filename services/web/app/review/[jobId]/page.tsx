@@ -55,6 +55,10 @@ export default function ReviewPage() {
     itemIndex: number;
     type: 'Barang' | 'Jasa';
   } | null>(null);
+  const [applyToAllUom, setApplyToAllUom] = useState<{
+    itemIndex: number;
+    uomCode: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!jobId) return;
@@ -151,6 +155,16 @@ export default function ReviewPage() {
     }
   }, [applyToAllState]);
 
+  // Auto-reset "Apply to All UOM" state after 2 seconds
+  useEffect(() => {
+    if (applyToAllUom) {
+      const timer = setTimeout(() => {
+        setApplyToAllUom(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [applyToAllUom]);
+
   const updateItem = (index: number, field: keyof LineItem, value: any) => {
     setItems(prev => {
       const updated = [...prev];
@@ -197,6 +211,24 @@ export default function ReviewPage() {
 
     // Clear the "Apply to All" state immediately
     setApplyToAllState(null);
+  };
+
+  const handleUomSelect = (index: number, uomCode: string) => {
+    // Update the current item
+    updateItem(index, 'uom', uomCode);
+
+    // Show "Apply to All" only if multiple items exist and UOM is not empty
+    if (items.length > 1 && uomCode) {
+      setApplyToAllUom({ itemIndex: index, uomCode });
+    }
+  };
+
+  const handleApplyUomToAll = (uomCode: string) => {
+    // Apply the UOM to all items
+    setItems(prev => prev.map(item => ({ ...item, uom: uomCode })));
+
+    // Clear the "Apply to All UOM" state immediately
+    setApplyToAllUom(null);
   };
 
   // Dirty tracking
@@ -536,7 +568,7 @@ export default function ReviewPage() {
                       </label>
                       <select
                         value={item.uom}
-                        onChange={(e) => updateItem(index, 'uom', e.target.value)}
+                        onChange={(e) => handleUomSelect(index, e.target.value)}
                         className={`w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-1 ${
                           itemErrors.uom
                             ? 'border-red-300 focus:ring-red-500'
@@ -552,6 +584,16 @@ export default function ReviewPage() {
                       </select>
                       {itemErrors.uom && (
                         <p className="mt-0.5 text-xs text-red-600">{itemErrors.uom}</p>
+                      )}
+                      {applyToAllUom?.itemIndex === index && items.length > 1 && (
+                        <button
+                          onClick={() => handleApplyUomToAll(applyToAllUom.uomCode)}
+                          className="mt-1.5 w-full px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition-all flex items-center justify-center gap-1"
+                          aria-label="Apply selected UOM to all line items"
+                        >
+                          <span>📋</span>
+                          <span>Apply to All</span>
+                        </button>
                       )}
                     </div>
 
