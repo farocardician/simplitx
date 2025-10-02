@@ -42,6 +42,10 @@ def load_mapping(mapping_path: str) -> Dict[str, Any]:
         for name, definition in computations.items():
             if not isinstance(definition, dict):
                 raise MappingError(f"Computation '{name}' must be an object")
+            # Builtin computations don't need an expression
+            builtin = definition.get('builtin')
+            if builtin:
+                continue
             expression = definition.get('expression')
             if not isinstance(expression, str) or not expression.strip():
                 raise MappingError(f"Computation '{name}' must define a non-empty 'expression'")

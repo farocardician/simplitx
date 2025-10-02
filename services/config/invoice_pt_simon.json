@@ -32,6 +32,7 @@
       "args": ["--fields", "{fields}", "--items", "{items}", "--validation", "{validation}", "--confidence", "{confidence}", "--cells", "{cells}", "--final", "{final}", "--manifest", "{manifest}", "--config", "{config}"]
     }
   ],
+  "confidence_threshold": 0.9,
   "json2xml": {
     "profiles": {
       "default": {

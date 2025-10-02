@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 from lxml import etree
 from .formatting import format_decimal
 from .mapping import resolve_mapping_placeholders
+from .party_resolver import get_buyer_field
 
 
 class ConversionError(Exception):
@@ -177,6 +178,35 @@ def compute_field_value(
     if computation is None:
         raise ConversionError(f"Unknown computation '{computation_name}'")
 
+    # Check for builtin function (special handling for party resolution, etc.)
+    builtin = computation.get("builtin")
+    if builtin:
+        if builtin == "resolve_buyer_field":
+            # Special handling for buyer party resolution
+            # Extract buyer_name from path
+            if "path" in field_config:
+                buyer_name = parse_jsonpath(field_config["path"], current_data)
+            elif "value" in field_config:
+                buyer_name = field_config["value"]
+            else:
+                buyer_name = None
+
+            if not buyer_name:
+                return ""
+
+            # Get field name from parameters
+            field_name = field_config.get("parameters", {}).get("field") or computation.get("parameters", {}).get("field")
+            if not field_name:
+                raise ConversionError(f"resolve_buyer_field requires 'field' parameter")
+
+            try:
+                result = get_buyer_field(str(buyer_name), field_name)
+                return result or ""
+            except Exception as exc:
+                raise ConversionError(f"Buyer field resolution failed: {exc}") from exc
+        else:
+            raise ConversionError(f"Unknown builtin function '{builtin}'")
+
     # Determine base field value (from path or literal)
     if "path" in field_config:
         field_value = parse_jsonpath(field_config["path"], current_data)
@@ -207,7 +237,10 @@ def compute_field_value(
 
     expression = computation.get("expression")
     if not expression:
-        raise ConversionError(f"Computation '{computation_name}' missing expression definition")
+        # For builtin functions, expression is not required
+        if not computation.get("builtin"):
+            raise ConversionError(f"Computation '{computation_name}' missing expression definition")
+        return ""
 
     try:
         result = _evaluate_expression(expression, context)

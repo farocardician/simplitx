@@ -3,7 +3,7 @@
     "name": "pt_simon_hybrid",
     "fail_mode": "soft",
     "required_fields": ["invoice_no", "invoice_date", "buyer_name"],
-    "expected_fields": ["seller", "currency"],
+    "expected_fields": ["seller", "currency", "buyer_id"],
     "optional_fields": ["po_reference", "customer_name", "uom", "subtotal", "tax_base", "tax_amount", "grand_total"]
   },
   "use_stage2_normalized": true,
@@ -38,22 +38,21 @@
       "segment": "buyer_id",
       "strategy": "regex_capture",
       "post": {
-        "regex_pattern": [
-          "(?:cust\\.?\\s*code\\s*:?)\\s*([A-Za-z0-9\\-_/\\.]+)",
-          "(?:customer\\s*id\\s*:?)\\s*([A-Za-z0-9\\-_/\\.]+)",
-          "([A-Za-z0-9][A-Za-z0-9\\-_/\\.]{2,})"
-        ]
+        "capture_regex": "(?:cust\\.?\\s*code\\s*:?)\\s*([A-Za-z0-9\\-_/\\.]+)"
       }
     },
     "buyer_name": {
       "segment": "buyer_name",
       "strategy": "regex_capture",
       "post": {
-        "regex_pattern": [
-          "(?:cust\\.?\\s*code\\s*:?)\\s*([A-Za-z0-9\\-_/\\.]+)",
-          "(?:customer\\s*id\\s*:?)\\s*([A-Za-z0-9\\-_/\\.]+)",
-          "([A-Za-z0-9][A-Za-z0-9\\-_/\\.]{2,})"
-        ]
+        "capture_regex": "([A-Za-z][A-Za-z0-9\\s\\.\\-&,]+)"
+      }
+    },
+    "currency": {
+      "segment": "currency",
+      "strategy": "regex_capture",
+      "post": {
+        "capture_regex": "\\b(IDR|USD|EUR|SGD|MYR|THB|PHP)\\b"
       }
     },    
     "seller": {

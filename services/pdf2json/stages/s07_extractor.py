@@ -396,29 +396,27 @@ def extract_strict(tokens_p: Path, segments_p: Path, cfg_p: Path, tokenizer: str
             out_warn.append(f"unknown_strategy:{strategy}")
             return summarize_value(None, None, [], [], None)
 
-    # Build outputs
-    # Header fields
-    header_fields = [
-        "invoice_no",
-        "invoice_date",
-        "po_reference",
-        "customer_id",
-        "customer_name",
-        "seller",
-        "currency",
-        "uom",
-    ]
+    # Build outputs - dynamic field categorization
+    # Fields referencing "total" segment go to totals_extracted
+    # All other fields go to header
     header: Dict[str, Any] = {}
-    for f in header_fields:
-        if f in field_map_raw:
-            header[f] = extract_one(f)
-
-    # Totals (printed only)
-    totals_names = ["subtotal", "tax_base", "tax_amount", "grand_total", "total_qty", "vat_rate"]
     totals_extracted: Dict[str, Any] = {}
-    for f in totals_names:
-        if f in field_map_raw:
-            totals_extracted[f] = extract_one(f)
+
+    for field_name, field_spec in field_map_raw.items():
+        # Determine segment reference
+        if isinstance(field_spec, dict):
+            segment_ref = field_spec.get("segment")
+        else:
+            segment_ref = field_spec
+
+        # Extract the field
+        field_result = extract_one(field_name)
+
+        # Categorize based on segment
+        if segment_ref == "total":
+            totals_extracted[field_name] = field_result
+        else:
+            header[field_name] = field_result
 
     out = {
         "doc_id": tdata.get("doc_id"),

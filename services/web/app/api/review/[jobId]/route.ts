@@ -108,16 +108,12 @@ export const GET = withSession(async (
         });
       }
 
-      // Last resort: try 'document.pdf' (common test data)
+      // Try jobId with .pdf extension
       if (!parserResult) {
         parserResult = await prisma.parserResult.findUnique({
-          where: { docId: 'document.pdf' },
+          where: { docId: `${jobId}.pdf` },
           select: { final: true }
         });
-
-        if (parserResult) {
-          console.warn(`Using fallback 'document.pdf' data for job ${jobId}. Stage 10 should save with correct doc_id.`);
-        }
       }
     }
 
@@ -462,9 +458,10 @@ export const POST = withSession(async (
         });
       }
 
+      // Try jobId with .pdf extension
       if (!parserResult) {
         parserResult = await prisma.parserResult.findUnique({
-          where: { docId: 'document.pdf' },
+          where: { docId: `${jobId}.pdf` },
           select: { final: true }
         });
       }

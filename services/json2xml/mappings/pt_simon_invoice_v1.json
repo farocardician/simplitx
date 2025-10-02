@@ -16,17 +16,17 @@
         "AddInfo": "",
         "CustomDoc": "",
         "CustomDocMonthYear": "",
-        "RefDesc": "$.data.invoice.number", 
+        "RefDesc": "$.data.invoice.number",
         "FacilityStamp": "",
         "SellerIDTKU": "0715420659018000000000",
-        "BuyerTin": "0849873807086000",
-        "BuyerDocument": "TIN",
-        "BuyerCountry": "IDN", 
-        "BuyerDocumentNumber": "-",
+        "BuyerTin": {"path": "$.data.buyer.name", "compute": "resolve_buyer_tin"},
+        "BuyerDocument": {"path": "$.data.buyer.name", "compute": "resolve_buyer_document_type"},
+        "BuyerCountry": {"path": "$.data.buyer.name", "compute": "resolve_buyer_country"},
+        "BuyerDocumentNumber": {"path": "$.data.buyer.name", "compute": "resolve_buyer_document_number"},
         "BuyerName": "$.data.buyer.name",
-        "BuyerAdress": "KOMPLEK GREEN VILLE  Blok AV No.15B RT:008 RW:014 ",
-        "BuyerEmail": "",
-        "BuyerIDTKU": "0849873807086000000000",
+        "BuyerAdress": {"path": "$.data.buyer.name", "compute": "resolve_buyer_address"},
+        "BuyerEmail": {"path": "$.data.buyer.name", "compute": "resolve_buyer_email"},
+        "BuyerIDTKU": {"path": "$.data.buyer.name", "compute": "resolve_buyer_idtku"},
         "ListOfGoodService": {
           "_array": "$.data.items[*]",
           "GoodService": {
@@ -78,6 +78,48 @@
         "rate": 0.11
       },
       "format": {"type": "decimal", "scale": 2}
+    },
+    "resolve_buyer_tin": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "tin"
+      }
+    },
+    "resolve_buyer_document_type": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "document_type"
+      }
+    },
+    "resolve_buyer_country": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "country"
+      }
+    },
+    "resolve_buyer_document_number": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "document_number"
+      }
+    },
+    "resolve_buyer_address": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "address"
+      }
+    },
+    "resolve_buyer_email": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "email"
+      }
+    },
+    "resolve_buyer_idtku": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "idtku"
+      }
     }
   }
 }

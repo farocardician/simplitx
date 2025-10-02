@@ -70,6 +70,7 @@ class CamelotConfig:
     flavor_order: List[str]
     lattice_line_scale: int
     stream_row_tol: Optional[float]
+    stream_line_scale: Optional[int]
 
 
 @dataclass
@@ -163,6 +164,7 @@ def _validate_config(cfg: Dict[str, Any]) -> TemplateConfig:
             flavor_order=list(camelot_cfg["flavor_order"]),
             lattice_line_scale=int(camelot_cfg.get("line_scale", 40)),
             stream_row_tol=(camelot_cfg.get("row_tol_stream") if camelot_cfg.get("row_tol_stream") is not None else None),
+            stream_line_scale=(int(camelot_cfg.get("line_scale_stream")) if camelot_cfg.get("line_scale_stream") is not None else None),
         ),
         stop_after_totals=stop_after_totals,
         page_stop_keywords=page_stop_keywords,
@@ -221,6 +223,7 @@ def run_camelot_tables(pdf_path: Path, cfg: TemplateConfig, tokens: TokensData) 
     flavor_order = cfg.camelot.flavor_order
     lattice_ls = cfg.camelot.lattice_line_scale
     stream_row_tol = cfg.camelot.stream_row_tol
+    stream_line_scale = cfg.camelot.stream_line_scale
 
     def safe_read_page(flavor: str, page: int):
         try:
@@ -228,7 +231,10 @@ def run_camelot_tables(pdf_path: Path, cfg: TemplateConfig, tokens: TokensData) 
                 return camelot.read_pdf(str(pdf_path), pages=str(page), flavor="lattice", line_scale=lattice_ls)
             if flavor == "stream":
                 kwargs = {}
-                if stream_row_tol is not None:
+                # Priority: use line_scale if specified (Simon-style), otherwise use row_tol (Rittal-style)
+                if stream_line_scale is not None:
+                    kwargs["line_scale"] = stream_line_scale
+                elif stream_row_tol is not None:
                     kwargs["row_tol"] = stream_row_tol
                 return camelot.read_pdf(str(pdf_path), pages=str(page), flavor="stream", **kwargs)
             return []
