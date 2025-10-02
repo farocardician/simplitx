@@ -342,6 +342,16 @@ def extract_strict(tokens_p: Path, segments_p: Path, cfg_p: Path, tokenizer: str
             out_warn.append("unsupported_strategy:anchor_value")
             return summarize_value(None, None, [], [], None)
 
+        elif strategy == "constant":
+            # Force a literal value from config (per-vendor canonicalization).
+            # Uses summarize_value so guards/required/confidence still apply.
+            const_val = (field_post.get("value") or field_post.get("literal") or "")
+            entry = summarize_value(None, None, [], [], None, const_val)
+            # Mark as an override (no source bbox/tokens)
+            entry["source_region"] = "override"
+            entry["region_bbox"] = None
+            return entry
+
         elif strategy == "regex_capture":
             # Apply regex pattern(s) to text inside a segment bbox
             patterns = field_post.get("regex_pattern")

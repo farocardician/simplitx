@@ -55,12 +55,9 @@
         "capture_regex": "\\b(IDR|USD|EUR|SGD|MYR|THB|PHP)\\b"
       }
     },    
-    "seller": {
-      "segment": "seller",
-      "strategy": "regex_capture",
-      "post": {
-        "capture_regex": "(PT\\s+.*?Indonesia)"
-      }
+    "seller_name": {
+      "strategy": "constant",
+      "post": { "value": "PT SIMON ELEKTRIK INDONESIA" }
     },
     "subtotal": {
       "segment": "total",
