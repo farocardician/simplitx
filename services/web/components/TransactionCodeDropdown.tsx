@@ -28,7 +28,7 @@ export default function TransactionCodeDropdown({
 
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-700 mb-1">
+      <label className="block text-xs font-medium text-gray-700 mb-1.5">
         Transaction Code (Jenis Transaksi)
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>

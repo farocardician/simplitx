@@ -502,20 +502,8 @@ export default function ReviewPage() {
             </div>
           </div>
 
-          {/* Bottom Row - Invoice Date and Total */}
+          {/* Bottom Row - Total Amount */}
           <div className="flex items-center gap-6 pt-2 border-t">
-            <div className="flex items-center gap-2">
-              <label htmlFor="invoice-date" className="text-xs font-medium text-gray-600">
-                Invoice Date
-              </label>
-              <input
-                id="invoice-date"
-                type="date"
-                value={invoiceDate}
-                onChange={(e) => setInvoiceDate(e.target.value)}
-                className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
             <div className="flex items-center gap-2 ml-auto">
               <span className="text-xs font-medium text-gray-600">Total Amount</span>
               <span className="text-base font-bold text-gray-900">{formatCurrency(totalAmount)}</span>
@@ -550,98 +538,76 @@ export default function ReviewPage() {
           </div>
         )}
 
-        {/* Buyer Resolution Section */}
+        {/* Invoice Details Card */}
         {invoiceData && invoiceData.buyer_resolution_status && (
-          <div className="mb-4 bg-white border rounded-lg p-4 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 mt-0.5">
-                {invoiceData.buyer_resolution_status === 'auto' && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                    ✓ Auto-matched
-                  </span>
-                )}
-                {invoiceData.buyer_resolution_status === 'locked' && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                    🔒 Confirmed
-                  </span>
-                )}
-                {invoiceData.buyer_resolution_status === 'pending_confirmation' && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800">
-                    ⚠ Confirm Match
-                  </span>
-                )}
-                {invoiceData.buyer_resolution_status === 'pending_selection' && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800">
-                    ⚠ Select Buyer
-                  </span>
-                )}
-              </div>
+          <div className="mb-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div className="p-4">
+              <div className="grid grid-cols-12 gap-4">
+                {/* Buyer Company - 5 columns */}
+                <div className="col-span-5">
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                    Buyer Company
+                    {invoiceData.buyer_unresolved && <span className="text-red-500 ml-1">*</span>}
+                  </label>
 
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">Buyer Company</h3>
+                  {/* Auto-matched or Locked - Show dropdown with prefilled value and ALL parties for override */}
+                  {(invoiceData.buyer_resolution_status === 'auto' || invoiceData.buyer_resolution_status === 'locked') && invoiceData.buyer_resolved && (
+                    <div>
+                      <BuyerDropdown
+                        candidates={allParties}
+                        selectedId={selectedBuyerPartyId || invoiceData.buyer_resolved.id}
+                        onChange={(id) => setSelectedBuyerPartyId(id)}
+                        prefilledParty={invoiceData.buyer_resolved}
+                        highlightThreshold={0.90}
+                      />
+                      {invoiceData.buyer_resolution_confidence && (
+                        <p className="mt-1 text-xs text-gray-500">
+                          Confidence: {(invoiceData.buyer_resolution_confidence * 100).toFixed(1)}%
+                          {selectedBuyerPartyId && selectedBuyerPartyId !== invoiceData.buyer_resolved.id && (
+                            <span className="ml-2 text-blue-600">• Modified</span>
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
-                {/* Auto-matched or Locked - Show dropdown with prefilled value and ALL parties for override */}
-                {(invoiceData.buyer_resolution_status === 'auto' || invoiceData.buyer_resolution_status === 'locked') && invoiceData.buyer_resolved && (
-                  <div>
-                    <BuyerDropdown
-                      candidates={allParties}
-                      selectedId={selectedBuyerPartyId || invoiceData.buyer_resolved.id}
-                      onChange={(id) => setSelectedBuyerPartyId(id)}
-                      prefilledParty={invoiceData.buyer_resolved}
-                      highlightThreshold={0.90}
-                    />
-                    {invoiceData.buyer_resolution_confidence && (
-                      <p className="mt-1 text-xs text-gray-500">
-                        Confidence: {(invoiceData.buyer_resolution_confidence * 100).toFixed(1)}%
-                        {selectedBuyerPartyId && selectedBuyerPartyId !== invoiceData.buyer_resolved.id && (
-                          <span className="ml-2 text-blue-600">• Modified</span>
-                        )}
-                      </p>
-                    )}
-                  </div>
-                )}
+                  {/* Pending Confirmation - Show candidates with best matches highlighted */}
+                  {invoiceData.buyer_resolution_status === 'pending_confirmation' && (
+                    <div>
+                      <BuyerDropdown
+                        candidates={invoiceData.buyer_candidates || []}
+                        selectedId={selectedBuyerPartyId}
+                        onChange={(id) => setSelectedBuyerPartyId(id)}
+                        highlightThreshold={0.86}
+                      />
+                      {buyerUnresolved && (
+                        <p className="mt-1 text-xs text-red-600">
+                          ⚠ You must select a buyer before saving
+                        </p>
+                      )}
+                    </div>
+                  )}
 
-                {/* Pending Confirmation - Show candidates with best matches highlighted */}
-                {invoiceData.buyer_resolution_status === 'pending_confirmation' && (
-                  <div>
-                    <p className="text-xs text-gray-600 mb-2">
-                      Please confirm the buyer match:
-                    </p>
-                    <BuyerDropdown
-                      candidates={invoiceData.buyer_candidates || []}
-                      selectedId={selectedBuyerPartyId}
-                      onChange={(id) => setSelectedBuyerPartyId(id)}
-                      highlightThreshold={0.86}
-                    />
-                    {buyerUnresolved && (
-                      <p className="mt-1 text-xs text-red-600">
-                        ⚠ You must select a buyer before saving
-                      </p>
-                    )}
-                  </div>
-                )}
+                  {/* Pending Selection - Show top 5 candidates only */}
+                  {invoiceData.buyer_resolution_status === 'pending_selection' && (
+                    <div>
+                      <BuyerDropdown
+                        candidates={invoiceData.buyer_candidates || []}
+                        selectedId={selectedBuyerPartyId}
+                        onChange={(id) => setSelectedBuyerPartyId(id)}
+                        showTopOnly={true}
+                      />
+                      {buyerUnresolved && (
+                        <p className="mt-1 text-xs text-red-600">
+                          ⚠ You must select a buyer before saving
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
 
-                {/* Pending Selection - Show top 5 candidates only */}
-                {invoiceData.buyer_resolution_status === 'pending_selection' && (
-                  <div>
-                    <p className="text-xs text-gray-600 mb-2">
-                      Please select the buyer company:
-                    </p>
-                    <BuyerDropdown
-                      candidates={invoiceData.buyer_candidates || []}
-                      selectedId={selectedBuyerPartyId}
-                      onChange={(id) => setSelectedBuyerPartyId(id)}
-                      showTopOnly={true}
-                    />
-                    {buyerUnresolved && (
-                      <p className="mt-1 text-xs text-red-600">
-                        ⚠ You must select a buyer before saving
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                <div className="mt-3">
+                {/* Transaction Code - 4 columns */}
+                <div className="col-span-4">
                   <TransactionCodeDropdown
                     codes={transactionCodes}
                     selectedCode={trxCode}
@@ -651,6 +617,20 @@ export default function ReviewPage() {
                     }}
                     required={trxCodeRequired}
                     error={trxCodeErrorMessage}
+                  />
+                </div>
+
+                {/* Invoice Date - 3 columns */}
+                <div className="col-span-3">
+                  <label htmlFor="invoice-date" className="block text-xs font-medium text-gray-700 mb-1.5">
+                    Invoice Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="invoice-date"
+                    type="date"
+                    value={invoiceDate}
+                    onChange={(e) => setInvoiceDate(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
