@@ -46,6 +46,7 @@ interface InvoiceData {
     email?: string;
   };
   items: InvoiceItem[];
+  trxCode?: string | null;
   // Additional fields from parser_results.final
   [key: string]: any;
 }
@@ -111,6 +112,14 @@ export async function buildInvoiceXml(data: InvoiceData, buyerResolved: Resolved
   }
 
   // XML GENERATION: All UOMs are valid, proceed
+  const trxCodeValueRaw = data.trxCode ?? (data as any).trx_code ?? null;
+
+  if (!trxCodeValueRaw || typeof trxCodeValueRaw !== 'string' || !trxCodeValueRaw.trim()) {
+    throw new Error('Transaction code is required to generate XML.');
+  }
+
+  const trxCode = trxCodeValueRaw.trim().padStart(2, '0');
+
   const sellerTin = data.seller?.tin || '0715420659018000';
   const sellerIdtku = data.seller?.idtku || `${sellerTin}000000`;
   const invoiceDate = data.invoice?.date || '';
@@ -133,7 +142,7 @@ export async function buildInvoiceXml(data: InvoiceData, buyerResolved: Resolved
     <TaxInvoice>
       <TaxInvoiceDate>${escapeXml(invoiceDate)}</TaxInvoiceDate>
       <TaxInvoiceOpt>Normal</TaxInvoiceOpt>
-      <TrxCode>04</TrxCode>
+      <TrxCode>${escapeXml(trxCode)}</TrxCode>
       <AddInfo></AddInfo>
       <CustomDoc></CustomDoc>
       <CustomDocMonthYear></CustomDocMonthYear>

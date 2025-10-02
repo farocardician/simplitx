@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import BuyerDropdown from '@/components/BuyerDropdown';
+import TransactionCodeDropdown from '@/components/TransactionCodeDropdown';
 
 interface LineItem {
   no?: number;
@@ -38,6 +39,8 @@ interface InvoiceData {
   buyer_name: string;
   invoice_date: string;
   items: LineItem[];
+  trx_code: string | null;
+  trx_code_required: boolean;
   buyer_resolved?: ResolvedParty | null;
   buyer_candidates?: CandidateParty[];
   buyer_resolution_status?: string;
@@ -48,6 +51,12 @@ interface InvoiceData {
 interface UOM {
   code: string;
   name: string;
+}
+
+interface TransactionCode {
+  code: string;
+  name: string;
+  description: string;
 }
 
 interface ItemErrors {
@@ -70,7 +79,11 @@ export default function ReviewPage() {
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
   const [invoiceDate, setInvoiceDate] = useState('');
   const [items, setItems] = useState<LineItem[]>([]);
-  const [initialSnapshot, setInitialSnapshot] = useState<{ invoiceDate: string; items: LineItem[] } | null>(null);
+  const [initialSnapshot, setInitialSnapshot] = useState<{
+    invoiceDate: string;
+    items: LineItem[];
+    trxCode: string | null;
+  } | null>(null);
   const [uomList, setUomList] = useState<UOM[]>([]);
   const [errors, setErrors] = useState<Record<number, ItemErrors>>({});
   const [applyToAllState, setApplyToAllState] = useState<{
@@ -83,16 +96,20 @@ export default function ReviewPage() {
   } | null>(null);
   const [selectedBuyerPartyId, setSelectedBuyerPartyId] = useState<string | null>(null);
   const [allParties, setAllParties] = useState<CandidateParty[]>([]);
+  const [transactionCodes, setTransactionCodes] = useState<TransactionCode[]>([]);
+  const [trxCode, setTrxCode] = useState<string | null>(null);
+  const [trxCodeRequired, setTrxCodeRequired] = useState(false);
 
   useEffect(() => {
     if (!jobId) return;
 
     const fetchData = async () => {
       try {
-        const [invoiceResponse, uomResponse, partiesResponse] = await Promise.all([
+        const [invoiceResponse, uomResponse, partiesResponse, trxCodesResponse] = await Promise.all([
           fetch(`/api/review/${jobId}`),
           fetch('/api/uom'),
-          fetch('/api/parties?limit=1000') // Fetch all parties for override capability
+          fetch('/api/parties?limit=1000'), // Fetch all parties for override capability
+          fetch('/api/transaction-codes')
         ]);
 
         if (!invoiceResponse.ok) {
@@ -103,6 +120,12 @@ export default function ReviewPage() {
 
         const invoiceData = await invoiceResponse.json();
         const uoms = uomResponse.ok ? await uomResponse.json() : [];
+        const trxCodesRaw = trxCodesResponse.ok ? await trxCodesResponse.json() : [];
+        const normalizedTrxCodes: TransactionCode[] = (trxCodesRaw || []).map((code: any) => ({
+          code: code.code,
+          name: code.name,
+          description: code.description ?? ''
+        }));
 
         // Fetch all parties for buyer override
         let parties: CandidateParty[] = [];
@@ -115,16 +138,24 @@ export default function ReviewPage() {
           }));
         }
 
+        const initialTrx = invoiceData.trx_code && invoiceData.trx_code.trim()
+          ? invoiceData.trx_code.trim()
+          : null;
+
         setInvoiceData(invoiceData);
         setInvoiceDate(invoiceData.invoice_date);
         setItems(invoiceData.items);
         setUomList(uoms);
         setAllParties(parties);
+        setTransactionCodes(normalizedTrxCodes);
+        setTrxCode(initialTrx);
+        setTrxCodeRequired(Boolean(invoiceData.trx_code_required));
 
         // Save initial snapshot for dirty tracking
         setInitialSnapshot({
           invoiceDate: invoiceData.invoice_date,
-          items: JSON.parse(JSON.stringify(invoiceData.items))
+          items: JSON.parse(JSON.stringify(invoiceData.items)),
+          trxCode: initialTrx
         });
       } catch (err) {
         console.error('Failed to load invoice:', err);
@@ -274,6 +305,8 @@ export default function ReviewPage() {
 
     if (invoiceDate !== initialSnapshot.invoiceDate) return true;
 
+    if (initialSnapshot.trxCode !== trxCode) return true;
+
     if (items.length !== initialSnapshot.items.length) return true;
 
     for (let i = 0; i < items.length; i++) {
@@ -294,7 +327,7 @@ export default function ReviewPage() {
     }
 
     return false;
-  }, [invoiceDate, items, initialSnapshot]);
+  }, [invoiceDate, items, initialSnapshot, trxCode]);
 
   // Check if there are any validation errors
   const hasErrors = useMemo(() => {
@@ -318,12 +351,29 @@ export default function ReviewPage() {
     return false;
   }, [invoiceData, selectedBuyerPartyId]);
 
+  const trxCodeErrorMessage = trxCodeRequired && !trxCode
+    ? 'Transaction code is required before saving XML.'
+    : null;
+
+  const saveDisabled = useMemo(() => {
+    if (trxCodeRequired && !trxCode) {
+      return true;
+    }
+
+    return (!isDirty && !buyerSelectionChanged) || hasErrors || buyerUnresolved;
+  }, [trxCodeRequired, trxCode, isDirty, buyerSelectionChanged, hasErrors, buyerUnresolved]);
+
   const handleCancel = () => {
     router.push('/queue');
   };
 
   const handleSave = async () => {
     setSaveError(null); // Clear any previous save errors
+
+    if (trxCodeRequired && !trxCode) {
+      return;
+    }
+
     try {
       const response = await fetch(`/api/review/${jobId}`, {
         method: 'POST',
@@ -342,7 +392,8 @@ export default function ReviewPage() {
             uom: item.uom,
             type: item.type
           })),
-          buyer_party_id: selectedBuyerPartyId
+          buyer_party_id: selectedBuyerPartyId,
+          trx_code: trxCode
         })
       });
 
@@ -443,7 +494,7 @@ export default function ReviewPage() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={(!isDirty && !buyerSelectionChanged) || hasErrors || buyerUnresolved}
+                disabled={saveDisabled}
                 className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 Save XML
@@ -589,6 +640,19 @@ export default function ReviewPage() {
                     )}
                   </div>
                 )}
+
+                <div className="mt-3">
+                  <TransactionCodeDropdown
+                    codes={transactionCodes}
+                    selectedCode={trxCode}
+                    onChange={(code) => {
+                      setTrxCode(code);
+                      setSaveError(null);
+                    }}
+                    required={trxCodeRequired}
+                    error={trxCodeErrorMessage}
+                  />
+                </div>
               </div>
             </div>
           </div>

@@ -10,6 +10,53 @@ import { createUomResolverSnapshot } from '@/lib/uomResolver';
 import { resolveBuyerParty, validateBuyerPartyId, type ResolvedParty, type CandidateParty } from '@/lib/partyResolver';
 import { auditResolutionAttempt } from '@/lib/auditLogger';
 
+const trxCodeDefaultCache = new Map<string, string | null>();
+
+async function loadDefaultTrxCode(mappingName: string | null | undefined): Promise<string | null> {
+  if (!mappingName) {
+    return '04';
+  }
+
+  if (trxCodeDefaultCache.has(mappingName)) {
+    return trxCodeDefaultCache.get(mappingName) ?? null;
+  }
+
+  try {
+    const mappingPath = join(process.cwd(), '..', 'json2xml', 'mappings', `${mappingName}.json`);
+    const mappingContent = await readFile(mappingPath, 'utf-8');
+    const mappingJson = JSON.parse(mappingContent);
+    const rawValue = mappingJson?.structure?.ListOfTaxInvoice?.TaxInvoice?.TrxCode;
+
+    if (rawValue === null || rawValue === undefined) {
+      trxCodeDefaultCache.set(mappingName, null);
+      return null;
+    }
+
+    if (typeof rawValue === 'string') {
+      const normalized = rawValue.trim();
+      trxCodeDefaultCache.set(mappingName, normalized || null);
+      return normalized || null;
+    }
+
+    trxCodeDefaultCache.set(mappingName, null);
+    return null;
+  } catch (error) {
+    console.warn(`Failed to load mapping for TrxCode: ${mappingName}`, error);
+    // Fallback to legacy default behaviour
+    trxCodeDefaultCache.set(mappingName, '04');
+    return '04';
+  }
+}
+
+function normalizeTrxCode(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
 function normalizeType(raw: unknown): 'Barang' | 'Jasa' {
   if (raw === null || raw === undefined) {
     return 'Barang';
@@ -43,7 +90,8 @@ export const GET = withSession(async (
         buyerPartyId: true,
         buyerResolutionStatus: true,
         buyerResolutionConfidence: true,
-        buyerResolutionDecidedAt: true
+        buyerResolutionDecidedAt: true,
+        mapping: true
       }
     });
 
@@ -69,6 +117,8 @@ export const GET = withSession(async (
         { status: 400 }
       );
     }
+
+    const defaultTrxCode = await loadDefaultTrxCode(job.mapping);
 
     // PHASE F: Try reading XML from resultPath first (reflects saved edits)
     let xmlData = null;
@@ -221,6 +271,10 @@ export const GET = withSession(async (
         }
       }
 
+      const xmlTrxCode = normalizeTrxCode((xmlData as any).trx_code);
+      const resolvedTrxCode = xmlTrxCode ?? defaultTrxCode ?? null;
+      const trxCodeRequired = defaultTrxCode === null;
+
       return NextResponse.json({
         invoice_no: xmlData.invoice_no,
         seller_name: sellerName,
@@ -231,7 +285,9 @@ export const GET = withSession(async (
         buyer_candidates: buyerCandidates,
         buyer_resolution_status: buyerResolutionStatus,
         buyer_unresolved: buyerUnresolved,
-        buyer_resolution_confidence: buyerResolutionConfidence
+        buyer_resolution_confidence: buyerResolutionConfidence,
+        trx_code: resolvedTrxCode,
+        trx_code_required: trxCodeRequired
       });
     }
 
@@ -352,6 +408,9 @@ export const GET = withSession(async (
       }
     }
 
+    const trxCodeRequired = defaultTrxCode === null;
+    const resolvedTrxCode = defaultTrxCode ?? null;
+
     return NextResponse.json({
       invoice_no: final.invoice?.number || final.invoice_no || '',
       seller_name: final.seller?.name || 'Seller',
@@ -362,7 +421,9 @@ export const GET = withSession(async (
       buyer_candidates: buyerCandidates,
       buyer_resolution_status: buyerResolutionStatus,
       buyer_unresolved: buyerUnresolved,
-      buyer_resolution_confidence: buyerResolutionConfidence
+      buyer_resolution_confidence: buyerResolutionConfidence,
+      trx_code: resolvedTrxCode,
+      trx_code_required: trxCodeRequired
     });
 
   } catch (error) {
@@ -384,7 +445,7 @@ export const POST = withSession(async (
   try {
     // Parse request body
     const body = await req.json();
-    const { invoice_date, items, buyer_party_id } = body;
+    const { invoice_date, items, buyer_party_id, trx_code } = body;
 
     if (!invoice_date || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -404,7 +465,8 @@ export const POST = withSession(async (
         buyerPartyId: true,
         buyerResolutionStatus: true,
         buyerResolutionConfidence: true,
-        updatedAt: true
+        updatedAt: true,
+        mapping: true
       }
     });
 
@@ -436,6 +498,19 @@ export const POST = withSession(async (
         { error: { code: 'NO_RESULT_PATH', message: 'Job has no result path' } },
         { status: 400 }
       );
+    }
+
+    const defaultTrxCode = await loadDefaultTrxCode(job.mapping);
+    const requestedTrxCode = normalizeTrxCode(trx_code);
+
+    if (requestedTrxCode) {
+      const trxCodeRecord = await prisma.transactionCode.findUnique({ where: { code: requestedTrxCode } });
+      if (!trxCodeRecord) {
+        return NextResponse.json(
+          { error: { code: 'INVALID_TRX_CODE', message: 'Selected transaction code is invalid' } },
+          { status: 400 }
+        );
+      }
     }
 
     // Load original parser_results.final to get metadata
@@ -475,6 +550,15 @@ export const POST = withSession(async (
     }
 
     const original = parserResult.final as any;
+
+    const effectiveTrxCode = requestedTrxCode ?? defaultTrxCode ?? null;
+
+    if (!effectiveTrxCode) {
+      return NextResponse.json(
+        { error: { code: 'TRX_CODE_REQUIRED', message: 'Transaction code must be selected before saving XML.' } },
+        { status: 400 }
+      );
+    }
 
     // BUYER RESOLUTION VALIDATION: Ensure buyer is resolved before generating XML
     let buyerResolved: ResolvedParty | null = null;
@@ -550,6 +634,7 @@ export const POST = withSession(async (
     // Merge edited data with original metadata
     const mergedData = {
       ...original,
+      trxCode: effectiveTrxCode,
       invoice: {
         ...original.invoice,
         date: invoice_date

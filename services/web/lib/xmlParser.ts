@@ -19,6 +19,7 @@ interface ParsedInvoiceData {
   buyer_name: string;
   invoice_date: string;
   items: ParsedInvoiceItem[];
+  trx_code: string | null;
 }
 
 /**
@@ -81,6 +82,7 @@ export function parseInvoiceXml(xmlContent: string): ParsedInvoiceData {
   const invoiceDate = extractTextBetweenTags(xmlContent, 'TaxInvoiceDate');
   const refDesc = extractTextBetweenTags(xmlContent, 'RefDesc');
   const buyerName = extractTextBetweenTags(xmlContent, 'BuyerName');
+  const trxCode = extractTextBetweenTags(xmlContent, 'TrxCode');
 
   const items = extractGoodServiceItems(xmlContent);
 
@@ -89,6 +91,7 @@ export function parseInvoiceXml(xmlContent: string): ParsedInvoiceData {
     seller_name: 'Seller', // Not stored in XML, will be merged from parser_results
     buyer_name: buyerName || 'Buyer',
     invoice_date: invoiceDate,
-    items
+    items,
+    trx_code: trxCode || null
   };
 }
