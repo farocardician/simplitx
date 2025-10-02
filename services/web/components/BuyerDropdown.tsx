@@ -38,6 +38,11 @@ export default function BuyerDropdown({
 }: BuyerDropdownProps) {
   const [query, setQuery] = useState('');
 
+  // Determine scenario
+  const isMatched = !!prefilledParty;
+  const isNotMatched = showTopOnly && !prefilledParty;
+  const isSomeCandidates = !isMatched && !isNotMatched;
+
   // Helper: Get display candidates
   const getDisplayCandidates = (): CandidateParty[] => {
     if (!showTopOnly) return candidates;
@@ -57,7 +62,18 @@ export default function BuyerDropdown({
   };
 
   const displayCandidates = getDisplayCandidates();
-  const hideScores = hasIdenticalScores(displayCandidates);
+
+  // Determine when to hide scores
+  const hideScores = (() => {
+    // Matched: Always show score for matched party, show for others if meaningful
+    if (isMatched) return false;
+
+    // Not Matched: Hide if all identical
+    if (isNotMatched) return hasIdenticalScores(displayCandidates);
+
+    // Some Candidates: Always show scores
+    return false;
+  })();
 
   // Combine prefilled party with candidates for full list, avoiding duplicates
   const allParties: (CandidateParty | ResolvedParty)[] = (() => {
@@ -111,7 +127,12 @@ export default function BuyerDropdown({
             className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 focus:outline-none"
             displayValue={() => {
               if (selectedParty) {
-                return `${selectedParty.displayName} (${selectedParty.tinDisplay})`;
+                const baseDisplay = `${selectedParty.displayName} (${selectedParty.tinDisplay})`;
+                // Show score in input for matched scenario
+                if (isMatched && 'confidence' in selectedParty) {
+                  return `${baseDisplay} ${formatConfidence(selectedParty.confidence)}`;
+                }
+                return baseDisplay;
               }
               return '';
             }}

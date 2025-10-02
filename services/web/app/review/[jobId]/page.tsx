@@ -78,9 +78,11 @@ export default function ReviewPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
   const [invoiceDate, setInvoiceDate] = useState('');
+  const [invoiceNo, setInvoiceNo] = useState('');
   const [items, setItems] = useState<LineItem[]>([]);
   const [initialSnapshot, setInitialSnapshot] = useState<{
     invoiceDate: string;
+    invoiceNo: string;
     items: LineItem[];
     trxCode: string | null;
   } | null>(null);
@@ -144,6 +146,7 @@ export default function ReviewPage() {
 
         setInvoiceData(invoiceData);
         setInvoiceDate(invoiceData.invoice_date);
+        setInvoiceNo(invoiceData.invoice_no);
         setItems(invoiceData.items);
         setUomList(uoms);
         setAllParties(parties);
@@ -154,6 +157,7 @@ export default function ReviewPage() {
         // Save initial snapshot for dirty tracking
         setInitialSnapshot({
           invoiceDate: invoiceData.invoice_date,
+          invoiceNo: invoiceData.invoice_no,
           items: JSON.parse(JSON.stringify(invoiceData.items)),
           trxCode: initialTrx
         });
@@ -305,6 +309,8 @@ export default function ReviewPage() {
 
     if (invoiceDate !== initialSnapshot.invoiceDate) return true;
 
+    if (invoiceNo !== initialSnapshot.invoiceNo) return true;
+
     if (initialSnapshot.trxCode !== trxCode) return true;
 
     if (items.length !== initialSnapshot.items.length) return true;
@@ -327,7 +333,7 @@ export default function ReviewPage() {
     }
 
     return false;
-  }, [invoiceDate, items, initialSnapshot, trxCode]);
+  }, [invoiceDate, invoiceNo, items, initialSnapshot, trxCode]);
 
   // Check if there are any validation errors
   const hasErrors = useMemo(() => {
@@ -381,6 +387,7 @@ export default function ReviewPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          invoice_no: invoiceNo,
           invoice_date: invoiceDate,
           items: items.map(item => ({
             description: item.description,
@@ -475,7 +482,13 @@ export default function ReviewPage() {
               <h1 className="text-base font-semibold text-gray-900 whitespace-nowrap">
                 Review Invoice
               </h1>
-              <span className="text-sm font-medium text-gray-700">{invoiceData.invoice_no}</span>
+              <input
+                type="text"
+                value={invoiceNo}
+                onChange={(e) => setInvoiceNo(e.target.value)}
+                className="px-2.5 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Invoice Number"
+              />
               <input
                 id="invoice-date"
                 type="date"
@@ -503,15 +516,32 @@ export default function ReviewPage() {
           </div>
 
           {/* Row 2 - Seller, Buyer Dropdown, Transaction Code, Total */}
-          <div className="flex items-center gap-3 pt-2 border-t">
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-sm text-gray-700">{invoiceData.seller_name}</span>
+          <div className="flex items-start gap-3 pt-2 border-t">
+            <div className="flex items-center gap-2 flex-shrink-0 pt-6">
+              <a
+                href="/admin/parties"
+                className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {invoiceData.seller_name}
+              </a>
               <span className="text-gray-400">→</span>
             </div>
 
             <div className="flex-1 min-w-0 grid grid-cols-12 gap-3">
-              {/* Buyer Company Dropdown - 6 columns */}
+              {/* Buyer Dropdown - 6 columns */}
               <div className="col-span-6">
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  <a
+                    href="/admin/parties"
+                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Buyer Information
+                  </a>
+                </label>
                 {/* Auto-matched or Locked */}
                 {(invoiceData.buyer_resolution_status === 'auto' || invoiceData.buyer_resolution_status === 'locked') && invoiceData.buyer_resolved && (
                   <BuyerDropdown
@@ -552,6 +582,10 @@ export default function ReviewPage() {
 
               {/* Transaction Code - 6 columns */}
               <div className="col-span-6">
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  Transaction Code
+                  {trxCodeRequired && <span className="text-red-500 ml-1">*</span>}
+                </label>
                 <TransactionCodeDropdown
                   codes={transactionCodes}
                   selectedCode={trxCode}
