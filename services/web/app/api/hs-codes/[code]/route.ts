@@ -146,7 +146,19 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const notes = body.notes !== undefined ? String(body.notes).trim() || null : existing.notes;
     const validFrom = body.validFrom ? new Date(body.validFrom) : body.validFrom === null ? null : existing.validFrom;
     const validTo = body.validTo ? new Date(body.validTo) : body.validTo === null ? null : existing.validTo;
-    const updatedAtToken = body.updatedAt ? new Date(body.updatedAt) : null;
+
+    // Check for optimistic locking - compare timestamps
+    if (body.updatedAt) {
+      const clientUpdatedAt = new Date(body.updatedAt).toISOString();
+      const existingUpdatedAt = new Date(existing.updatedAt).toISOString();
+
+      if (clientUpdatedAt !== existingUpdatedAt) {
+        return NextResponse.json(
+          { error: { code: 'CONFLICT', message: 'Updated elsewhere. Review changes?', meta: { current: existing } } },
+          { status: 409 }
+        );
+      }
+    }
 
     if (body.descriptionEn !== undefined && !descriptionEn) {
       return NextResponse.json(
@@ -191,30 +203,12 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       validTo
     };
 
-    const updateResult = await hsDelegate.updateMany({
+    const updated = await hsDelegate.update({
       where: {
-        id: existing.id,
-        ...(updatedAtToken ? { updatedAt: updatedAtToken } : {})
+        id: existing.id
       },
       data: updateData
     });
-
-    if (updateResult.count === 0) {
-      const fresh = await hsDelegate.findUnique({ where: { id: existing.id } });
-      return NextResponse.json(
-        { error: { code: 'CONFLICT', message: 'Updated elsewhere. Review changes?', meta: { current: fresh } } },
-        { status: 409 }
-      );
-    }
-
-    const updated = await hsDelegate.findUnique({ where: { id: existing.id } });
-
-    if (!updated) {
-      return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'HS code disappeared during update.' } },
-        { status: 404 }
-      );
-    }
 
     return NextResponse.json({
       ...updated,
