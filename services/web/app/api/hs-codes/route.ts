@@ -245,12 +245,12 @@ export async function POST(req: NextRequest) {
         );
       }
 
-    const parentExists = await hsDelegate.findFirst({
-      where: {
-        jurisdiction,
-        versionYear,
-        code: parentCode
-      }
+      const parentExists = await hsDelegate.findFirst({
+        where: {
+          jurisdiction,
+          versionYear,
+          code: parentCode
+        }
       });
 
       if (!parentExists) {
