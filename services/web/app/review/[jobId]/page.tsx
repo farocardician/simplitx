@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import BuyerDropdown from '@/components/BuyerDropdown';
 
 interface LineItem {
   no?: number;
@@ -81,15 +82,17 @@ export default function ReviewPage() {
     uomCode: string;
   } | null>(null);
   const [selectedBuyerPartyId, setSelectedBuyerPartyId] = useState<string | null>(null);
+  const [allParties, setAllParties] = useState<CandidateParty[]>([]);
 
   useEffect(() => {
     if (!jobId) return;
 
     const fetchData = async () => {
       try {
-        const [invoiceResponse, uomResponse] = await Promise.all([
+        const [invoiceResponse, uomResponse, partiesResponse] = await Promise.all([
           fetch(`/api/review/${jobId}`),
-          fetch('/api/uom')
+          fetch('/api/uom'),
+          fetch('/api/parties?limit=1000') // Fetch all parties for override capability
         ]);
 
         if (!invoiceResponse.ok) {
@@ -101,10 +104,22 @@ export default function ReviewPage() {
         const invoiceData = await invoiceResponse.json();
         const uoms = uomResponse.ok ? await uomResponse.json() : [];
 
+        // Fetch all parties for buyer override
+        let parties: CandidateParty[] = [];
+        if (partiesResponse.ok) {
+          const partiesData = await partiesResponse.json();
+          // Convert parties to CandidateParty format with neutral confidence
+          parties = partiesData.parties.map((party: any) => ({
+            ...party,
+            confidence: 0.5 // Neutral score for manual selection
+          }));
+        }
+
         setInvoiceData(invoiceData);
         setInvoiceDate(invoiceData.invoice_date);
         setItems(invoiceData.items);
         setUomList(uoms);
+        setAllParties(parties);
 
         // Save initial snapshot for dirty tracking
         setInitialSnapshot({
@@ -512,41 +527,61 @@ export default function ReviewPage() {
               </div>
 
               <div className="flex-1">
-                <h3 className="text-sm font-medium text-gray-900 mb-1">Buyer Company</h3>
+                <h3 className="text-sm font-medium text-gray-900 mb-2">Buyer Company</h3>
 
-                {/* Auto-resolved or Locked */}
+                {/* Auto-matched or Locked - Show dropdown with prefilled value and ALL parties for override */}
                 {(invoiceData.buyer_resolution_status === 'auto' || invoiceData.buyer_resolution_status === 'locked') && invoiceData.buyer_resolved && (
-                  <div className="text-sm text-gray-700">
-                    <p className="font-medium">{invoiceData.buyer_resolved.displayName}</p>
-                    <p className="text-xs text-gray-500">
-                      TIN: {invoiceData.buyer_resolved.tinDisplay}
-                      {invoiceData.buyer_resolved.countryCode && ` • ${invoiceData.buyer_resolved.countryCode}`}
-                      {invoiceData.buyer_resolution_confidence && ` • Confidence: ${(invoiceData.buyer_resolution_confidence * 100).toFixed(1)}%`}
-                    </p>
+                  <div>
+                    <BuyerDropdown
+                      candidates={allParties}
+                      selectedId={selectedBuyerPartyId || invoiceData.buyer_resolved.id}
+                      onChange={(id) => setSelectedBuyerPartyId(id)}
+                      prefilledParty={invoiceData.buyer_resolved}
+                      highlightThreshold={0.90}
+                    />
+                    {invoiceData.buyer_resolution_confidence && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Confidence: {(invoiceData.buyer_resolution_confidence * 100).toFixed(1)}%
+                        {selectedBuyerPartyId && selectedBuyerPartyId !== invoiceData.buyer_resolved.id && (
+                          <span className="ml-2 text-blue-600">• Modified</span>
+                        )}
+                      </p>
+                    )}
                   </div>
                 )}
 
-                {/* Pending confirmation or selection */}
-                {(invoiceData.buyer_resolution_status === 'pending_confirmation' || invoiceData.buyer_resolution_status === 'pending_selection') && (
+                {/* Pending Confirmation - Show candidates with best matches highlighted */}
+                {invoiceData.buyer_resolution_status === 'pending_confirmation' && (
                   <div>
                     <p className="text-xs text-gray-600 mb-2">
-                      {invoiceData.buyer_resolution_status === 'pending_confirmation'
-                        ? 'Please confirm the buyer match:'
-                        : 'Please select the buyer company:'}
+                      Please confirm the buyer match:
                     </p>
-                    <select
-                      value={selectedBuyerPartyId || ''}
-                      onChange={(e) => setSelectedBuyerPartyId(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">-- Select Buyer Company --</option>
-                      {invoiceData.buyer_candidates?.map((candidate) => (
-                        <option key={candidate.id} value={candidate.id}>
-                          {candidate.displayName} ({candidate.tinDisplay})
-                          {candidate.confidence && ` - ${(candidate.confidence * 100).toFixed(1)}% match`}
-                        </option>
-                      ))}
-                    </select>
+                    <BuyerDropdown
+                      candidates={invoiceData.buyer_candidates || []}
+                      selectedId={selectedBuyerPartyId}
+                      onChange={(id) => setSelectedBuyerPartyId(id)}
+                      highlightThreshold={0.86}
+                    />
+                    {buyerUnresolved && (
+                      <p className="mt-1 text-xs text-red-600">
+                        ⚠ You must select a buyer before saving
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Pending Selection - Show top 5 candidates only */}
+                {invoiceData.buyer_resolution_status === 'pending_selection' && (
+                  <div>
+                    <p className="text-xs text-gray-600 mb-2">
+                      Please select the buyer company:
+                    </p>
+                    <BuyerDropdown
+                      candidates={invoiceData.buyer_candidates || []}
+                      selectedId={selectedBuyerPartyId}
+                      onChange={(id) => setSelectedBuyerPartyId(id)}
+                      showTopOnly={true}
+                    />
                     {buyerUnresolved && (
                       <p className="mt-1 text-xs text-red-600">
                         ⚠ You must select a buyer before saving
