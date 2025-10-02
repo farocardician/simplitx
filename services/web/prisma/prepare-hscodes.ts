@@ -91,7 +91,13 @@ function isServiceDescription(desc: string): boolean {
   return lower.includes('service') || lower.includes('jasa');
 }
 
+function isValidHSCode(code: string): boolean {
+  // Regex: Must be 2, 4, or 6 digits only
+  return /^[0-9]{2}([0-9]{2}){0,2}$/.test(code);
+}
+
 function inferLevel(code: string): 'HS2' | 'HS4' | 'HS6' | null {
+  if (!isValidHSCode(code)) return null;
   if (code.length === 2) return 'HS2';
   if (code.length === 4) return 'HS4';
   if (code.length === 6) return 'HS6';

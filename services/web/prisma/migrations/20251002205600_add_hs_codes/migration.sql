@@ -9,6 +9,12 @@
 -- Enable pg_trgm for trigram fuzzy search (fallback for typos)
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
+-- Enable pgcrypto for gen_random_uuid() function
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Enable unaccent for accent-insensitive search
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
 -- Optional: Enable pgvector for embeddings (comment out if not available)
 -- CREATE EXTENSION IF NOT EXISTS vector;
 
@@ -48,12 +54,13 @@ CREATE TABLE IF NOT EXISTS hs_codes (
   -- embedding vector,
 
   -- Generated search vectors (auto-maintained by PostgreSQL)
+  -- Using unaccent + lower for better recall across languages
   search_vector_en tsvector GENERATED ALWAYS AS (
-    to_tsvector('english', coalesce(description_en, ''))
+    to_tsvector('simple', unaccent(lower(coalesce(description_en, ''))))
   ) STORED,
 
   search_vector_id tsvector GENERATED ALWAYS AS (
-    to_tsvector('simple', coalesce(description_id, ''))
+    to_tsvector('simple', unaccent(lower(coalesce(description_id, ''))))
   ) STORED,
 
   -- Timestamps
@@ -61,19 +68,40 @@ CREATE TABLE IF NOT EXISTS hs_codes (
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 
   -- Constraints
+  -- Validate code format: 2, 4, or 6 digits only (prevents codes like '94A500')
   CONSTRAINT hs_codes_code_check CHECK (
-    length(code) = 2 OR length(code) = 4 OR length(code) = 6
+    code ~ '^[0-9]{2}([0-9]{2}){0,2}$'
   ),
 
+  -- Multi-jurisdiction support: unique per jurisdiction/year
   CONSTRAINT hs_codes_unique_code UNIQUE (jurisdiction, version_year, code),
-  CONSTRAINT hs_codes_unique_code_simple UNIQUE (code),
 
   -- Foreign key to parent (deferrable to allow bulk insert without ordering)
-  -- References code only (simpler than composite FK since codes are globally unique)
-  CONSTRAINT hs_codes_parent_fkey FOREIGN KEY (parent_code)
-    REFERENCES hs_codes(code)
+  -- Composite FK ensures parent is in same jurisdiction/year
+  CONSTRAINT hs_codes_parent_fkey FOREIGN KEY (jurisdiction, version_year, parent_code)
+    REFERENCES hs_codes(jurisdiction, version_year, code)
     DEFERRABLE INITIALLY DEFERRED
 );
+
+-- ============================================================================
+-- PART 3B: AUTO-UPDATE TRIGGER FOR updated_at
+-- ============================================================================
+
+-- Function to auto-update updated_at on row changes
+CREATE OR REPLACE FUNCTION update_hs_codes_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to call the function before any UPDATE
+DROP TRIGGER IF EXISTS trigger_update_hs_codes_updated_at ON hs_codes;
+CREATE TRIGGER trigger_update_hs_codes_updated_at
+  BEFORE UPDATE ON hs_codes
+  FOR EACH ROW
+  EXECUTE FUNCTION update_hs_codes_updated_at();
 
 -- ============================================================================
 -- PART 4: INDEXES
@@ -130,43 +158,42 @@ CREATE TEMP TABLE IF NOT EXISTS hs_codes_staging (
 -- ============================================================================
 
 -- Copy CSV data into staging table
--- Note: Adjust the file path to match your filtered CSV location
--- COPY hs_codes_staging(code, level, parent_code, description_en, description_id, jurisdiction, version_year)
--- FROM '/app/prisma/hscodes_filtered.csv'
--- WITH (FORMAT csv, HEADER true, DELIMITER ',', QUOTE '"', ESCAPE '"');
+COPY hs_codes_staging(code, level, parent_code, description_en, description_id, jurisdiction, version_year)
+FROM '/Users/budionodarmawan/Websites/simplitx/services/web/prisma/hscodes_filtered.csv'
+WITH (FORMAT csv, HEADER true, DELIMITER ',', QUOTE '"', ESCAPE '"');
 
 -- ============================================================================
 -- PART 7: UPSERT INTO MAIN TABLE
 -- ============================================================================
 
 -- Insert or update from staging to main table
--- INSERT INTO hs_codes (code, level, parent_code, description_en, description_id, jurisdiction, version_year)
--- SELECT
---   code,
---   level::hs_level,
---   NULLIF(parent_code, ''),
---   description_en,
---   description_id,
---   COALESCE(jurisdiction, 'ID'),
---   COALESCE(version_year, 2022)
--- FROM hs_codes_staging
--- ON CONFLICT (jurisdiction, version_year, code)
--- DO UPDATE SET
---   description_en = EXCLUDED.description_en,
---   description_id = EXCLUDED.description_id,
---   parent_code = EXCLUDED.parent_code,
---   updated_at = NOW();
+INSERT INTO hs_codes (code, level, parent_code, description_en, description_id, jurisdiction, version_year)
+SELECT
+  code,
+  level::hs_level,
+  NULLIF(parent_code, ''),
+  description_en,
+  description_id,
+  COALESCE(jurisdiction, 'ID'),
+  COALESCE(version_year, 2022)
+FROM hs_codes_staging
+ON CONFLICT (jurisdiction, version_year, code)
+DO UPDATE SET
+  description_en = EXCLUDED.description_en,
+  description_id = EXCLUDED.description_id,
+  parent_code = EXCLUDED.parent_code,
+  updated_at = NOW();
 
 -- NULL any orphaned parent references (parents that don't exist in the table)
--- UPDATE hs_codes hc
--- SET parent_code = NULL
--- WHERE parent_code IS NOT NULL
---   AND NOT EXISTS (
---     SELECT 1 FROM hs_codes parent
---     WHERE parent.code = hc.parent_code
---       AND parent.jurisdiction = hc.jurisdiction
---       AND parent.version_year = hc.version_year
---   );
+UPDATE hs_codes hc
+SET parent_code = NULL
+WHERE parent_code IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM hs_codes parent
+    WHERE parent.code = hc.parent_code
+      AND parent.jurisdiction = hc.jurisdiction
+      AND parent.version_year = hc.version_year
+  );
 
 -- ============================================================================
 -- PART 8: BREADCRUMBS VIEW (HS6 -> HS4 -> HS2)
@@ -232,23 +259,23 @@ $$ LANGUAGE plpgsql STABLE;
 -- ============================================================================
 
 -- Summary by level
--- SELECT level, COUNT(*) as count
--- FROM hs_codes
--- WHERE jurisdiction = 'ID' AND version_year = 2022
--- GROUP BY level
--- ORDER BY level;
+SELECT level, COUNT(*) as count
+FROM hs_codes
+WHERE jurisdiction = 'ID' AND version_year = 2022
+GROUP BY level
+ORDER BY level;
 
 -- Check for orphaned parents
--- SELECT code, parent_code
--- FROM hs_codes hc
--- WHERE parent_code IS NOT NULL
---   AND NOT EXISTS (
---     SELECT 1 FROM hs_codes parent
---     WHERE parent.code = hc.parent_code
---       AND parent.jurisdiction = hc.jurisdiction
---       AND parent.version_year = hc.version_year
---   )
--- LIMIT 10;
+SELECT code, parent_code
+FROM hs_codes hc
+WHERE parent_code IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM hs_codes parent
+    WHERE parent.code = hc.parent_code
+      AND parent.jurisdiction = hc.jurisdiction
+      AND parent.version_year = hc.version_year
+  )
+LIMIT 10;
 
 -- ============================================================================
 -- EXAMPLE QUERIES (FOR TESTING)

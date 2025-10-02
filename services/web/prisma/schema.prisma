@@ -145,7 +145,6 @@ model HsCode {
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@unique([jurisdiction, versionYear, code], name: "hs_codes_unique_code")
-  @@unique([code], name: "hs_codes_unique_code_simple")
   @@index([jurisdiction, versionYear, code], name: "idx_hs_codes_jurisdiction_version_code")
   @@index([code(ops: raw("text_pattern_ops"))], name: "idx_hs_codes_code_pattern")
   @@index([parentCode], name: "idx_hs_codes_parent")
