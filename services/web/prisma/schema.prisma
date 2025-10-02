@@ -141,6 +141,8 @@ model HsCode {
   descriptionEn String   @map("description_en") @db.Text
   descriptionId String   @map("description_id") @db.Text
   notes         String?  @db.Text
+  validFrom     DateTime? @map("valid_from")
+  validTo       DateTime? @map("valid_to")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
 
