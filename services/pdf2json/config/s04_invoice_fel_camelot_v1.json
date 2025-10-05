@@ -1,0 +1,32 @@
+{
+  "name": "Invoice FEL Camelot Grid",
+  "version": "1.0",
+  "header_aliases": {
+    "DESC": [
+      "DESCRIPTION"
+    ],
+    "AMOUNT": [
+      "USD AMOUNT",
+      "USDAMOUNT"
+    ]
+  },
+  "totals_keywords": [
+    "SUB TOTAL",
+    "GRAND TOTAL",
+    "TOTAL",
+    "Ref Document"
+  ],
+  "camelot": {
+    "flavor_order": [
+      "stream"
+    ],
+    "line_scale": 40,
+    "row_tol_stream": 10
+  },
+  "stop_after_totals": true,
+  "page_stop_keywords": {},
+  "page_row_limit": {},
+  "row_fix": {
+    "enabled": false
+  }
+}

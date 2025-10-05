@@ -1,5 +1,5 @@
 {
-  "name": "RCS Invoice Segmenter Config V1",
+  "name": "Azu Invoice Segmenter Config V1",
   "version": "1.0",
   "coords": { "normalized": true, "y_origin": "top", "precision": 6 },
   "defaults": { "min_height": 0.02 },

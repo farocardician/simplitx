@@ -1,0 +1,125 @@
+{
+  "root": {
+    "tag": "TaxInvoiceBulk",
+    "nsmap": {
+      "xsd": "http://www.w3.org/2001/XMLSchema",
+      "xsi": "http://www.w3.org/2001/XMLSchema-instance"
+    }
+  },
+  "structure": {
+    "TIN": "0715420659018000",
+    "ListOfTaxInvoice": {
+      "TaxInvoice": {
+        "TaxInvoiceDate": "$.data.invoice.date",
+        "TaxInvoiceOpt": "Normal",
+        "TrxCode": "04",
+        "AddInfo": "",
+        "CustomDoc": "",
+        "CustomDocMonthYear": "",
+        "RefDesc": "$.data.invoice.number",
+        "FacilityStamp": "",
+        "SellerIDTKU": "0715420659018000000000",
+        "BuyerTin": {"path": "$.data.buyer.name", "compute": "resolve_buyer_tin"},
+        "BuyerDocument": {"path": "$.data.buyer.name", "compute": "resolve_buyer_document_type"},
+        "BuyerCountry": {"path": "$.data.buyer.name", "compute": "resolve_buyer_country"},
+        "BuyerDocumentNumber": {"path": "$.data.buyer.name", "compute": "resolve_buyer_document_number"},
+        "BuyerName": "$.data.buyer.name",
+        "BuyerAdress": {"path": "$.data.buyer.name", "compute": "resolve_buyer_address"},
+        "BuyerEmail": {"path": "$.data.buyer.name", "compute": "resolve_buyer_email"},
+        "BuyerIDTKU": {"path": "$.data.buyer.name", "compute": "resolve_buyer_idtku"},
+        "ListOfGoodService": {
+          "_array": "$.data.items[*]",
+          "GoodService": {
+            "Opt": "A",
+            "Code": {"path": "$.hs_code", "compute": "hs_code_to_full"},
+            "Name": "$.description",
+            "Unit": "$.uom",
+            "Price": {"path": "$.unit_price", "format": {"type": "decimal", "scale": 2}},
+            "Qty": "$.qty",
+            "TotalDiscount": "0",
+            "TaxBase": {"path": "$.amount", "format": {"type": "decimal", "scale": 2}},
+            "OtherTaxBase": {"path": "$.amount", "compute": "other_tax_base"},
+            "VATRate": "12",
+            "VAT": {"path": "$.amount", "compute": "vat_amount"},
+            "STLGRate": "0",
+            "STLG": "0"
+          }
+        }
+      }
+    }
+  },
+  "computations": {
+    "hs_code_to_full": {
+      "expression": "str(code) + suffix",
+      "inputs": {
+        "code": {"source": "field"}
+      },
+      "parameters": {
+        "suffix": "00"
+      }
+    },
+    "other_tax_base": {
+      "expression": "(amount / divisor) * multiplier",
+      "inputs": {
+        "amount": {"source": "field"}
+      },
+      "parameters": {
+        "divisor": 12,
+        "multiplier": 11
+      },
+      "format": {"type": "decimal", "scale": 2}
+    },
+    "vat_amount": {
+      "expression": "amount * rate",
+      "inputs": {
+        "amount": {"source": "field"}
+      },
+      "parameters": {
+        "rate": 0.11
+      },
+      "format": {"type": "decimal", "scale": 2}
+    },
+    "resolve_buyer_tin": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "tin"
+      }
+    },
+    "resolve_buyer_document_type": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "document_type"
+      }
+    },
+    "resolve_buyer_country": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "country"
+      }
+    },
+    "resolve_buyer_document_number": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "document_number"
+      }
+    },
+    "resolve_buyer_address": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "address"
+      }
+    },
+    "resolve_buyer_email": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "email"
+      }
+    },
+    "resolve_buyer_idtku": {
+      "builtin": "resolve_buyer_field",
+      "parameters": {
+        "field": "idtku"
+      }
+    }
+  }
+}

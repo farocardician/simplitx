@@ -1,0 +1,224 @@
+{
+  "name": "Tyche Invoice Segmenter Config V1",
+  "version": "1.0",
+  "coords": { "normalized": true, "y_origin": "top", "precision": 6 },
+  "defaults": { "min_height": 0.011 },
+  "regions": [
+    {
+      "id": "header",
+      "label": "Header",
+      "on_pages": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^INVOICE$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "below_only",
+          "dy_max": 0.18,
+          "width": "page"
+        },
+        "margin": {
+          "top": 0.0,
+          "right": 0.0,
+          "bottom": -0.02,
+          "left": 0.0
+        }
+      },
+      "fallbacks": [
+        {
+          "by": "y_cutoff",
+          "edge": "top",
+          "y": 0.38
+        }
+      ],
+      "keep": "first"
+    },
+    {
+      "id": "invoice_no",
+      "label": "invoice_no",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^No$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "around",
+          "dx": 0.15,
+          "dy": 0.002
+        },
+        "margin": {
+          "top": 0.0,
+          "right": 0.0,
+          "bottom": 0.0,
+          "left": 0.0
+        }
+      }
+    },
+    {
+      "id": "invoice_date",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Date$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "around",
+          "dx": 0.15,
+          "dy": 0.002
+        },
+        "margin": {
+          "top": 0.0,
+          "right": 0.0,
+          "bottom": 0.0,
+          "left": 0.0
+        }
+      }
+    },
+    {
+      "id": "buyer_name",
+      "label": "buyer_name",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^To$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "below_only",
+          "dy_max": 0.05,
+          "width": "page"
+        },
+        "margin": {
+          "top": -0.017,
+          "right": 0.0,
+          "bottom": -0.019,
+          "left": 0.0
+        }
+      }
+    },
+    {
+      "id": "total",
+      "label": "total",
+      "on_pages": "all",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Total$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "around",
+          "dx": 0.7,
+          "dy": 0.025
+        },
+        "margin": {
+          "top": 0.0,
+          "bottom": 0.0,
+          "left": 0.0,
+          "right": 0.0
+        }
+      },
+      "fallbacks": [
+        {
+          "by": "y_cutoff",
+          "edge": "bottom",
+          "y": 0.65
+        }
+      ]
+    },
+    {
+      "id": "subtotal",
+      "label": "subtotal",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Total$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "around",
+          "dx": 0.65,
+          "dy": 0.002
+        }
+      }
+    },
+    {
+      "id": "vat",
+      "label": "vat",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^VAT$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 1,
+          "row_tol": 0.005,
+          "dx_max": 0.7
+        }
+      }
+    },
+    {
+      "id": "grand_total",
+      "label": "grand_total",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Amount$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 1,
+          "row_tol": 0.005,
+          "dx_max": 0.7
+        }
+      }
+    }
+  ]
+}

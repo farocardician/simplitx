@@ -1,0 +1,166 @@
+{
+  "name": "invoice_rittal_table_segmenter_v1",
+  "description": "Table body segmentation for Rittal invoices",
+  "version": "2.0.0",
+  "coords": {
+    "normalized": true,
+    "y_origin": "top",
+    "precision": 6
+  },
+  "tolerances": {
+    "y_line_tol": 0.006,
+    "parent_overlap_tol": 0.0
+  },
+  "defaults": {
+    "margin": {
+      "top": 0.0,
+      "bottom": 0.0,
+      "left": 0.0,
+      "right": 0.0
+    },
+    "min_height": 0.01
+  },
+  "regions": [
+    {
+      "id": "table_body",
+      "label": "table_body",
+      "on_pages": "all",
+      "keep": "all",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^Article\\b"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "topmost"
+        },
+        "start_rows_below": 1,
+        "end_anchor": {
+          "patterns": [
+            "(?i)sub\\s*total",
+            "(?i)tax\\s*based",
+            "(?i)vat\\b"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "topmost"
+        },
+        "end_rows_above": 1,
+        "row_tol": 0.02,
+        "row_safety": 0.004,
+        "anchor_scope": "document",
+        "margin": {
+          "top": 0.0,
+          "bottom": 0.08,
+          "left": 0.02,
+          "right": 0.02
+        },
+        "max_page_gap": 0
+      },
+      "fallbacks": [
+        {
+          "by": "anchors",
+          "start_anchor": {
+            "patterns": [
+              "^Article\\b"
+            ],
+            "flags": {
+              "ignore_case": true
+            },
+            "select": "topmost"
+          },
+          "start_rows_below": 1,
+          "end_anchor": {
+            "patterns": [
+              "(?i)^says"
+            ],
+            "flags": {
+              "ignore_case": true
+            },
+            "select": "topmost"
+          },
+          "end_rows_above": 1,
+          "row_tol": 0.02,
+          "row_safety": 0.004,
+          "anchor_scope": "document",
+          "margin": {
+            "top": 0.0,
+            "bottom": 0.08,
+            "left": 0.02,
+            "right": 0.02
+          },
+          "max_page_gap": 0
+        },
+        {
+          "by": "anchors",
+          "start_anchor": {
+            "patterns": [
+              "^Article\\b"
+            ],
+            "flags": {
+              "ignore_case": true
+            },
+            "select": "topmost"
+          },
+          "start_rows_below": 1,
+          "end_anchor": {
+            "patterns": [
+              "(?i)^Halaman"
+            ],
+            "flags": {
+              "ignore_case": true
+            },
+            "select": "topmost"
+          },
+          "end_rows_above": 1,
+          "row_tol": 0.02,
+          "row_safety": 0.004,
+          "anchor_scope": "document",
+          "margin": {
+            "top": 0.0,
+            "bottom": 0.08,
+            "left": 0.02,
+            "right": 0.02
+          },
+          "max_page_gap": 0
+        },
+        {
+          "by": "anchors",
+          "start_anchor": {
+            "patterns": [
+              "^[0-9]{4,}"
+            ],
+            "flags": {
+              "ignore_case": false
+            },
+            "select": "topmost"
+          },
+          "end_anchor": {
+            "patterns": [
+              "(?i)^Halaman"
+            ],
+            "flags": {
+              "ignore_case": true
+            },
+            "select": "topmost"
+          },
+          "end_rows_above": 1,
+          "row_tol": 0.02,
+          "row_safety": 0.004,
+          "anchor_scope": "document",
+          "margin": {
+            "top": 0.0,
+            "bottom": 0.08,
+            "left": 0.02,
+            "right": 0.02
+          },
+          "max_page_gap": 0
+        }
+      ]
+    }
+  ]
+}

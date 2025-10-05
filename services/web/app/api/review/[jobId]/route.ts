@@ -445,7 +445,7 @@ export const POST = withSession(async (
   try {
     // Parse request body
     const body = await req.json();
-    const { invoice_date, items, buyer_party_id, trx_code } = body;
+    const { invoice_no, invoice_date, items, buyer_party_id, trx_code } = body;
 
     if (!invoice_date || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -637,6 +637,7 @@ export const POST = withSession(async (
       trxCode: effectiveTrxCode,
       invoice: {
         ...original.invoice,
+        number: invoice_no || original.invoice?.number || original.invoice?.no,
         date: invoice_date
       },
       items: items.map((item: any) => ({

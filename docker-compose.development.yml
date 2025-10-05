@@ -33,6 +33,7 @@ services:
     volumes:
       - ./services/pdf2json:/app
       - ./services/config:/config
+      - ./scripts:/scripts
       - ./pdf:/pdf
     environment:
       - PYTHONPATH=/app

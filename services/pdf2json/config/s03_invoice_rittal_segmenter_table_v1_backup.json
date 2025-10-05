@@ -1,0 +1,75 @@
+{
+  "name": "invoice_rittal_table_segmenter_v1",
+  "description": "Table header and body segmentation for Rittal invoices",
+  "version": "1.0.0",
+  "coords": {
+    "normalized": true,
+    "y_origin": "top",
+    "precision": 6
+  },
+  "tolerances": {
+    "y_line_tol": 0.006,
+    "parent_overlap_tol": 0.0
+  },
+  "defaults": {
+    "margin": {
+      "top": 0.0,
+      "bottom": 0.0,
+      "left": 0.0,
+      "right": 0.0
+    },
+    "min_height": 0.01
+  },
+  "regions": [
+    {
+      "id": "table_header",
+      "label": "table_header",
+      "on_pages": "all",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Article$"],
+          "flags": {
+            "ignore_case": false
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "around",
+          "dx": 0.9,
+          "dy": 0.005
+        }
+      }
+    },
+    {
+      "id": "table_body",
+      "label": "table_body",
+      "on_pages": "all",
+      "keep": "all",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^\\d{7}$"],
+          "flags": {
+            "ignore_case": false
+          },
+          "select": "leftmost"
+        },
+        "end_anchor": {
+          "patterns": ["^Says$"],
+          "flags": {
+            "ignore_case": false
+          },
+          "select": "first"
+        },
+        "margin": {
+          "left": 0.1,
+          "right": 0.5,
+          "top": 0.0,
+          "bottom": -0.03
+        }
+      }
+    }
+  ]
+}

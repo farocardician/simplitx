@@ -1,0 +1,44 @@
+{
+  "name": "Invoice VISI Camelot Grid",
+  "version": "1.0",
+  "header_aliases": {
+    "NO": [
+      "No."
+    ],
+    "DESC": [
+      "Description",
+      "DESCRIPTION"
+    ],
+    "AMOUNT": [
+      "Amount(IDR)",
+      "Amount",
+      "AMOUNT"
+    ]
+  },
+  "totals_keywords": [
+    "SUB TOTAL",
+    "Sub Total",
+    "Tax Base",
+    "VAT",
+    "PPN",
+    "GRAND TOTAL",
+    "Total Amount",
+    "TOTAL",
+    "Invoice no",
+    "PT. AIG",
+    "Billing Date"
+  ],
+  "camelot": {
+    "flavor_order": [
+      "lattice"
+    ],
+    "line_scale": 40,
+    "row_tol_stream": 10
+  },
+  "stop_after_totals": true,
+  "page_stop_keywords": {},
+  "page_row_limit": {},
+  "row_fix": {
+    "enabled": false
+  }
+}

@@ -40,7 +40,7 @@
     },
     {
       "id": "seller",
-      "label": "Seller",
+      "label": "seller",
       "inside": "@header",
       "detect": {
         "by": "anchors",
@@ -57,26 +57,32 @@
       "keep": "all"
     },
     {
-      "id": "buyer",
-      "label": "buyer",
+      "id": "buyer_name",
+      "label": "buyer_name",
       "inside": "@header",
       "detect": {
         "by": "anchors",
         "start_anchor": { "patterns": ["^Bill$"], "flags": { "ignore_case": true }, "select": "first" },
         "capture_window": {
           "mode": "below_rows",
-          "rows": 5,
+          "rows": 1,
           "row_tol": 0.006,
           "width": "anchor",
           "pad_left": 0.04,
           "pad_right": 0.20
-        }
+        },
+        "margin": {
+          "top": 0.005,
+          "bottom": 0,
+          "right": 0.05,
+          "left": 0
+        }        
       },
       "keep": "all"
     },
     {
-      "id": "invoice_no",
-      "label": "InvoiceNumber",
+      "id": "invoice_number",
+      "label": "invoice_number",
       "inside": "@header",
       "detect": {
         "by": "anchors",
@@ -98,7 +104,7 @@
     },
     {
       "id": "invoice_date",
-      "label": "InvoiceDate",
+      "label": "invoice_date",
       "inside": "@header",
       "detect": {
         "by": "anchors",
@@ -120,7 +126,7 @@
     },
     {
       "id": "currency",
-      "label": "Currency",
+      "label": "currency",
       "inside": "@header",
       "detect": {
         "by": "anchors",
@@ -133,15 +139,15 @@
           "mode": "left_then_rows",
           "rows": 2,
           "row_tol": 0.006,
-          "dx_max": 0.08,      
-          "gap_x": 0.002       
+          "dx_max": 0.08,
+          "gap_x": 0.002
         }
       },
       "keep": "all"
     },
     {
       "id": "total",
-      "label": "Totals",
+      "label": "total",
       "on_pages": "all",
       "detect": {
         "by": "anchors",
@@ -167,7 +173,7 @@
     },
     {
       "id": "subtotal",
-      "label": "SubTotal",
+      "label": "subtotal",
       "inside": "@total",
       "detect": {
         "by": "anchors",
@@ -185,7 +191,7 @@
     },
     {
       "id": "tax_base",
-      "label": "TaxBase",
+      "label": "tax_base",
       "inside": "@total",
       "detect": {
         "by": "anchors",
@@ -202,8 +208,8 @@
       "keep": "all"
     },
     {
-      "id": "vat",
-      "label": "VAT",
+      "id": "tax",
+      "label": "tax",
       "inside": "@total",
       "detect": {
         "by": "anchors",
@@ -245,8 +251,8 @@
       "keep": "all"
     },
     {
-      "id": "pph23",
-      "label": "PPH23",
+      "id": "income_tax",
+      "label": "income_tax",
       "inside": "@total",
       "detect": {
         "by": "anchors",
@@ -263,8 +269,8 @@
       "keep": "all"
     },
     {
-      "id": "total_net",
-      "label": "TotalNetAmount",
+      "id": "grand_total",
+      "label": "grand_total",
       "inside": "@total",
       "detect": {
         "by": "anchors",

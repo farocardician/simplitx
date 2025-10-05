@@ -1,0 +1,49 @@
+{
+  "name": "Invoice KASS Camelot Grid",
+  "version": "1.0",
+  "header_aliases": {
+    "NO": [
+      "#"
+    ],
+    "DESC": [
+      "Item & Description",
+      "DESCRIPTION"
+    ],
+    "QTY": [
+      "Qty",
+      "QTY"
+    ],
+    "UNIT_PRICE": [
+      "Rate",
+      "UNIT PRICE",
+      "PRICE"
+    ],
+    "AMOUNT": [
+      "Amount",
+      "AMOUNT"
+    ]
+  },
+  "totals_keywords": [
+    "SUB TOTAL",
+    "VAT",
+    "GRAND TOTAL",
+    "TOTAL",
+    "Balance Due",
+    "NPWP"
+  ],
+  "camelot": {
+    "flavor_order": [
+      "stream"
+    ],
+    "line_scale": 40,
+    "row_tol_stream": 10
+  },
+  "stop_after_totals": true,
+  "page_stop_keywords": {
+    "2": ["Bank Account", "Payment Details", "Thank you"]
+  },
+  "page_row_limit": {},
+  "row_fix": {
+    "enabled": false
+  }
+}
