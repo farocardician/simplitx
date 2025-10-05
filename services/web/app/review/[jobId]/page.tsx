@@ -549,6 +549,7 @@ export default function ReviewPage() {
                     selectedId={selectedBuyerPartyId || invoiceData.buyer_resolved.id}
                     onChange={(id) => setSelectedBuyerPartyId(id)}
                     prefilledParty={invoiceData.buyer_resolved}
+                    prefilledConfidence={invoiceData.buyer_resolution_confidence ?? null}
                     highlightThreshold={0.90}
                   />
                 )}

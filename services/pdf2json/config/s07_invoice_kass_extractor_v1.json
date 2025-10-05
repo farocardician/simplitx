@@ -22,7 +22,12 @@
   "fields": {
     "buyer_name": {
       "segment": "buyer_name",
-      "strategy": "strict_full_text"
+      "strategy": "regex_capture",
+      "post": {
+        "regex_pattern": [
+          "(?s)[Bb]ill\\s*[Tt]o\\b\\s*[:\\-]*\\s*(?:\\r?\\n|\\s)+([^\\r\\n]+)"
+        ]
+      }
     },
     "invoice_number": {
       "segment": "invoice_number",

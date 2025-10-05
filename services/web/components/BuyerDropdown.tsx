@@ -24,6 +24,7 @@ interface BuyerDropdownProps {
   selectedId: string | null;
   onChange: (partyId: string) => void;
   prefilledParty?: ResolvedParty;
+  prefilledConfidence?: number | null;
   showTopOnly?: boolean;
   highlightThreshold?: number;
 }
@@ -33,6 +34,7 @@ export default function BuyerDropdown({
   selectedId,
   onChange,
   prefilledParty,
+  prefilledConfidence,
   showTopOnly = false,
   highlightThreshold = 0.86
 }: BuyerDropdownProps) {
@@ -86,8 +88,12 @@ export default function BuyerDropdown({
     // Filter out the prefilled party from candidates to avoid duplicates
     const filteredCandidates = displayCandidates.filter(c => c.id !== prefilledParty.id);
 
+    const resolvedConfidence = typeof prefilledConfidence === 'number'
+      ? prefilledConfidence
+      : 1.0;
+
     return [
-      { ...prefilledParty, confidence: 1.0 } as CandidateParty,
+      { ...prefilledParty, confidence: resolvedConfidence } as CandidateParty,
       ...filteredCandidates
     ];
   })();

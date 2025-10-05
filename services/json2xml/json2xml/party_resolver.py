@@ -3,13 +3,16 @@ Party resolution for buyer data lookup.
 Ports logic from web service lib/partyResolver.ts to Python.
 """
 
+import json
 import os
 import re
+from pathlib import Path
 from typing import Optional, Dict, Any
 from Levenshtein import ratio as dice_coefficient
 
 # Database connection
 _db_connection = None
+_party_thresholds = None
 
 
 def get_db_connection():
@@ -55,6 +58,7 @@ def resolve_buyer_party(buyer_name: str) -> Optional[Dict[str, Any]]:
         return None
 
     normalized = normalize_party_name(buyer_name)
+    thresholds = get_party_thresholds()
     conn = get_db_connection()
 
     # STAGE 1: Exact match on name_normalized
@@ -110,15 +114,15 @@ def resolve_buyer_party(buyer_name: str) -> Optional[Dict[str, Any]]:
         return None
 
     # Compute fuzzy scores using Dice coefficient
-    CONFIDENCE_AUTO_SELECT = 0.92
-    TIE_PROXIMITY_THRESHOLD = 0.02
+    confidence_auto_select = thresholds["confidenceAutoSelect"]
+    tie_proximity_threshold = thresholds["tieProximityThreshold"]
 
     scored = []
     for row in all_parties:
         party_normalized = row[2]
         score = dice_coefficient(normalized, party_normalized)
 
-        if score >= CONFIDENCE_AUTO_SELECT:
+        if score >= confidence_auto_select:
             scored.append({
                 'id': row[0],
                 'displayName': row[1],
@@ -146,7 +150,7 @@ def resolve_buyer_party(buyer_name: str) -> Optional[Dict[str, Any]]:
     top_score = top_candidate['score']
 
     # Check for close ties
-    close_ties = [c for c in scored if abs(c['score'] - top_score) <= TIE_PROXIMITY_THRESHOLD]
+    close_ties = [c for c in scored if abs(c['score'] - top_score) <= tie_proximity_threshold]
 
     if len(close_ties) > 1:
         # Multiple candidates within tie threshold - return None (requires manual resolution)
@@ -194,3 +198,18 @@ def get_buyer_field(buyer_name: str, field_name: str) -> str:
         return ""
 
     return str(value)
+def get_party_thresholds() -> Dict[str, Any]:
+    """Load shared party resolution thresholds from JSON once."""
+    global _party_thresholds
+
+    if _party_thresholds is None:
+        config_path = Path(__file__).resolve().parents[2] / 'shared' / 'partyThresholds.json'
+        try:
+            with config_path.open('r', encoding='utf-8') as handle:
+                _party_thresholds = json.load(handle)
+        except FileNotFoundError as exc:
+            raise RuntimeError(f"Party threshold config not found at {config_path}") from exc
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"Party threshold config is invalid JSON: {exc}") from exc
+
+    return _party_thresholds

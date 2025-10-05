@@ -1,32 +1,35 @@
 import { prisma } from '@/lib/prisma';
+import { getPartyThresholds } from '@/lib/partyThresholds';
 import { compareTwoStrings } from 'string-similarity';
 
 // ============================================================================
 // CONSTANTS - Buyer Resolution Thresholds
 // ============================================================================
 
+const PARTY_THRESHOLDS = getPartyThresholds();
+
 /**
  * Confidence threshold for auto-selecting a buyer match (≥0.92)
  * Matches at or above this threshold are automatically selected without user confirmation.
  */
-export const CONFIDENCE_AUTO_SELECT = 0.92;
+export const CONFIDENCE_AUTO_SELECT = PARTY_THRESHOLDS.confidenceAutoSelect;
 
 /**
  * Minimum confidence threshold for requiring user confirmation (≥0.86)
  * Matches between 0.86 and 0.9199 require user to confirm the selection.
  */
-export const CONFIDENCE_REQUIRE_CONFIRM = 0.86;
+export const CONFIDENCE_REQUIRE_CONFIRM = PARTY_THRESHOLDS.confidenceRequireConfirm;
 
 /**
  * Maximum number of candidates to return for user selection
  */
-export const MAX_CANDIDATES = 10;
+export const MAX_CANDIDATES = PARTY_THRESHOLDS.maxCandidates;
 
 /**
  * Score proximity threshold for tie detection (0.02)
  * If multiple candidates are within this range, they are considered tied.
  */
-export const TIE_PROXIMITY_THRESHOLD = 0.02;
+export const TIE_PROXIMITY_THRESHOLD = PARTY_THRESHOLDS.tieProximityThreshold;
 
 // ============================================================================
 // NORMALIZATION (Must match database functions exactly)

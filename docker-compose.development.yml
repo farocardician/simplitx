@@ -8,6 +8,7 @@ services:
       - ./services/web:/app
       - web_node_modules:/app/node_modules
       - web_next:/app/.next
+      - ./services/shared:/shared
     environment:
       - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
@@ -51,6 +52,7 @@ services:
       - ./services/json2xml:/app
       - ./services/config:/config
       - ./services/json2xml/mappings:/app/mappings
+      - ./services/shared:/shared
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
