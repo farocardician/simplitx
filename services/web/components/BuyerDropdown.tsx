@@ -50,8 +50,12 @@ export default function BuyerDropdown({
     // Filter out very low scores (< 0.50)
     const filtered = candidates.filter(c => c.confidence >= 0.50);
 
-    // Take top 5
-    return filtered.slice(0, 5);
+    if (filtered.length > 0) {
+      return filtered.slice(0, 5);
+    }
+
+    // If nothing clears the threshold, fall back to the original ordering
+    return candidates.slice(0, 5);
   };
 
   // Helper: Check if all candidates have identical scores
@@ -163,9 +167,11 @@ export default function BuyerDropdown({
           afterLeave={() => setQuery('')}
         >
           <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-            {filteredParties.length === 0 && query !== '' ? (
+            {filteredParties.length === 0 ? (
               <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
-                No companies match your search.
+                {query === ''
+                  ? 'No buyer companies available. Add one from the Parties admin page.'
+                  : 'No companies match your search.'}
               </div>
             ) : (
               <>
