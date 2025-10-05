@@ -129,7 +129,7 @@
       ]
     },
     {
-      "id": "invoice_no",
+      "id": "invoice_number",
       "on_pages": "first",
       "inside": "@header",
       "keep": "first",

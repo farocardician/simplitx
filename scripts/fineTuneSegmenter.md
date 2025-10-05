@@ -2,7 +2,7 @@ You are a Senior PDF Segmentation Engineer. Tune invoice segmentation using s03_
 
 Goal
 Produce regions that exactly cover the labeled token blocks below, with strict geometric nesting:
-• invoice_no, invoice_date, buyer_name ⊂ header
+• invoice_number, invoice_date, buyer_name ⊂ header
 • subtotal, vat, grand_total ⊂ total
 
 Doc Vars
@@ -18,7 +18,7 @@ Step 2 — Configure regions
 A) header (top-level) — must fully includeTheseTokens:
 LOREMIPSUM
 
-Child: invoice_no — must be strictly inside header and fully includeTheseTokens:
+Child: invoice_number — must be strictly inside header and fully includeTheseTokens:
 LOREMIPSUM
 
 Child: invoice_date — must be strictly inside header and fully includeTheseTokens:
@@ -53,4 +53,4 @@ General rules
 
 Step 3 — Verify each segment using script below:
 
-./scripts/verifySegmen.py --token TOKENS_PATH --segmen OUTPUT_PATH --region-id {region, for example invoice_no}  --tokenizer plumber --check-coverage {"Fill with Each Segment includeTheseTokens"}
+./scripts/verifySegmen.py --token TOKENS_PATH --segmen OUTPUT_PATH --region-id {region, for example invoice_number}  --tokenizer plumber --check-coverage {"Fill with Each Segment includeTheseTokens"}

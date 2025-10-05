@@ -1956,7 +1956,7 @@ class AgnosticSegmenter:
         colors = {
             "header": (0, 0, 1),
             "footer": (1, 0, 0),
-            "invoice_no": (0, 1, 0),
+            "invoice_number": (0, 1, 0),
             "amount": (1, 0, 1),
         }
         # Alternate color for ghost parts

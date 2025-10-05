@@ -151,7 +151,7 @@
       "keep": "all"
     },
     {
-      "id": "invoice_no",
+      "id": "invoice_number",
       "label": "Invoice Number",
       "inside": "@header",
       "detect": {

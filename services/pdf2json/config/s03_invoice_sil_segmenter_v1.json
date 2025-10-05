@@ -88,8 +88,8 @@
       "keep": "all"
     },    
     {
-      "id": "invoice_no",
-      "label": "invoice_no",
+      "id": "invoice_number",
+      "label": "invoice_number",
       "inside": "@header",
       "detect": {
         "by": "anchors",
@@ -196,8 +196,8 @@
       "keep": "all"
     },
     {
-      "id": "invoice_no",
-      "label": "invoice_no",
+      "id": "invoice_number",
+      "label": "invoice_number",
       "inside": "@invoice",
       "detect": {
         "by": "anchors",

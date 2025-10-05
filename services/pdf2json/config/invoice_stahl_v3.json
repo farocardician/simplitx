@@ -186,7 +186,7 @@
       1,
       2
     ],
-    "invoice_no_patterns": [
+    "invoice_number_patterns": [
       "([A-Z0-9]+-\\d{6}-\\d{4})",
       ":?(\\d{8})"
     ],

@@ -2,13 +2,13 @@
   "profile": {
     "name": "pt_simon_hybrid",
     "fail_mode": "soft",
-    "required_fields": ["invoice_no", "invoice_date", "buyer_name"],
+    "required_fields": ["invoice_number", "invoice_date", "buyer_name"],
     "expected_fields": ["seller", "currency", "buyer_id"],
     "optional_fields": ["po_reference", "customer_name", "uom", "subtotal", "tax_base", "tax_amount", "grand_total"]
   },
   "use_stage2_normalized": true,
   "guards": {
-    "invoice_no": { "allowed_chars": "A-Za-z0-9-/", "min_len": 5, "max_len": 40 },
+    "invoice_number": { "allowed_chars": "A-Za-z0-9-/", "min_len": 5, "max_len": 40 },
     "invoice_date": { "min_len": 8, "max_len": 20 },
     "customer_id": { "allowed_chars": "A-Za-z0-9-", "min_len": 2, "max_len": 40 }
   },
@@ -20,8 +20,8 @@
   },
   "totals": { "mode": "segments_only" },
   "fields": {
-    "invoice_no": {
-      "segment": "invoice_no",
+    "invoice_number": {
+      "segment": "invoice_number",
       "strategy": "regex_capture",
       "post": {
         "capture_regex": "([A-Z0-9-]+-\\d{6}-\\d{4})"

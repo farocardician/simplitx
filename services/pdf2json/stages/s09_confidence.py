@@ -22,7 +22,7 @@
 #   Score = clamp01(Base - ΣPenalties)
 #
 # Header score (defaults): fraction present among
-#   invoice_no, invoice_date, customer_id, seller, currency
+#   invoice_number, invoice_date, customer_id, seller, currency
 # Presence uses Stage‑7 value_text (V3); for legacy V1/V2, raw string value.
 #
 # Subtotal score = 1 if totals.checks.subtotal.pass is True, else 0 (legacy: subtotal_check.pass)
@@ -112,7 +112,7 @@ def _load_config(cfg_path: Optional[Path]) -> Dict[str, Any]:
             "totals_detail": {"G": 0.70, "V": 0.15, "S": 0.10, "B": 0.05},
         },
         "header_fields": {
-            "required": ["invoice_no", "invoice_date", "customer_id"],
+            "required": ["invoice_number", "invoice_date", "customer_id"],
             "expected": ["seller", "currency"],
             "optional": [],
         },
@@ -284,7 +284,7 @@ def main():
     header_keys: List[str] = list(cfg.get("header_fields", {}).get("required", [])) + list(cfg.get("header_fields", {}).get("expected", []))
     # Fallback if config empty
     if not header_keys:
-        header_keys = ["invoice_no", "invoice_date", "customer_id", "seller", "currency"]
+        header_keys = ["invoice_number", "invoice_date", "customer_id", "seller", "currency"]
     header_presence = _get_header_presence(f, header_keys)
     header_present = sum(1 for ok in header_presence.values() if ok)
     header_total = len(header_keys)

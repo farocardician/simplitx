@@ -137,7 +137,7 @@
   },
   "stage7": {
     "header_rows_to_scan": 40,
-    "invoice_no_patterns": [
+    "invoice_number_patterns": [
       "([A-Z0-9]+-\\d{6}-\\d{4})"
     ],
     "date_patterns": [

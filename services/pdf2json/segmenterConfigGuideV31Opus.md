@@ -244,7 +244,7 @@ Applied unless overridden in the region or mode.
 **Invoice number (first page), same-line value to the right**
 ```json
 {
-  "id": "invoice_no",
+  "id": "invoice_number",
   "on_pages": "first",
   "keep": "first",
   "inside": "@header",

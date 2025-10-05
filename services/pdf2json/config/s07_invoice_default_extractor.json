@@ -2,13 +2,13 @@
   "profile": {
     "name": "invoice_default",
     "fail_mode": "soft",
-    "required_fields": ["invoice_no", "invoice_date", "customer_id"],
+    "required_fields": ["invoice_number", "invoice_date", "customer_id"],
     "expected_fields": ["seller", "currency"],
     "optional_fields": ["po_reference", "customer_name", "uom", "subtotal", "tax_base", "tax_amount", "grand_total", "total_qty", "vat_rate"]
   },
   "use_stage2_normalized": true,
   "guards": {
-    "invoice_no": { "allowed_chars": "-A-Za-z0-9._/", "min_len": 3, "max_len": 64 },
+    "invoice_number": { "allowed_chars": "-A-Za-z0-9._/", "min_len": 3, "max_len": 64 },
     "invoice_date": { "min_len": 8, "max_len": 20 },
     "customer_id": { "allowed_chars": "-A-Za-z0-9._/", "min_len": 2, "max_len": 64 }
   },
@@ -20,8 +20,8 @@
   },
   "totals": { "mode": "segments_only" },
   "fields": {
-    "invoice_no": {
-      "segment": "invoice_no",
+    "invoice_number": {
+      "segment": "invoice_number",
       "strategy": "regex_capture",
       "post": {
         "capture_regex": "(?:(?:invoice\\s*(?:no|number)\\.?\\s*:?\\s*)?)([A-Za-z0-9][A-Za-z0-9\-_/\.]+)"

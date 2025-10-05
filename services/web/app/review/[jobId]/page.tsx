@@ -34,7 +34,7 @@ interface CandidateParty extends ResolvedParty {
 }
 
 interface InvoiceData {
-  invoice_no: string;
+  invoice_number: string;
   seller_name: string;
   buyer_name: string;
   invoice_date: string;
@@ -146,7 +146,7 @@ export default function ReviewPage() {
 
         setInvoiceData(invoiceData);
         setInvoiceDate(invoiceData.invoice_date);
-        setInvoiceNo(invoiceData.invoice_no);
+        setInvoiceNo(invoiceData.invoice_number);
         setItems(invoiceData.items);
         setUomList(uoms);
         setAllParties(parties);
@@ -157,7 +157,7 @@ export default function ReviewPage() {
         // Save initial snapshot for dirty tracking
         setInitialSnapshot({
           invoiceDate: invoiceData.invoice_date,
-          invoiceNo: invoiceData.invoice_no,
+          invoiceNo: invoiceData.invoice_number,
           items: JSON.parse(JSON.stringify(invoiceData.items)),
           trxCode: initialTrx
         });
@@ -387,7 +387,7 @@ export default function ReviewPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          invoice_no: invoiceNo,
+          invoice_number: invoiceNo,
           invoice_date: invoiceDate,
           items: items.map(item => ({
             description: item.description,

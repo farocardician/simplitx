@@ -34,8 +34,8 @@
       "strategy": "regex_capture",
       "post": {
         "regex_pattern": [
-          "(TI\\s*No\\.?#?\\s*TI\\d+)",
-          "(TI\\d+)"
+          "(?i)(?:TI\\s*No\\.?\\s*[:#-]?\\s*)(TI\\d+)",
+          "\\b(TI\\d+)\\b"
         ]
       }
     },

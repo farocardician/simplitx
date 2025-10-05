@@ -339,7 +339,7 @@ def main():
     # Header
     hdr = f.get("header", {}) or {}
     # Support Stage-7 V3 (field objects with value_text) and legacy scalars
-    invoice_no = s7_value_text(hdr.get("invoice_no"))
+    invoice_number = s7_value_text(hdr.get("invoice_number"))
     invoice_date = s7_value_text(hdr.get("invoice_date"))
     # Some profiles expose customer ID as 'customer_id' (map to buyer_id)
     buyer_id = s7_value_text(hdr.get("buyer_id")) or s7_value_text(hdr.get("customer_id"))
@@ -466,7 +466,7 @@ def main():
 
     # Header backrefs
     header_values = {
-        "invoice_no": invoice_no,
+        "invoice_number": invoice_number,
         "invoice_date": invoice_date,
     }
     hdr_refs = header_backrefs(cells_doc, header_values, config.get("header", {}))
@@ -474,7 +474,7 @@ def main():
     final = {
         "doc_id": f.get("doc_id"),
         "buyer_id": buyer_id,
-        "invoice": {"number": invoice_no, "date": invoice_date},
+        "invoice": {"number": invoice_number, "date": invoice_date},
         "seller": {"name": seller_name},
         "buyer": {"name": buyer_name},
         "currency": currency,

@@ -23,7 +23,7 @@
 
 **Goal:** New page at `/review/[jobId]` with a **compact header** and **line item cards**.
 
-* **Header format:** `Review Invoice {invoice_no} from {seller} to {buyer} {invoice_date}`. The date is editable via a date picker.
+* **Header format:** `Review Invoice {invoice_number} from {seller} to {buyer} {invoice_date}`. The date is editable via a date picker.
 * Render a global **Save XML** (primary) and **Cancel / Back to Queue** (secondary) at the bottom.
 
 **Data loading:**

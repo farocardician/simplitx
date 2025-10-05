@@ -11,7 +11,7 @@
     "pages": [1],
     "search_row_limit": 25,
     "fields": {
-      "invoice_no": { "match": "contains" },
+      "invoice_number": { "match": "contains" },
       "invoice_date": { "match": "contains" }
     }
   },
@@ -52,7 +52,7 @@
   "overlay": {
     "header_color": [0.1, 0.55, 0.95],
     "header_fields": [
-      { "field": "invoice_no", "label": "Invoice No" },
+      { "field": "invoice_number", "label": "Invoice No" },
       { "field": "invoice_date", "label": "Invoice Date" }
     ],
     "totals": {

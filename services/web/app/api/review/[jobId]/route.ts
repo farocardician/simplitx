@@ -276,7 +276,7 @@ export const GET = withSession(async (
       const trxCodeRequired = defaultTrxCode === null;
 
       return NextResponse.json({
-        invoice_no: xmlData.invoice_no,
+        invoice_number: xmlData.invoice_number,
         seller_name: sellerName,
         buyer_name: xmlData.buyer_name,
         invoice_date: xmlData.invoice_date,
@@ -412,7 +412,7 @@ export const GET = withSession(async (
     const resolvedTrxCode = defaultTrxCode ?? null;
 
     return NextResponse.json({
-      invoice_no: final.invoice?.number || final.invoice_no || '',
+      invoice_number: final.invoice?.number || final.invoice_number || '',
       seller_name: final.seller?.name || 'Seller',
       buyer_name: final.buyer?.name || 'Buyer',
       invoice_date: final.invoice?.date || final.invoice_date || '',
@@ -445,7 +445,7 @@ export const POST = withSession(async (
   try {
     // Parse request body
     const body = await req.json();
-    const { invoice_no, invoice_date, items, buyer_party_id, trx_code } = body;
+    const { invoice_number, invoice_date, items, buyer_party_id, trx_code } = body;
 
     if (!invoice_date || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -637,7 +637,7 @@ export const POST = withSession(async (
       trxCode: effectiveTrxCode,
       invoice: {
         ...original.invoice,
-        number: invoice_no || original.invoice?.number || original.invoice?.no,
+        number: invoice_number || original.invoice?.number || original.invoice?.no,
         date: invoice_date
       },
       items: items.map((item: any) => ({

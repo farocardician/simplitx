@@ -35,7 +35,7 @@ The goal: keep the parser template-agnostic. Instead of editing Python, you twea
   "pages": [1],
   "search_row_limit": 25,
   "fields": {
-    "invoice_no": { "match": "contains" },
+    "invoice_number": { "match": "contains" },
     "invoice_date": { "match": "contains" }
   }
 }

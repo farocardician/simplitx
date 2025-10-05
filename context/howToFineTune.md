@@ -32,7 +32,7 @@ Invoices follow a consistent two-level hierarchy:
 
 ```
 ├── header (top-level region)
-│   ├── invoice_no (child)
+│   ├── invoice_number (child)
 │   ├── invoice_date (child)
 │   └── buyer_name (child)
 └── total (top-level region)
@@ -287,7 +287,7 @@ with open('/app/results/{name}/s02-{name}.json', 'r') as f:
 tokens = s02['plumber']['tokens']
 
 for seg in s03['segments']:
-    if seg['id'] in ['invoice_no', 'buyer_name', 'subtotal', 'vat', 'grand_total']:
+    if seg['id'] in ['invoice_number', 'buyer_name', 'subtotal', 'vat', 'grand_total']:
         bbox = seg['bbox']
         captured = []
         for tok in tokens:
@@ -305,7 +305,7 @@ Compare captured tokens against requirements:
 
 | Region | Required | Actual | Status |
 |--------|----------|--------|--------|
-| invoice_no | `Invoice No : T03/12/2021` | `Invoice No : T03/12/2021` | ✅ |
+| invoice_number | `Invoice No : T03/12/2021` | `Invoice No : T03/12/2021` | ✅ |
 | buyer_name | `PT. Gotrans Logistics` | `PT. Gotrans Logistics International` | ❌ Extra tokens |
 | subtotal | `Total 184.988.502` | `Total` | ❌ Missing value |
 
@@ -368,7 +368,7 @@ Compare captured tokens against requirements:
 
 ```json
 {
-  "id": "invoice_no",
+  "id": "invoice_number",
   "inside": "@header",       // MUST be inside parent
   "detect": {
     "by": "anchors",

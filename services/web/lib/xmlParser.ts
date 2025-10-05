@@ -14,7 +14,7 @@ interface ParsedInvoiceItem {
 }
 
 interface ParsedInvoiceData {
-  invoice_no: string;
+  invoice_number: string;
   seller_name: string;
   buyer_name: string;
   invoice_date: string;
@@ -87,7 +87,7 @@ export function parseInvoiceXml(xmlContent: string): ParsedInvoiceData {
   const items = extractGoodServiceItems(xmlContent);
 
   return {
-    invoice_no: refDesc,
+    invoice_number: refDesc,
     seller_name: 'Seller', // Not stored in XML, will be merged from parser_results
     buyer_name: buyerName || 'Buyer',
     invoice_date: invoiceDate,

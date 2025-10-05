@@ -123,7 +123,7 @@ def main() -> None:
     tol_sub_rel = Decimal(str(cfg.get("tolerances", {}).get("subtotal", {}).get("rel", 0.003)))
     tol_sub_abs = Decimal(str(cfg.get("tolerances", {}).get("subtotal", {}).get("abs", 2.00)))
     enable_token_cross = bool(cfg.get("enable_token_crosscheck", False))
-    cross_fields = cfg.get("crosscheck_fields", ["invoice_no", "invoice_date", "customer_id"]) or []
+    cross_fields = cfg.get("crosscheck_fields", ["invoice_number", "invoice_date", "customer_id"]) or []
 
     # Currency from Stage 7 header (value_text)
     currency = get_field_value_text(s7, "currency") or "IDR"

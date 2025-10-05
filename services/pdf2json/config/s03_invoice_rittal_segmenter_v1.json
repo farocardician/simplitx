@@ -98,7 +98,7 @@
       ]
     },
     {
-      "id": "invoice_no",
+      "id": "invoice_number",
       "inside": "@header",
       "on_pages": "first",
       "keep": "first",
