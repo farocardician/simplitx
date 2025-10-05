@@ -11,8 +11,8 @@ interface LineItem {
   qty: number;
   unit_price: number;
   amount: number;
-  sku?: string;
-  hs_code: string;
+  sku?: string | null;
+  hs_code: string | null;
   uom: string;
   type: 'Barang' | 'Jasa';
 }
@@ -67,6 +67,9 @@ interface ItemErrors {
   uom?: string;
   type?: string;
 }
+
+// Default UOM to use when a line item is marked as "Jasa"
+const JASA_UOM_CODE = 'UM.0030';
 
 export default function ReviewPage() {
   const params = useParams();
@@ -187,8 +190,11 @@ export default function ReviewPage() {
       errors.unit_price = 'Unit price must be ≥ 0';
     }
 
-    if (!item.hs_code || !/^\d+$/.test(item.hs_code)) {
-      errors.hs_code = 'HS Code must be digits only';
+    // HS Code is required only for Barang
+    if (item.type === 'Barang') {
+      if (!item.hs_code || !/^\d+$/.test(item.hs_code)) {
+        errors.hs_code = 'HS Code must be digits only';
+      }
     }
 
     if (!item.uom || item.uom.trim() === '') {
@@ -242,6 +248,15 @@ export default function ReviewPage() {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
 
+      // If type switches to Jasa, clear SKU & HS Code and set UOM to default Jasa UOM (if present)
+      if (field === 'type' && value === 'Jasa') {
+        updated[index].sku = null;
+        updated[index].hs_code = null;
+
+        const jasaUomAvailable = uomList.some(u => u.code === JASA_UOM_CODE);
+        updated[index].uom = jasaUomAvailable ? JASA_UOM_CODE : (updated[index].uom || '');
+      }
+
       // Live amount calculation
       if (field === 'qty' || field === 'unit_price') {
         const qty = field === 'qty' ? value : updated[index].qty;
@@ -254,6 +269,16 @@ export default function ReviewPage() {
 
     // Validate on change
     const newItem = { ...items[index], [field]: value };
+
+    // Mirror the side effects for validation preview object
+    if (field === 'type' && value === 'Jasa') {
+      newItem.sku = null;
+      newItem.hs_code = null;
+
+      const jasaUomAvailable = uomList.some(u => u.code === JASA_UOM_CODE);
+      newItem.uom = jasaUomAvailable ? JASA_UOM_CODE : (newItem.uom || '');
+    }
+
     if (field === 'qty' || field === 'unit_price') {
       const qty = field === 'qty' ? value : newItem.qty;
       const unitPrice = field === 'unit_price' ? value : newItem.unit_price;
@@ -278,21 +303,22 @@ export default function ReviewPage() {
   };
 
   const handleApplyToAll = (type: 'Barang' | 'Jasa') => {
-    // Apply the type to all items
-    setItems(prev => prev.map(item => ({ ...item, type })));
+    setItems(prev => prev.map(item => {
+      if (type === 'Jasa') {
+        const jasaUomAvailable = uomList.some(u => u.code === JASA_UOM_CODE);
+        return {
+          ...item,
+          type: 'Jasa',
+          sku: null,
+          hs_code: null,
+          uom: jasaUomAvailable ? JASA_UOM_CODE : (item.uom || '')
+        };
+      }
+      // Barang: only change type; keep other fields as-is
+      return { ...item, type: 'Barang' };
+    }));
 
-    // Clear the "Apply to All" state immediately
     setApplyToAllState(null);
-  };
-
-  const handleUomSelect = (index: number, uomCode: string) => {
-    // Update the current item
-    updateItem(index, 'uom', uomCode);
-
-    // Show "Apply to All" only if multiple items exist and UOM is not empty
-    if (items.length > 1 && uomCode) {
-      setApplyToAllUom({ itemIndex: index, uomCode });
-    }
   };
 
   const handleApplyUomToAll = (uomCode: string) => {
@@ -301,6 +327,16 @@ export default function ReviewPage() {
 
     // Clear the "Apply to All UOM" state immediately
     setApplyToAllUom(null);
+  };
+
+  const handleUomSelect = (index: number, uomCode: string) => {
+    // Respect explicit user choice even if current type is Jasa
+    updateItem(index, 'uom', uomCode);
+
+    // Offer "Apply to All" for UOM for 2s (you already have the reset effect)
+    if (items.length > 1) {
+      setApplyToAllUom({ itemIndex: index, uomCode });
+    }
   };
 
   // Dirty tracking
@@ -696,11 +732,25 @@ export default function ReviewPage() {
                       </label>
                       <input
                         type="text"
-                        value={item.sku || ''}
+                        value={item.sku ?? ''}
                         onChange={(e) => updateItem(index, 'sku', e.target.value)}
                         placeholder="SKU"
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        disabled={item.type === 'Jasa'}
+                        aria-describedby={`sku-hint-${index}`}
+                        title={item.type === 'Jasa' ? 'Disabled for jasa' : undefined}
+                        className={`w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-1 ${
+                          item.type === 'Jasa'
+                            ? 'border-gray-200 bg-gray-100 cursor-not-allowed'
+                            : 'border-gray-300 focus:ring-blue-500'
+                        }`}
                       />
+                      {/* Fixed-height helper line to prevent layout drift */}
+                      <div
+                        id={`sku-hint-${index}`}
+                        className="mt-0.5 h-4 text-[11px] text-gray-500"
+                      >
+                        {item.type === 'Jasa' ? 'Disabled for jasa.' : ' '}
+                      </div>
                     </div>
 
                     {/* Qty */}
@@ -791,19 +841,36 @@ export default function ReviewPage() {
                     {/* HS Code */}
                     <div className="col-span-3">
                       <label className="block text-xs font-medium text-gray-600 mb-1">
-                        HS Code <span className="text-red-500">*</span>
+                        HS Code {item.type === 'Barang' && <span className="text-red-500">*</span>}
                       </label>
+
                       <input
                         type="text"
-                        value={item.hs_code}
+                        value={item.hs_code ?? ''}
                         onChange={(e) => updateItem(index, 'hs_code', e.target.value)}
                         placeholder="000000"
+                        disabled={item.type === 'Jasa'}
+                        aria-describedby={`hs-hint-${index}`}
+                        title={item.type === 'Jasa' ? 'Disabled for jasa' : undefined}
+                        inputMode="numeric"
+                        pattern="\d*"
                         className={`w-full px-2 py-1.5 text-sm font-mono border rounded focus:outline-none focus:ring-1 ${
-                          itemErrors.hs_code
-                            ? 'border-red-300 focus:ring-red-500'
-                            : 'border-gray-300 focus:ring-blue-500'
+                          item.type === 'Jasa'
+                            ? 'border-gray-200 bg-gray-100 cursor-not-allowed'
+                            : itemErrors.hs_code
+                              ? 'border-red-300 focus:ring-red-500'
+                              : 'border-gray-300 focus:ring-blue-500'
                         }`}
                       />
+
+                      {/* Fixed-height helper line to prevent layout drift */}
+                      <div
+                        id={`hs-hint-${index}`}
+                        className="mt-0.5 h-4 text-[11px] text-gray-500"
+                      >
+                        {item.type === 'Jasa' ? 'Disabled for jasa.' : ' '}
+                      </div>
+
                       {itemErrors.hs_code && (
                         <p className="mt-0.5 text-xs text-red-600">{itemErrors.hs_code}</p>
                       )}
