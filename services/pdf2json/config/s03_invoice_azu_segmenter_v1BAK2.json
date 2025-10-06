@@ -91,18 +91,20 @@
       "label": "total",
       "detect": {
         "by": "anchors",
-        "anchor_scope": "page",
         "start_anchor": {
           "patterns": ["^RECEIVABLE$"],
           "flags": { "ignore_case": true },
           "select": "topmost"
         },
-        "end_anchor": {
-          "patterns": ["^TOTAL$"],
-          "flags": { "ignore_case": true },
-          "select": "topmost"
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 3,
+          "row_tol": 0.008,
+          "dx_max": 0.45,
+          "dy_max": 0.05
         },
-        "margin": { "top": 0.002, "right": 0.35, "bottom": 0.005, "left": 0.0 },
+        "margin": { "top": -0.005, "right": 0.02, "bottom": 0.005, "left": 0.0 },
         "min_height": 0.045
       },
       "keep": "all"
@@ -115,17 +117,29 @@
         "by": "anchors",
         "start_anchor": {
           "patterns": ["^RECEIVABLE$"],
-          "flags": { "ignore_case": true, "normalize_space": true },
+          "flags": { "ignore_case": true },
           "select": "topmost"
         },
-        "end_anchor": {
-          "patterns": ["^VAT$"],
-          "flags": { "ignore_case": true, "normalize_space": true },
-          "select": "topmost"
+        "capture_window": {
+          "mode": "right_only",
+          "start_edge": "left",
+          "dx_max": 0.42,
+          "gap_x": 0.01
         },
-        "margin": { "top": 0.005, "right": 0.4, "bottom": -0.015, "left": 0.0 },
-        "min_height": 0.02
-      }
+        "margin": { "top": 0.0, "right": 0.02, "bottom": 0.0, "left": 0.0 }
+      },
+      "min_height": 0.008
+    },
+    {
+      "id": "tax_based",
+      "label": "tax_based",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": { "patterns": ["^Tax$"], "flags": { "ignore_case": true }, "select": "topmost" },
+        "capture_window": { "mode": "right_only", "start_edge": "left", "dx_max": 0.22, "height": "anchor" }
+      },
+      "min_height": 0.008
     },
     {
       "id": "vat",
@@ -135,17 +149,29 @@
         "by": "anchors",
         "start_anchor": {
           "patterns": ["^VAT$"],
-          "flags": { "ignore_case": true, "normalize_space": true },
+          "flags": { "ignore_case": true },
           "select": "topmost"
         },
-        "end_anchor": {
-          "patterns": ["^TOTAL$"],
-          "flags": { "ignore_case": true, "normalize_space": true },
-          "select": "topmost"
+        "capture_window": {
+          "mode": "right_only",
+          "start_edge": "left",
+          "dx_max": 0.42,
+          "gap_x": 0.01
         },
-        "margin": { "top": 0.005, "right": 0.4, "bottom": -0.015, "left": 0.0 },
-        "min_height": 0.02
-      }
+        "margin": { "top": 0.0, "right": 0.02, "bottom": 0.0, "left": 0.0 }
+      },
+      "min_height": 0.008
+    },
+    {
+      "id": "vat_rate",
+      "label": "vat_rate",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": { "patterns": ["^VAT$"], "flags": { "ignore_case": true }, "select": "topmost" },
+        "capture_window": { "mode": "right_only", "start_edge": "left", "dx_max": 0.01, "height": "anchor" }
+      },
+      "min_height": 0.008
     },
     {
       "id": "grand_total",
@@ -155,40 +181,20 @@
         "by": "anchors",
         "start_anchor": {
           "patterns": ["^TOTAL$"],
-          "flags": { "ignore_case": true, "normalize_space": true },
-          "select": "topmost"
-        },
-        "capture_window": {
-          "mode": "right_then_rows",
-          "start_edge": "left",
-          "rows": 0,
-          "row_tol": 0,
-          "dx_max": 0.3
-        },
-        "margin": { "top": 0.005, "right": 0.4, "bottom": -0.01, "left": 0.0 },
-        "min_height": 0.02
-      }
-    },
-    {
-      "id": "buyer_name",
-      "label": "buyer_name",
-      "detect": {
-        "by": "anchors",
-        "start_anchor": {
-          "patterns": ["^BUYER$"],
-          "flags": { "ignore_case": true, "normalize_space": true },
+          "flags": { "ignore_case": true },
           "select": "topmost"
         },
         "capture_window": {
           "mode": "right_then_rows",
           "start_edge": "left",
           "rows": 1,
-          "row_tol": 0,
-          "dx_max": 0.2
-        },
-        "margin": { "top": -0.005, "right": 0.25, "bottom": 0, "left": 0.0 },
-        "min_height": 0.03
-      }
+          "dx_max": 0.42,
+          "gap_x": 0.01,
+          "row_tol": 0.006
+        }
+      },
+      "min_height": 0.008,
+      "keep": "all"
     }
 
   ]

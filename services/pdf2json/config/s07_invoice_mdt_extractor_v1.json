@@ -1,0 +1,184 @@
+{
+    "profile": {
+        "name": "invoice_mdt",
+        "fail_mode": "soft",
+        "required_fields": [
+            "buyer_name",
+            "invoice_number",
+            "invoice_date",
+            "subtotal",
+            "tax_amount",
+            "grand_total"
+        ],
+        "expected_fields": [
+            "tax_base",
+            "tax",
+            "income_tax",
+            "income_tax_amount"
+        ],
+        "optional_fields": [
+            "tax_base",
+            "tax",
+            "income_tax",
+            "income_tax_amount"
+        ]
+    },
+    "use_stage2_normalized": true,
+    "guards": {
+        "invoice_number": {
+            "allowed_chars": "-A-Za-z0-9_./",
+            "min_len": 3,
+            "max_len": 64
+        },
+        "invoice_date": {
+            "min_len": 8,
+            "max_len": 20
+        },
+        "subtotal": {
+            "allowed_chars": "0-9.,()\\-",
+            "min_len": 1,
+            "max_len": 32
+        },
+        "tax_amount": {
+            "allowed_chars": "0-9.,()\\-",
+            "min_len": 1,
+            "max_len": 32
+        },
+        "grand_total": {
+            "allowed_chars": "0-9.,()\\-",
+            "min_len": 1,
+            "max_len": 32
+        },
+        "income_tax_amount": {
+            "allowed_chars": "0-9.,()\\-",
+            "min_len": 1,
+            "max_len": 32
+        },
+        "tax": {
+            "allowed_chars": "0-9%\\s",
+            "min_len": 1,
+            "max_len": 16
+        },
+        "income_tax": {
+            "allowed_chars": "0-9%\\s",
+            "min_len": 1,
+            "max_len": 16
+        },
+        "tax_base": {
+            "allowed_chars": "0-9.,()\\-",
+            "min_len": 1,
+            "max_len": 32
+        }
+    },
+    "confidence": {
+        "thresholds": {
+            "high": {
+                "max_lines": 1,
+                "max_tokens": 20
+            },
+            "medium": {
+                "max_lines": 3,
+                "max_tokens": 80
+            }
+        }
+    },
+    "totals": {
+        "mode": "segments_only"
+    },
+    "fields": {
+        "buyer_name": {
+            "segment": "buyer",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "^\\s*([^\\d]+?)\\s+\\1\\b",
+                    "^\\s*([^\\d]+?)(?=\\s+\\S*\\d|$)",
+                    "^\\s*(.+?)\\s*$"
+                ]
+            }
+        },
+        "invoice_number": {
+            "segment": "invoice_number",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "([A-Za-z0-9][A-Za-z0-9\\-_/]+)"
+                ]
+            }
+        },
+        "invoice_date": {
+            "segment": "invoice_date",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(\\d{4}-\\d{2}-\\d{2})",
+                    "(\\d{2}/\\d{2}/\\d{4})",
+                    "(\\d{2}-\\d{2}-\\d{4})"
+                ]
+            }
+        },
+        "subtotal": {
+            "segment": "total",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(?:untaxed|sub\\s*total|net\\s*amount)[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"
+                ]
+            }
+        },
+        "tax_base": {
+            "segment": "total",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(?:tax\\s*base|dpp|dasar\\s*pajak)[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"
+                ]
+            }
+        },
+        "tax": {
+            "segment": "total",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(?:tax(?:es)?|ppn|vat)[^0-9%]*([0-9]{1,2}\\s*%)"
+                ]
+            }
+        },
+        "tax_amount": {
+            "segment": "total",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(?:\\btax(?:es)?\\b|\\bppn\\b|\\bvat\\b)[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"
+                ]
+            }
+        },
+        "income_tax": {
+            "segment": "total",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(?:withholding|income\\s*tax)[^0-9%]*([0-9]{1,2}\\s*%)"
+                ]
+            }
+        },
+        "income_tax_amount": {
+            "segment": "total",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(?:withholding|income\\s*tax)[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"
+                ]
+            }
+        },
+        "grand_total": {
+            "segment": "total",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(?:^|\\n|\\s)(?:total|amount\\s*due|balance)[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"
+                ]
+            }
+        }
+    }
+}

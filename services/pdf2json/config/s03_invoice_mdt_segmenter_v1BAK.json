@@ -82,35 +82,6 @@
       }
     },
     {
-      "id": "buyer",
-      "inside": "@header",
-      "detect": {
-        "by": "anchors",
-        "start_anchor": {
-          "patterns": ["^Invoice$"],
-          "flags": {
-            "ignore_case": false,
-            "normalize_space": true
-          },
-          "select": "first"
-        },
-        "capture_window": {
-          "mode": "right_then_up",
-          "dx_max": 0.38,
-          "dy_max": 0.148,
-          "dy_tol": 0.0,
-          "gap_x": 0.45,
-          "start_edge": "right"
-        },
-        "margin": {
-          "top": 0.0,
-          "bottom": 0.0,
-          "left": 0.0,
-          "right": 0.0
-        }
-      }
-    },
-    {
       "id": "total",
       "detect": {
         "by": "anchors",
@@ -124,12 +95,12 @@
         },
         "capture_window": {
           "mode": "below_only",
-          "dy_max": 0.1,
+          "dy_max": 0.08,
           "width": "page"
         },
         "margin": {
-          "top": 0.02,
-          "bottom": 0.01,
+          "top": 0.0,
+          "bottom": 0.0,
           "left": 0.0,
           "right": 0.0
         }
