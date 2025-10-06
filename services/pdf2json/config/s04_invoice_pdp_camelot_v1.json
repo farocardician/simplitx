@@ -1,0 +1,85 @@
+{
+  "name": "Invoice PDP Camelot Grid",
+  "version": "1.0",
+  "header_aliases": {
+    "NO": [
+      "NO",
+      "NO.",
+      "ITEM",
+      "ITEM NO",
+      "SEQ"
+    ],
+    "DESC": [
+      "ITEM",
+      "DESCRIPTION",
+      "DESCRIPTION OF GOODS",
+      "DESCRIPTION OF SERVICES",
+      "GOODS",
+      "PARTICULARS",
+      "ITEM DESCRIPTION",
+      "DETAILS"
+    ],
+    "QTY": [
+      "QUANTITY",
+      "QTY",
+      "QTY.",
+      "UNIT"
+    ],
+    "UNIT_PRICE": [
+      "UNIT PRICE",
+      "UNIT PRICE (IDR)",
+      "UNIT PRICE IDR",
+      "UNIT COST",
+      "PRICE (IDR)",
+      "PRICE/UNIT"
+    ],
+    "AMOUNT": [
+      "TOTAL",
+      "AMOUNT",
+      "AMOUNT (IDR)",
+      "LINE TOTAL",
+      "TOTAL (IDR)",
+      "AMOUNT IDR"
+    ]
+  },
+  "totals_keywords": [
+    "SUBTOTAL",
+    "SUB TOTAL",
+    "TOTAL",
+    "TOTAL DUE",
+    "GRAND TOTAL",
+    "AMOUNT DUE",
+    "TOTAL PAYMENT",
+    "VAT",
+    "PPN",
+    "TAX"
+  ],
+  "camelot": {
+    "flavor_order": [
+      "lattice",
+      "stream"
+    ],
+    "line_scale": 40,
+    "line_scale_stream": 15,
+    "row_tol_stream": 15
+  },
+  "stop_after_totals": false,
+  "page_stop_keywords": {},
+  "page_row_limit": {},
+  "row_fix": {
+    "enabled": false,
+    "shadow_mode": false,
+    "continuation_gap_points": 5.0,
+    "header_margin_points": 3.0,
+    "numeric_column_mode": "right_edge_cluster",
+    "numeric_band_tolerance_points": 4.0,
+    "partno_regex_list": [],
+    "arithmetic_abs_tolerance": 1.0,
+    "arithmetic_rel_tolerance": 0.005,
+    "subtotal_abs_tolerance": 2.0,
+    "subtotal_rel_tolerance": 0.003,
+    "use_llm_hints": false,
+    "debug_dump": true,
+    "cache_enabled": false
+  }
+}
