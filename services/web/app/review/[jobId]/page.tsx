@@ -132,28 +132,14 @@ export default function ReviewPage() {
           description: code.description ?? ''
         }));
 
-        // Determine which parties list to use based on resolution status
-        let partiesToUse: CandidateParty[] = [];
+        // Use buyer_candidates from API response (already sorted by score with real fuzzy scores)
+        // API now computes real scores for ALL scenarios (auto, locked, pending_confirmation, pending_selection)
+        const partiesToUse = invoiceData.buyer_candidates || [];
+
+        // Auto-select top candidate for pending_confirmation and pending_selection
         let initialBuyerSelection = null;
-
-        if (invoiceData.buyer_resolution_status === 'auto' ||
-            invoiceData.buyer_resolution_status === 'locked') {
-          // For auto/locked, fetch all parties for override capability
-          if (partiesResponse.ok) {
-            const partiesData = await partiesResponse.json();
-            partiesToUse = partiesData.parties.map((party: any) => ({
-              ...party,
-              confidence: party.id === invoiceData.buyer_resolved?.id
-                ? (invoiceData.buyer_resolution_confidence ?? 1.0)
-                : 0.5
-            }));
-          }
-        } else {
-          // For pending_confirmation and pending_selection, use buyer_candidates from API
-          // (already sorted by score, contains all parties)
-          partiesToUse = invoiceData.buyer_candidates || [];
-
-          // Auto-select top candidate
+        if (invoiceData.buyer_resolution_status === 'pending_confirmation' ||
+            invoiceData.buyer_resolution_status === 'pending_selection') {
           if (partiesToUse.length > 0) {
             initialBuyerSelection = partiesToUse[0].id;
           }
@@ -265,11 +251,8 @@ export default function ReviewPage() {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
 
-      // If type switches to Jasa, clear SKU & HS Code and set UOM to default Jasa UOM (if present)
+      // If type switches to Jasa, only set UOM to default Jasa UOM (if present)
       if (field === 'type' && value === 'Jasa') {
-        updated[index].sku = null;
-        updated[index].hs_code = null;
-
         const jasaUomAvailable = uomList.some(u => u.code === JASA_UOM_CODE);
         updated[index].uom = jasaUomAvailable ? JASA_UOM_CODE : (updated[index].uom || '');
       }
@@ -289,9 +272,6 @@ export default function ReviewPage() {
 
     // Mirror the side effects for validation preview object
     if (field === 'type' && value === 'Jasa') {
-      newItem.sku = null;
-      newItem.hs_code = null;
-
       const jasaUomAvailable = uomList.some(u => u.code === JASA_UOM_CODE);
       newItem.uom = jasaUomAvailable ? JASA_UOM_CODE : (newItem.uom || '');
     }
@@ -326,8 +306,6 @@ export default function ReviewPage() {
         return {
           ...item,
           type: 'Jasa',
-          sku: null,
-          hs_code: null,
           uom: jasaUomAvailable ? JASA_UOM_CODE : (item.uom || '')
         };
       }
@@ -751,22 +729,10 @@ export default function ReviewPage() {
                         value={item.sku ?? ''}
                         onChange={(e) => updateItem(index, 'sku', e.target.value)}
                         placeholder="SKU"
-                        disabled={item.type === 'Jasa'}
-                        aria-describedby={`sku-hint-${index}`}
-                        title={item.type === 'Jasa' ? 'Disabled for jasa' : undefined}
-                        className={`w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-1 ${
-                          item.type === 'Jasa'
-                            ? 'border-gray-200 bg-gray-100 cursor-not-allowed'
-                            : 'border-gray-300 focus:ring-blue-500'
-                        }`}
+                        className="w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-1 border-gray-300 focus:ring-blue-500"
                       />
-                      {/* Fixed-height helper line to prevent layout drift */}
-                      <div
-                        id={`sku-hint-${index}`}
-                        className="mt-0.5 h-4 text-[11px] text-gray-500"
-                      >
-                        {item.type === 'Jasa' ? 'Disabled for jasa.' : ' '}
-                      </div>
+                      {/* fixed-height spacer to keep rows aligned */}
+                      <div className="mt-0.5 h-4 text-[11px] text-gray-500">{'\u00A0'}</div>
                     </div>
 
                     {/* Qty */}
@@ -859,34 +825,21 @@ export default function ReviewPage() {
                       <label className="block text-xs font-medium text-gray-600 mb-1">
                         HS Code {item.type === 'Barang' && <span className="text-red-500">*</span>}
                       </label>
-
                       <input
                         type="text"
                         value={item.hs_code ?? ''}
                         onChange={(e) => updateItem(index, 'hs_code', e.target.value)}
                         placeholder="000000"
-                        disabled={item.type === 'Jasa'}
-                        aria-describedby={`hs-hint-${index}`}
-                        title={item.type === 'Jasa' ? 'Disabled for jasa' : undefined}
                         inputMode="numeric"
                         pattern="\d*"
                         className={`w-full px-2 py-1.5 text-sm font-mono border rounded focus:outline-none focus:ring-1 ${
-                          item.type === 'Jasa'
-                            ? 'border-gray-200 bg-gray-100 cursor-not-allowed'
-                            : itemErrors.hs_code
-                              ? 'border-red-300 focus:ring-red-500'
-                              : 'border-gray-300 focus:ring-blue-500'
+                          itemErrors.hs_code
+                            ? 'border-red-300 focus:ring-red-500'
+                            : 'border-gray-300 focus:ring-blue-500'
                         }`}
                       />
-
-                      {/* Fixed-height helper line to prevent layout drift */}
-                      <div
-                        id={`hs-hint-${index}`}
-                        className="mt-0.5 h-4 text-[11px] text-gray-500"
-                      >
-                        {item.type === 'Jasa' ? 'Disabled for jasa.' : ' '}
-                      </div>
-
+                      {/* fixed-height spacer to keep rows aligned */}
+                      <div className="mt-0.5 h-4 text-[11px] text-gray-500">{'\u00A0'}</div>
                       {itemErrors.hs_code && (
                         <p className="mt-0.5 text-xs text-red-600">{itemErrors.hs_code}</p>
                       )}

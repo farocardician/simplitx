@@ -217,6 +217,9 @@ export const GET = withSession(async (
       let buyerUnresolved = true;
       let buyerResolutionConfidence: number | null = null;
 
+      // Always get buyer name for fuzzy scoring
+      const buyerName = xmlData.buyer_name || 'Buyer';
+
       if (job.buyerPartyId) {
         // Buyer already resolved - validate it still exists
         buyerResolved = await validateBuyerPartyId(job.buyerPartyId);
@@ -232,10 +235,38 @@ export const GET = withSession(async (
         buyerUnresolved = false;
         buyerResolutionConfidence = job.buyerResolutionConfidence || 1.0;
 
+        // Compute fuzzy scores for ALL parties for dropdown (same as scenarios 2&3)
+        const { normalizePartyName } = await import('@/lib/partyResolver');
+        const { compareTwoStrings } = await import('string-similarity');
+        const normalized = normalizePartyName(buyerName);
+
+        const allParties = await prisma.party.findMany({
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            displayName: true,
+            nameNormalized: true,
+            tinDisplay: true,
+            tinNormalized: true,
+            countryCode: true,
+            addressFull: true,
+            email: true,
+            buyerDocument: true,
+            buyerDocumentNumber: true,
+            buyerIdtku: true
+          }
+        });
+
+        buyerCandidates = allParties
+          .map(party => ({
+            ...party,
+            confidence: compareTwoStrings(normalized, party.nameNormalized)
+          }))
+          .sort((a, b) => b.confidence - a.confidence);
+
         auditResolutionAttempt(jobId, 'locked', buyerResolutionConfidence, 0, false);
       } else {
         // Run buyer resolution
-        const buyerName = xmlData.buyer_name || 'Buyer';
         const resolutionResult = await resolveBuyerParty(buyerName);
 
         if (resolutionResult.status === 'resolved') {
@@ -243,6 +274,35 @@ export const GET = withSession(async (
           buyerResolutionStatus = 'auto';
           buyerUnresolved = false;
           buyerResolutionConfidence = resolutionResult.confidence;
+
+          // Compute fuzzy scores for ALL parties for dropdown (same as scenarios 2&3)
+          const { normalizePartyName } = await import('@/lib/partyResolver');
+          const { compareTwoStrings } = await import('string-similarity');
+          const normalized = normalizePartyName(buyerName);
+
+          const allParties = await prisma.party.findMany({
+            where: { deletedAt: null },
+            select: {
+              id: true,
+              displayName: true,
+              nameNormalized: true,
+              tinDisplay: true,
+              tinNormalized: true,
+              countryCode: true,
+              addressFull: true,
+              email: true,
+              buyerDocument: true,
+              buyerDocumentNumber: true,
+              buyerIdtku: true
+            }
+          });
+
+          buyerCandidates = allParties
+            .map(party => ({
+              ...party,
+              confidence: compareTwoStrings(normalized, party.nameNormalized)
+            }))
+            .sort((a, b) => b.confidence - a.confidence);
 
           auditResolutionAttempt(jobId, 'resolved', resolutionResult.confidence, 0, false);
         } else if (resolutionResult.status === 'candidates') {
@@ -354,6 +414,9 @@ export const GET = withSession(async (
     let buyerUnresolved = true;
     let buyerResolutionConfidence: number | null = null;
 
+    // Always get buyer name for fuzzy scoring
+    const buyerName = final.buyer?.name || 'Buyer';
+
     if (job.buyerPartyId) {
       // Buyer already resolved - validate it still exists
       buyerResolved = await validateBuyerPartyId(job.buyerPartyId);
@@ -369,10 +432,38 @@ export const GET = withSession(async (
       buyerUnresolved = false;
       buyerResolutionConfidence = job.buyerResolutionConfidence || 1.0;
 
+      // Compute fuzzy scores for ALL parties for dropdown (same as scenarios 2&3)
+      const { normalizePartyName } = await import('@/lib/partyResolver');
+      const { compareTwoStrings } = await import('string-similarity');
+      const normalized = normalizePartyName(buyerName);
+
+      const allParties = await prisma.party.findMany({
+        where: { deletedAt: null },
+        select: {
+          id: true,
+          displayName: true,
+          nameNormalized: true,
+          tinDisplay: true,
+          tinNormalized: true,
+          countryCode: true,
+          addressFull: true,
+          email: true,
+          buyerDocument: true,
+          buyerDocumentNumber: true,
+          buyerIdtku: true
+        }
+      });
+
+      buyerCandidates = allParties
+        .map(party => ({
+          ...party,
+          confidence: compareTwoStrings(normalized, party.nameNormalized)
+        }))
+        .sort((a, b) => b.confidence - a.confidence);
+
       auditResolutionAttempt(jobId, 'locked', buyerResolutionConfidence, 0, false);
     } else {
       // Run buyer resolution
-      const buyerName = final.buyer?.name || 'Buyer';
       const resolutionResult = await resolveBuyerParty(buyerName);
 
       if (resolutionResult.status === 'resolved') {
@@ -380,6 +471,35 @@ export const GET = withSession(async (
         buyerResolutionStatus = 'auto';
         buyerUnresolved = false;
         buyerResolutionConfidence = resolutionResult.confidence;
+
+        // Compute fuzzy scores for ALL parties for dropdown (same as scenarios 2&3)
+        const { normalizePartyName } = await import('@/lib/partyResolver');
+        const { compareTwoStrings } = await import('string-similarity');
+        const normalized = normalizePartyName(buyerName);
+
+        const allParties = await prisma.party.findMany({
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            displayName: true,
+            nameNormalized: true,
+            tinDisplay: true,
+            tinNormalized: true,
+            countryCode: true,
+            addressFull: true,
+            email: true,
+            buyerDocument: true,
+            buyerDocumentNumber: true,
+            buyerIdtku: true
+          }
+        });
+
+        buyerCandidates = allParties
+          .map(party => ({
+            ...party,
+            confidence: compareTwoStrings(normalized, party.nameNormalized)
+          }))
+          .sort((a, b) => b.confidence - a.confidence);
 
         auditResolutionAttempt(jobId, 'resolved', resolutionResult.confidence, 0, false);
       } else if (resolutionResult.status === 'candidates') {
