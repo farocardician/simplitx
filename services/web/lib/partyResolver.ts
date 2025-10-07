@@ -471,25 +471,23 @@ export async function resolveBuyerParty(
     };
   });
 
+  // Sort all candidates by score descending
+  const sortedCandidates = scored.sort((a, b) => b.score - a.score);
+
   // Filter candidates that meet minimum confidence threshold
-  const validCandidates = scored
-    .filter(c => c.score >= CONFIDENCE_REQUIRE_CONFIRM)
-    .sort((a, b) => b.score - a.score);
+  const validCandidates = sortedCandidates.filter(c => c.score >= CONFIDENCE_REQUIRE_CONFIRM);
 
   // No candidates above minimum threshold
   if (validCandidates.length === 0) {
-    // Return top 10 for manual selection
-    const top10 = scored
-      .sort((a, b) => b.score - a.score)
-      .slice(0, MAX_CANDIDATES)
-      .map(c => ({
-        ...c,
-        confidence: c.score
-      }));
+    // Return ALL parties sorted by score for manual selection
+    const allCandidates = sortedCandidates.map(c => ({
+      ...c,
+      confidence: c.score
+    }));
 
     return {
       status: 'unresolved',
-      candidates: top10
+      candidates: allCandidates
     };
   }
 
@@ -509,14 +507,15 @@ export async function resolveBuyerParty(
 
       if (!winner) {
         // True tie detected - require manual confirmation
-        const top10 = closeTies.slice(0, MAX_CANDIDATES).map(c => ({
+        // Return ALL parties sorted by score
+        const allCandidates = sortedCandidates.map(c => ({
           ...c,
           confidence: c.score
         }));
 
         return {
           status: 'candidates',
-          candidates: top10,
+          candidates: allCandidates,
           topConfidence: topScore
         };
       }
@@ -538,14 +537,15 @@ export async function resolveBuyerParty(
   }
 
   // Medium confidence (0.86-0.9199) - require user confirmation
-  const top10 = validCandidates.slice(0, MAX_CANDIDATES).map(c => ({
+  // Return ALL parties sorted by score
+  const allCandidates = sortedCandidates.map(c => ({
     ...c,
     confidence: c.score
   }));
 
   return {
     status: 'candidates',
-    candidates: top10,
+    candidates: allCandidates,
     topConfidence: topScore
   };
 }

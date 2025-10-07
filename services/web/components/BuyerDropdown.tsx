@@ -45,41 +45,11 @@ export default function BuyerDropdown({
   const isNotMatched = showTopOnly && !prefilledParty;
   const isSomeCandidates = !isMatched && !isNotMatched;
 
-  // Helper: Get display candidates
-  const getDisplayCandidates = (): CandidateParty[] => {
-    if (!showTopOnly) return candidates;
+  // Always show all candidates (no filtering by showTopOnly)
+  const displayCandidates = candidates;
 
-    // Filter out very low scores (< 0.50)
-    const filtered = candidates.filter(c => c.confidence >= 0.50);
-
-    if (filtered.length > 0) {
-      return filtered.slice(0, 5);
-    }
-
-    // If nothing clears the threshold, fall back to the original ordering
-    return candidates.slice(0, 5);
-  };
-
-  // Helper: Check if all candidates have identical scores
-  const hasIdenticalScores = (parties: CandidateParty[]): boolean => {
-    if (parties.length <= 1) return true;
-    const firstScore = parties[0].confidence;
-    return parties.every(c => Math.abs(c.confidence - firstScore) < 0.001);
-  };
-
-  const displayCandidates = getDisplayCandidates();
-
-  // Determine when to hide scores
-  const hideScores = (() => {
-    // Matched: Always show score for matched party, show for others if meaningful
-    if (isMatched) return false;
-
-    // Not Matched: Hide if all identical
-    if (isNotMatched) return hasIdenticalScores(displayCandidates);
-
-    // Some Candidates: Always show scores
-    return false;
-  })();
+  // Always show scores - never hide them
+  const hideScores = false;
 
   // Combine prefilled party with candidates for full list, avoiding duplicates
   const allParties: (CandidateParty | ResolvedParty)[] = (() => {
@@ -138,8 +108,8 @@ export default function BuyerDropdown({
             displayValue={() => {
               if (selectedParty) {
                 const baseDisplay = `${selectedParty.displayName} (${selectedParty.tinDisplay})`;
-                // Show score in input for matched scenario
-                if (isMatched && 'confidence' in selectedParty) {
+                // Always show score if available
+                if ('confidence' in selectedParty) {
                   return `${baseDisplay} ${formatConfidence(selectedParty.confidence)}`;
                 }
                 return baseDisplay;

@@ -132,15 +132,31 @@ export default function ReviewPage() {
           description: code.description ?? ''
         }));
 
-        // Fetch all parties for buyer override
-        let parties: CandidateParty[] = [];
-        if (partiesResponse.ok) {
-          const partiesData = await partiesResponse.json();
-          // Convert parties to CandidateParty format with neutral confidence
-          parties = partiesData.parties.map((party: any) => ({
-            ...party,
-            confidence: 0.5 // Neutral score for manual selection
-          }));
+        // Determine which parties list to use based on resolution status
+        let partiesToUse: CandidateParty[] = [];
+        let initialBuyerSelection = null;
+
+        if (invoiceData.buyer_resolution_status === 'auto' ||
+            invoiceData.buyer_resolution_status === 'locked') {
+          // For auto/locked, fetch all parties for override capability
+          if (partiesResponse.ok) {
+            const partiesData = await partiesResponse.json();
+            partiesToUse = partiesData.parties.map((party: any) => ({
+              ...party,
+              confidence: party.id === invoiceData.buyer_resolved?.id
+                ? (invoiceData.buyer_resolution_confidence ?? 1.0)
+                : 0.5
+            }));
+          }
+        } else {
+          // For pending_confirmation and pending_selection, use buyer_candidates from API
+          // (already sorted by score, contains all parties)
+          partiesToUse = invoiceData.buyer_candidates || [];
+
+          // Auto-select top candidate
+          if (partiesToUse.length > 0) {
+            initialBuyerSelection = partiesToUse[0].id;
+          }
         }
 
         const initialTrx = invoiceData.trx_code && invoiceData.trx_code.trim()
@@ -152,10 +168,11 @@ export default function ReviewPage() {
         setInvoiceNo(invoiceData.invoice_number);
         setItems(invoiceData.items);
         setUomList(uoms);
-        setAllParties(parties);
+        setAllParties(partiesToUse);
         setTransactionCodes(normalizedTrxCodes);
         setTrxCode(initialTrx);
         setTrxCodeRequired(Boolean(invoiceData.trx_code_required));
+        setSelectedBuyerPartyId(initialBuyerSelection);
 
         // Save initial snapshot for dirty tracking
         setInitialSnapshot({
@@ -593,7 +610,7 @@ export default function ReviewPage() {
                 {/* Pending Confirmation */}
                 {invoiceData.buyer_resolution_status === 'pending_confirmation' && (
                   <BuyerDropdown
-                    candidates={invoiceData.buyer_candidates || []}
+                    candidates={allParties}
                     selectedId={selectedBuyerPartyId}
                     onChange={(id) => setSelectedBuyerPartyId(id)}
                     highlightThreshold={0.86}
@@ -603,10 +620,9 @@ export default function ReviewPage() {
                 {/* Pending Selection */}
                 {invoiceData.buyer_resolution_status === 'pending_selection' && (
                   <BuyerDropdown
-                    candidates={invoiceData.buyer_candidates || []}
+                    candidates={allParties}
                     selectedId={selectedBuyerPartyId}
                     onChange={(id) => setSelectedBuyerPartyId(id)}
-                    showTopOnly={true}
                   />
                 )}
 
