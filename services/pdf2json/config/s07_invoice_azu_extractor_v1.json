@@ -117,6 +117,22 @@
     }
   },
   "totals": {
-    "mode": "segments_only"
+    "mode": "segments_only",
+    "field_names": [
+      "subtotal",
+      "tax_base",
+      "tax_amount",
+      "grand_total",
+      "total_qty",
+      "vat_rate_percent"
+    ],
+    "segments": [
+      "total",
+      "totals",
+      "subtotal",
+      "vat",
+      "grand_total"
+    ],
+    "prefer_totals_over_header": true
   }
 }

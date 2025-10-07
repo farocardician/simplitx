@@ -8,6 +8,12 @@ Contract (from extractorRefactorV3.md):
 - Evidence per field: region id, bbox, page, token span, confidence, warnings.
 - Python logic is rigid; behavior controlled only via config file.
 
+Totals routing note (2025-02): totals-like fields are now routed into
+``totals_extracted`` when their name or segment matches configurable
+allow-lists. Defaults mirror the previous behaviour so existing vendors stay
+unchanged, while configs can override the lists or keep header copies if
+desired.
+
 Inputs:
   --tokens   Stage 2 normalized tokens JSON
   --segments Stage 3 segments JSON
@@ -20,9 +26,13 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+
+logger = logging.getLogger("s07_extractor")
 
 
 # -------------------- IO helpers --------------------
@@ -214,6 +224,35 @@ def extract_strict(tokens_p: Path, segments_p: Path, cfg_p: Path, tokenizer: str
     region_map = _build_region_map(sdata)
 
     field_map_raw = cfg.get("fields") or {}
+
+    totals_cfg = cfg.get("totals") or {}
+    default_total_fields = [
+        "subtotal",
+        "tax_base",
+        "tax_amount",
+        "grand_total",
+        "total_qty",
+        "vat_rate_percent",
+    ]
+    default_total_segments = [
+        "total",
+        "totals",
+        "subtotal",
+        "vat",
+        "grand_total",
+    ]
+    totals_field_names = {
+        str(name).strip().lower()
+        for name in (totals_cfg.get("field_names") or default_total_fields)
+        if str(name).strip()
+    }
+    totals_segment_names = {
+        str(name).strip().lower()
+        for name in (totals_cfg.get("segments") or default_total_segments)
+        if str(name).strip()
+    }
+    prefer_totals_bucket = bool(totals_cfg.get("prefer_totals_over_header", True))
+    warned_totals_reroute = False
 
     # Preflight checks
     errors: List[str] = []
@@ -422,9 +461,26 @@ def extract_strict(tokens_p: Path, segments_p: Path, cfg_p: Path, tokenizer: str
         # Extract the field
         field_result = extract_one(field_name)
 
-        # Categorize based on segment
-        if segment_ref == "total":
+        segment_key = None
+        if isinstance(segment_ref, str):
+            segment_key = segment_ref
+        elif segment_ref is not None:
+            segment_key = str(segment_ref)
+
+        field_key = str(field_name).lower()
+        detected_by_name = field_key in totals_field_names
+        detected_by_segment = (segment_key or "").lower() in totals_segment_names if segment_key else False
+        route_to_totals = detected_by_name or detected_by_segment
+
+        if route_to_totals:
             totals_extracted[field_name] = field_result
+            if prefer_totals_bucket:
+                header.pop(field_name, None)
+            else:
+                header[field_name] = field_result
+            if detected_by_name and not detected_by_segment and not warned_totals_reroute:
+                logger.warning("Found totals field(s) in header; routed to totals_extracted.")
+                warned_totals_reroute = True
         else:
             header[field_name] = field_result
 
