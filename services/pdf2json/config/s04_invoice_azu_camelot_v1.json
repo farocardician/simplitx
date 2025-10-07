@@ -60,6 +60,59 @@
     ],
     "line_scale": 40
   },
+  "items_region": {
+    "detect": {
+      "by": "anchors"
+    },
+    "start_anchor": {
+      "patterns": [
+        "\\bDESCRIPTION\\b",
+        "\\bDETAILS\\b",
+        "\\bUNIT\\s*PRICE\\b",
+        "\\bAMOUNT\\b",
+        "\\bQTY\\b"
+      ]
+    },
+    "end_anchor": {
+      "patterns": [
+        "(?i)\\bSUB\\s*TOTAL\\b",
+        "(?i)\\bTOTAL\\b",
+        "(?i)\\bVAT\\b",
+        "(?i)\\bPPN\\b",
+        "(?i)\\bTAX\\b",
+        "(?i)\\bPAYMENT\\s+DETAILS\\b",
+        "(?i)\\bACCOUNT\\s*NAME\\b",
+        "(?i)\\bACCOUNT\\s*NUMBER\\b",
+        "(?i)\\bSWIFT\\s*CODE\\b",
+        "(?i)\\bBANK\\b"
+      ],
+      "select": "next_below"
+    },
+    "flags": {
+      "ignore_case": true
+    },
+    "select": "next_below",
+    "x_policy": "full",
+    "margin": {
+      "top": 0.0,
+      "bottom": 0.02,
+      "left": 0.0,
+      "right": 0.0
+    },
+    "min_height": 0.3
+  },
+  "ranking": {
+    "weights": {
+      "header": 3.0,
+      "overlap_items_region": 2.5,
+      "numeric_right": 0.8,
+      "rows": 1.2,
+      "totals_below": 0.5
+    },
+    "overlap_threshold": 0.2,
+    "max_candidates": 6,
+    "use_items_roi": true
+  },
   "stop_after_totals": true,
   "page_stop_keywords": {},
   "page_row_limit": {

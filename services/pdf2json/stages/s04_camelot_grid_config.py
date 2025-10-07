@@ -1,6 +1,20 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-"""Stage 4 + 4.5 — Camelot grid with deterministic row fixer."""
+"""Stage 4 + 4.5 — Camelot grid with deterministic row fixer.
+
+This stage now ranks Camelot candidates with an anchor-guided band that is
+configured per vendor. The s04 config exposes two tuning blocks:
+
+- ``items_region`` defines how to locate the line-item band via start/end
+  anchors, optional margins, and a minimal height fallback.
+- ``ranking`` adjusts feature weights (header hits, overlap, numeric-right,
+  row count, totals-below), controls the ROI experiment, and limits
+  candidates.
+
+The chosen table per page is still emitted in ``s04`` format. A sidecar file
+``candidate_ranking.json`` captures every scored candidate along with the
+band that drove the decision so downstream reviewers can trace outcomes.
+"""
 
 import argparse
 import json
@@ -55,6 +69,21 @@ def _points_to_norm(points: float, page_height: float) -> float:
     return float(points) / float(page_height)
 
 
+def _trim_numeric_tail(text: str) -> str:
+    if not text:
+        return text
+    match = NUMERIC_TOKEN_RE.search(text)
+    if not match:
+        return text.strip()
+    start = match.start()
+    end = match.end()
+    if start > 0 and text[start - 1] == "(":
+        closing = text.find(")", end)
+        if closing != -1:
+            end = closing + 1
+    return text[:end].strip()
+
+
 # ---------------------------------------------------------------------------
 # Configuration structures
 # ---------------------------------------------------------------------------
@@ -63,6 +92,7 @@ def _points_to_norm(points: float, page_height: float) -> float:
 NUMERIC_FAMILIES = {"QTY", "UNIT_PRICE", "DISCOUNT", "TOTAL_PRICE", "TOTAL", "AMOUNT"}
 NUMERIC_ANCHOR_RE = re.compile(r"^[0-9][0-9.,]*$")
 NUMERIC_X_THRESHOLD_FRACTION = 0.45
+NUMERIC_TOKEN_RE = re.compile(r"-?\d[\d.,]*")
 
 
 @dataclass
@@ -71,6 +101,29 @@ class CamelotConfig:
     lattice_line_scale: int
     stream_row_tol: Optional[float]
     stream_line_scale: Optional[int]
+
+
+@dataclass
+class ItemsRegionConfig:
+    detect_by: str = "anchors"
+    start_patterns: List[str] = field(default_factory=list)
+    end_patterns: List[str] = field(default_factory=list)
+    ignore_case: bool = True
+    select: str = "next_below"
+    x_policy: str = "full"
+    margin_top: float = 0.01
+    margin_bottom: float = 0.02
+    margin_left: float = 0.0
+    margin_right: float = 0.0
+    min_height: float = 0.25
+
+
+@dataclass
+class RankingConfig:
+    weights: Dict[str, float] = field(default_factory=dict)
+    overlap_threshold: float = 0.2
+    max_candidates: int = 6
+    use_items_roi: bool = True
 
 
 @dataclass
@@ -96,6 +149,8 @@ class TemplateConfig:
     header_aliases: Dict[str, List[str]]
     totals_keywords: List[str]
     camelot: CamelotConfig
+    items_region: ItemsRegionConfig
+    ranking: RankingConfig
     stop_after_totals: bool
     page_stop_keywords: Dict[int, List[str]]
     page_row_limit: Dict[int, int]
@@ -157,6 +212,85 @@ def _validate_config(cfg: Dict[str, Any]) -> TemplateConfig:
         cache_enabled=bool(row_fix_cfg.get("cache_enabled", True)),
     )
 
+    region_cfg_raw = cfg.get("items_region") or {}
+    region_detect = (region_cfg_raw.get("detect") or {})
+    detect_by = str(region_detect.get("by") or region_cfg_raw.get("detect_by") or "anchors").strip().lower()
+    start_patterns = [str(p) for p in (region_cfg_raw.get("start_anchor") or {}).get("patterns", []) if p]
+    end_patterns = [str(p) for p in (region_cfg_raw.get("end_anchor") or {}).get("patterns", []) if p]
+    flags_cfg = region_cfg_raw.get("flags") or {}
+    ignore_case = bool(flags_cfg.get("ignore_case", True))
+    select_val = str((region_cfg_raw.get("end_anchor") or {}).get("select") or region_cfg_raw.get("select") or "next_below").strip().lower()
+    x_policy = str(region_cfg_raw.get("x_policy") or "full").strip().lower()
+    margin_cfg = region_cfg_raw.get("margin") or {}
+    def _get_margin(name: str, default: float) -> float:
+        try:
+            return float(margin_cfg.get(name, default))
+        except Exception:
+            return default
+    margin_top = max(0.0, _get_margin("top", 0.01))
+    margin_bottom = max(0.0, _get_margin("bottom", 0.02))
+    margin_left = max(0.0, _get_margin("left", 0.0))
+    margin_right = max(0.0, _get_margin("right", 0.0))
+    try:
+        min_height = float(region_cfg_raw.get("min_height", 0.25))
+    except Exception:
+        min_height = 0.25
+    min_height = max(0.05, min_height)
+
+    items_region = ItemsRegionConfig(
+        detect_by=detect_by,
+        start_patterns=start_patterns,
+        end_patterns=end_patterns,
+        ignore_case=ignore_case,
+        select=select_val,
+        x_policy=x_policy,
+        margin_top=margin_top,
+        margin_bottom=margin_bottom,
+        margin_left=margin_left,
+        margin_right=margin_right,
+        min_height=min_height,
+    )
+
+    ranking_cfg_raw = cfg.get("ranking") or {}
+    default_weights = {
+        "header": 3.0,
+        "overlap_items_region": 2.0,
+        "numeric_right": 1.0,
+        "rows": 1.0,
+        "totals_below": 0.5,
+    }
+    weights_raw = ranking_cfg_raw.get("weights") or {}
+    weights: Dict[str, float] = {}
+    for key, default_val in default_weights.items():
+        try:
+            weights[key] = float(weights_raw.get(key, default_val))
+        except Exception:
+            weights[key] = default_val
+    for key, value in weights_raw.items():
+        if key in weights:
+            continue
+        try:
+            weights[key] = float(value)
+        except Exception:
+            continue
+    try:
+        overlap_threshold = float(ranking_cfg_raw.get("overlap_threshold", 0.2))
+    except Exception:
+        overlap_threshold = 0.2
+    overlap_threshold = max(0.0, overlap_threshold)
+    try:
+        max_candidates = int(ranking_cfg_raw.get("max_candidates", 6))
+    except Exception:
+        max_candidates = 6
+    if max_candidates < 0:
+        max_candidates = 0
+    ranking = RankingConfig(
+        weights=weights,
+        overlap_threshold=overlap_threshold,
+        max_candidates=max_candidates,
+        use_items_roi=bool(ranking_cfg_raw.get("use_items_roi", True)),
+    )
+
     return TemplateConfig(
         header_aliases={str(k): list(v or []) for k, v in cfg["header_aliases"].items()},
         totals_keywords=list(cfg["totals_keywords"]),
@@ -166,6 +300,8 @@ def _validate_config(cfg: Dict[str, Any]) -> TemplateConfig:
             stream_row_tol=(camelot_cfg.get("row_tol_stream") if camelot_cfg.get("row_tol_stream") is not None else None),
             stream_line_scale=(int(camelot_cfg.get("line_scale_stream")) if camelot_cfg.get("line_scale_stream") is not None else None),
         ),
+        items_region=items_region,
+        ranking=ranking,
         stop_after_totals=stop_after_totals,
         page_stop_keywords=page_stop_keywords,
         page_row_limit=page_row_limit,
@@ -213,11 +349,182 @@ def load_tokens(tokens_path: Path) -> TokensData:
 
 
 # ---------------------------------------------------------------------------
+# Items region resolver
+# ---------------------------------------------------------------------------
+
+
+def _compile_patterns(patterns: List[str], ignore_case: bool) -> List[re.Pattern[str]]:
+    flags = re.IGNORECASE if ignore_case else 0
+    compiled: List[re.Pattern[str]] = []
+    for pattern in patterns:
+        try:
+            compiled.append(re.compile(pattern, flags))
+        except re.error:
+            continue
+    return compiled
+
+
+def _cluster_tokens_by_line(tokens: List[Dict[str, Any]], tolerance: float = 0.004) -> List[Dict[str, Any]]:
+    lines: List[Dict[str, Any]] = []
+    if not tokens:
+        return lines
+    sorted_tokens = sorted(tokens, key=lambda t: (_tok_top(t), _tok_left(t)))
+    for tok in sorted_tokens:
+        cy = (_tok_top(tok) + _tok_bottom(tok)) / 2.0
+        if not lines or abs(cy - lines[-1]["center"]) > tolerance:
+            lines.append({
+                "center": cy,
+                "tokens": [tok],
+                "y0": _tok_top(tok),
+                "y1": _tok_bottom(tok),
+            })
+            continue
+        line = lines[-1]
+        line["tokens"].append(tok)
+        line["y0"] = min(line["y0"], _tok_top(tok))
+        line["y1"] = max(line["y1"], _tok_bottom(tok))
+        line["center"] = (line["center"] * (len(line["tokens"]) - 1) + cy) / len(line["tokens"])
+    for line in lines:
+        texts = [(_token_text(tok) or "").strip() for tok in line["tokens"] if _token_text(tok)]
+        normalized = " ".join(" ".join(texts).split())
+        line["text"] = normalized
+    return lines
+
+
+def _resolve_items_band_for_page(page: int, tokens: List[Dict[str, Any]], cfg: ItemsRegionConfig) -> Optional[Dict[str, Any]]:
+    if cfg.detect_by != "anchors" or not cfg.start_patterns:
+        return None
+    lines = _cluster_tokens_by_line(tokens)
+    if not lines:
+        return None
+    start_regexes = _compile_patterns(cfg.start_patterns, cfg.ignore_case)
+    end_regexes = _compile_patterns(cfg.end_patterns, cfg.ignore_case)
+    if not start_regexes:
+        return None
+
+    start_candidates: List[Dict[str, Any]] = []
+    for line in lines:
+        text = line.get("text", "")
+        start_hits = sum(1 for rgx in start_regexes if rgx.search(text))
+        line["start_hits"] = start_hits
+        line["end_hits"] = sum(1 for rgx in end_regexes if rgx.search(text)) if end_regexes else 0
+        if start_hits:
+            start_candidates.append(line)
+
+    if not start_candidates:
+        return None
+
+    multi_hits = [ln for ln in start_candidates if ln.get("start_hits", 0) >= 2]
+    if multi_hits:
+        start_line = max(multi_hits, key=lambda ln: ln["center"])
+    else:
+        start_line = max(start_candidates, key=lambda ln: (ln.get("start_hits", 0), ln["center"]))
+
+    end_line = None
+    if end_regexes and start_line is not None:
+        for line in lines:
+            if line["center"] <= start_line["center"]:
+                continue
+            if line.get("end_hits"):
+                end_line = line
+                break
+
+    tks = start_line.get("tokens", []) if start_line else []
+    if not tks:
+        return None
+    start_bottom = max(_tok_bottom(tok) for tok in tks)
+    start_top = min(_tok_top(tok) for tok in tks)
+    header_pad = min(0.03, max(0.0, start_bottom - start_top))
+    band_top_base = max(0.0, start_bottom - header_pad)
+    band_top = band_top_base + cfg.margin_top
+    small_margin = 0.01
+    if end_line is not None:
+        end_top = min(_tok_top(tok) for tok in end_line.get("tokens", []))
+        band_bottom = end_top - cfg.margin_bottom
+    else:
+        band_bottom = start_bottom + cfg.min_height
+    band_top = max(0.0, min(band_top, 1.0 - small_margin))
+    band_bottom = max(band_top + 0.001, min(band_bottom, 1.0 - small_margin))
+    if band_bottom - band_top < cfg.min_height:
+        band_bottom = band_top + cfg.min_height
+    band_bottom = min(band_bottom, 1.0 - small_margin)
+    if band_bottom <= band_top:
+        band_bottom = min(1.0 - small_margin, band_top + max(cfg.min_height, 0.05))
+
+    if cfg.x_policy == "full":
+        x0 = max(0.0, min(cfg.margin_left, 1.0))
+        x1 = min(1.0, max(1.0 - cfg.margin_right, 0.0))
+    else:
+        x0 = max(0.0, min(cfg.margin_left, 1.0))
+        x1 = min(1.0, max(1.0 - cfg.margin_right, 0.0))
+    if x1 - x0 < 0.1:
+        x0 = 0.0
+        x1 = 1.0
+
+    band = {
+        "page": page,
+        "x0": x0,
+        "x1": x1,
+        "y0": max(0.0, min(band_top, 1.0)),
+        "y1": max(0.0, min(band_bottom, 1.0)),
+        "start_anchor": {
+            "text": start_line.get("text"),
+            "y0": start_line.get("y0"),
+            "y1": start_line.get("y1"),
+            "hits": start_line.get("start_hits"),
+        },
+        "end_anchor": None,
+    }
+    if end_line is not None:
+        band["end_anchor"] = {
+            "text": end_line.get("text"),
+            "y0": end_line.get("y0"),
+            "y1": end_line.get("y1"),
+            "hits": end_line.get("end_hits"),
+        }
+    return band
+
+
+def resolve_items_regions(cfg: ItemsRegionConfig, tokens_by_page: Dict[int, List[Dict[str, Any]]]) -> Dict[int, Dict[str, Any]]:
+    regions: Dict[int, Dict[str, Any]] = {}
+    if cfg.detect_by != "anchors" or not cfg.start_patterns:
+        return regions
+    for page, toks in tokens_by_page.items():
+        band = _resolve_items_band_for_page(page, toks, cfg)
+        if band:
+            regions[page] = band
+    return regions
+
+
+def band_to_table_area(band: Dict[str, Any], page_dims: Optional[Tuple[float, float]]) -> Optional[str]:
+    if not band or not page_dims:
+        return None
+    pw, ph = page_dims
+    if not pw or not ph:
+        return None
+    x0 = max(0.0, min(1.0, float(band.get("x0", 0.0)))) * pw
+    x1 = max(0.0, min(1.0, float(band.get("x1", 1.0)))) * pw
+    y0 = max(0.0, min(1.0, float(band.get("y0", 0.0))))
+    y1 = max(0.0, min(1.0, float(band.get("y1", 1.0))))
+    if x1 <= x0 or y1 <= y0:
+        return None
+    top = (1.0 - y0) * ph
+    bottom = (1.0 - y1) * ph
+    return f"{x0:.2f},{top:.2f},{x1:.2f},{bottom:.2f}"
+
+
+# ---------------------------------------------------------------------------
 # Camelot runner — geometry first
 # ---------------------------------------------------------------------------
 
 
-def run_camelot_tables(pdf_path: Path, cfg: TemplateConfig, tokens: TokensData) -> Dict[int, List[Tuple[Any, str]]]:
+def run_camelot_tables(
+    pdf_path: Path,
+    cfg: TemplateConfig,
+    tokens: TokensData,
+    table_areas: Optional[Dict[int, str]] = None,
+    fallback_on_empty: bool = False,
+) -> Dict[int, List[Tuple[Any, str, str]]]:
     import camelot  # type: ignore
 
     flavor_order = cfg.camelot.flavor_order
@@ -225,10 +532,13 @@ def run_camelot_tables(pdf_path: Path, cfg: TemplateConfig, tokens: TokensData) 
     stream_row_tol = cfg.camelot.stream_row_tol
     stream_line_scale = cfg.camelot.stream_line_scale
 
-    def safe_read_page(flavor: str, page: int):
+    def safe_read_page(flavor: str, page: int, areas: Optional[List[str]]):
         try:
             if flavor == "lattice":
-                return camelot.read_pdf(str(pdf_path), pages=str(page), flavor="lattice", line_scale=lattice_ls)
+                kwargs: Dict[str, Any] = {"line_scale": lattice_ls}
+                if areas:
+                    kwargs["table_areas"] = areas
+                return camelot.read_pdf(str(pdf_path), pages=str(page), flavor="lattice", **kwargs)
             if flavor == "stream":
                 kwargs = {}
                 # Priority: use line_scale if specified (Simon-style), otherwise use row_tol (Rittal-style)
@@ -236,20 +546,31 @@ def run_camelot_tables(pdf_path: Path, cfg: TemplateConfig, tokens: TokensData) 
                     kwargs["line_scale"] = stream_line_scale
                 elif stream_row_tol is not None:
                     kwargs["row_tol"] = stream_row_tol
+                if areas:
+                    kwargs["table_areas"] = areas
                 return camelot.read_pdf(str(pdf_path), pages=str(page), flavor="stream", **kwargs)
             return []
         except Exception:
             return []
 
-    by_page: Dict[int, List[Tuple[Any, str]]] = {}
+    by_page: Dict[int, List[Tuple[Any, str, str]]] = {}
     pages = sorted({int(t["page"]) for t in tokens.tokens})
     for page_no in pages:
-        tables: List[Tuple[Any, str]] = []
-        for flavor in flavor_order:
-            got = safe_read_page(flavor, page_no) or []
-            if got:
+        tables: List[Tuple[Any, str, str]] = []
+        area = table_areas.get(page_no) if table_areas else None
+        if area:
+            for flavor in flavor_order:
+                got = safe_read_page(flavor, page_no, [area]) or []
                 for tb in got:
-                    tables.append((tb, flavor))
+                    tables.append((tb, flavor, "roi"))
+            if tables or not fallback_on_empty:
+                by_page[page_no] = tables
+                continue
+            tables = []
+        for flavor in flavor_order:
+            got = safe_read_page(flavor, page_no, None) or []
+            for tb in got:
+                tables.append((tb, flavor, "full" if area else "default"))
         by_page[page_no] = tables
     return by_page
 
@@ -296,9 +617,27 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
     for t in tokens.tokens:
         by_page_tokens.setdefault(int(t["page"]), []).append(t)
 
-    tables_by_page = run_camelot_tables(pdf_path, cfg, tokens)
+    items_regions = resolve_items_regions(cfg.items_region, by_page_tokens)
+    table_areas: Dict[int, str] = {}
+    if cfg.ranking.use_items_roi:
+        for page, band in items_regions.items():
+            area = band_to_table_area(band, tokens.page_meta.get(page))
+            if area:
+                table_areas[page] = area
+
+    tables_by_page = run_camelot_tables(
+        pdf_path,
+        cfg,
+        tokens,
+        table_areas=table_areas if table_areas else None,
+        fallback_on_empty=bool(table_areas),
+    )
+
     family_of_header = _build_family_matcher(cfg.header_aliases)
     totals_keys = {_canon(k) for k in cfg.totals_keywords if k}
+    totals_pattern_seed = [k for k in cfg.totals_keywords if k]
+    totals_pattern_seed.extend(cfg.items_region.end_patterns)
+    totals_regexes = _compile_patterns(list(dict.fromkeys(totals_pattern_seed)), True)
 
     def get_page_dims(tb, page_no: int) -> Tuple[float, float]:
         pr = getattr(tb, "parsing_report", {}) or {}
@@ -339,64 +678,91 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
             pieces.append(joined)
         return pieces
 
-    pages_out: List[BaseTable] = []
-    processed_pages = sorted({int(t["page"]) for t in tokens.tokens})
-    prev_col_map: Optional[List[str]] = None
-    prev_header_texts: Optional[List[str]] = None
-
-    for page_no in processed_pages:
-        page_tokens = sorted(by_page_tokens.get(page_no, []), key=lambda t: (t["bbox"]["y0"], t["bbox"]["x0"]))
-        tables = tables_by_page.get(page_no, [])
-
-        best = None
-        best_score = (-1, -1)
-        best_idx = None
-        best_dims = (None, None)
-        best_flavor = None
-
-        for tb, flavor in tables:
-            pw, ph = get_page_dims(tb, page_no)
-            if not pw or not ph:
-                continue
+    def analyze_candidate(
+        tb,
+        flavor: str,
+        source: str,
+        page_no: int,
+        page_tokens: List[Dict[str, Any]],
+        band: Optional[Dict[str, Any]],
+    ) -> Optional[Dict[str, Any]]:
+        pw, ph = get_page_dims(tb, page_no)
+        if not pw or not ph:
+            return None
+        try:
             rows, cols = tb.shape
-            local_best = (-1, -1)
-            local_idx = None
-            for r in range(min(rows, 12)):
-                texts = row_text(tb, r, page_no, pw, ph, page_tokens)
-                fam_hits = set()
-                for txt in texts:
-                    fam = family_of_header(txt)
-                    if fam:
-                        fam_hits.add(fam)
-                def _row_text(rr: int) -> List[str]:
-                    return row_text(tb, rr, page_no, pw, ph, page_tokens)
-                stop_at = rows
-                if cfg.stop_after_totals:
-                    for rr in range(r + 1, rows):
-                        joined = _canon(" ".join(_row_text(rr)))
-                        if joined and any(k in joined for k in totals_keys):
-                            stop_at = rr
-                            break
-                body_count = max(0, stop_at - (r + 1))
-                cand = (body_count, len(fam_hits))
-                if cand > local_best:
-                    local_best = cand
-                    local_idx = r
-            if local_idx is not None and local_best > best_score:
-                best_score = local_best
-                best = tb
-                best_idx = local_idx
-                best_dims = (pw, ph)
-                best_flavor = flavor
+        except Exception:
+            return None
+        if rows <= 0 or cols <= 0:
+            return None
 
-        if best is None:
-            pages_out.append(BaseTable(page=page_no, flavor=None, header_row_index=None, header_cells=[], rows=[], bbox={}))
-            continue
+        row_cache: Dict[int, List[str]] = {}
 
-        tb = best
-        pw, ph = best_dims
-        rows, cols = tb.shape
-        header_idx = best_idx if best_idx is not None else 0
+        def row_text_cached(idx: int) -> List[str]:
+            if idx not in row_cache:
+                row_cache[idx] = row_text(tb, idx, page_no, pw, ph, page_tokens)
+            return row_cache[idx]
+
+        best_idx: Optional[int] = None
+        best_stop_at = rows
+        best_score = (-1, -1)
+        best_fam_hits: set = set()
+        row_candidates: List[Dict[str, Any]] = []
+        extra_keys = {_canon(k) for k in cfg.page_stop_keywords.get(page_no, []) if k}
+
+        for r in range(min(rows, 12)):
+            texts = row_text_cached(r)
+            fam_hits: set = set()
+            for txt in texts:
+                fam = family_of_header(txt)
+                if fam:
+                    fam_hits.add(fam)
+            stop_at = rows
+            if cfg.stop_after_totals:
+                for rr in range(r + 1, rows):
+                    joined = _canon(" ".join(row_text_cached(rr)))
+                    if joined and any(k in joined for k in totals_keys):
+                        stop_at = rr
+                        break
+            if extra_keys:
+                for rr in range(r + 1, rows):
+                    joined = _canon(" ".join(row_text_cached(rr)))
+                    if joined and any(k in joined for k in extra_keys):
+                        stop_at = min(stop_at, rr)
+                        break
+            body_count = max(0, stop_at - (r + 1))
+            cand_score = (body_count, len(fam_hits))
+            row_candidates.append({
+                "idx": r,
+                "body": body_count,
+                "fam_hits": set(fam_hits),
+                "stop_at": stop_at,
+            })
+            if cand_score > best_score:
+                best_score = cand_score
+                best_idx = r
+                best_stop_at = stop_at
+                best_fam_hits = fam_hits
+
+        if best_idx is None:
+            return None
+
+        if not best_fam_hits:
+            alt = None
+            for cand in row_candidates:
+                if not cand["fam_hits"]:
+                    continue
+                key = (len(cand["fam_hits"]), cand["body"])
+                if not alt or key > (len(alt["fam_hits"]), alt["body"]):
+                    alt = cand
+            if alt:
+                best_idx = alt["idx"]
+                best_stop_at = alt["stop_at"]
+                best_fam_hits = alt["fam_hits"]
+                best_score = (alt["body"], len(alt["fam_hits"]))
+
+        header_hits = len(best_fam_hits)
+        body_rows = best_score[0]
 
         if hasattr(tb, "_bbox") and tb._bbox and all(tb._bbox):
             x1, y1, x2, y2 = tb._bbox
@@ -421,77 +787,245 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
             tbx1 = max(xs1) if xs1 else 1.0
             tby1 = max(ys1) if ys1 else 1.0
 
-        table_bbox = {"x0": tbx0, "y0": tby0, "x1": tbx1, "y1": tby1}
-        header_texts = row_text(tb, header_idx, page_no, pw, ph, page_tokens)
-        col_map: List[str] = []
-        header_hits = 0
-        for c in range(cols):
-            fam = family_of_header(header_texts[c])
-            if fam:
-                header_hits += 1
-            col_map.append(fam or f"COL{c+1}")
+        table_height = max(1e-6, tby1 - tby0)
+        overlap = 0.0
+        if band:
+            band_top = float(band.get("y0", 0.0))
+            band_bottom = float(band.get("y1", 1.0))
+            inter_top = max(band_top, tby0)
+            inter_bottom = min(band_bottom, tby1)
+            if inter_bottom > inter_top:
+                overlap = max(0.0, min(1.0, (inter_bottom - inter_top) / table_height))
 
-        reuse_prev = False
-        if header_hits == 0:
-            if prev_col_map is not None:
-                reuse_prev = True
-                col_map = prev_col_map[:]
-                if prev_header_texts is not None:
-                    header_texts = prev_header_texts[:]
-                else:
-                    header_texts = [col_map[c] for c in range(cols)]
+        numeric_rows = 0
+        numeric_hits = 0
+        for rr in range(best_idx + 1, best_stop_at):
+            texts = row_text_cached(rr)
+            if not texts:
+                continue
+            right_text = (texts[-1] or "").strip()
+            if not right_text:
+                continue
+            numeric_rows += 1
+            simple = right_text.replace(" ", "").replace("(", "").replace(")", "")
+            if NUMERIC_ANCHOR_RE.fullmatch(simple) or any(ch.isdigit() for ch in right_text):
+                numeric_hits += 1
+        numeric_right = (numeric_hits / numeric_rows) if numeric_rows else 0.0
+
+        totals_flag = 0.0
+        if totals_regexes:
+            bottom = tby1
+            for tok in page_tokens:
+                if _tok_top(tok) <= bottom + 1e-3:
+                    continue
+                text = _token_text(tok)
+                if text and any(rgx.search(text) for rgx in totals_regexes):
+                    totals_flag = 1.0
+                    break
+
+        candidate = {
+            "table": tb,
+            "flavor": flavor,
+            "source": source,
+            "header_idx": best_idx,
+            "stop_at": best_stop_at,
+            "body_rows": body_rows,
+            "header_hits": header_hits,
+            "bbox": {"x0": tbx0, "y0": tby0, "x1": tbx1, "y1": tby1},
+            "features": {
+                "header_hits": float(header_hits),
+                "overlap": float(overlap),
+                "numeric_right": float(numeric_right),
+                "rows": float(body_rows),
+                "totals_below": float(totals_flag),
+            },
+        }
+        return candidate
+
+    pages_out: List[BaseTable] = []
+    ranking_records: List[Dict[str, Any]] = []
+    processed_pages = sorted(by_page_tokens.keys())
+    prev_col_map: Optional[List[str]] = None
+    prev_header_texts: Optional[List[str]] = None
+
+    for page_no in processed_pages:
+        page_tokens = sorted(by_page_tokens.get(page_no, []), key=lambda t: (t["bbox"]["y0"], t["bbox"]["x0"]))
+        band = items_regions.get(page_no)
+        tables = tables_by_page.get(page_no, [])
+        page_candidates: List[Dict[str, Any]] = []
+        for idx, item in enumerate(tables):
+            tb, flavor, source = item
+            candidate = analyze_candidate(tb, flavor, source, page_no, page_tokens, band)
+            if not candidate:
+                continue
+            candidate["index"] = idx
+            candidate["eligible"] = True
+            candidate["score"] = None
+            page_candidates.append(candidate)
+
+        limit = cfg.ranking.max_candidates or 0
+        eligible_candidates: List[Dict[str, Any]] = []
+        for ordinal, cand in enumerate(page_candidates):
+            if limit and ordinal >= limit:
+                cand["eligible"] = False
+                continue
+            eligible_candidates.append(cand)
+
+        overlap_ok = any(cand["features"].get("overlap", 0.0) >= cfg.ranking.overlap_threshold for cand in eligible_candidates)
+        weights = cfg.ranking.weights
+        for cand in eligible_candidates:
+            feats = cand["features"]
+            score = (
+                float(weights.get("header", 0.0)) * float(feats.get("header_hits", 0.0))
+                + (float(weights.get("overlap_items_region", 0.0)) * float(feats.get("overlap", 0.0)) if overlap_ok else 0.0)
+                + float(weights.get("numeric_right", 0.0)) * float(feats.get("numeric_right", 0.0))
+                + float(weights.get("rows", 0.0)) * float(feats.get("rows", 0.0))
+                + float(weights.get("totals_below", 0.0)) * float(feats.get("totals_below", 0.0))
+            )
+            cand["score"] = score
+
+        winner: Optional[Dict[str, Any]] = None
+        if eligible_candidates:
+            winner = max(
+                eligible_candidates,
+                key=lambda c: (
+                    float(c.get("score") or 0.0),
+                    float(c["features"].get("header_hits", 0.0)),
+                    float(c["features"].get("rows", 0.0)),
+                ),
+            )
+
+        if winner:
+            tb = winner["table"]
+            flavor = winner.get("flavor")
+            header_idx = int(winner.get("header_idx", 0))
+            pw, ph = get_page_dims(tb, page_no)
+            if not pw or not ph:
+                base_table = BaseTable(page=page_no, flavor=None, header_row_index=None, header_cells=[], rows=[], bbox={})
+                pages_out.append(base_table)
             else:
-                header_texts = [col_map[c] for c in range(cols)]
+                rows, cols = tb.shape
+                header_texts = row_text(tb, header_idx, page_no, pw, ph, page_tokens)
+                col_map: List[str] = []
+                header_hits = 0
+                for c in range(cols):
+                    fam = family_of_header(header_texts[c])
+                    if fam:
+                        header_hits += 1
+                    col_map.append(fam or f"COL{c+1}")
 
-        data_start = header_idx + 1
-        if reuse_prev:
-            data_start = header_idx
+                reuse_prev = False
+                if header_hits == 0:
+                    if prev_col_map is not None:
+                        reuse_prev = True
+                        col_map = prev_col_map[:]
+                        if prev_header_texts is not None:
+                            header_texts = prev_header_texts[:]
+                        else:
+                            header_texts = [col_map[c] for c in range(cols)]
+                    else:
+                        header_texts = [col_map[c] for c in range(cols)]
 
-        def row_text_list(r: int) -> List[str]:
-            return row_text(tb, r, page_no, pw, ph, page_tokens)
+                data_start = header_idx + 1
+                if reuse_prev:
+                    data_start = header_idx
 
-        stop_at = rows
-        if cfg.stop_after_totals:
-            scan_start = data_start
-            extra_keys = {_canon(k) for k in cfg.page_stop_keywords.get(page_no, []) if k}
-            for r in range(scan_start, rows):
-                joined = _canon(" ".join(row_text_list(r)))
-                if joined and any(k in joined for k in totals_keys):
-                    stop_at = r
-                    break
-                if extra_keys and joined and any(k in joined for k in extra_keys):
-                    stop_at = r
-                    break
+                def row_text_list(r: int) -> List[str]:
+                    return row_text(tb, r, page_no, pw, ph, page_tokens)
 
-        grid_rows: List[Dict[str, Any]] = []
-        for r in range(data_start, stop_at):
-            texts = row_text_list(r)
-            cells = []
-            for c in range(cols):
-                x0, y0, x1, y1 = get_cell_bbox(tb, r, c, pw, ph)
-                cells.append({
-                    "col": c,
-                    "name": col_map[c],
-                    "bbox": {"x0": x0, "y0": y0, "x1": x1, "y1": y1},
-                    "text": texts[c],
-                })
-            grid_rows.append({"row": r, "cells": cells})
+                stop_at = rows
+                if cfg.stop_after_totals:
+                    scan_start = data_start
+                    extra_keys = {_canon(k) for k in cfg.page_stop_keywords.get(page_no, []) if k}
+                    for r in range(scan_start, rows):
+                        joined = _canon(" ".join(row_text_list(r)))
+                        if joined and any(k in joined for k in totals_keys):
+                            stop_at = r
+                            break
+                        if extra_keys and joined and any(k in joined for k in extra_keys):
+                            stop_at = r
+                            break
 
-        limit = cfg.page_row_limit.get(page_no)
-        if limit is not None:
-            grid_rows = grid_rows[:limit]
+                grid_rows: List[Dict[str, Any]] = []
+                for r in range(data_start, stop_at):
+                    texts = row_text_list(r)
+                    cells = []
+                    for c in range(cols):
+                        x0, y0, x1, y1 = get_cell_bbox(tb, r, c, pw, ph)
+                        value = texts[c]
+                        name_upper = (col_map[c] or "").upper()
+                        if name_upper in NUMERIC_FAMILIES:
+                            value = _trim_numeric_tail(value)
+                        cells.append({
+                            "col": c,
+                            "name": col_map[c],
+                            "bbox": {"x0": x0, "y0": y0, "x1": x1, "y1": y1},
+                            "text": value,
+                        })
+                    grid_rows.append({"row": r, "cells": cells})
 
-        pages_out.append(BaseTable(
-            page=page_no,
-            flavor=best_flavor,
-            header_row_index=header_idx,
-            header_cells=[{"col": c, "text": header_texts[c], "name": col_map[c]} for c in range(cols)],
-            rows=grid_rows,
-            bbox=table_bbox,
-        ))
+                limit = cfg.page_row_limit.get(page_no)
+                if limit is not None:
+                    grid_rows = grid_rows[:limit]
 
-        prev_col_map = col_map[:]
-        prev_header_texts = header_texts[:]
+                pages_out.append(BaseTable(
+                    page=page_no,
+                    flavor=flavor,
+                    header_row_index=header_idx,
+                    header_cells=[{"col": c, "text": header_texts[c], "name": col_map[c]} for c in range(cols)],
+                    rows=grid_rows,
+                    bbox=winner.get("bbox", {}),
+                ))
+
+                prev_col_map = col_map[:]
+                prev_header_texts = header_texts[:]
+        else:
+            pages_out.append(BaseTable(page=page_no, flavor=None, header_row_index=None, header_cells=[], rows=[], bbox={}))
+
+        selected_index = winner.get("index") if winner else None
+        band_record = None
+        if band:
+            band_record = {
+                "x0": band.get("x0"),
+                "x1": band.get("x1"),
+                "y0": band.get("y0"),
+                "y1": band.get("y1"),
+                "start_anchor": band.get("start_anchor"),
+                "end_anchor": band.get("end_anchor"),
+            }
+
+        page_record = {
+            "page": page_no,
+            "items_region": band_record,
+            "candidates": [],
+            "selected_index": selected_index,
+        }
+        if not tables:
+            page_record["note"] = "no_tables_detected"
+        elif not page_candidates:
+            page_record["note"] = "no_valid_candidates"
+        for cand in page_candidates:
+            summary = {
+                "index": cand.get("index"),
+                "source": cand.get("source"),
+                "flavor": cand.get("flavor"),
+                "bbox": cand.get("bbox"),
+                "features": cand.get("features"),
+                "score": cand.get("score"),
+                "eligible": cand.get("eligible", True),
+                "header_row_index": cand.get("header_idx"),
+                "body_rows": cand.get("body_rows"),
+                "header_hits": cand.get("header_hits"),
+                "selected": bool(selected_index is not None and cand.get("index") == selected_index),
+            }
+            if not cand.get("eligible", True):
+                summary["note"] = "skipped_by_limit"
+            page_record["candidates"].append(summary)
+        ranking_records.append(page_record)
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    ranking_path = out_path.parent / "candidate_ranking.json"
+    ranking_path.write_text(json.dumps(ranking_records, ensure_ascii=False, indent=2), encoding="utf-8")
 
     return pages_out
 
