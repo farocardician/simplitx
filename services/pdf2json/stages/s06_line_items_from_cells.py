@@ -833,9 +833,12 @@ def _maybe_parse_header_as_row(table: Dict[str, Any], cfg: Dict[str, Any]) -> Li
     header_text = _join_header_texts(header_cells)
     header_opts = cfg.get("header_row") or {}
     force_as_row = bool(header_opts.get("as_data", False))
+    allow_detect = header_opts.get("allow_detect", True)
+    if not allow_detect and not force_as_row:
+        return []
     looks_like_line = force_as_row or bool(
-        _regex_search(r"\b\d+(?:[.,]\d+)?\s*/\s*[A-Za-z]{1,6}\b", header_text) or
-        _regex_search(r"\bUSD\b\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?", header_text)
+        (_regex_search(r"\b\d+(?:[.,]\d+)?\s*/\s*[A-Za-z]{1,6}\b", header_text) or
+         _regex_search(r"\bUSD\b\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?", header_text)) if allow_detect else False
     )
     if not looks_like_line:
         return []

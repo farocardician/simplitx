@@ -67,6 +67,9 @@
       "merge": false
     }
   },
+  "header_row": {
+    "allow_detect": false
+  },
   "currency_hints": [
     "IDR",
     "Rp",

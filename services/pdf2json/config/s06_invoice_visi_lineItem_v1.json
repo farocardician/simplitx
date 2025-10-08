@@ -1,5 +1,17 @@
 {
   "fields": {
+    "qty": {
+      "header_synonyms": [
+        "\\bQTY\\b",
+        "Quantity",
+        "\\bQUANTITY\\b"
+      ],
+      "parsers": [
+        "parse_int"
+      ],
+      "required": true,
+      "merge": false
+    },
     "description": {
       "header_synonyms": [
         "\\bDESCRIPTION\\b",
@@ -52,7 +64,8 @@
   },
   "defaults": {
     "discount_percent": 0,
-    "discount_amount": 0
+    "discount_amount": 0,
+    "qty": 1
   },
   "row_filters": [
     "^\\s*(TOTAL|SUB\\s*TOTAL|GRAND\\s*TOTAL|VAT|PPN|Tax Base|Total Amount)\\b",

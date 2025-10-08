@@ -2,7 +2,7 @@
   "profile": {
     "name": "invoice_rittal_v1",
     "fail_mode": "soft",
-    "required_fields": ["invoice_number", "invoice_date", "customer_id"],
+    "required_fields": ["buyer_name","invoice_number", "invoice_date", "customer_id"],    
     "expected_fields": ["seller", "currency"],
     "optional_fields": ["po_reference", "customer_name", "subtotal", "tax_base", "tax_amount", "grand_total"]
   },
@@ -34,6 +34,13 @@
         "capture_regex": "(\\d{4}-\\d{2}-\\d{2})"
       }
     },
+    "buyer_name": {
+      "segment": "buyer_name",
+      "strategy": "regex_capture",
+      "post": {
+        "capture_regex": "(?:^|\\n)\\s*To\\s*:?\\s*([A-Za-z0-9.&,'\\-\\s]+)"
+      }
+    },    
     "customer_id": {
       "segment": "customer_id",
       "strategy": "regex_capture",
@@ -45,12 +52,9 @@
         ]
       }
     },
-    "seller": {
-      "segment": "seller",
-      "strategy": "regex_capture",
-      "post": {
-        "capture_regex": "(PT\\s+.*?Indonesia)"
-      }
+    "seller_name": {
+      "strategy": "constant",
+      "post": { "value": "PT Rittal" }
     },
     "subtotal": {
       "segment": "total",

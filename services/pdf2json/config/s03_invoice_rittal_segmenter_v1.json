@@ -52,7 +52,7 @@
       ]
     },
     {
-      "id": "buyer",
+      "id": "buyer_name",
       "inside": "@header",
       "on_pages": "first",
       "keep": "first",
@@ -65,7 +65,7 @@
         },
         "capture_window": {
           "mode": "below_rows",
-          "rows": 6,
+          "rows": 1,
           "pad_left": 0.02,
           "pad_right": 0.36
         }

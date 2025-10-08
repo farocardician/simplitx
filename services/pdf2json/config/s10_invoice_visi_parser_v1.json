@@ -1,0 +1,60 @@
+{
+  "metadata": {
+    "template": "Visi Invoice (IDR, VAT 12%)",
+    "money_rounding": 0
+  },
+  "defaults": {
+    "currency": "IDR",
+    "tax_label": "PPN-VAT 12%"
+  },
+  "header": {
+    "pages": [1],
+    "search_row_limit": 30,
+    "fields": {
+      "invoice_number": { "match": "contains" },
+      "invoice_date": { "match": "contains" }
+    }
+  },
+  "items": {
+    "min_columns": 3,
+    "header_rows_can_hold_items": false,
+    "key_field": "description",
+    "fields": [
+      { "name": "no", "column": 0, "transform": "int" },
+      { "name": "hs_code" },
+      { "name": "sku" },
+      { "name": "code" },
+      { "name": "description", "column": 1, "transform": "string" },
+      { "name": "qty", "transform": "int" },
+      { "name": "uom" },
+      { "name": "unit_price", "transform": "money" },
+      { "name": "discount_amount", "transform": "money" },
+      { "name": "discount_percent" },
+      { "name": "amount", "column": 2, "transform": "money" }
+    ]
+  },
+  "totals": {
+    "tax_label": "PPN-VAT 12%",
+    "fields": {
+      "subtotal": [
+        "printed.subtotal",
+        "checks.subtotal.computed"
+      ],
+      "tax_base": [
+        "printed.tax_base",
+        "computed.tax_base"
+      ],
+      "tax_amount": [
+        "printed.tax_amount",
+        "computed.tax_amount"
+      ],
+      "grand_total": [
+        "printed.grand_total",
+        "computed.grand_total"
+      ]
+    }
+  },
+  "manifest": {
+    "schema_template": "Visi Invoice (IDR, VAT 12%)"
+  }
+}

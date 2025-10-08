@@ -36,6 +36,10 @@
     }
   },
   "fields": {
+    "seller_name": {
+      "strategy": "constant",
+      "post": { "value": "PT. VISI GLOBALINDO DATA UTAMA" }
+    },
     "buyer_name": {
       "strategy": "regex_capture",
       "segment": "Buyer",
