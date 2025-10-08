@@ -155,6 +155,7 @@ class TemplateConfig:
     page_stop_keywords: Dict[int, List[str]]
     page_row_limit: Dict[int, int]
     row_fix: RowFixOptions
+    token_engine: str
 
 
 def _validate_config(cfg: Dict[str, Any]) -> TemplateConfig:
@@ -291,6 +292,16 @@ def _validate_config(cfg: Dict[str, Any]) -> TemplateConfig:
         use_items_roi=bool(ranking_cfg_raw.get("use_items_roi", True)),
     )
 
+    token_cfg = cfg.get("tokens") or {}
+    token_engine = token_cfg.get("engine") if isinstance(token_cfg, dict) else None
+    if not token_engine:
+        token_engine = cfg.get("token_engine")
+    if not isinstance(token_engine, str):
+        token_engine = "plumber"
+    token_engine = token_engine.strip().lower()
+    if token_engine not in {"plumber", "pymupdf", "combined"}:
+        token_engine = "plumber"
+
     return TemplateConfig(
         header_aliases={str(k): list(v or []) for k, v in cfg["header_aliases"].items()},
         totals_keywords=list(cfg["totals_keywords"]),
@@ -306,6 +317,7 @@ def _validate_config(cfg: Dict[str, Any]) -> TemplateConfig:
         page_stop_keywords=page_stop_keywords,
         page_row_limit=page_row_limit,
         row_fix=row_fix,
+        token_engine=token_engine,
     )
 
 
@@ -319,21 +331,48 @@ class TokensData:
     doc_id: Optional[str]
     tokens: List[Dict[str, Any]]
     page_meta: Dict[int, Tuple[float, float]]
+    engine: str = "plumber"
 
 
-def load_tokens(tokens_path: Path) -> TokensData:
+def load_tokens(tokens_path: Path, preferred_engine: Optional[str] = None) -> TokensData:
     try:
         raw = json.loads(tokens_path.read_text(encoding="utf-8"))
     except Exception as exc:
         raise RuntimeError(f"Failed to read tokens file: {exc}")
 
-    tokens = []
-    if "tokens" in raw and isinstance(raw["tokens"], list):
+    engine_used = "plumber"
+    tokens: Optional[List[Dict[str, Any]]] = None
+
+    if isinstance(raw.get("tokens"), list):
         tokens = raw["tokens"]
-    elif "plumber" in raw and isinstance(raw["plumber"], dict) and isinstance(raw["plumber"].get("tokens"), list):
-        tokens = raw["plumber"]["tokens"]
-    else:
-        raise RuntimeError("Tokens JSON missing 'tokens' list")
+        engine_used = "combined"
+
+    def _engine_tokens(name: str) -> Optional[List[Dict[str, Any]]]:
+        payload = raw.get(name)
+        if isinstance(payload, dict):
+            toks = payload.get("tokens")
+            if isinstance(toks, list):
+                return toks
+        return None
+
+    candidates: List[str] = []
+    if preferred_engine:
+        candidates.append(preferred_engine.strip().lower())
+    candidates.extend(["plumber", "pymupdf"])
+
+    seen: set[str] = set()
+    candidates = [c for c in candidates if not (c in seen or seen.add(c))]
+
+    if tokens is None:
+        for candidate in candidates:
+            toks = _engine_tokens(candidate)
+            if toks:
+                tokens = toks
+                engine_used = candidate
+                break
+
+    if tokens is None:
+        raise RuntimeError("Tokens JSON missing usable 'tokens' list")
 
     pages_meta = {}
     for entry in raw.get("pages", []):
@@ -345,7 +384,7 @@ def load_tokens(tokens_path: Path) -> TokensData:
         except Exception:
             continue
 
-    return TokensData(doc_id=raw.get("doc_id"), tokens=tokens, page_meta=pages_meta)
+    return TokensData(doc_id=raw.get("doc_id"), tokens=tokens, page_meta=pages_meta, engine=engine_used)
 
 
 # ---------------------------------------------------------------------------
@@ -1721,9 +1760,10 @@ class RowFixer:
 # ---------------------------------------------------------------------------
 
 
-def build_cells(pdf_path: Path, tokens_path: Path, out_path: Path, config_path: Path) -> Dict[str, Any]:
+def build_cells(pdf_path: Path, tokens_path: Path, out_path: Path, config_path: Path, token_engine: Optional[str] = None) -> Dict[str, Any]:
     cfg = _validate_config(json.loads(config_path.read_text(encoding="utf-8")))
-    tokens = load_tokens(tokens_path)
+    preferred_engine = token_engine or cfg.token_engine
+    tokens = load_tokens(tokens_path, preferred_engine=preferred_engine)
     base_tables = build_base_tables(pdf_path, tokens_path, out_path, cfg, tokens)
 
     final_tables = base_tables
@@ -1758,6 +1798,7 @@ def build_cells(pdf_path: Path, tokens_path: Path, out_path: Path, config_path: 
     summary = {
         "stage": "camelot_grid_rowfix",
         "doc_id": tokens.doc_id,
+        "token_engine": tokens.engine,
         "pages": [
             {
                 "page": p.get("page"),
@@ -1783,14 +1824,17 @@ def main() -> None:
     ap.add_argument("--tokens", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--config", required=True)
-    ap.add_argument("--tokenizer", required=False, help="Token source identifier (ignored; kept for compatibility)")
+    ap.add_argument("--tokenizer", required=False, help="Token source override (plumber, pymupdf, combined)")
     args = ap.parse_args()
+
+    token_engine = args.tokenizer.strip().lower() if getattr(args, "tokenizer", None) else None
 
     build_cells(
         Path(args.pdf).resolve(),
         Path(args.tokens).resolve(),
         Path(args.out).resolve(),
         Path(args.config).resolve(),
+        token_engine=token_engine,
     )
 
 

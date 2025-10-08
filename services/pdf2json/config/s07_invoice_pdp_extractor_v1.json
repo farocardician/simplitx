@@ -1,1 +1,190 @@
-{"profile":{"name":"invoice_pdp","fail_mode":"soft","required_fields":["buyer_name","invoice_number","invoice_date","subtotal","tax_amount","grand_total"],"expected_fields":["tax_base","tax","income_tax","income_tax_amount"],"optional_fields":["tax_base","tax","income_tax","income_tax_amount"]},"use_stage2_normalized":true,"guards":{"invoice_number":{"allowed_chars":"-A-Za-z0-9_./","min_len":3,"max_len":64},"invoice_date":{"min_len":8,"max_len":20},"subtotal":{"allowed_chars":"0-9.,()\\-","min_len":1,"max_len":32},"tax_amount":{"allowed_chars":"0-9.,()\\-","min_len":1,"max_len":32},"grand_total":{"allowed_chars":"0-9.,()\\-","min_len":1,"max_len":32},"tax_base":{"allowed_chars":"0-9.,()\\-","min_len":1,"max_len":32},"income_tax_amount":{"allowed_chars":"0-9.,()\\-","min_len":1,"max_len":32},"tax":{"allowed_chars":"0-9%\\s","min_len":1,"max_len":16},"income_tax":{"allowed_chars":"0-9%\\s","min_len":1,"max_len":16}},"confidence":{"thresholds":{"high":{"max_lines":1,"max_tokens":20},"medium":{"max_lines":3,"max_tokens":80}}},"totals":{"mode":"segments_only"},"fields":{"buyer_name":{"segment":"buyer_name","strategy":"regex_capture","post":{"regex_pattern":["(?:^|\\n)\\s*Client\\s*:?\\s*([A-Za-z&.,'\\s-]+?)(?=\\s+(?:[A-Z][A-Za-z&.'-]*\\s+)?(?:Lt\\.|Jl\\.|Jalan|Street|Road|Blok|No\\.|Tower|Gedung|Unit|Kompleks|RT\\b|RW\\b|[0-9]))","(?:^|\\n)\\s*(?!Client\\b)([A-Za-z&.,'\\s-]+?)(?=\\s+(?:[A-Z][A-Za-z&.'-]*\\s+)?(?:Lt\\.|Jl\\.|Jalan|Street|Road|Blok|No\\.|Tower|Gedung|Unit|Kompleks|RT\\b|RW\\b|[0-9]))","(?:^|\\n)\\s*Client\\s*:?\\s*(.+?)\\s*$"]}},"invoice_number":{"segment":"invoice_number","strategy":"regex_capture","post":{"regex_pattern":["(?:No\\.?\\s*(?:Invoice)?\\s*:?)\\s*([A-Za-z0-9][A-Za-z0-9\\-_/\\.]+)"]}},"invoice_date":{"segment":"invoice_date","strategy":"regex_capture","post":{"regex_pattern":["(?:Invoice\\s*Date\\s*:?)\\s*(\\d{4}-\\d{2}-\\d{2})","(?:Invoice\\s*Date\\s*:?)\\s*(\\d{2}/\\d{2}/\\d{4})","(?:Invoice\\s*Date\\s*:?)\\s*(\\d{2}-\\d{2}-\\d{4})"]}},"subtotal":{"segment":"subtotal","strategy":"regex_capture","post":{"regex_pattern":["\\bTotal\\b[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)","(?:sub\\s*total|net\\s*amount)[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"]}},"tax_base":{"segment":"subtotal","strategy":"regex_capture","post":{"regex_pattern":["(?:tax\\s*base|dpp|dasar\\s*pajak)[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"]}},"tax":{"segment":"vat","strategy":"regex_capture","post":{"regex_pattern":["\\b(?:VAT|PPN|Tax(?:es)?)\\b[^0-9%]*([0-9]{1,2}\\s*%)"]}},"tax_amount":{"segment":"vat","strategy":"regex_capture","post":{"regex_pattern":["\\b(?:VAT|PPN|Tax(?:es)?)\\b[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"]}},"income_tax":{"segment":"vat","strategy":"regex_capture","post":{"regex_pattern":["(?:withholding|income\\s*tax)[^0-9%]*([0-9]{1,2}\\s*%)"]}},"income_tax_amount":{"segment":"vat","strategy":"regex_capture","post":{"regex_pattern":["(?:withholding|income\\s*tax)[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"]}},"grand_total":{"segment":"grand_total","strategy":"regex_capture","post":{"regex_pattern":["\\bGrand\\s*Total\\b[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)","(?:amount\\s*due|balance)[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"]}}}}
+{
+    "profile": {
+        "name": "invoice_pdp",
+        "fail_mode": "soft",
+        "required_fields": [
+            "buyer_name",
+            "invoice_number",
+            "invoice_date",
+            "subtotal",
+            "tax_amount",
+            "grand_total"
+        ],
+        "expected_fields": [
+            "tax_base",
+            "tax",
+            "income_tax",
+            "income_tax_amount"
+        ],
+        "optional_fields": [
+            "tax_base",
+            "tax",
+            "income_tax",
+            "income_tax_amount"
+        ]
+    },
+    "use_stage2_normalized": true,
+    "guards": {
+        "invoice_number": {
+            "allowed_chars": "-A-Za-z0-9_./",
+            "min_len": 3,
+            "max_len": 64
+        },
+        "invoice_date": {
+            "min_len": 8,
+            "max_len": 20
+        },
+        "subtotal": {
+            "allowed_chars": "0-9.,()\\-",
+            "min_len": 1,
+            "max_len": 32
+        },
+        "tax_amount": {
+            "allowed_chars": "0-9.,()\\-",
+            "min_len": 1,
+            "max_len": 32
+        },
+        "grand_total": {
+            "allowed_chars": "0-9.,()\\-",
+            "min_len": 1,
+            "max_len": 32
+        },
+        "tax_base": {
+            "allowed_chars": "0-9.,()\\-",
+            "min_len": 1,
+            "max_len": 32
+        },
+        "income_tax_amount": {
+            "allowed_chars": "0-9.,()\\-",
+            "min_len": 1,
+            "max_len": 32
+        },
+        "tax": {
+            "allowed_chars": "0-9%\\s",
+            "min_len": 1,
+            "max_len": 16
+        },
+        "income_tax": {
+            "allowed_chars": "0-9%\\s",
+            "min_len": 1,
+            "max_len": 16
+        }
+    },
+    "confidence": {
+        "thresholds": {
+            "high": {
+                "max_lines": 1,
+                "max_tokens": 20
+            },
+            "medium": {
+                "max_lines": 3,
+                "max_tokens": 80
+            }
+        }
+    },
+    "totals": {
+        "mode": "segments_only"
+    },
+    "fields": {
+        "seller_name": {
+            "strategy": "constant",
+            "post": { "value": "PT. PARADIGM DINAMIKA PERSADA" }
+        },         
+        "buyer_name": {
+            "segment": "buyer_name",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(?:^|\\n)\\s*Client\\s*:?\\s*([A-Za-z&.,'\\s-]+?)(?=\\s+(?:[A-Z][A-Za-z&.'-]*\\s+)?(?:Lt\\.|Jl\\.|Jalan|Street|Road|Blok|No\\.|Tower|Gedung|Unit|Kompleks|RT\\b|RW\\b|[0-9]))",
+                    "(?:^|\\n)\\s*(?!Client\\b)([A-Za-z&.,'\\s-]+?)(?=\\s+(?:[A-Z][A-Za-z&.'-]*\\s+)?(?:Lt\\.|Jl\\.|Jalan|Street|Road|Blok|No\\.|Tower|Gedung|Unit|Kompleks|RT\\b|RW\\b|[0-9]))",
+                    "(?:^|\\n)\\s*Client\\s*:?\\s*(.+?)\\s*$"
+                ]
+            }
+        },
+        "invoice_number": {
+            "segment": "invoice_number",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(?:No\\.?\\s*(?:Invoice)?\\s*:?)\\s*([A-Za-z0-9][A-Za-z0-9\\-_/\\.]+)"
+                ]
+            }
+        },
+        "invoice_date": {
+            "segment": "invoice_date",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(?:Invoice\\s*Date\\s*:?)\\s*(\\d{4}-\\d{2}-\\d{2})",
+                    "(?:Invoice\\s*Date\\s*:?)\\s*(\\d{2}/\\d{2}/\\d{4})",
+                    "(?:Invoice\\s*Date\\s*:?)\\s*(\\d{2}-\\d{2}-\\d{4})"
+                ]
+            }
+        },
+        "subtotal": {
+            "segment": "subtotal",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "\\bTotal\\b[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)",
+                    "(?:sub\\s*total|net\\s*amount)[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"
+                ]
+            }
+        },
+        "tax_base": {
+            "segment": "subtotal",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(?:tax\\s*base|dpp|dasar\\s*pajak)[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"
+                ]
+            }
+        },
+        "tax": {
+            "segment": "vat",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "\\b(?:VAT|PPN|Tax(?:es)?)\\b[^0-9%]*([0-9]{1,2}\\s*%)"
+                ]
+            }
+        },
+        "tax_amount": {
+            "segment": "vat",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "\\b(?:VAT|PPN|Tax(?:es)?)\\b[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"
+                ]
+            }
+        },
+        "income_tax": {
+            "segment": "vat",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(?:withholding|income\\s*tax)[^0-9%]*([0-9]{1,2}\\s*%)"
+                ]
+            }
+        },
+        "income_tax_amount": {
+            "segment": "vat",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "(?:withholding|income\\s*tax)[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"
+                ]
+            }
+        },
+        "grand_total": {
+            "segment": "grand_total",
+            "strategy": "regex_capture",
+            "post": {
+                "regex_pattern": [
+                    "\\bGrand\\s*Total\\b[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)",
+                    "(?:amount\\s*due|balance)[^0-9]*([\\(\\-]?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d+)?[\\)]?)"
+                ]
+            }
+        }
+    }
+}

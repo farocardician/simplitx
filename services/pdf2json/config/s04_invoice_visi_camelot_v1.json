@@ -35,6 +35,9 @@
     "line_scale": 40,
     "row_tol_stream": 10
   },
+  "tokens": {
+    "engine": "pymupdf"
+  },
   "stop_after_totals": true,
   "page_stop_keywords": {},
   "page_row_limit": {},
