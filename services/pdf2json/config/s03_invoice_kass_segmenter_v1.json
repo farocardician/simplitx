@@ -1,8 +1,14 @@
 {
   "name": "KASS Invoice Segmenter Config V1",
   "version": "1.0",
-  "coords": { "normalized": true, "y_origin": "top", "precision": 6 },
-  "defaults": { "min_height": 0.02 },
+  "coords": {
+    "normalized": true,
+    "y_origin": "top",
+    "precision": 6
+  },
+  "defaults": {
+    "min_height": 0.02
+  },
   "regions": [
     {
       "id": "header",
@@ -11,8 +17,13 @@
       "detect": {
         "by": "anchors",
         "start_anchor": {
-          "patterns": ["^Commercial$", "^Invoice$"],
-          "flags": { "ignore_case": true },
+          "patterns": [
+            "^Commercial$",
+            "^Invoice$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
           "select": "first"
         },
         "end_anchor": {
@@ -24,7 +35,9 @@
             "^Item$",
             "^Description$"
           ],
-          "flags": { "ignore_case": true }
+          "flags": {
+            "ignore_case": true
+          }
         },
         "margin": {
           "top": -0.006,
@@ -34,7 +47,11 @@
         }
       },
       "fallbacks": [
-        { "by": "y_cutoff", "edge": "bottom", "y": 0.40 }
+        {
+          "by": "y_cutoff",
+          "edge": "bottom",
+          "y": 0.4
+        }
       ],
       "keep": "all"
     },
@@ -44,14 +61,22 @@
       "inside": "@header",
       "detect": {
         "by": "anchors",
-        "start_anchor": { "patterns": ["^Bill$"], "flags": { "ignore_case": true }, "select": "first" },
+        "start_anchor": {
+          "patterns": [
+            "^Bill$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
         "capture_window": {
           "mode": "above_rows",
           "rows": 8,
           "row_tol": 0.006,
           "width": "anchor",
           "pad_left": 0.04,
-          "pad_right": 0.20
+          "pad_right": 0.2
         }
       },
       "keep": "all"
@@ -62,21 +87,29 @@
       "inside": "@header",
       "detect": {
         "by": "anchors",
-        "start_anchor": { "patterns": ["^Bill$"], "flags": { "ignore_case": true }, "select": "first" },
+        "start_anchor": {
+          "patterns": [
+            "^Bill$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
         "capture_window": {
           "mode": "below_rows",
           "rows": 1,
           "row_tol": 0.006,
           "width": "anchor",
           "pad_left": 0.04,
-          "pad_right": 0.20
+          "pad_right": 0.2
         },
         "margin": {
           "top": 0.005,
           "bottom": 0,
           "right": 0.05,
           "left": 0
-        }        
+        }
       },
       "keep": "all"
     },
@@ -87,8 +120,12 @@
       "detect": {
         "by": "anchors",
         "start_anchor": {
-          "patterns": ["^TI$"],
-          "flags": { "ignore_case": true },
+          "patterns": [
+            "^TI$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
           "select": "first"
         },
         "capture_window": {
@@ -96,8 +133,8 @@
           "start_edge": "left",
           "rows": 0,
           "row_tol": 0.006,
-          "dx_max": 0.22,     
-          "gap_x": 0.002      
+          "dx_max": 0.22,
+          "gap_x": 0.002
         }
       },
       "keep": "all"
@@ -107,18 +144,20 @@
       "label": "invoice_date",
       "inside": "@header",
       "detect": {
-        "by": "anchors",
+        "by": "line_anchors",
         "start_anchor": {
-          "patterns": ["^Invoice$"],
-          "flags": { "ignore_case": true },
-          "select": "leftmost"   
+          "patterns": ["\\bInvoice\\s*Date\\s*:"],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "leftmost"
         },
         "capture_window": {
           "mode": "right_then_rows",
           "start_edge": "left",
           "rows": 0,
           "row_tol": 0.006,
-          "dx_max": 0.28,      
+          "dx_max": 0.28,
           "gap_x": 0.002
         }
       },
@@ -131,8 +170,12 @@
       "detect": {
         "by": "anchors",
         "start_anchor": {
-          "patterns": ["^Due$"],
-          "flags": { "ignore_case": true },
+          "patterns": [
+            "^Due$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
           "select": "first"
         },
         "capture_window": {
@@ -152,22 +195,26 @@
       "detect": {
         "by": "anchors",
         "start_anchor": {
-          "patterns": ["^Sub$"],
-          "flags": { "ignore_case": true },
+          "patterns": [
+            "^Sub$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
           "select": "first"
         },
         "capture_window": {
           "mode": "right_then_rows",
           "start_edge": "left",
-          "rows": 8,             
+          "rows": 8,
           "row_tol": 0.006,
-          "dx_max": 0.5,        
+          "dx_max": 0.5,
           "gap_x": 0.001
         },
         "margin": {
           "left": 0.1,
           "right": 0.02
-        }        
+        }
       },
       "keep": "all"
     },
@@ -177,13 +224,21 @@
       "inside": "@total",
       "detect": {
         "by": "anchors",
-        "start_anchor": { "patterns": ["^Sub$"], "flags": { "ignore_case": true }, "select": "first" },
+        "start_anchor": {
+          "patterns": [
+            "^Sub$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
         "capture_window": {
           "mode": "right_then_rows",
           "start_edge": "left",
           "rows": 0,
           "row_tol": 0.006,
-          "dx_max": 0.60,
+          "dx_max": 0.6,
           "gap_x": 0.001
         }
       },
@@ -195,13 +250,21 @@
       "inside": "@total",
       "detect": {
         "by": "anchors",
-        "start_anchor": { "patterns": ["^Tax$"], "flags": { "ignore_case": true }, "select": "first" },
+        "start_anchor": {
+          "patterns": [
+            "^Tax$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
         "capture_window": {
           "mode": "right_then_rows",
           "start_edge": "left",
           "rows": 0,
           "row_tol": 0.006,
-          "dx_max": 0.60,
+          "dx_max": 0.6,
           "gap_x": 0.001
         }
       },
@@ -214,8 +277,12 @@
       "detect": {
         "by": "anchors",
         "start_anchor": {
-          "patterns": ["^\\(\\d{1,2}(?:\\.\\d{1,2})?%\\)$"],
-          "flags": { "ignore_case": true },
+          "patterns": [
+            "^\\(\\d{1,2}(?:\\.\\d{1,2})?%\\)$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
           "select": "first"
         },
         "capture_window": {
@@ -223,12 +290,12 @@
           "start_edge": "left",
           "rows": 0,
           "row_tol": 0.006,
-          "dx_max": 0.60,
+          "dx_max": 0.6,
           "gap_x": 0.001
         },
         "margin": {
           "left": 0.04
-        }        
+        }
       },
       "keep": "all"
     },
@@ -238,13 +305,21 @@
       "inside": "@total",
       "detect": {
         "by": "anchors",
-        "start_anchor": { "patterns": ["^Zero$"], "flags": { "ignore_case": true }, "select": "first" },
+        "start_anchor": {
+          "patterns": [
+            "^Zero$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
         "capture_window": {
           "mode": "right_then_rows",
           "start_edge": "left",
           "rows": 0,
           "row_tol": 0.006,
-          "dx_max": 0.60,
+          "dx_max": 0.6,
           "gap_x": 0.001
         }
       },
@@ -256,13 +331,21 @@
       "inside": "@total",
       "detect": {
         "by": "anchors",
-        "start_anchor": { "patterns": ["^PPH$"], "flags": { "ignore_case": true }, "select": "first" },
+        "start_anchor": {
+          "patterns": [
+            "^PPH$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
         "capture_window": {
           "mode": "right_then_rows",
           "start_edge": "left",
           "rows": 0,
           "row_tol": 0.006,
-          "dx_max": 0.60,
+          "dx_max": 0.6,
           "gap_x": 0.001
         }
       },
@@ -275,8 +358,12 @@
       "detect": {
         "by": "anchors",
         "start_anchor": {
-          "patterns": ["^Amount$"],
-          "flags": { "ignore_case": true },
+          "patterns": [
+            "^Amount$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
           "select": "first"
         },
         "capture_window": {
@@ -284,12 +371,12 @@
           "start_edge": "right",
           "rows": 0,
           "row_tol": 0.006,
-          "dx_max": 0.60,
+          "dx_max": 0.6,
           "gap_x": 0.001
         },
         "margin": {
           "right": 0.22
-        }  
+        }
       },
       "keep": "all"
     }

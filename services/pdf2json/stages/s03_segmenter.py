@@ -153,6 +153,8 @@ class Context:
     logger: logging.Logger
     parent_bbox: Optional[BBox] = None
     defaults: Dict[str, Any] = field(default_factory=dict)
+    lines: Optional[List[Dict[str, Any]]] = None
+    lines_available: bool = False
 
 
 @dataclass  
@@ -412,6 +414,118 @@ class DetectionModes:
                 "start_anchor": start_match.get("matched_text"),
                 "used_capture_window": bool(capture_window)
             }
+        )
+
+    @staticmethod
+    def line_anchors(ctx: Context,
+                     start_anchor: Dict[str, Any],
+                     end_anchor: Optional[Dict[str, Any]] = None,
+                     margin: Optional[Dict[str, float]] = None,
+                     capture_window: Optional[Dict[str, Any]] = None,
+                     **kwargs) -> Optional[DetectionResult]:
+        """Detect region using anchors evaluated over line aggregates."""
+        if not ctx.lines_available:
+            return None
+
+        if margin is None and "margin" in ctx.defaults:
+            margin = ctx.defaults["margin"]
+
+        line_records = ctx.lines or []
+        if not line_records:
+            return None
+
+        candidates: List[Dict[str, Any]] = []
+        for line in line_records:
+            text = str(line.get("text", "")).strip()
+            bbox_obj = line.get("bbox")
+            if not text or bbox_obj is None:
+                continue
+
+            if isinstance(bbox_obj, BBox):
+                bbox = bbox_obj
+            elif isinstance(bbox_obj, dict):
+                try:
+                    bbox = BBox(
+                        float(bbox_obj["x0"]),
+                        float(bbox_obj["y0"]),
+                        float(bbox_obj["x1"]),
+                        float(bbox_obj["y1"]),
+                    )
+                except (KeyError, TypeError, ValueError):
+                    continue
+            else:
+                try:
+                    x0, y0, x1, y1 = bbox_obj
+                    bbox = BBox(float(x0), float(y0), float(x1), float(y1))
+                except (TypeError, ValueError):
+                    continue
+
+            candidates.append({
+                "norm": text,
+                "text": text,
+                "page": ctx.page,
+                "bbox": {
+                    "x0": bbox.x0,
+                    "y0": bbox.y0,
+                    "x1": bbox.x1,
+                    "y1": bbox.y1,
+                },
+                "_source_line": line,
+            })
+
+        if not candidates:
+            return None
+
+        start_match = AnchorMatcher.match(candidates, start_anchor)
+        if not start_match:
+            return None
+
+        start_bbox_list = [float(v) for v in start_match["bbox"]]
+
+        if capture_window:
+            cw_bbox = DetectionModes._capture_window_bbox(
+                ctx=ctx,
+                start_bbox=start_bbox_list,
+                capture_window=capture_window,
+            )
+            if cw_bbox is None:
+                return None
+            x0, y0, x1, y1 = cw_bbox.x0, cw_bbox.y0, cw_bbox.x1, cw_bbox.y1
+        else:
+            end_match = None
+            if end_anchor:
+                end_match = AnchorMatcher.match(candidates, end_anchor, start_match)
+                if not end_match:
+                    return None
+
+            x0, y0, x1, y1 = start_bbox_list
+            if end_match:
+                ex0, ey0, ex1, ey1 = [float(v) for v in end_match["bbox"]]
+                x0 = min(x0, ex0)
+                y0 = min(y0, ey0)
+                x1 = max(x1, ex1)
+                y1 = max(y1, ey1)
+
+        if margin:
+            x0 -= margin.get("left", 0.0)
+            y0 -= margin.get("top", 0.0)
+            x1 += margin.get("right", 0.0)
+            y1 += margin.get("bottom", 0.0)
+
+        if "min_height" in ctx.defaults:
+            min_h = float(ctx.defaults["min_height"])
+            if (y1 - y0) < min_h:
+                y1 = y0 + min_h
+
+        bbox = BBox(x0, y0, x1, y1)
+
+        return DetectionResult(
+            bbox=bbox,
+            metadata={
+                "mode": "line_anchors",
+                "start_anchor": start_match.get("matched_text"),
+                "used_capture_window": bool(capture_window),
+            },
         )
 
     @staticmethod
@@ -935,6 +1049,7 @@ class AgnosticSegmenter:
         """Build registry of mode handlers."""
         return {
             "anchors": DetectionModes.anchors,
+            "line_anchors": DetectionModes.line_anchors,
             "by_table": DetectionModes.by_table,
             "y_cutoff": DetectionModes.y_cutoff,
             "fixed_box": DetectionModes.fixed_box,
@@ -985,6 +1100,122 @@ class AgnosticSegmenter:
             row.sort(key=lambda t: t["bbox"]["x0"])
 
         return rows
+
+    @staticmethod
+    def _bbox_from_tokens(tokens: Sequence[Dict[str, Any]]) -> Optional[BBox]:
+        """Compute union bbox for a collection of tokens."""
+        boxes: List[BBox] = []
+        for token in tokens:
+            tb = token.get("bbox") or {}
+            try:
+                boxes.append(BBox(
+                    float(tb["x0"]),
+                    float(tb["y0"]),
+                    float(tb["x1"]),
+                    float(tb["y1"]),
+                ))
+            except (KeyError, TypeError, ValueError):
+                continue
+
+        if not boxes:
+            return None
+
+        return BBox.union_many(boxes)
+
+    def _build_line_records(
+        self,
+        page: int,
+        page_tokens: List[Dict[str, Any]],
+        rows: List[List[Dict[str, Any]]],
+        lines_by_page: Optional[Dict[int, List[Dict[str, Any]]]],
+    ) -> Tuple[Optional[List[Dict[str, Any]]], bool]:
+        """Prepare line records enriched with bounding boxes for line anchors."""
+        if lines_by_page is None:
+            return None, False
+
+        raw_lines = lines_by_page.get(page)
+        if raw_lines is None:
+            return None, False
+
+        if not raw_lines:
+            return [], True
+
+        tol_cfg = self.config.get("tolerances", {})
+        line_tol = float(tol_cfg.get("y_line_tol", 0.006))
+
+        row_infos: List[Dict[str, Any]] = []
+        for row in rows:
+            bbox = self._bbox_from_tokens(row)
+            if not bbox:
+                continue
+            row_infos.append({
+                "bbox": bbox,
+                "y_center": 0.5 * (bbox.y0 + bbox.y1),
+                "tokens": row,
+            })
+
+        line_records: List[Dict[str, Any]] = []
+
+        for raw_line in raw_lines:
+            text = str(raw_line.get("text", "")).strip()
+            if not text:
+                continue
+
+            raw_bbox = raw_line.get("bbox")
+            if isinstance(raw_bbox, dict):
+                try:
+                    bbox = BBox(
+                        float(raw_bbox["x0"]),
+                        float(raw_bbox["y0"]),
+                        float(raw_bbox["x1"]),
+                        float(raw_bbox["y1"]),
+                    )
+                except (KeyError, TypeError, ValueError):
+                    bbox = None
+            else:
+                bbox = None
+
+            ly0 = float(raw_line.get("y0", 0.0))
+
+            if bbox is None:
+                best_row = None
+                best_delta = float("inf")
+                for info in row_infos:
+                    delta = abs(info["y_center"] - ly0)
+                    if delta < best_delta:
+                        best_delta = delta
+                        best_row = info
+
+                if best_row and best_delta <= line_tol:
+                    bbox = best_row["bbox"]
+                else:
+                    # Fallback: gather tokens near the target y position
+                    nearby_tokens = []
+                    for token in page_tokens:
+                        tb = token.get("bbox") or {}
+                        try:
+                            ty0 = float(tb["y0"])
+                            ty1 = float(tb["y1"])
+                        except (KeyError, TypeError, ValueError):
+                            continue
+
+                        if abs(ty0 - ly0) <= line_tol or (ty0 <= ly0 <= ty1):
+                            nearby_tokens.append(token)
+
+                    bbox = self._bbox_from_tokens(nearby_tokens)
+
+            if not bbox:
+                continue
+
+            line_records.append({
+                "page": page,
+                "text": text,
+                "y0": ly0,
+                "bbox": bbox,
+                "raw": raw_line,
+            })
+
+        return line_records, True
 
     @staticmethod
     def _token_intersects_bbox(token: Dict[str, Any], bbox: BBox, tol: float = 0.0) -> bool:
@@ -1045,8 +1276,14 @@ class AgnosticSegmenter:
         
         return None
     
-    def _process_region(self, region_config: Dict[str, Any], pages: List[int],
-                       tokens: List[Dict[str, Any]], total_pages: int) -> List[Dict[str, Any]]:
+    def _process_region(
+        self,
+        region_config: Dict[str, Any],
+        pages: List[int],
+        tokens: List[Dict[str, Any]],
+        total_pages: int,
+        lines_by_page: Optional[Dict[int, List[Dict[str, Any]]]] = None,
+    ) -> List[Dict[str, Any]]:
         """Process a region across specified pages."""
         region_id = region_config["id"]
         keep_policy = region_config.get("keep", "all")
@@ -1102,7 +1339,11 @@ class AgnosticSegmenter:
             
             # Process this page
             segment = self._process_region_on_page(
-                region_config, page, tokens, total_pages
+                region_config,
+                page,
+                tokens,
+                total_pages,
+                lines_by_page=lines_by_page,
             )
             if segment:
                 page_results.append(segment)
@@ -1124,9 +1365,15 @@ class AgnosticSegmenter:
         
         return results
     
-    def _process_region_on_page(self, region_config: Dict[str, Any], page: int,
-                                tokens: List[Dict[str, Any]], total_pages: int,
-                                parent_bbox: Optional[BBox] = None) -> Optional[Dict[str, Any]]:
+    def _process_region_on_page(
+        self,
+        region_config: Dict[str, Any],
+        page: int,
+        tokens: List[Dict[str, Any]],
+        total_pages: int,
+        parent_bbox: Optional[BBox] = None,
+        lines_by_page: Optional[Dict[int, List[Dict[str, Any]]]] = None,
+    ) -> Optional[Dict[str, Any]]:
         """Process a single region on a specific page."""
         region_id = region_config["id"]
 
@@ -1142,6 +1389,14 @@ class AgnosticSegmenter:
         # Group tokens into rows
         rows = self._group_rows_from_tokens(page_tokens)
 
+        # Prepare line records if available
+        page_lines, lines_available = self._build_line_records(
+            page=page,
+            page_tokens=page_tokens,
+            rows=rows,
+            lines_by_page=lines_by_page,
+        )
+
         # Build context with defaults
         ctx = Context(
             page=page,
@@ -1152,7 +1407,9 @@ class AgnosticSegmenter:
             config=self.config,
             logger=logger,
             parent_bbox=parent_bbox,
-            defaults=self.config.get("defaults", {})
+            defaults=self.config.get("defaults", {}),
+            lines=page_lines,
+            lines_available=lines_available,
         )
         
         # Detect region
@@ -1175,9 +1432,14 @@ class AgnosticSegmenter:
         
         return segment
     
-    def segment_page_with_dependencies(self, regions: List[Dict[str, Any]], 
-                                      page: int, tokens: List[Dict[str, Any]], 
-                                      total_pages: int) -> List[Dict[str, Any]]:
+    def segment_page_with_dependencies(
+        self,
+        regions: List[Dict[str, Any]],
+        page: int,
+        tokens: List[Dict[str, Any]],
+        total_pages: int,
+        lines_by_page: Optional[Dict[int, List[Dict[str, Any]]]] = None,
+    ) -> List[Dict[str, Any]]:
         """Process regions on a page with dependency resolution."""
         segments = []
         parent_results = {}  # region_id -> DetectionResult
@@ -1203,7 +1465,8 @@ class AgnosticSegmenter:
                 page,
                 tokens,
                 total_pages,
-                parent_bbox
+                parent_bbox,
+                lines_by_page=lines_by_page,
             )
             if not segment:
                 continue
@@ -1241,6 +1504,16 @@ class AgnosticSegmenter:
             raise SystemExit(f"Tokenizer '{tokenizer}' tokens not found in input JSON")
 
         tokens = engine_block["tokens"]
+        lines = engine_block.get("lines")
+        lines_by_page: Optional[Dict[int, List[Dict[str, Any]]]] = None
+        if isinstance(lines, list):
+            lines_by_page = {}
+            for line in lines:
+                try:
+                    page_idx = int(line.get("page"))
+                except (TypeError, ValueError):
+                    continue
+                lines_by_page.setdefault(page_idx, []).append(line)
         page_count = data.get("page_count", 0)
         
         # Resolve region dependencies
@@ -1262,7 +1535,13 @@ class AgnosticSegmenter:
             pages = PageResolver.resolve(on_pages, page_count)
             
             if pages:
-                segments = self._process_region(region_config, pages, tokens, page_count)
+                segments = self._process_region(
+                    region_config,
+                    pages,
+                    tokens,
+                    page_count,
+                    lines_by_page=lines_by_page,
+                )
                 all_segments.extend(segments)
         
         # Process child regions page by page with dependencies
@@ -1285,7 +1564,11 @@ class AgnosticSegmenter:
                     all_page_regions.extend(page_regions)
                     
                     segments = self.segment_page_with_dependencies(
-                        all_page_regions, page, tokens, page_count
+                        all_page_regions,
+                        page,
+                        tokens,
+                        page_count,
+                        lines_by_page=lines_by_page,
                     )
                     
                     # Filter to only child segments (parents already added)

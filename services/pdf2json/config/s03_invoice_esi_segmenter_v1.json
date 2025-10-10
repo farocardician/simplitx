@@ -29,9 +29,9 @@
       "label": "invoice_number",
       "inside": "@header",
       "detect": {
-        "by": "anchors",
+        "by": "line_anchors",
         "start_anchor": {
-          "patterns": ["^No\\.$"],
+          "patterns": ["\\bInvoice\\s*(No|Number)\\.?\\s*[:\\-]?"],
           "flags": { "ignore_case": true, "normalize_space": true },
           "select": "topmost"
         },
@@ -42,7 +42,7 @@
           "row_tol": 0,
           "dx_max": 0.25
         },
-        "margin": { "top": 0.004, "right": 0.0, "bottom": -0.004, "left": 0.05 }
+        "margin": { "top": 0, "right": 0, "bottom": 0, "left": 0 }
       }
     },
     {
@@ -50,9 +50,9 @@
       "label": "invoice_date",
       "inside": "@header",
       "detect": {
-        "by": "anchors",
+        "by": "line_anchors",
         "start_anchor": {
-          "patterns": ["Date"],
+          "patterns": ["\\bInvoice\\s*Date\\s*:"],
           "flags": { "ignore_case": true, "normalize_space": true },
           "select": "topmost"
         },
@@ -63,7 +63,7 @@
           "row_tol": 0,
           "dx_max": 0.25
         },
-        "margin": { "top": 0.004, "right": 0.0, "bottom": -0.004, "left": 0.05 }
+        "margin": { "top": 0, "right": 0, "bottom": 0, "left": 0 }
       }
     },
     {
