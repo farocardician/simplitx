@@ -1,0 +1,202 @@
+# PROMPT TEMPLATE: Extract Invoice Regions from PDF Folders
+
+## Task Overview
+Extract structured invoice data from multiple PDF files in subfolders and create regionized token text files for each invoice field (header, buyer_name, invoice_number, invoice_date, subtotal, tax_base, vat, grand_total, total).
+
+## Input Structure
+- Base folder containing numbered subfolders (e.g., `/1/`, `/2/`, `/3/`)
+- Each subfolder contains one invoice PDF file
+- Folder 1 contains reference example with already-extracted token files
+
+## Output Required
+For each subfolder, create 9 token text files:
+1. `header.txt` - Full invoice header with company info, buyer, dates, references
+2. `buyer_name.txt` - Customer/buyer company name only
+3. `invoice_number.txt` - Invoice number/ID
+4. `invoice_date.txt` - Invoice date
+5. `subtotal.txt` - Subtotal amount with label
+6. `tax_base.txt` - Tax base amount for VAT calculation
+7. `vat.txt` - VAT/tax amount
+8. `grand_total.txt` - Final total amount
+9. `total.txt` - Complete financial breakdown (all line items)
+
+## STRATEGY: Token-Efficient Approach
+
+### Phase 1: Understand the Pattern (Low Token Cost)
+1. **Explore reference folder** (folder 1) to understand:
+   - File structure and naming conventions
+   - Content format and layout expectations
+   - What data goes in each token file
+2. **Read example token files** to capture the exact format
+3. **Identify all subfolders** needing processing using bash commands
+
+### Phase 2: Load All Data in Batches (Efficient Context Usage)
+4. **Read PDFs in parallel batches** (5-6 at a time):
+   ```
+   Read /path/to/folder/2/2.pdf
+   Read /path/to/folder/3/3.pdf
+   Read /path/to/folder/4/4.pdf
+   Read /path/to/folder/5/5.pdf
+   Read /path/to/folder/6/6.pdf
+   ```
+   - Use Read tool for PDFs (supports multimodal - text + images)
+   - All PDFs get loaded into context memory
+   - Continue until all PDFs are read
+
+### Phase 3: Extract and Create Files (Hybrid Approach)
+5. **Manually create token files for 1-2 folders** to:
+   - Demonstrate understanding of the format
+   - Show the user what's being created
+   - Establish the pattern clearly
+
+6. **Delegate bulk work to specialized agent**:
+   - Since all PDF data is already in context, create a Task agent
+   - Provide the agent with:
+     * Summary of all extracted data (invoice numbers, buyers, amounts)
+     * Clear instructions on file format
+     - Reference to folder 1 for format guidance
+   - Agent creates all remaining token files efficiently
+
+### Phase 4: Verify and Report
+7. **Verify creation** with selective bash commands:
+   ```bash
+   ls -la services/pdf2json/results/kass/2/
+   ls -la services/pdf2json/results/kass/19/
+   ```
+8. **Create comprehensive summary** of all invoices processed
+
+## TOKEN OPTIMIZATION TECHNIQUES
+
+### ✅ DO:
+- **Read multiple PDFs in single message** (parallel tool calls)
+- **Batch similar operations** together
+- **Use Task agent for repetitive work** once pattern is established
+- **Load all data first**, then process (avoids re-reading)
+- **Selective verification** (check sample folders, not all)
+- **Track progress with TodoWrite** to stay organized
+
+### ❌ DON'T:
+- Read PDFs one at a time sequentially
+- Create files one-by-one for all folders manually
+- Re-read files already in context
+- Verify every single folder individually
+- Use bash loops that create redundant output
+
+## EXECUTION TEMPLATE
+
+### Step 1: Analyze Reference Structure
+```
+You are an experienced AI engineer.
+Analyze the folder **`[BASE_PATH]/1/`** — it contains one invoice's PDF file and its regionized token outputs (text files such as header, buyer_name, invoice_number, invoice_date, subtotal, tax_base, vat, and grand_total).
+
+Your task is to **do the same** for **all subfolders** inside `[BASE_PATH]/`.
+Each subfolder (e.g., `/2/`, `/3/`, etc.) will contain a similar structure with a PDF and needs token files created.
+
+Do not use line number prefixes in the output files.
+```
+
+### Step 2: Key Actions (TodoWrite Pattern)
+Create todo list with phases:
+1. Explore folder 1 structure
+2. Analyze token file formats
+3. Identify all subfolders
+4. Read PDFs in batches (2-7, 8-13, 14-19, etc.)
+5. Create token files for folder 2 (manual example)
+6. Delegate bulk creation to agent (folders 3-N)
+7. Verify and summarize
+
+### Step 3: PDF Reading Pattern
+Read 5-6 PDFs per message in parallel:
+```
+Read /path/to/2/2.pdf
+Read /path/to/3/3.pdf
+Read /path/to/4/4.pdf
+Read /path/to/5/5.pdf
+Read /path/to/6/6.pdf
+```
+
+Continue until all PDFs loaded into context.
+
+### Step 4: Manual Creation (1-2 folders)
+Create files for folder 2 manually to show format:
+```
+Write /path/to/2/header.txt
+Write /path/to/2/buyer_name.txt
+Write /path/to/2/invoice_number.txt
+[etc...]
+```
+
+### Step 5: Agent Delegation
+Use Task tool with general-purpose agent:
+```
+Task: "Create token files for folders 3-N"
+Prompt:
+"I've already analyzed all the PDFs. Here's the data for each folder:
+
+Folder 3: Invoice X - Company Y (amounts...)
+Folder 4: Invoice Z - Company W (amounts...)
+[etc...]
+
+For each folder, create 9 token files following the EXACT format from folder 1:
+1. header.txt - [description]
+2. buyer_name.txt - [description]
+[etc...]
+
+Look at folder 1 for the exact format. Create all files without line number prefixes."
+```
+
+### Step 6: Verification
+```bash
+ls -la [BASE_PATH]/2/
+ls -la [BASE_PATH]/[LAST_FOLDER]/
+```
+
+### Step 7: Summary Report
+Create detailed summary showing:
+- Total folders processed
+- Each invoice: number, buyer, date, amount
+- Total files created
+- Subject/purpose of each invoice
+
+## ADAPTATIONS FOR DIFFERENT INVOICE TYPES
+
+### For ESI-style invoices (training/services):
+- Fields: header, buyer_name, invoice_number, invoice_date, subtotal, tax_base, vat, grand_total, total
+- Focus: Buyer company, service description, financial amounts
+
+### For KASS-style invoices (IP services):
+- Fields: Same 9 files
+- Focus: TI number, buyer, trademark/patent details, financial breakdown
+- Include: PPH 23 calculations in total.txt
+
+### For other invoice types:
+- First analyze folder 1 to identify required fields
+- Adapt token file list based on what fields exist
+- Maintain consistent structure within each invoice type
+
+## SUCCESS METRICS
+- ✅ All subfolders have complete set of token files
+- ✅ Format matches reference folder exactly
+- ✅ No line number prefixes in output files
+- ✅ All financial data accurately extracted
+- ✅ Comprehensive summary report generated
+- ✅ Token usage kept under 150K for ~20 invoices
+
+## ESTIMATED TOKEN USAGE
+- Phase 1 (Explore): ~5K tokens
+- Phase 2 (Read 20 PDFs): ~40-60K tokens
+- Phase 3 (Create files): ~30-40K tokens
+- Phase 4 (Verify/Report): ~5-10K tokens
+- **Total: ~80-115K tokens for 20 invoices**
+
+## EXAMPLE USAGE
+```
+You are an experienced AI engineer.
+Analyze the folder **`services/pdf2json/results/esi/1/`** — it contains one invoice's PDF file and its regionized token outputs.
+
+Your task is to **do the same** for **all subfolders** inside `services/pdf2json/results/esi/`.
+Each subfolder will contain a similar structure with a PDF.
+Do not use line number prefixes.
+```
+
+Then follow the strategy above: explore → read batches → manual example → agent delegation → verify → summarize.

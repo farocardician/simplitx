@@ -37,10 +37,10 @@
   },
   "fields": {
     "buyer_name": {
-      "strategy": "regex_capture",
-      "segment": "buyer",
+      "strategy": "first_line_pattern",
+      "segment": "buyer_name",
       "post": {
-        "regex_pattern": [":\\s*([^\\n]+?)\\s+Jl\\."]
+        "regex_pattern": [":\\s*(.+)"]
       }
     },
     "invoice_number": {
@@ -57,6 +57,10 @@
         "regex_pattern": ["Invoice\\s+Date\\s*:\\s*(\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4})"]
       }
     },
+    "seller_name": {
+      "strategy": "constant",
+      "post": { "value": "PT Electronic Science Indonesia" }
+    },    
     "subtotal": {
       "strategy": "regex_capture",
       "segment": "subtotal",
@@ -66,23 +70,23 @@
     },
     "tax_base": {
       "strategy": "regex_capture",
-      "segment": "tax_based",
+      "segment": "total",
       "post": {
-        "regex_pattern": ["Rp\\s+([\\d,\\.]+)"]
+        "regex_pattern": ["Based\\s+VAT\\s+Rp\\s+([\\d,\\.]+)"]
       }
     },
     "tax": {
-      "strategy": "regex_capture",
+      "strategy": "constant",
       "segment": "vat",
       "post": {
-        "regex_pattern": ["VAT\\s+(\\d+%)"]
+        "value": "11%"
       }
     },
     "tax_amount": {
       "strategy": "regex_capture",
       "segment": "vat",
       "post": {
-        "regex_pattern": ["\\d+%\\s+Rp\\s+([\\d,\\.]+)"]
+        "regex_pattern": ["VAT\\s+Rp\\s+([\\d,\\.]+)"]
       }
     },
     "income_tax": {
@@ -101,9 +105,9 @@
     },
     "grand_total": {
       "strategy": "regex_capture",
-      "segment": "grand_total",
+      "segment": "total",
       "post": {
-        "regex_pattern": ["Total\\s+Rp\\s+([\\d,\\.]+)"]
+        "regex_pattern": ["total\\s+Rp\\s+([\\d,\\.]+)"]
       }
     }
   },

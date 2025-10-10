@@ -87,8 +87,8 @@
       }
     },
     {
-      "id": "buyer",
-      "label": "buyer",
+      "id": "buyer_name",
+      "label": "buyer_name",
       "inside": "@header",
       "detect": {
         "by": "anchors",
@@ -112,21 +112,18 @@
       "id": "total",
       "label": "total",
       "detect": {
-        "by": "anchors",
+        "by": "line_anchors",
         "start_anchor": {
-          "patterns": ["^Sub$"],
-          "flags": { "ignore_case": true },
+          "patterns": ["^Sub\\s+total"],
+          "flags": { "ignore_case": true, "normalize_space": true },
           "select": "topmost"
         },
-        "capture_window": {
-          "mode": "right_then_rows",
-          "start_edge": "left",
-          "rows": 4,          
-          "row_tol": 0.006,
-          "dx_max": 0.25
+        "end_anchor": {
+          "patterns": ["^Grand\\s+Total"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
         },
-        "margin": { "top": 0, "right": 0.0, "bottom": 0.002, "left": 0.0 },
-        "min_height": 0.040
+        "margin": { "top": 0, "right": 0, "bottom": 0, "left": -0.6 }
       },
       "keep": "all"
     },
@@ -157,9 +154,9 @@
       "label": "vat",
       "inside": "@total",
       "detect": {
-        "by": "anchors",
-        "start_anchor": { "patterns": ["^VAT$"], "flags": { "ignore_case": true }, "select": "topmost" },
-        "capture_window": { "mode": "right_only", "start_edge": "left", "dx_max": 0.22, "height": "anchor" }
+        "by": "line_anchors",
+        "start_anchor": { "patterns": ["^VAT\\s+Rp"], "flags": { "ignore_case": true, "normalize_space": true }, "select": "topmost" },
+        "margin": { "top": 0.005, "right": 0.3, "bottom": 0.005, "left": 0.0 }
       },
       "min_height": 0.008
     },

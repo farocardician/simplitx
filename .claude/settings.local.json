@@ -4,7 +4,11 @@
       "Bash(docker-compose up:*)",
       "Bash(docker-compose:*)",
       "Bash(awk:*)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(for:*)",
+      "Bash(do echo \"=== Folder $i ===\")",
+      "Bash(ls:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []
