@@ -127,6 +127,87 @@ def _to_decimal(s: Optional[str], thousands: str = ",", decimal: str = ".", allo
     return -v if neg else v
 
 
+def _validate_number_parse(input_str: Optional[str], thousands: str, decimal: str, parsed_value: Optional[Decimal]) -> bool:
+    """
+    Validate that a parsed number matches the structural pattern of the declared format.
+    Returns False if parse is likely incorrect (triggers fallback to next alternate).
+
+    Deterministic rejection rule:
+    - When input contains BOTH . and ,, the decimal separator MUST appear:
+      1. AFTER the thousands separator (rightmost position)
+      2. Followed by 0-3 digits (standard currency precision)
+    """
+    if parsed_value is None:
+        return False
+
+    if input_str is None:
+        return True
+
+    clean_input = _clean(str(input_str))
+    has_dot = '.' in clean_input
+    has_comma = ',' in clean_input
+
+    # If both separators present, validate which is which
+    if has_dot and has_comma:
+        last_dot = clean_input.rfind('.')
+        last_comma = clean_input.rfind(',')
+
+        # Decimal separator must appear AFTER thousands separator
+        if decimal == '.' and last_dot < last_comma:
+            return False  # . appears before , → wrong format
+        if decimal == ',' and last_comma < last_dot:
+            return False  # , appears before . → wrong format
+
+        # Check decimal precision (currency standard = 0-3 digits after decimal)
+        sep_idx = last_dot if decimal == '.' else last_comma
+        after_decimal = clean_input[sep_idx+1:]
+        decimal_digits = sum(1 for c in after_decimal if c.isdigit())
+        if decimal_digits > 3:
+            return False  # Too many decimal places → likely wrong parse
+
+    return True
+
+
+def _to_decimal_multi_format(
+    input_str: Optional[str],
+    cfg: Dict[str, Any],
+    currency_hints: Optional[List[str]] = None
+) -> Optional[Decimal]:
+    """
+    Try parsing with primary format, then alternates (with validation).
+    Returns first valid parse or None.
+
+    This allows supporting multiple number formats (e.g., US: 70,000,000 and Indonesian: 15.961.733)
+    in a single config without breaking existing templates.
+    """
+    nf = cfg.get("number_format", {})
+    formats = [nf]  # Primary format first (existing behavior)
+
+    # Add alternates if configured (new feature, opt-in)
+    alts = cfg.get("number_format_alternates", [])
+    if alts:
+        formats.extend(alts)
+
+    for fmt in formats:
+        thousands = fmt.get("thousands", ",")
+        decimal = fmt.get("decimal", ".")
+        allow_parens = fmt.get("allow_parens", True)
+
+        parsed = _to_decimal(
+            input_str,
+            thousands=thousands,
+            decimal=decimal,
+            allow_parens=allow_parens,
+            currency_hints=currency_hints
+        )
+
+        # Validate parse before accepting
+        if _validate_number_parse(input_str, thousands, decimal, parsed):
+            return parsed
+
+    return None  # All formats failed
+
+
 def _first_numeric_token(s: Optional[str]) -> Optional[str]:
     if s is None:
         return None
@@ -175,18 +256,14 @@ def parse_int(ctx: ParseContext, cfg: Dict[str, Any]) -> None:
 
 
 def parse_number(ctx: ParseContext, cfg: Dict[str, Any]) -> None:
-    nf = cfg.get("number_format", {})
-    v = _to_decimal(ctx.raw, thousands=nf.get("thousands", ","), decimal=nf.get("decimal", "."),
-                    allow_parens=nf.get("allow_parens", True))
+    v = _to_decimal_multi_format(ctx.raw, cfg)
     if v is not None:
         ctx.values[ctx.values.get("_target_field", "")] = v
 
 
 def parse_money(ctx: ParseContext, cfg: Dict[str, Any]) -> None:
-    nf = cfg.get("number_format", {})
     cur_hints = cfg.get("currency_hints") or []
-    v = _to_decimal(ctx.raw, thousands=nf.get("thousands", ","), decimal=nf.get("decimal", "."),
-                    allow_parens=nf.get("allow_parens", True), currency_hints=cur_hints)
+    v = _to_decimal_multi_format(ctx.raw, cfg, currency_hints=cur_hints)
     if v is not None:
         ctx.values[ctx.values.get("_target_field", "")] = v
 
@@ -195,9 +272,7 @@ def parse_first_number(ctx: ParseContext, cfg: Dict[str, Any]) -> None:
     token = _first_numeric_token(ctx.raw)
     if token is None:
         return
-    nf = cfg.get("number_format", {})
-    v = _to_decimal(token, thousands=nf.get("thousands", ","), decimal=nf.get("decimal", "."),
-                    allow_parens=nf.get("allow_parens", True))
+    v = _to_decimal_multi_format(token, cfg)
     if v is not None:
         ctx.values[ctx.values.get("_target_field", "")] = v
 
@@ -206,10 +281,8 @@ def parse_first_money(ctx: ParseContext, cfg: Dict[str, Any]) -> None:
     token = _first_numeric_token(ctx.raw)
     if token is None:
         return
-    nf = cfg.get("number_format", {})
     cur_hints = cfg.get("currency_hints") or []
-    v = _to_decimal(token, thousands=nf.get("thousands", ","), decimal=nf.get("decimal", "."),
-                    allow_parens=nf.get("allow_parens", True), currency_hints=cur_hints)
+    v = _to_decimal_multi_format(token, cfg, currency_hints=cur_hints)
     if v is not None:
         ctx.values[ctx.values.get("_target_field", "")] = v
 

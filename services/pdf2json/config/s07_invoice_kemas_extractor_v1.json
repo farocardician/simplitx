@@ -17,6 +17,10 @@
     }
   },
   "fields": {
+    "seller_name": {
+      "strategy": "constant",
+      "post": { "value": "PT KREASI MULTI SINERGINDO" }
+    },    
     "buyer_name": {
       "strategy": "strict_full_text",
       "segment": "buyer_name"

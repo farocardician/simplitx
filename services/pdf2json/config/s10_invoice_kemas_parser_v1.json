@@ -1,0 +1,54 @@
+{
+  "metadata": {
+    "template": "KEMAS Invoice (IDR)",
+    "money_rounding": 0
+  },
+  "defaults": {
+    "currency": "IDR",
+    "tax_label": "PPn"
+  },
+  "header": {
+    "pages": [1],
+    "search_row_limit": 30,
+    "fields": {
+      "invoice_number": { "match": "contains" },
+      "invoice_date": { "match": "contains" }
+    }
+  },
+  "items": {
+    "min_columns": 4,
+    "header_rows_can_hold_items": false,
+    "key_field": "no",
+    "fields": [
+      { "name": "no", "column": 0, "type": "int" },
+      { "name": "description", "column": 1, "transform": "string" },
+      { "name": "qty", "column": 2, "transform": "int" },
+      { "name": "unit_price", "column": 4, "transform": "money" },
+      { "name": "amount", "column": 5, "transform": "money" }
+    ]
+  },
+  "totals": {
+    "tax_label": "PPn",
+    "fields": {
+      "subtotal": [
+        "printed.subtotal",
+        "checks.subtotal.computed"
+      ],
+      "tax_base": [
+        "printed.tax_base",
+        "computed.tax_base"
+      ],
+      "tax_amount": [
+        "printed.tax_amount",
+        "computed.tax_amount"
+      ],
+      "grand_total": [
+        "printed.grand_total",
+        "computed.grand_total"
+      ]
+    }
+  },
+  "manifest": {
+    "schema_template": "KEMAS Invoice (IDR)"
+  }
+}

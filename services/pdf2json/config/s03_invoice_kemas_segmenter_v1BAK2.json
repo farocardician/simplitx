@@ -106,14 +106,6 @@
           },
           "select": "first"
         },
-        "end_anchor": {
-          "patterns": ["^Invoice$"],
-          "flags": {
-            "ignore_case": false,
-            "normalize_space": true
-          },
-          "select": "first"
-        },
         "capture_window": {
           "mode": "right_then_rows",
           "start_edge": "right",
@@ -124,7 +116,7 @@
         },
         "margin": {
           "top": 0.0,
-          "right": -0.05,
+          "right": 0.0,
           "bottom": 0.0,
           "left": 0.0
         }

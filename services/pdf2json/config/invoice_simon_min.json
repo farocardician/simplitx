@@ -20,7 +20,9 @@
       "DESC",
       "DESCRIPTION",
       "DESCRIPTION OF GOODS",
-      "GOODS"
+      "GOODS",
+      "ITEM",
+      "Item"
     ],
     "QTY": [
       "QTY",
@@ -34,7 +36,8 @@
     "PRICE": [
       "PRICE",
       "UNIT COST",
-      "UNIT PRICE"
+      "UNIT PRICE",
+      "UNIT_PRICE"
     ],
     "AMOUNT": [
       "AMOUNT",

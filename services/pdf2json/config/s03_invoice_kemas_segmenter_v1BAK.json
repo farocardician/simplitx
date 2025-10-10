@@ -95,7 +95,7 @@
     {
       "id": "buyer_name",
       "label": "buyer_name",
-      "on_pages": "first",
+      "inside": "@header",
       "detect": {
         "by": "anchors",
         "start_anchor": {
@@ -106,25 +106,17 @@
           },
           "select": "first"
         },
-        "end_anchor": {
-          "patterns": ["^Invoice$"],
-          "flags": {
-            "ignore_case": false,
-            "normalize_space": true
-          },
-          "select": "first"
-        },
         "capture_window": {
           "mode": "right_then_rows",
           "start_edge": "right",
           "rows": 0,
-          "row_tol": 0.005,
-          "dx_max": 0.6,
-          "gap_x": 0.01
+          "row_tol": 0.002,
+          "dx_max": 0.45,
+          "gap_x": 0.03
         },
         "margin": {
           "top": 0.0,
-          "right": -0.05,
+          "right": 0.0,
           "bottom": 0.0,
           "left": 0.0
         }
