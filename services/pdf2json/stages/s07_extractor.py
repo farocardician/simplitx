@@ -26,10 +26,11 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import string
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 
 logger = logging.getLogger("s07_extractor")
@@ -93,6 +94,27 @@ def group_lines(tokens: List[Dict[str, Any]], y_tol: float = 0.004) -> List[List
 
 def join_line(tokens: List[Dict[str, Any]], prefer_norm: bool) -> str:
     return " ".join(token_text(t, prefer_norm) for t in tokens if token_text(t, prefer_norm))
+
+
+def tokens_bbox(tokens: List[Dict[str, Any]]) -> Optional[List[float]]:
+    if not tokens:
+        return None
+    xs0: List[float] = []
+    ys0: List[float] = []
+    xs1: List[float] = []
+    ys1: List[float] = []
+    for t in tokens:
+        bb = t.get("bbox") or {}
+        try:
+            xs0.append(float(bb.get("x0")))
+            ys0.append(float(bb.get("y0")))
+            xs1.append(float(bb.get("x1")))
+            ys1.append(float(bb.get("y1")))
+        except (TypeError, ValueError):
+            continue
+    if not xs0 or not ys0 or not xs1 or not ys1:
+        return None
+    return [min(xs0), min(ys0), max(xs1), max(ys1)]
 
 
 # -------------------- Config model --------------------
@@ -303,14 +325,17 @@ def extract_strict(tokens_p: Path, segments_p: Path, cfg_p: Path, tokenizer: str
             }
         # Resolve strategy
         field_post = {}
+        flags_cfg: Dict[str, Any] = {}
         if isinstance(spec, dict):
             strategy = (spec.get("strategy") or "strict_full_text").lower()
             field_post = spec.get("post") or {}
             seg_ref = spec.get("segment") or None
+            flags_cfg = spec.get("flags") or {}
         else:
             strategy = "strict_full_text"
             field_post = {}
             seg_ref = None
+            flags_cfg = {}
         # Record the chosen strategy for this field
         strategies_used[field] = strategy
 
@@ -349,6 +374,44 @@ def extract_strict(tokens_p: Path, segments_p: Path, cfg_p: Path, tokenizer: str
                 entry["warnings"] = out_warn
             return entry
 
+        def first_non_empty_line(line_groups: List[List[Dict[str, Any]]]) -> Dict[str, Any]:
+            normalize_space_flag = bool(flags_cfg.get("normalize_space"))
+            strip_punct_flag = bool(flags_cfg.get("strip_punctuation"))
+            raw_candidates: List[str] = []
+            for idx, group in enumerate(line_groups):
+                candidate = join_line(group, prefer_norm)
+                if not candidate:
+                    continue
+                raw_candidates.append(candidate)
+                processed = candidate
+                if normalize_space_flag:
+                    processed = re.sub(r"\s+", " ", processed).strip()
+                else:
+                    processed = processed.strip()
+                if strip_punct_flag:
+                    processed = processed.strip(string.punctuation)
+                if not processed:
+                    continue
+                chk = re.sub(r"\s+", "", processed)
+                if chk and all(ch in string.punctuation for ch in chk):
+                    continue
+                return {
+                    "found": True,
+                    "line_index": idx,
+                    "raw_line": candidate,
+                    "prepared_line": processed,
+                    "tokens": group,
+                    "raw_candidates": raw_candidates,
+                }
+            return {
+                "found": False,
+                "line_index": None,
+                "raw_line": raw_candidates[0] if raw_candidates else None,
+                "prepared_line": None,
+                "tokens": [],
+                "raw_candidates": raw_candidates,
+            }
+
         # Strategy implementations
         if strategy == "strict_full_text":
             # Legacy path using a single segment id
@@ -373,9 +436,166 @@ def extract_strict(tokens_p: Path, segments_p: Path, cfg_p: Path, tokenizer: str
             entry["region_bbox"] = bbox
             return entry
 
+        elif strategy == "first_line_pattern":
+            patterns = field_post.get("regex_pattern")
+            if isinstance(patterns, str):
+                patterns = [patterns]
+            elif patterns is None:
+                patterns = []
+
+            seg_id = str(seg_ref) if seg_ref else (spec if isinstance(spec, str) else None)
+            if not seg_id:
+                out_warn.append("segment_not_mapped")
+                return summarize_value(None, None, [], [], None)
+            seg = region_map.get(seg_id)
+            if not seg:
+                out_warn.append("segment_not_found")
+                return summarize_value(None, None, [], [], None)
+
+            page = int(seg.get("page", 1))
+            bbox = seg.get("bbox", [0, 0, 1, 1])
+            toks = tokens_in_bbox(tbyp, page, bbox)
+            line_groups = group_lines(toks)
+            picked = first_non_empty_line(line_groups)
+
+            if not picked.get("found"):
+                entry = summarize_value(page, bbox, [], [], None)
+                entry["source_region"] = seg_id
+                entry["region_bbox"] = bbox
+                entry.setdefault("meta", {})
+                entry["meta"]["confidence_bucket"] = entry.get("confidence")
+                entry["meta"].update({
+                    "strategy": "first_line_pattern",
+                    "line_index": None,
+                    "warning": "first_line_pattern: no non-empty line",
+                })
+                if picked.get("raw_line"):
+                    entry["meta"]["sample_line"] = picked.get("raw_line")
+                entry["confidence"] = 0.20
+                entry["value"] = entry.get("value_text")
+                return entry
+
+            prepared_line = picked.get("prepared_line") or ""
+            raw_line = picked.get("raw_line") or ""
+            prepared_tokens = picked.get("tokens") or []
+            line_index = picked.get("line_index")
+
+            if not patterns:
+                out_warn.append("first_line_pattern:no_patterns")
+
+            regex_flags = 0
+            if flags_cfg.get("ignore_case"):
+                regex_flags |= re.IGNORECASE
+            if flags_cfg.get("multiline"):
+                regex_flags |= re.MULTILINE
+            if flags_cfg.get("dotall"):
+                regex_flags |= re.DOTALL
+
+            extracted = None
+            matched_pattern = None
+            matched_index = None
+            group_used = 0
+            match_span: Optional[List[int]] = None
+
+            for idx, pat in enumerate(patterns or []):
+                try:
+                    rx = re.compile(pat, flags=regex_flags)
+                except re.error:
+                    out_warn.append(f"regex_compile_error:{idx}")
+                    continue
+                m = rx.search(prepared_line)
+                if not m:
+                    continue
+                if m.lastindex:
+                    extracted = m.group(1)
+                    group_used = 1
+                else:
+                    extracted = m.group(0)
+                    group_used = 0
+                matched_pattern = pat
+                matched_index = idx
+                match_span = [int(m.span(0)[0]), int(m.span(0)[1])]
+                break
+
+            entry = summarize_value(page, bbox, prepared_tokens, [raw_line], raw_line, extracted)
+            bucket_conf = entry.get("confidence")
+            success = extracted is not None and extracted != ""
+            entry["confidence"] = 0.90 if success else 0.20
+            entry["value"] = entry.get("value_text")
+            entry.setdefault("meta", {})
+            entry["meta"].update({
+                "strategy": "first_line_pattern",
+                "confidence_bucket": bucket_conf,
+                "line_index": line_index,
+                "line_bbox": tokens_bbox(prepared_tokens),
+                "line_text_len": len(prepared_line),
+                "raw_line": raw_line,
+                "pattern_used": matched_pattern,
+                "pattern_index": matched_index,
+                "group_used": group_used if success else None,
+                "match_span": match_span,
+                "total_patterns": len(patterns or []),
+            })
+            if not success:
+                entry["meta"]["warning"] = "first_line_pattern: no pattern matched"
+                entry["meta"]["sample_line"] = prepared_line or raw_line
+            entry["source_region"] = seg_id
+            entry["region_bbox"] = bbox
+            return entry
+
         elif strategy == "first_line":
-            out_warn.append("unsupported_strategy:first_line")
-            return summarize_value(None, None, [], [], None)
+            seg_id = str(seg_ref) if seg_ref else (spec if isinstance(spec, str) else None)
+            if not seg_id:
+                out_warn.append("segment_not_mapped")
+                return summarize_value(None, None, [], [], None)
+            seg = region_map.get(seg_id)
+            if not seg:
+                out_warn.append("segment_not_found")
+                return summarize_value(None, None, [], [], None)
+
+            page = int(seg.get("page", 1))
+            bbox = seg.get("bbox", [0, 0, 1, 1])
+            toks = tokens_in_bbox(tbyp, page, bbox)
+            line_groups = group_lines(toks)
+            picked = first_non_empty_line(line_groups)
+            if not picked.get("found"):
+                entry = summarize_value(page, bbox, [], [], None)
+                entry["source_region"] = seg_id
+                entry["region_bbox"] = bbox
+                entry.setdefault("meta", {})
+                entry["meta"]["confidence_bucket"] = entry.get("confidence")
+                entry["meta"].update({
+                    "strategy": "first_line",
+                    "line_index": None,
+                    "warning": "first_line: no non-empty line",
+                })
+                if picked.get("raw_line"):
+                    entry["meta"]["sample_line"] = picked.get("raw_line")
+                entry["confidence"] = 0.20
+                entry["value"] = entry.get("value_text")
+                return entry
+
+            prepared_line = picked.get("prepared_line")
+            raw_line = picked.get("raw_line")
+            prepared_tokens = picked.get("tokens") or []
+            line_index = picked.get("line_index")
+
+            entry = summarize_value(page, bbox, prepared_tokens, [raw_line], raw_line, prepared_line)
+            bucket_conf = entry.get("confidence")
+            entry["confidence"] = 0.75
+            entry["value"] = entry.get("value_text")
+            entry.setdefault("meta", {})
+            entry["meta"].update({
+                "strategy": "first_line",
+                "confidence_bucket": bucket_conf,
+                "line_index": line_index,
+                "line_bbox": tokens_bbox(prepared_tokens),
+                "line_text_len": len(prepared_line or ""),
+                "raw_line": raw_line,
+            })
+            entry["source_region"] = seg_id
+            entry["region_bbox"] = bbox
+            return entry
 
         elif strategy == "anchor_value":
             out_warn.append("unsupported_strategy:anchor_value")
