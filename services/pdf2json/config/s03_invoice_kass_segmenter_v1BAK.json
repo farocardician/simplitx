@@ -193,10 +193,15 @@
       "label": "Table",
       "on_pages": "first",
       "detect": {
-        "by": "line_anchors",
+        "by": "anchors",
         "start_anchor": {
           "patterns": [
-            "# Item & Description Qty Rate Amount"
+            "^#$",
+            "^Item$",
+            "^Description$",
+            "^Qty$",
+            "^Rate$",
+            "^Amount$"
           ],
           "flags": {
             "ignore_case": true
@@ -205,17 +210,18 @@
         },
         "end_anchor": {
           "patterns": [
-            "Sub Total",
-            "Tax Base",
-            "Total"
+            "^Sub$",
+            "^Sub Total$",
+            "^Tax$",
+            "^Total$"
           ],
           "flags": {
             "ignore_case": true
           }
         },
         "margin": {
-          "top": 0.005,
-          "bottom": -0.02,
+          "top": -0.01,
+          "bottom": -0.01,
           "right": 0.02,
           "left": 0.04
         }

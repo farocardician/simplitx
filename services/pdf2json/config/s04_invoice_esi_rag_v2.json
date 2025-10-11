@@ -1,0 +1,157 @@
+{
+  "regions": {
+    "header": {
+      "table_name": "rag_header_lines",
+      "query_synonyms": {
+        "buyer_name": [
+          "buyer name",
+          "bill to",
+          "ship to",
+          "sold to",
+          "to :",
+          "attn"
+        ],
+        "invoice_number": [
+          "invoice no",
+          "invoice number",
+          "inv no",
+          "no. faktur"
+        ],
+        "invoice_date": [
+          "invoice date",
+          "date :",
+          "tanggal invoice",
+          "issued on"
+        ]
+      },
+      "fields": {
+        "buyer_name": {
+          "label_regex": "\\b(buyer\\s*name|bill\\s*to|ship\\s*to|sold\\s*to|to|attn)\\b[:\\-]*",
+          "candidate_regex": "(?:buyer\\s*name|bill\\s*to|ship\\s*to|sold\\s*to|to|attn)[^A-Za-z0-9]*([A-Za-z0-9 .,/&-]+)",
+          "trailing_label_regex": "(?:\\b(buyer\\s*name|bill\\s*to|ship\\s*to|sold\\s*to|to|attn)\\b[:\\-]?\\s*)+$",
+          "require_digit": false
+        },
+        "invoice_number": {
+          "label_regex": "\\b(invoice\\s*(?:no\\.?|number)|inv\\s*no|no\\.\\s*faktur)\\b[:\\-]*",
+          "candidate_regex": "(?:invoice\\s*(?:no\\.?|number)|inv\\s*no|no\\.\\s*faktur)[^A-Za-z0-9]*((?=[A-Za-z0-9./-]*\\d)[A-Za-z0-9./-]+)",
+          "fallback_regex": "((?=[A-Za-z0-9./-]*\\d)[A-Za-z0-9./-]+)",
+          "require_digit": true,
+          "prefer_fallback": true
+        },
+        "invoice_date": {
+          "label_regex": "\\b(invoice\\s*date|date|tanggal\\s*invoice|issued\\s*on)\\b[:\\-]*",
+          "candidate_regex": "(?:invoice\\s*date|date|tanggal\\s*invoice|issued\\s*on)[^0-9A-Za-z]*([0-9]{1,2}\\s+[A-Za-z]+\\s+[0-9]{4})",
+          "fallback_regex": "([0-9]{1,2}\\s+[A-Za-z]+\\s+[0-9]{4})",
+          "require_digit": false
+        }
+      }
+    },
+    "total": {
+      "table_name": "rag_total_lines",
+      "query_synonyms": {
+        "subtotal": [
+          "sub total",
+          "subtotal",
+          "sub-total",
+          "amount before tax",
+          "jumlah sebelum pajak"
+        ],
+        "tax_based": [
+          "tax based",
+          "tax base",
+          "taxable amount",
+          "dasar pengenaan pajak",
+          "dpp"
+        ],
+        "vat": [
+          "vat",
+          "ppn",
+          "tax amount",
+          "pajak",
+          "value added tax"
+        ],
+        "grand_total": [
+          "grand total",
+          "total",
+          "total amount",
+          "amount due",
+          "total keseluruhan"
+        ]
+      },
+      "fields": {
+        "subtotal": {
+          "label_regex": "\\b(sub\\s*total|subtotal|sub-total)\\b[:\\-]*",
+          "candidate_regex": "(?:sub\\s*total|subtotal|sub-total)[^0-9Rp]*((?:Rp\\s*)?[\\d.,]+)",
+          "fallback_regex": "((?:Rp\\s*)?[\\d.,]+)",
+          "require_digit": true,
+          "normalizer": "currency"
+        },
+        "tax_based": {
+          "label_regex": "\\b(tax\\s*(?:based?|base)|dpp|dasar\\s*pengenaan\\s*pajak)\\b[:\\-]*",
+          "candidate_regex": "(?:tax\\s*(?:based?|base)|dpp|dasar\\s*pengenaan\\s*pajak)[^0-9Rp]*((?:Rp\\s*)?[\\d.,]+)",
+          "fallback_regex": "((?:Rp\\s*)?[\\d.,]+)",
+          "require_digit": true,
+          "normalizer": "currency"
+        },
+        "vat": {
+          "label_regex": "\\b(vat|ppn|pajak)\\b[:\\-]*",
+          "candidate_regex": "^(?:VAT|vat|ppn)\\s+(?:Rp\\s*)?([.\\d,]+)",
+          "require_digit": true,
+          "stop_regex": "(?i)\\b(?:tax|dasar)\\s+(?:based?|base|pengenaan)",
+          "normalizer": "currency"
+        },
+        "grand_total": {
+          "label_regex": "\\b(grand\\s*total|total(?:\\s*amount)?|amount\\s*due)\\b[:\\-]*",
+          "candidate_regex": "(?:grand\\s*total|total(?:\\s*amount)?|amount\\s*due)[^0-9Rp]*((?:Rp\\s*)?[\\d.,]+)",
+          "fallback_regex": "((?:Rp\\s*)?[\\d.,]+)",
+          "require_digit": true,
+          "normalizer": "currency"
+        }
+      }
+    },
+    "table": {
+      "table_name": "rag_table_lines",
+      "use_reranker": false,
+      "columns": [
+        {
+          "name": "no",
+          "synonyms": ["NO", "No.", "#", "Number"],
+          "normalizer": "integer"
+        },
+        {
+          "name": "article_no",
+          "synonyms": ["ARTICLE NO", "ARTICLE NO.", "Article No", "Item Code", "SKU"],
+          "normalizer": "string"
+        },
+        {
+          "name": "description",
+          "synonyms": ["DESCRIPTION", "Description", "Item Description", "Product"],
+          "normalizer": "string",
+          "truncate_at": 100
+        },
+        {
+          "name": "qty",
+          "synonyms": ["QTY", "Qty", "Quantity", "Q"],
+          "normalizer": "integer"
+        },
+        {
+          "name": "uom",
+          "synonyms": ["UOM", "Unit", "U/M", "Unit of Measure"],
+          "normalizer": "string"
+        },
+        {
+          "name": "unit_price",
+          "synonyms": ["UNIT PRICE", "Unit Price", "Price", "Rate"],
+          "normalizer": "currency",
+          "output_fields": ["unit_price", "unit_price_norm"]
+        },
+        {
+          "name": "total_price",
+          "synonyms": ["TOTAL PRICE", "Total Price", "Total", "Amount"],
+          "normalizer": "currency",
+          "output_fields": ["total_price", "total_price_norm"]
+        }
+      ]
+    }
+  }
+}

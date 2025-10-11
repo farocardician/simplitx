@@ -115,14 +115,14 @@
         "by": "line_anchors",
         "start_anchor": {
           "patterns": [
-            "^NO\\s+ARTICLE\\s+NO\\.\\s+DESCRIPTION\\s+QTY\\s+UOM\\s+UNIT\\s+PRICE\\s+TOTAL\\s+PRICE$"
+            "^(NO\\s+ARTICLE\\s+NO\\.?|NO\\.?\\s+ARTICLE\\s+NO\\.?|NO\\s+ARTICLE\\s+NUMBER)$"
           ],
           "flags": { "ignore_case": true, "normalize_space": true },
           "select": "topmost"
         },
         "end_anchor": {
           "patterns": [
-            "^Sub\\s*total\\s*Rp.*$"
+            "^(Sub\\s*total\\s*Rp|Subtotal\\s*Rp)$"
           ],
           "flags": { "ignore_case": true, "normalize_space": true },
           "select": "bottommost"

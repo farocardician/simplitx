@@ -46,3 +46,17 @@ services:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
+
+  reranker:
+    build:
+      context: .
+      dockerfile: docker/reranker.Dockerfile
+      target: production
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - RERANKER_MODEL=bge-reranker-v2-m3
+      - RERANKER_DEVICE=cpu
+    ports:
+      - "9000:8000"
+    restart: unless-stopped

@@ -71,6 +71,22 @@ services:
       - PYTHONUNBUFFERED=1
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
+  reranker:
+    build:
+      context: .
+      dockerfile: docker/reranker.Dockerfile
+      target: development
+    volumes:
+      - ./services/reranker:/app
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - RERANKER_MODEL=bge-reranker-v2-m3
+      - RERANKER_DEVICE=cpu
+    ports:
+      - "9000:8000"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
 volumes:
   web_node_modules:
   web_next:

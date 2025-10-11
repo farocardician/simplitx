@@ -19,6 +19,23 @@ services:
       timeout: 5s
       retries: 5
 
+  reranker:
+    build:
+      context: .
+      dockerfile: docker/reranker.Dockerfile
+      target: production
+    environment:
+      - RERANKER_MODEL=bge-reranker-v2-m3
+      - RERANKER_DEVICE=cpu
+    ports:
+      - "9000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   pdf2json:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
