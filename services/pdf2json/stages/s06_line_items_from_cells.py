@@ -713,6 +713,12 @@ def _build_item_from_row(row_cells: List[Dict[str, Any]], colmap: Dict[int, str]
                 parsed[fname] = defaults[fname]
                 notes.append(f"defaulted {fname}")
 
+    # Apply defaults for fields that have defaults but are not in parsed
+    for fname, default_val in defaults.items():
+        if default_val is not None and (fname not in parsed or parsed.get(fname) in (None, "")):
+            parsed[fname] = default_val
+            notes.append(f"defaulted {fname}")
+
     # UOM resolution
     uom_val = _resolve_uom(parsed, header_text, cfg)
     if uom_val is not None:
@@ -754,6 +760,7 @@ def _build_item_from_row(row_cells: List[Dict[str, Any]], colmap: Dict[int, str]
         "sku": parsed.get("sku"),
         "code": parsed.get("code"),
         "description": parsed.get("description"),
+        "type": parsed.get("type"),  # Add type field for line item categorization
         "qty": _num_out(qty_d) if qty_d is not None else None,
         "uom": parsed.get("uom"),
         "unit_price": _num_out(_round_half_up(up_d, currency_decimals)) if up_d is not None else None,
@@ -772,7 +779,7 @@ def _build_item_from_row(row_cells: List[Dict[str, Any]], colmap: Dict[int, str]
         item["_raw_fields"] = raw_by_field
 
     # Normalize empty strings to None for text fields
-    for key in ("hs_code", "sku", "code", "description"):
+    for key in ("hs_code", "sku", "code", "description", "type"):
         if isinstance(item.get(key), str) and item.get(key) == "":
             item[key] = None
 
@@ -1007,6 +1014,7 @@ def process(input_path: Path, config_path: Path) -> Dict[str, Any]:
             "sku": it.get("sku"),
             "code": it.get("code"),
             "description": it.get("description"),
+            "type": it.get("type"),  # Include type field in final output
             "qty": it.get("qty"),
             "uom": it.get("uom"),
             "unit_price": it.get("unit_price"),

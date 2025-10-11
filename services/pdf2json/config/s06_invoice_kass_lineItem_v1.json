@@ -65,6 +65,10 @@
       ],
       "required": true,
       "merge": false
+    },
+    "type": {
+      "required": true,
+      "merge": false
     }
   },
   "header_row": {
@@ -88,8 +92,11 @@
     }
   },
   "defaults": {
+    "hs_code": "130300",
+    "uom": "UM.0030",
     "discount_percent": 0,
-    "discount_amount": 0
+    "discount_amount": 0,
+    "type": "B"
   },
   "row_filters": [
     "^\\s*(TOTAL|SUB\\s*TOTAL|GRAND\\s*TOTAL|VAT|PPN)\\b",

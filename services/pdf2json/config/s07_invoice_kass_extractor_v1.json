@@ -97,14 +97,9 @@
     },
     "tax": {
       "segment": "tax",
-      "strategy": "regex_capture",
-      "post": {
-        "regex_pattern": [
-          "(\\d{1,2}\\s*%)",
-          "(?:PPN|VAT|Tax)\\s*(\\d{1,2}\\s*%)"
-        ]
-      }
-    },
+      "strategy": "constant",
+      "post": { "value": "12%" }
+    },     
     "tax_amount": {
       "segment": "tax",
       "strategy": "regex_capture",
