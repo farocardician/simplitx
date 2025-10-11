@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import BuyerDropdown from '@/components/BuyerDropdown';
 import TransactionCodeDropdown from '@/components/TransactionCodeDropdown';
 
-interface LineItem {
+interface LineItemBase {
   no?: number;
   description: string;
   qty: number;
@@ -15,6 +15,26 @@ interface LineItem {
   hs_code: string | null;
   uom: string;
   type: 'Barang' | 'Jasa';
+}
+
+interface LineItem extends LineItemBase {
+  id: string;
+  orderKey: number;
+  mergeSnapshot?: MergeSnapshot | null;
+  roundingAdjustment?: number;
+}
+
+interface StoredItemState extends LineItemBase {
+  id: string;
+  orderKey: number;
+}
+
+interface MergeSnapshot {
+  mergeId: string;
+  anchor: StoredItemState;
+  components: StoredItemState[];
+  totalAmount: number;
+  roundingAdjustment?: number;
 }
 
 interface ResolvedParty {
@@ -38,7 +58,7 @@ interface InvoiceData {
   seller_name: string;
   buyer_name: string;
   invoice_date: string;
-  items: LineItem[];
+  items: LineItemBase[];
   trx_code: string | null;
   trx_code_required: boolean;
   buyer_resolved?: ResolvedParty | null;
@@ -71,6 +91,64 @@ interface ItemErrors {
 // Default UOM to use when a line item is marked as "Jasa"
 const JASA_UOM_CODE = 'UM.0030';
 
+const generateItemId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `item-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+};
+
+const createStoredState = (item: LineItem): StoredItemState => ({
+  id: item.id,
+  orderKey: item.orderKey,
+  no: item.no,
+  description: item.description,
+  qty: item.qty,
+  unit_price: item.unit_price,
+  amount: item.amount,
+  sku: item.sku ?? null,
+  hs_code: item.hs_code,
+  uom: item.uom,
+  type: item.type
+});
+
+const createLineItemState = (item: LineItemBase, orderKey: number): LineItem => ({
+  ...item,
+  id: generateItemId(),
+  orderKey,
+  mergeSnapshot: null
+});
+
+const cloneStoredState = (stored: StoredItemState): StoredItemState => ({ ...stored });
+
+const restoreFromStored = (stored: StoredItemState): LineItem => ({
+  ...stored,
+  mergeSnapshot: null,
+  roundingAdjustment: undefined
+});
+
+const flattenStoredItems = (item: LineItem): StoredItemState[] => {
+  if (item.mergeSnapshot) {
+    return [
+      cloneStoredState(item.mergeSnapshot.anchor),
+      ...item.mergeSnapshot.components.map(component => cloneStoredState(component))
+    ];
+  }
+
+  return [createStoredState(item)];
+};
+
+const buildErrors = (list: LineItem[], validator: (item: LineItem, index: number) => ItemErrors) => {
+  const newErrors: Record<number, ItemErrors> = {};
+  list.forEach((item, index) => {
+    const itemErrors = validator(item, index);
+    if (Object.keys(itemErrors).length > 0) {
+      newErrors[index] = itemErrors;
+    }
+  });
+  return newErrors;
+};
+
 export default function ReviewPage() {
   const params = useParams();
   const router = useRouter();
@@ -86,9 +164,11 @@ export default function ReviewPage() {
   const [initialSnapshot, setInitialSnapshot] = useState<{
     invoiceDate: string;
     invoiceNo: string;
-    items: LineItem[];
+    items: StoredItemState[];
     trxCode: string | null;
   } | null>(null);
+  const orderKeyRef = useRef(0);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [uomList, setUomList] = useState<UOM[]>([]);
   const [errors, setErrors] = useState<Record<number, ItemErrors>>({});
   const [applyToAllState, setApplyToAllState] = useState<{
@@ -149,10 +229,16 @@ export default function ReviewPage() {
           ? invoiceData.trx_code.trim()
           : null;
 
+        const normalizedItems = (invoiceData.items || []).map((item: LineItemBase, index: number) =>
+          createLineItemState(item, index)
+        );
+
+        orderKeyRef.current = normalizedItems.length;
+
         setInvoiceData(invoiceData);
         setInvoiceDate(invoiceData.invoice_date);
         setInvoiceNo(invoiceData.invoice_number);
-        setItems(invoiceData.items);
+        setItems(normalizedItems);
         setUomList(uoms);
         setAllParties(partiesToUse);
         setTransactionCodes(normalizedTrxCodes);
@@ -164,7 +250,7 @@ export default function ReviewPage() {
         setInitialSnapshot({
           invoiceDate: invoiceData.invoice_date,
           invoiceNo: invoiceData.invoice_number,
-          items: JSON.parse(JSON.stringify(invoiceData.items)),
+          items: normalizedItems.map(createStoredState),
           trxCode: initialTrx
         });
       } catch (err) {
@@ -215,15 +301,7 @@ export default function ReviewPage() {
   useEffect(() => {
     if (!initialSnapshot || items.length === 0) return;
 
-    const newErrors: Record<number, ItemErrors> = {};
-    items.forEach((item, index) => {
-      const itemErrors = validateItem(item, index);
-      if (Object.keys(itemErrors).length > 0) {
-        newErrors[index] = itemErrors;
-      }
-    });
-
-    setErrors(newErrors);
+    setErrors(buildErrors(items, validateItem));
   }, [initialSnapshot, items]);
 
   // Auto-reset "Apply to All" state after 2 seconds
@@ -246,24 +324,46 @@ export default function ReviewPage() {
     }
   }, [applyToAllUom]);
 
+  useEffect(() => {
+    setSelectedIds(prev => {
+      const existingIds = new Set(items.map(item => item.id));
+      let mutated = false;
+      const next = new Set<string>();
+      prev.forEach(id => {
+        if (existingIds.has(id)) {
+          next.add(id);
+        } else {
+          mutated = true;
+        }
+      });
+
+      if (!mutated) {
+        return prev;
+      }
+
+      return next;
+    });
+  }, [items]);
+
   const updateItem = (index: number, field: keyof LineItem, value: any) => {
     setItems(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
+      const nextItem = { ...updated[index], [field]: value } as LineItem;
+
+      if (field === 'qty' || field === 'unit_price') {
+        const qty = field === 'qty' ? value : nextItem.qty;
+        const unitPrice = field === 'unit_price' ? value : nextItem.unit_price;
+        nextItem.amount = qty * unitPrice;
+        nextItem.roundingAdjustment = undefined;
+      }
 
       // If type switches to Jasa, only set UOM to default Jasa UOM (if present)
       if (field === 'type' && value === 'Jasa') {
         const jasaUomAvailable = uomList.some(u => u.code === JASA_UOM_CODE);
-        updated[index].uom = jasaUomAvailable ? JASA_UOM_CODE : (updated[index].uom || '');
+        nextItem.uom = jasaUomAvailable ? JASA_UOM_CODE : (nextItem.uom || '');
       }
 
-      // Live amount calculation
-      if (field === 'qty' || field === 'unit_price') {
-        const qty = field === 'qty' ? value : updated[index].qty;
-        const unitPrice = field === 'unit_price' ? value : updated[index].unit_price;
-        updated[index].amount = qty * unitPrice;
-      }
-
+      updated[index] = nextItem;
       return updated;
     });
 
@@ -280,6 +380,7 @@ export default function ReviewPage() {
       const qty = field === 'qty' ? value : newItem.qty;
       const unitPrice = field === 'unit_price' ? value : newItem.unit_price;
       newItem.amount = qty * unitPrice;
+      newItem.roundingAdjustment = undefined;
     }
 
     const itemErrors = validateItem(newItem, index);
@@ -332,6 +433,181 @@ export default function ReviewPage() {
     if (items.length > 1) {
       setApplyToAllUom({ itemIndex: index, uomCode });
     }
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelection = (id: string, checked: boolean) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  };
+
+  const handleAddItem = () => {
+    const orderKey = orderKeyRef.current;
+    orderKeyRef.current += 1;
+
+    const baseItem: LineItemBase = {
+      description: '',
+      qty: 1,
+      unit_price: 0,
+      amount: 0,
+      sku: null,
+      hs_code: '',
+      uom: '',
+      type: 'Barang'
+    };
+
+    const newItem = createLineItemState(baseItem, orderKey);
+
+    setItems(prev => {
+      const updated = [...prev, newItem];
+      setErrors(buildErrors(updated, validateItem));
+      return updated;
+    });
+
+    setApplyToAllState(null);
+    setApplyToAllUom(null);
+  };
+
+  const handleDeleteItem = (id: string) => {
+    const target = items.find(item => item.id === id);
+    if (!target) return;
+
+    const confirmed = window.confirm('Delete this line item? This action cannot be undone.');
+    if (!confirmed) return;
+
+    setItems(prev => {
+      const updated = prev.filter(item => item.id !== id);
+      setErrors(buildErrors(updated, validateItem));
+      return updated;
+    });
+
+    setSelectedIds(prev => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+
+    setApplyToAllState(null);
+    setApplyToAllUom(null);
+  };
+
+  const handleMerge = (anchorId: string) => {
+    const selectedArray = Array.from(selectedIds).filter(id => items.some(item => item.id === id));
+    if (selectedArray.length < 2 || !selectedArray.includes(anchorId)) {
+      return;
+    }
+
+    setItems(prev => {
+      const anchorIndex = prev.findIndex(item => item.id === anchorId);
+      if (anchorIndex === -1) return prev;
+
+      const anchorItem = prev[anchorIndex];
+      if (anchorItem.qty <= 0) {
+        return prev;
+      }
+
+      const selectedItems = selectedArray
+        .map(id => prev.find(item => item.id === id))
+        .filter((item): item is LineItem => Boolean(item));
+
+      if (selectedItems.length < 2) return prev;
+
+      const otherIds = selectedArray.filter(id => id !== anchorId);
+
+      const totalAmount = selectedItems.reduce((sum, current) => sum + current.amount, 0);
+      // Capture the original anchor so unmerge can restore the exact values and position.
+      const anchorOriginal = anchorItem.mergeSnapshot
+        ? cloneStoredState(anchorItem.mergeSnapshot.anchor)
+        : createStoredState(anchorItem);
+
+      const existingComponents = anchorItem.mergeSnapshot
+        ? anchorItem.mergeSnapshot.components.map(component => cloneStoredState(component))
+        : [];
+
+      const newComponents: StoredItemState[] = [];
+      otherIds.forEach(id => {
+        const found = prev.find(item => item.id === id);
+        if (!found) return;
+        flattenStoredItems(found).forEach(snapshot => {
+          newComponents.push(cloneStoredState(snapshot));
+        });
+      });
+
+      const combinedComponents = [...existingComponents, ...newComponents]
+        .map(component => cloneStoredState(component))
+        .sort((a, b) => a.orderKey - b.orderKey);
+
+      const anchorQty = anchorItem.qty;
+      if (anchorQty <= 0) {
+        return prev;
+      }
+
+      // Anchor-preserving math: keep anchor qty and attributes, only recompute price/amount.
+      const recalculatedUnitPrice = Math.round(totalAmount / anchorQty);
+      const roundingAdjustment = totalAmount - recalculatedUnitPrice * anchorQty;
+
+      const mergeId = generateItemId();
+
+      const updatedAnchor: LineItem = {
+        ...anchorItem,
+        amount: totalAmount,
+        unit_price: recalculatedUnitPrice,
+        mergeSnapshot: {
+          mergeId,
+          anchor: anchorOriginal,
+          components: combinedComponents,
+          totalAmount,
+          roundingAdjustment: roundingAdjustment !== 0 ? roundingAdjustment : undefined
+        },
+        roundingAdjustment: roundingAdjustment !== 0 ? roundingAdjustment : undefined
+      };
+
+      const filtered = prev.filter(item => !otherIds.includes(item.id));
+      const replacementIndex = filtered.findIndex(item => item.id === anchorId);
+      if (replacementIndex === -1) return prev;
+
+      filtered[replacementIndex] = updatedAnchor;
+      setErrors(buildErrors(filtered, validateItem));
+      return filtered;
+    });
+
+    clearSelection();
+    setApplyToAllState(null);
+    setApplyToAllUom(null);
+  };
+
+  const handleUnmerge = (anchorId: string) => {
+    setItems(prev => {
+      const anchorIndex = prev.findIndex(item => item.id === anchorId);
+      if (anchorIndex === -1) return prev;
+
+      const anchorItem = prev[anchorIndex];
+      if (!anchorItem.mergeSnapshot) return prev;
+
+      const restoredItems = [anchorItem.mergeSnapshot.anchor, ...anchorItem.mergeSnapshot.components]
+        .map(component => restoreFromStored(component));
+
+      const remaining = prev.filter(item => item.id !== anchorId);
+      const combined = [...remaining, ...restoredItems].sort((a, b) => a.orderKey - b.orderKey);
+
+      setErrors(buildErrors(combined, validateItem));
+      return combined;
+    });
+
+    clearSelection();
+    setApplyToAllState(null);
+    setApplyToAllUom(null);
   };
 
   // Dirty tracking
@@ -387,6 +663,14 @@ export default function ReviewPage() {
         invoiceData.buyer_resolved.id !== selectedBuyerPartyId) return true;
     return false;
   }, [invoiceData, selectedBuyerPartyId]);
+
+  const selectedCount = useMemo(() => {
+    if (selectedIds.size === 0) return 0;
+    const ids = selectedIds;
+    return items.reduce((count, item) => (ids.has(item.id) ? count + 1 : count), 0);
+  }, [items, selectedIds]);
+
+  const canMergeSelection = selectedCount >= 2;
 
   const trxCodeErrorMessage = trxCodeRequired && !trxCode
     ? 'Transaction code is required before saving XML.'
@@ -666,10 +950,32 @@ export default function ReviewPage() {
         )}
 
         {/* Line Items Header */}
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-gray-700">
-            Line Items <span className="text-gray-500 font-normal">({items.length})</span>
-          </h2>
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-sm font-medium text-gray-700">
+              Line Items <span className="text-gray-500 font-normal">({items.length})</span>
+            </h2>
+            {selectedCount > 0 && (
+              <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                <span>Selected: {selectedCount}</span>
+                <button
+                  type="button"
+                  onClick={clearSelection}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  Clear selection
+                </button>
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleAddItem}
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <span aria-hidden="true">+</span>
+            <span>Add Item</span>
+          </button>
         </div>
 
         {/* Line Items */}
@@ -677,24 +983,110 @@ export default function ReviewPage() {
           {items.map((item, index) => {
             const itemErrors = errors[index] || {};
             const hasItemErrors = Object.keys(itemErrors).length > 0;
+            const isSelected = selectedIds.has(item.id);
+            const showMergeHere = canMergeSelection && isSelected;
+            const mergeDisabled = item.qty <= 0;
+            const componentCount = item.mergeSnapshot ? item.mergeSnapshot.components.length + 1 : 0;
+            const componentTooltip = item.mergeSnapshot
+              ? [item.mergeSnapshot.anchor, ...item.mergeSnapshot.components]
+                  .map(component => {
+                    const descriptor = component.description && component.description.trim() !== ''
+                      ? component.description.trim()
+                      : 'No description';
+                    return `${descriptor} - Qty ${component.qty} - ${formatCurrency(component.amount)}`;
+                  })
+                  .join('\n')
+              : '';
+            const hasRoundingNote = typeof item.roundingAdjustment === 'number' && item.roundingAdjustment !== 0;
+            const mergeButtonTitle = mergeDisabled
+              ? 'Set qty > 0 to merge here.'
+              : `Merge ${selectedCount} selected items into this line.`;
+            const cardClasses = [
+              'bg-white rounded-lg border transition-colors',
+              hasItemErrors ? 'border-red-300' : 'border-gray-200 hover:border-gray-300',
+              isSelected ? 'ring-2 ring-blue-200' : ''
+            ].filter(Boolean).join(' ');
 
             return (
-              <div
-                key={index}
-                className={`bg-white rounded-lg border transition-colors ${
-                  hasItemErrors ? 'border-red-300' : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
+              <div key={item.id} className={cardClasses}>
                 <div className="p-3">
-                  {/* Header Row - Item Number and Amount */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-medium text-gray-500">
-                      #{item.no || index + 1}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-900">
-                      {formatCurrency(item.amount)}
-                    </span>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          id={`select-${item.id}`}
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          checked={isSelected}
+                          onChange={(e) => toggleSelection(item.id, e.target.checked)}
+                          aria-label={`Select line item ${index + 1}`}
+                        />
+                        <label
+                          htmlFor={`select-${item.id}`}
+                          className="text-xs font-medium text-gray-500 cursor-pointer select-none"
+                        >
+                          #{item.no || index + 1}
+                        </label>
+                      </div>
+                      {item.mergeSnapshot && (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700"
+                          title={componentTooltip}
+                        >
+                          Bundle
+                          <span>{componentCount} items</span>
+                        </span>
+                      )}
+                      {hasRoundingNote && (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700"
+                          title="Unit price rounded to keep total amount exact."
+                        >
+                          Avg price
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(item.amount)}
+                      </span>
+                      {item.mergeSnapshot && (
+                        <button
+                          type="button"
+                          onClick={() => handleUnmerge(item.id)}
+                          className="text-xs font-medium text-blue-600 hover:text-blue-700 focus:outline-none focus:underline"
+                        >
+                          Unmerge
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteItem(item.id)}
+                        className="text-xs font-medium text-red-600 hover:text-red-700 focus:outline-none focus:underline"
+                        aria-label={`Delete line item ${index + 1}`}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
+                  {showMergeHere && (
+                    <div className="flex justify-end mb-3">
+                      <button
+                        type="button"
+                        onClick={() => handleMerge(item.id)}
+                        disabled={mergeDisabled}
+                        aria-disabled={mergeDisabled}
+                        title={mergeButtonTitle}
+                        className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors ${
+                          mergeDisabled
+                            ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
+                            : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                        }`}
+                      >
+                        Merge here
+                      </button>
+                    </div>
+                  )}
 
                   {/* Main Row - Description, SKU, Qty, Unit Price */}
                   <div className="grid grid-cols-12 gap-2 mb-2">
