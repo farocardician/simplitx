@@ -22,7 +22,8 @@ const TYPE_TO_OPT_MAP: Record<'Barang' | 'Jasa', 'A' | 'B'> = {
 };
 
 function mapTypeToOpt(type: string): 'A' | 'B' {
-  if (type === 'Jasa' || type === 'B') {
+  // Standardized: A = Barang, B = Jasa
+  if (type === 'Jasa') {
     return TYPE_TO_OPT_MAP.Jasa;
   }
   return TYPE_TO_OPT_MAP.Barang;

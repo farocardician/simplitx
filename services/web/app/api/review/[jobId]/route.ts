@@ -64,7 +64,8 @@ function normalizeType(raw: unknown): 'Barang' | 'Jasa' {
 
   const value = String(raw).trim().toUpperCase();
 
-  if (value === 'JASA' || value === 'J' || value === 'B') {
+  // Standardized codes: A = Barang, B = Jasa
+  if (value === 'JASA' || value === 'B') {
     return 'Jasa';
   }
 

@@ -33,7 +33,8 @@ function extractTextBetweenTags(xml: string, tagName: string): string {
 
 function mapOptToType(opt: string): 'Barang' | 'Jasa' {
   const normalized = opt.trim().toUpperCase();
-  if (normalized === 'B' || normalized === 'J') {
+  // XML opt codes: A = Barang (goods), B = Jasa (services)
+  if (normalized === 'B') {
     return 'Jasa';
   }
   return 'Barang';
