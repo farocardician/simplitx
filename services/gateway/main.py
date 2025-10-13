@@ -5,12 +5,15 @@ Single /process endpoint that routes to appropriate backend services
 based on file type and Accept headers.
 """
 
+import json
 import os
+from functools import lru_cache
+from pathlib import Path
 from typing import Optional
 
 import httpx
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import Response
 
 app = FastAPI(
     title="Gateway Service",
@@ -22,6 +25,86 @@ app = FastAPI(
 PDF2JSON_URL = os.getenv("PDF2JSON_URL", "http://pdf2json:8000")
 JSON2XML_URL = os.getenv("JSON2XML_URL", "http://json2xml:8000")
 MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "50"))  # Default 50MB limit
+DEFAULT_PIPELINE = os.getenv("PIPELINE_CONFIG") or os.getenv("DEFAULT_PIPELINE") or "invoice_pt_simon.json"
+
+_HERE = Path(__file__).resolve()
+_SERVICE_DIR = _HERE.parent
+_SERVICES_DIR = _SERVICE_DIR.parent
+_CONFIG_CANDIDATES = [
+    Path(os.getenv("CONFIG_DIR")) if os.getenv("CONFIG_DIR") else None,
+    _SERVICES_DIR / "config",
+    _SERVICE_DIR / "config",
+    _SERVICES_DIR / "pdf2json" / "config",
+]
+CONFIG_SEARCH_DIRS = [p for p in dict.fromkeys([c for c in _CONFIG_CANDIDATES if c is not None])]
+
+
+def _find_pipeline_config(filename: str) -> Path:
+    """Locate the pipeline config file used by pdf2json/json2xml services."""
+
+    name = Path(filename).name
+    for base in CONFIG_SEARCH_DIRS:
+        candidate = (base / name).resolve()
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError(
+        f"Pipeline config '{name}' not found in {[str(p) for p in CONFIG_SEARCH_DIRS]}"
+    )
+
+
+@lru_cache(maxsize=16)
+def _load_pipeline_config(filename: str) -> dict:
+    """Load and cache pipeline configuration JSON."""
+
+    path = _find_pipeline_config(filename)
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Invalid JSON in pipeline config '{path}': {exc}") from exc
+
+
+def _get_confidence_threshold(pipeline_name: str) -> Optional[float]:
+    """Extract confidence threshold value from pipeline config."""
+
+    try:
+        config = _load_pipeline_config(pipeline_name)
+    except (FileNotFoundError, RuntimeError):
+        return None
+
+    threshold_value = config.get("confidence_threshold")
+    if threshold_value is None:
+        confidence_section = config.get("confidence")
+        if isinstance(confidence_section, dict):
+            threshold_value = (
+                confidence_section.get("threshold")
+                or confidence_section.get("min_score")
+            )
+
+    if threshold_value is None:
+        return None
+
+    try:
+        return float(threshold_value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _extract_confidence_score(processed_data: dict) -> Optional[float]:
+    """Retrieve confidence score from pdf2json response payload."""
+
+    confidence_section = processed_data.get("confidence")
+    if isinstance(confidence_section, dict):
+        score = confidence_section.get("score")
+    else:
+        score = None
+
+    if score is None:
+        return None
+
+    try:
+        return float(score)
+    except (TypeError, ValueError):
+        return None
 
 @app.get("/health")
 async def health_check():
@@ -139,20 +222,62 @@ async def unified_process(
                 
             elif is_pdf and accept_header == "application/xml":
                 # Route 2: PDF + Accept: application/xml + mapping → pdf2json → json2xml pipeline
-                
+
                 # Step 1: Call PDF2JSON
                 files = {"file": (file.filename, content, file.content_type)}
                 data = {}
                 if template:
                     data["template"] = template
                 pdf_response = await client.post(f"{PDF2JSON_URL}/process", files=files, data=data)
-                
+
                 if pdf_response.status_code != 200:
                     raise HTTPException(
                         status_code=502,
                         detail=f"PDF2JSON service error: {pdf_response.text}"
                     )
-                
+
+                pipeline_name = template or DEFAULT_PIPELINE
+                threshold = _get_confidence_threshold(pipeline_name)
+                if threshold is None:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=(
+                            f"Confidence threshold not configured for pipeline "
+                            f"'{Path(pipeline_name).name}'."
+                        )
+                    )
+
+                try:
+                    pdf_payload = pdf_response.json()
+                except ValueError as exc:
+                    raise HTTPException(
+                        status_code=502,
+                        detail=f"PDF2JSON response was not valid JSON: {exc}"
+                    ) from exc
+
+                processed_data = pdf_payload.get("data")
+                if not isinstance(processed_data, dict):
+                    raise HTTPException(
+                        status_code=502,
+                        detail="PDF2JSON response missing 'data' payload."
+                    )
+
+                confidence_score = _extract_confidence_score(processed_data)
+                if confidence_score is None:
+                    raise HTTPException(
+                        status_code=422,
+                        detail="Confidence score unavailable; JSON→XML conversion was skipped."
+                    )
+
+                if confidence_score < threshold:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=(
+                            f"Confidence score {confidence_score:.2f} is below the minimum "
+                            f"threshold {threshold:.2f}. JSON→XML conversion was skipped."
+                        )
+                    )
+
                 # Step 2: Call JSON2XML with the JSON result
                 json_content = pdf_response.content
                 form_data = {
@@ -178,7 +303,8 @@ async def unified_process(
                     media_type="application/xml",
                     headers={
                         "Content-Type": "application/xml; charset=utf-8",
-                        "X-Stage": "pdf2json,json2xml"
+                        "X-Stage": "pdf2json,json2xml",
+                        "X-Confidence-Score": f"{confidence_score:.6f}"
                     }
                 )
                 
