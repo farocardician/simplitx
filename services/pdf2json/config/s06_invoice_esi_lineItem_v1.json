@@ -1,5 +1,40 @@
 {
   "fields": {
+    "no": {
+      "header_synonyms": [
+        "\\bNO\\b",
+        "\\bNO\\.\\b",
+        "\\bITEM\\b",
+        "\\bLINE\\b"
+      ],
+      "position_hint": {
+        "x0": 0.0,
+        "x1": 0.1
+      },
+      "parsers": [
+        "parse_number"
+      ],
+      "required": true,
+      "merge": false
+    },
+    "sku": {
+      "header_synonyms": [
+        "ARTICLE NO",
+        "ARTICLE NO.",
+        "SKU",
+        "PART NO",
+        "ITEM CODE"
+      ],
+      "position_hint": {
+        "x0": 0.1,
+        "x1": 0.2
+      },
+      "parsers": [
+        "strip_nonprint"
+      ],
+      "required": false,
+      "merge": false
+    },
     "description": {
       "header_synonyms": [
         "\\bDESCRIPTION\\b",
@@ -7,13 +42,13 @@
         "DESCRIPTION OF SERVICES"
       ],
       "position_hint": {
-        "x0": 0.1,
-        "x1": 0.44
+        "x0": 0.2,
+        "x1": 0.5
       },
       "parsers": [
         "strip_nonprint"
       ],
-      "required": false,
+      "required": true,
       "merge": true,
       "merge_wrapped": true,
       "glue_hyphenated_words": true,
@@ -21,17 +56,31 @@
     },
     "qty": {
       "header_synonyms": [
-        "\\bNO\\b",
-        "\\bNO\\.\\b",
         "\\bQTY\\b",
         "\\bQUANTITY\\b"
       ],
       "position_hint": {
-        "x0": 0.44,
-        "x1": 0.52
+        "x0": 0.5,
+        "x1": 0.58
       },
       "parsers": [
         "parse_number"
+      ],
+      "required": true,
+      "merge": false
+    },
+    "uom": {
+      "header_synonyms": [
+        "\\bUOM\\b",
+        "\\bUNIT\\b",
+        "\\bU/M\\b"
+      ],
+      "position_hint": {
+        "x0": 0.58,
+        "x1": 0.64
+      },
+      "parsers": [
+        "strip_nonprint"
       ],
       "required": true,
       "merge": false
@@ -112,5 +161,45 @@
     "^\\s*Note\\s*.*$",
     "^\\s*$",
     "^\\s*Rp\\s*$"
-  ]
+  ],
+  "qwen": {
+    "prompt_template": "You are a strict JSON formatter. Extract the line items from the table below and return ONLY valid JSON matching the schema. Do not include extra keys. Do not infer missing values. For numeric fields (qty, unit_price, amount), if the text contains no digits, set the field to null.",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "no": {"type": ["integer", "null"]},
+              "hs_code": {"type": ["string", "null"]},
+              "sku": {"type": ["string", "null"]},
+              "code": {"type": ["string", "null"]},
+              "description": {"type": "string"},
+              "qty": {"type": ["integer", "null"]},
+              "uom": {"type": ["string", "null"]},
+              "unit_price": {"type": ["integer", "null"]},
+              "discount_amount": {"type": ["integer", "null"]},
+              "discount_percent": {"type": ["number", "null"]},
+              "amount": {"type": ["integer", "null"]}
+            },
+            "required": ["no", "hs_code", "sku", "code", "description", "qty", "uom", "unit_price", "discount_amount", "discount_percent", "amount"]
+          }
+        },
+        "stage": {"type": ["string", "null"]},
+        "version": {"type": ["string", "null"]},
+        "notes": {"type": ["string", "null"]}
+      },
+      "required": ["items"]
+    },
+    "field_instructions": "Parse numbers by removing 'Rp', spaces, '.', and ',' then convert to integers. Drop decimal parts. If qty, unit_price, or amount contains no digits, set to null. Set hs_code, sku, code, discount_amount, and discount_percent to null unless explicitly present.",
+    "few_shot": {
+      "example": "Input: 'Rp 19.573.311' → Output: 19573311\nInput: 'Seven Hundred' (no digits) → Output: null"
+    },
+    "llm_options": {
+      "temperature": 0,
+      "max_tokens": 4000
+    }
+  }
 }
