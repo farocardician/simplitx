@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import BuyerDropdown from '@/components/BuyerDropdown';
 import TransactionCodeDropdown from '@/components/TransactionCodeDropdown';
@@ -15,6 +15,7 @@ interface LineItemBase {
   hs_code: string | null;
   uom: string;
   type: 'Barang' | 'Jasa';
+  taxRate?: number | null;
 }
 
 interface LineItem extends LineItemBase {
@@ -22,11 +23,13 @@ interface LineItem extends LineItemBase {
   orderKey: number;
   mergeSnapshot?: MergeSnapshot | null;
   roundingAdjustment?: number;
+  taxRate: number;
 }
 
 interface StoredItemState extends LineItemBase {
   id: string;
   orderKey: number;
+  taxRate: number;
 }
 
 interface MergeSnapshot {
@@ -109,15 +112,28 @@ const createStoredState = (item: LineItem): StoredItemState => ({
   sku: item.sku ?? null,
   hs_code: item.hs_code,
   uom: item.uom,
-  type: item.type
+  type: item.type,
+  taxRate: item.taxRate
 });
 
-const createLineItemState = (item: LineItemBase, orderKey: number): LineItem => ({
-  ...item,
-  id: generateItemId(),
-  orderKey,
-  mergeSnapshot: null
-});
+const createLineItemState = (item: LineItemBase, orderKey: number): LineItem => {
+  const rawTaxRate = (() => {
+    const fromCamel = item.taxRate;
+    const fromSnake = (item as unknown as { tax_rate?: number | null }).tax_rate;
+    const candidate = typeof fromCamel === 'number' ? fromCamel : fromSnake;
+    return typeof candidate === 'number' && !Number.isNaN(candidate)
+      ? candidate
+      : 12;
+  })();
+
+  return {
+    ...item,
+    id: generateItemId(),
+    orderKey,
+    mergeSnapshot: null,
+    taxRate: rawTaxRate
+  };
+};
 
 const cloneStoredState = (stored: StoredItemState): StoredItemState => ({ ...stored });
 
@@ -182,6 +198,118 @@ export default function ReviewPage() {
   const [selectedBuyerPartyId, setSelectedBuyerPartyId] = useState<string | null>(null);
   const [allParties, setAllParties] = useState<CandidateParty[]>([]);
   const [transactionCodes, setTransactionCodes] = useState<TransactionCode[]>([]);
+  const [focusedDescriptionIndex, setFocusedDescriptionIndex] = useState<number | null>(null);
+  const [hoveredDescription, setHoveredDescription] = useState<{
+    index: number;
+    position: 'top' | 'bottom';
+  } | null>(null);
+  const descriptionFieldRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const descriptionInputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const [descriptionTruncationMap, setDescriptionTruncationMap] = useState<Record<number, boolean>>({});
+
+  const recomputeDescriptionTruncation = useCallback(() => {
+    const next: Record<number, boolean> = {};
+
+    descriptionInputRefs.current.forEach((input, index) => {
+      if (!input) {
+        return;
+      }
+      const isTruncated = input.scrollWidth - input.clientWidth > 0.5;
+      if (isTruncated) {
+        next[index] = true;
+      }
+    });
+
+    setDescriptionTruncationMap(prev => {
+      const allIndexes = new Set<number>([
+        ...Object.keys(prev).map(key => Number(key)),
+        ...Object.keys(next).map(key => Number(key))
+      ]);
+
+      let changed = false;
+
+      allIndexes.forEach(idx => {
+        if (Boolean(prev[idx]) !== Boolean(next[idx])) {
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(recomputeDescriptionTruncation);
+    return () => window.cancelAnimationFrame(frame);
+  }, [items, focusedDescriptionIndex, recomputeDescriptionTruncation]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleResize = () => {
+      recomputeDescriptionTruncation();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [recomputeDescriptionTruncation]);
+
+  const isDescriptionTextTruncated = (index: number) => {
+    if (descriptionTruncationMap[index]) {
+      return true;
+    }
+
+    const input = descriptionInputRefs.current[index];
+    if (!input) {
+      return false;
+    }
+
+    return input.scrollWidth - input.clientWidth > 0.5;
+  };
+
+  useEffect(() => {
+    descriptionFieldRefs.current = descriptionFieldRefs.current.slice(0, items.length);
+    descriptionInputRefs.current = descriptionInputRefs.current.slice(0, items.length);
+    setFocusedDescriptionIndex(current => (current !== null && current >= items.length ? null : current));
+    setHoveredDescription(current => (current && current.index >= items.length ? null : current));
+  }, [items.length]);
+
+  const handleDescriptionMouseEnter = (index: number) => {
+    if (focusedDescriptionIndex === index) {
+      return;
+    }
+
+    recomputeDescriptionTruncation();
+
+    if (!isDescriptionTextTruncated(index)) {
+      setHoveredDescription(null);
+      return;
+    }
+    const container = descriptionFieldRefs.current[index];
+    if (!container) {
+      return;
+    }
+    const rect = container.getBoundingClientRect();
+    const viewportHeight = typeof window !== 'undefined'
+      ? window.innerHeight || document.documentElement.clientHeight || 0
+      : 0;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const preferTop = spaceBelow < 150 && spaceAbove > spaceBelow;
+    setHoveredDescription({ index, position: preferTop ? 'top' : 'bottom' });
+  };
+
+  const handleDescriptionMouseLeave = () => {
+    setHoveredDescription(null);
+  };
   const [trxCode, setTrxCode] = useState<string | null>(null);
   const [trxCodeRequired, setTrxCodeRequired] = useState(false);
 
@@ -350,6 +478,13 @@ export default function ReviewPage() {
       const updated = [...prev];
       const nextItem = { ...updated[index], [field]: value } as LineItem;
 
+      if (field === 'taxRate') {
+        const numeric = typeof value === 'number' && !Number.isNaN(value)
+          ? value
+          : parseFloat(String(value)) || 0;
+        nextItem.taxRate = numeric;
+      }
+
       if (field === 'qty' || field === 'unit_price') {
         const qty = field === 'qty' ? value : nextItem.qty;
         const unitPrice = field === 'unit_price' ? value : nextItem.unit_price;
@@ -368,7 +503,14 @@ export default function ReviewPage() {
     });
 
     // Validate on change
-    const newItem = { ...items[index], [field]: value };
+    const newItem = { ...items[index], [field]: value } as LineItem;
+
+    if (field === 'taxRate') {
+      const numeric = typeof value === 'number' && !Number.isNaN(value)
+        ? value
+        : parseFloat(String(value)) || 0;
+      newItem.taxRate = numeric;
+    }
 
     // Mirror the side effects for validation preview object
     if (field === 'type' && value === 'Jasa') {
@@ -463,7 +605,8 @@ export default function ReviewPage() {
       sku: null,
       hs_code: '',
       uom: '',
-      type: 'Barang'
+      type: 'Barang',
+      taxRate: 12
     };
 
     const newItem = createLineItemState(baseItem, orderKey);
@@ -633,7 +776,8 @@ export default function ReviewPage() {
         current.sku !== initial.sku ||
         current.hs_code !== initial.hs_code ||
         current.uom !== initial.uom ||
-        current.type !== initial.type
+        current.type !== initial.type ||
+        current.taxRate !== initial.taxRate
       ) {
         return true;
       }
@@ -1001,252 +1145,96 @@ export default function ReviewPage() {
             const mergeButtonTitle = mergeDisabled
               ? 'Set qty > 0 to merge here.'
               : `Merge ${selectedCount} selected items into this line.`;
-            const cardClasses = [
-              'bg-white rounded-lg border transition-colors',
-              hasItemErrors ? 'border-red-300' : 'border-gray-200 hover:border-gray-300',
-              isSelected ? 'ring-2 ring-blue-200' : ''
-            ].filter(Boolean).join(' ');
+            const qtyValue = Number.isFinite(item.qty) ? item.qty : 0;
+            const unitPriceValue = Number.isFinite(item.unit_price) ? item.unit_price : 0;
+            const lineTotal = Number.isFinite(item.amount) ? item.amount : qtyValue * unitPriceValue;
+            const taxRateValue = Number.isFinite(item.taxRate) ? item.taxRate : 12;
+            const taxBase = lineTotal * (11 / 12);
+            const taxAmount = taxBase * (taxRateValue / 100);
+            const showApplyToAllType = items.length > 1 && applyToAllState?.itemIndex === index;
+            const applyToAllType = applyToAllState?.type;
+            const showApplyToAllUom = items.length > 1 && applyToAllUom?.itemIndex === index;
+            const isDescriptionFocused = focusedDescriptionIndex === index;
+            const isDescriptionTruncated = isDescriptionTextTruncated(index);
+            const showDescriptionTooltip = hoveredDescription?.index === index && !isDescriptionFocused && isDescriptionTruncated;
+            const activeTooltipPosition = hoveredDescription?.position ?? 'bottom';
+            const cardClassList = [
+              'relative rounded-md border transition-colors',
+              'bg-white odd:bg-gray-50',
+              hasItemErrors
+                ? 'border-red-300'
+                : 'border-gray-200 hover:border-blue-200 hover:bg-blue-50/50 focus-within:border-blue-200'
+            ];
+
+            if (isDescriptionFocused) {
+              cardClassList.push('ring-2 ring-blue-300 shadow-lg');
+            } else if (isSelected) {
+              cardClassList.push('ring-2 ring-blue-200');
+            }
+
+            const cardClasses = cardClassList.join(' ');
 
             return (
               <div key={item.id} className={cardClasses}>
-                <div className="p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="flex items-center gap-2">
-                        <input
-                          id={`select-${item.id}`}
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          checked={isSelected}
-                          onChange={(e) => toggleSelection(item.id, e.target.checked)}
-                          aria-label={`Select line item ${index + 1}`}
-                        />
-                        <label
-                          htmlFor={`select-${item.id}`}
-                          className="text-xs font-medium text-gray-500 cursor-pointer select-none"
-                        >
-                          #{item.no || index + 1}
-                        </label>
+                {isDescriptionFocused && (
+                  <div className="pointer-events-none absolute inset-0 z-20 rounded-md bg-slate-100/70 backdrop-blur-sm transition-opacity duration-200" />
+                )}
+                <div className="relative">
+                  <div className="absolute left-2 top-2 flex items-center gap-1 text-[11px] text-gray-500">
+                    <input
+                      id={`select-${item.id}`}
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      checked={isSelected}
+                      onChange={(e) => toggleSelection(item.id, e.target.checked)}
+                      aria-label={`Select line item ${index + 1}`}
+                    />
+                    <label
+                      htmlFor={`select-${item.id}`}
+                      className="cursor-pointer select-none font-medium text-gray-500"
+                    >
+                      #{item.no || index + 1}
+                    </label>
+                  </div>
+
+                  <div className="flex flex-col gap-2 px-2 py-2 pl-14 text-xs text-gray-700 sm:pl-16 md:text-sm">
+                    {(item.mergeSnapshot || hasRoundingNote) && (
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
+                        {item.mergeSnapshot && (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 font-medium text-purple-700"
+                            title={componentTooltip}
+                          >
+                            Bundle
+                            <span>{componentCount} items</span>
+                          </span>
+                        )}
+                        {hasRoundingNote && (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-700"
+                            title="Unit price rounded to keep total amount exact."
+                          >
+                            Avg price
+                          </span>
+                        )}
+                        {item.mergeSnapshot && (
+                          <button
+                            type="button"
+                            onClick={() => handleUnmerge(item.id)}
+                            className="text-[11px] font-medium text-blue-600 hover:text-blue-700 focus:outline-none focus:underline"
+                          >
+                            Unmerge
+                          </button>
+                        )}
                       </div>
-                      {item.mergeSnapshot && (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700"
-                          title={componentTooltip}
-                        >
-                          Bundle
-                          <span>{componentCount} items</span>
-                        </span>
-                      )}
-                      {hasRoundingNote && (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700"
-                          title="Unit price rounded to keep total amount exact."
-                        >
-                          Avg price
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold text-gray-900">
-                        {formatCurrency(item.amount)}
-                      </span>
-                      {item.mergeSnapshot && (
-                        <button
-                          type="button"
-                          onClick={() => handleUnmerge(item.id)}
-                          className="text-xs font-medium text-blue-600 hover:text-blue-700 focus:outline-none focus:underline"
-                        >
-                          Unmerge
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteItem(item.id)}
-                        className="text-xs font-medium text-red-600 hover:text-red-700 focus:outline-none focus:underline"
-                        aria-label={`Delete line item ${index + 1}`}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                  {showMergeHere && (
-                    <div className="flex justify-end mb-3">
-                      <button
-                        type="button"
-                        onClick={() => handleMerge(item.id)}
-                        disabled={mergeDisabled}
-                        aria-disabled={mergeDisabled}
-                        title={mergeButtonTitle}
-                        className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors ${
-                          mergeDisabled
-                            ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
-                            : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                        }`}
-                      >
-                        Merge here
-                      </button>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Main Row - Description, SKU, Qty, Unit Price */}
-                  <div className="grid grid-cols-12 gap-2 mb-2">
-                    {/* Description */}
-                    <div className="col-span-5">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Description <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={item.description}
-                        onChange={(e) => updateItem(index, 'description', e.target.value)}
-                        placeholder="Item description"
-                        className={`w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-1 ${
-                          itemErrors.description
-                            ? 'border-red-300 focus:ring-red-500'
-                            : 'border-gray-300 focus:ring-blue-500'
-                        }`}
-                      />
-                      {itemErrors.description && (
-                        <p className="mt-0.5 text-xs text-red-600">{itemErrors.description}</p>
-                      )}
-                    </div>
-
-                    {/* SKU (optional) */}
-                    <div className="col-span-3">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        SKU <span className="text-gray-400">(optional)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={item.sku ?? ''}
-                        onChange={(e) => updateItem(index, 'sku', e.target.value)}
-                        placeholder="SKU"
-                        className="w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-1 border-gray-300 focus:ring-blue-500"
-                      />
-                      {/* fixed-height spacer to keep rows aligned */}
-                      <div className="mt-0.5 h-4 text-[11px] text-gray-500">{'\u00A0'}</div>
-                    </div>
-
-                    {/* Qty */}
-                    <div className="col-span-2">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Qty <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        value={item.qty}
-                        onChange={(e) => updateItem(index, 'qty', parseFloat(e.target.value) || 0)}
-                        className={`w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-1 ${
-                          itemErrors.qty
-                            ? 'border-red-300 focus:ring-red-500'
-                            : 'border-gray-300 focus:ring-blue-500'
-                        }`}
-                        min="0"
-                        step="any"
-                      />
-                      {itemErrors.qty && (
-                        <p className="mt-0.5 text-xs text-red-600">{itemErrors.qty}</p>
-                      )}
-                    </div>
-
-                    {/* Unit Price */}
-                    <div className="col-span-2">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Unit Price <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        value={item.unit_price}
-                        onChange={(e) => updateItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                        className={`w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-1 ${
-                          itemErrors.unit_price
-                            ? 'border-red-300 focus:ring-red-500'
-                            : 'border-gray-300 focus:ring-blue-500'
-                        }`}
-                        min="0"
-                        step="any"
-                      />
-                      {itemErrors.unit_price && (
-                        <p className="mt-0.5 text-xs text-red-600">{itemErrors.unit_price}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Second Row - UOM, HS Code, Type */}
-                  <div className="grid grid-cols-12 gap-2">
-                    {/* UOM */}
-                    <div className="col-span-3">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        <a href="/admin/uom" target="_blank" className="text-blue-600 hover:text-blue-700 hover:underline">
-                          UOM
-                        </a> <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={item.uom}
-                        onChange={(e) => handleUomSelect(index, e.target.value)}
-                        className={`w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-1 ${
-                          itemErrors.uom
-                            ? 'border-red-300 focus:ring-red-500'
-                            : 'border-gray-300 focus:ring-blue-500'
-                        }`}
-                      >
-                        <option value="">Select UOM</option>
-                        {uomList.map(uom => (
-                          <option key={uom.code} value={uom.code}>
-                            {uom.name}
-                          </option>
-                        ))}
-                      </select>
-                      {itemErrors.uom && (
-                        <p className="mt-0.5 text-xs text-red-600">{itemErrors.uom}</p>
-                      )}
-                      {applyToAllUom?.itemIndex === index && items.length > 1 && (
-                        <button
-                          onClick={() => handleApplyUomToAll(applyToAllUom.uomCode)}
-                          className="mt-1.5 w-full px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition-all flex items-center justify-center gap-1"
-                          aria-label="Apply selected UOM to all line items"
-                        >
-                          <span>📋</span>
-                          <span>Apply to All</span>
-                        </button>
-                      )}
-                    </div>
-
-                    {/* HS Code */}
-                    <div className="col-span-3">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        HS Code {item.type === 'Barang' && <span className="text-red-500">*</span>}
-                      </label>
-                      <input
-                        type="text"
-                        value={item.hs_code ?? ''}
-                        onChange={(e) => updateItem(index, 'hs_code', e.target.value)}
-                        placeholder="000000"
-                        inputMode="numeric"
-                        pattern="\d*"
-                        className={`w-full px-2 py-1.5 text-sm font-mono border rounded focus:outline-none focus:ring-1 ${
-                          itemErrors.hs_code
-                            ? 'border-red-300 focus:ring-red-500'
-                            : 'border-gray-300 focus:ring-blue-500'
-                        }`}
-                      />
-                      {/* fixed-height spacer to keep rows aligned */}
-                      <div className="mt-0.5 h-4 text-[11px] text-gray-500">{'\u00A0'}</div>
-                      {itemErrors.hs_code && (
-                        <p className="mt-0.5 text-xs text-red-600">{itemErrors.hs_code}</p>
-                      )}
-                    </div>
-
-                    {/* Type chips */}
-                    <div className="col-span-3">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Type <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex gap-1.5">
+                    <div className="grid grid-cols-[60px_4px_minmax(200px,1fr)_8px_60px_8px_60px_8px_70px_8px_77px_8px_140px_8px_50px_8px_140px_8px_140px_8px_auto] items-end min-h-[56px]">
+                    {/* Type Column */}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex flex-col gap-1.5">
                         {(() => {
-                          const showApplyToAll = items.length > 1 && applyToAllState?.itemIndex === index;
-                          const applyToAllType = applyToAllState?.type;
-
+                          const showApplyToAll = showApplyToAllType;
                           return (
                             <>
                               <button
@@ -1257,13 +1245,13 @@ export default function ReviewPage() {
                                     handleTypeSelect(index, 'Barang');
                                   }
                                 }}
-                                className={`min-w-[100px] px-3 py-1 rounded-full text-xs font-medium transition-all text-center ${
+                                className={`w-full rounded-full px-1 py-0.5 text-[11px] font-medium transition-all ${
                                   item.type === 'Barang'
                                     ? 'bg-blue-600 text-white shadow-sm'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                               >
-                                {showApplyToAll && applyToAllType === 'Barang' ? 'Apply to All' : 'Barang'}
+                                {showApplyToAll && applyToAllType === 'Barang' ? 'All?' : 'Barang'}
                               </button>
                               <button
                                 onClick={() => {
@@ -1273,22 +1261,323 @@ export default function ReviewPage() {
                                     handleTypeSelect(index, 'Jasa');
                                   }
                                 }}
-                                className={`min-w-[100px] px-3 py-1 rounded-full text-xs font-medium transition-all text-center ${
+                                className={`w-full rounded-full px-1 py-0.5 text-[11px] font-medium transition-all ${
                                   item.type === 'Jasa'
                                     ? 'bg-green-600 text-white shadow-sm'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                               >
-                                {showApplyToAll && applyToAllType === 'Jasa' ? 'Apply to All' : 'Jasa'}
+                                {showApplyToAll && applyToAllType === 'Jasa' ? 'All?' : 'Jasa'}
                               </button>
                             </>
                           );
                         })()}
                       </div>
                       {itemErrors.type && (
-                        <p className="mt-0.5 text-xs text-red-600">{itemErrors.type}</p>
+                        <p className="text-[11px] text-red-600 mt-1">{itemErrors.type}</p>
                       )}
                     </div>
+
+                    {/* Gap between Type and Description (4px) */}
+                    <div></div>
+
+                    {/* Description Column */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        Description <span className="text-red-500">*</span>
+                      </span>
+                      <div
+                        className="relative min-h-[38px]"
+                        ref={(el) => {
+                          descriptionFieldRefs.current[index] = el;
+                        }}
+                        onMouseEnter={() => {
+                          if (!item.description) {
+                            return;
+                          }
+                          handleDescriptionMouseEnter(index);
+                        }}
+                        onMouseLeave={handleDescriptionMouseLeave}
+                      >
+                        <input
+                          type="text"
+                          value={item.description}
+                          onChange={(e) => updateItem(index, 'description', e.target.value)}
+                          onFocus={() => {
+                            const shouldExpand = isDescriptionTextTruncated(index);
+                            setFocusedDescriptionIndex(shouldExpand ? index : null);
+                            setHoveredDescription(null);
+                          }}
+                          onBlur={() => {
+                            setFocusedDescriptionIndex(current => (current === index ? null : current));
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                              e.stopPropagation();
+                              setFocusedDescriptionIndex(null);
+                              e.currentTarget.blur();
+                            }
+                          }}
+                          placeholder="Item description"
+                          title={isDescriptionTruncated ? item.description : undefined}
+                          aria-expanded={isDescriptionFocused}
+                          ref={(el) => {
+                            descriptionInputRefs.current[index] = el;
+                          }}
+                          className={[
+                            'rounded border px-2 py-1 transition-all duration-200 ease-out focus:outline-none',
+                            itemErrors.description
+                              ? 'border-red-300 focus:border-red-400 focus:ring-1 focus:ring-red-400'
+                              : 'border-gray-300 focus:border-blue-400 focus:ring-1 focus:ring-blue-300',
+                            isDescriptionFocused
+                              ? 'absolute left-0 top-0 z-40 bg-white shadow-lg focus:ring-2 focus:ring-blue-300'
+                              : 'relative w-full truncate'
+                          ].join(' ')}
+                          style={isDescriptionFocused ? { width: 'min(560px, 95vw)' } : undefined}
+                        />
+                        {showDescriptionTooltip && (
+                          <div
+                            className={`absolute ${
+                              activeTooltipPosition === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
+                            } z-40 w-max max-w-[360px] rounded-md border border-gray-200 bg-white p-2 text-xs leading-relaxed text-gray-700 shadow-lg`}
+                            role="tooltip"
+                          >
+                            <span className="whitespace-pre-wrap break-words">{item.description}</span>
+                          </div>
+                        )}
+                      </div>
+                      {itemErrors.description && (
+                        <p className="text-[11px] text-red-600">{itemErrors.description}</p>
+                      )}
+                    </div>
+
+                    {/* Gap */}
+                    <div></div>
+
+                    {/* HS Code Column */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        HS Code {item.type === 'Barang' && <span className="text-red-500">*</span>}
+                      </span>
+                      <input
+                        type="text"
+                        value={item.hs_code ?? ''}
+                        onChange={(e) => updateItem(index, 'hs_code', e.target.value)}
+                        placeholder="000000"
+                        inputMode="numeric"
+                        pattern="\d*"
+                        className={`w-full rounded border px-2 py-1 font-mono focus:outline-none focus:ring-1 ${
+                          itemErrors.hs_code
+                            ? 'border-red-300 focus:border-red-400 focus:ring-red-400'
+                            : 'border-gray-300 focus:border-blue-400 focus:ring-blue-300'
+                        }`}
+                      />
+                      {itemErrors.hs_code && (
+                        <p className="text-[11px] text-red-600">{itemErrors.hs_code}</p>
+                      )}
+                    </div>
+
+                    {/* Gap */}
+                    <div></div>
+
+                    {/* Qty Column */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        Qty <span className="text-red-500">*</span>
+                      </span>
+                      <input
+                        type="number"
+                        value={item.qty}
+                        onChange={(e) => updateItem(index, 'qty', parseFloat(e.target.value) || 0)}
+                        min="0"
+                        step="any"
+                        className={`w-full rounded border px-2 py-1 text-right tabular-nums focus:outline-none focus:ring-1 ${
+                          itemErrors.qty
+                            ? 'border-red-300 focus:border-red-400 focus:ring-red-400'
+                            : 'border-gray-300 focus:border-blue-400 focus:ring-blue-300'
+                        }`}
+                      />
+                      {itemErrors.qty && (
+                        <p className="text-[11px] text-red-600">{itemErrors.qty}</p>
+                      )}
+                    </div>
+
+                    {/* Gap */}
+                    <div></div>
+
+                    {/* UOM Column */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        UOM <span className="text-red-500">*</span>
+                      </span>
+                      <select
+                        value={item.uom}
+                        onChange={(e) => handleUomSelect(index, e.target.value)}
+                        className={`w-full rounded border px-2 py-1 focus:outline-none focus:ring-1 ${
+                          itemErrors.uom
+                            ? 'border-red-300 focus:border-red-400 focus:ring-red-400'
+                            : 'border-gray-300 focus:border-blue-400 focus:ring-blue-300'
+                        }`}
+                      >
+                        <option value="">Select UOM</option>
+                        {uomList.map(uom => (
+                          <option key={uom.code} value={uom.code}>
+                            {uom.name}
+                          </option>
+                        ))}
+                      </select>
+                      {showApplyToAllUom && (
+                        <button
+                          type="button"
+                          onClick={() => applyToAllUom && handleApplyUomToAll(applyToAllUom.uomCode)}
+                          className="inline-flex items-center justify-center gap-1 rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-600 hover:bg-blue-100"
+                          aria-label="Apply selected UOM to all line items"
+                        >
+                          <span>📋</span>
+                          <span>Apply all</span>
+                        </button>
+                      )}
+                      {itemErrors.uom && (
+                        <p className="text-[11px] text-red-600">{itemErrors.uom}</p>
+                      )}
+                    </div>
+
+                    {/* Gap */}
+                    <div></div>
+
+                    {/* Unit Price Column */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        Unit Price <span className="text-red-500">*</span>
+                      </span>
+                      <input
+                        type="number"
+                        value={item.unit_price}
+                        onChange={(e) => updateItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                        min="0"
+                        step="any"
+                        className={`w-full rounded border px-2 py-1 text-right tabular-nums focus:outline-none focus:ring-1 ${
+                          itemErrors.unit_price
+                            ? 'border-red-300 focus:border-red-400 focus:ring-red-400'
+                            : 'border-gray-300 focus:border-blue-400 focus:ring-blue-300'
+                        }`}
+                      />
+                      {itemErrors.unit_price && (
+                        <p className="text-[11px] text-red-600">{itemErrors.unit_price}</p>
+                      )}
+                    </div>
+
+                    {/* Gap */}
+                    <div></div>
+
+                    {/* Total Column */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        Total
+                      </span>
+                      <div
+                        className="rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-right font-semibold text-gray-800 tabular-nums"
+                        title={formatCurrency(lineTotal)}
+                      >
+                        {formatCurrency(lineTotal)}
+                      </div>
+                    </div>
+
+                    {/* Gap */}
+                    <div></div>
+
+                    {/* Tax % Column */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        Tax %
+                      </span>
+                      <input
+                        type="number"
+                        value={taxRateValue}
+                        onChange={(e) => updateItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
+                        min="0"
+                        step="0.01"
+                        className="w-full rounded border border-gray-300 px-2 py-1 text-right tabular-nums focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                      />
+                    </div>
+
+                    {/* Gap */}
+                    <div></div>
+
+                    {/* Tax Base Column */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        Tax Base
+                      </span>
+                      <div
+                        className="rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-right font-medium text-gray-800 tabular-nums"
+                        title={formatCurrency(taxBase)}
+                      >
+                        {formatCurrency(taxBase)}
+                      </div>
+                    </div>
+
+                    {/* Gap */}
+                    <div></div>
+
+                    {/* Tax Amount Column */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        Tax Amount
+                      </span>
+                      <div
+                        className="rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-right font-medium text-gray-800 tabular-nums"
+                        title={formatCurrency(taxAmount)}
+                      >
+                        {formatCurrency(taxAmount)}
+                      </div>
+                    </div>
+
+                    {/* Gap */}
+                    <div></div>
+
+                    {/* Delete Button Column */}
+                    <div className="relative self-end">
+                      {showMergeHere && (
+                        <div className="absolute bottom-full mb-1 right-0 transition-all duration-200">
+                          <button
+                            type="button"
+                            onClick={() => handleMerge(item.id)}
+                            disabled={mergeDisabled}
+                            aria-disabled={mergeDisabled}
+                            title={mergeButtonTitle}
+                            className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs transition-colors ${
+                              mergeDisabled
+                                ? 'cursor-not-allowed text-gray-300'
+                                : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                            }`}
+                            aria-label={`Merge selected items into line ${index + 1}`}
+                          >
+                            ⇄
+                          </button>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteItem(item.id)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-base text-gray-400 transition-colors hover:text-red-600"
+                        aria-label={`Delete line item ${index + 1}`}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+
+                    {hasItemErrors && (
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 text-[11px] text-red-600">
+                        {itemErrors.description && <span>Description: {itemErrors.description}</span>}
+                        {itemErrors.hs_code && <span>HS Code: {itemErrors.hs_code}</span>}
+                        {itemErrors.qty && <span>Qty: {itemErrors.qty}</span>}
+                        {itemErrors.uom && <span>UOM: {itemErrors.uom}</span>}
+                        {itemErrors.unit_price && <span>Unit Price: {itemErrors.unit_price}</span>}
+                        {itemErrors.type && <span>Type: {itemErrors.type}</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
