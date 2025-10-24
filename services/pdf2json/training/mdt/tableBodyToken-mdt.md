@@ -1,0 +1,1 @@
+Storing, consigning, delivery Services 1.00 49,995.54 PPN-VAT 12% $ 55,995.00

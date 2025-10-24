@@ -1,0 +1,237 @@
+[
+  {
+    "page": 1,
+    "items_region": {
+      "x0": 0.0,
+      "x1": 1.0,
+      "y0": 0.3240736342042755,
+      "y1": 0.5797624703087886,
+      "start_anchor": {
+        "text": "Article Number Item Name Qty @Price Discount Total Price",
+        "y0": 0.3190736342042755,
+        "y1": 0.3297624703087886,
+        "hits": 4
+      },
+      "end_anchor": null
+    },
+    "candidates": [
+      {
+        "index": 0,
+        "source": "default",
+        "flavor": "stream",
+        "bbox": {
+          "x0": 0.03865546218487395,
+          "y0": 0.2818979689876966,
+          "x1": 0.9596705882352942,
+          "y1": 0.861437054631829
+        },
+        "features": {
+          "header_hits": 6.0,
+          "overlap": 0.4411934284299844,
+          "numeric_right": 1.0,
+          "rows": 18.0,
+          "totals_below": 0.0
+        },
+        "score": 37.882386856859966,
+        "eligible": true,
+        "header_row_index": 1,
+        "body_rows": 18,
+        "header_hits": 6,
+        "selected": true,
+        "stop_rule": "numeric_fallback",
+        "stop_at": 20
+      },
+      {
+        "index": 1,
+        "source": "default",
+        "flavor": "lattice",
+        "bbox": {
+          "x0": 0.14118596208148448,
+          "y0": 0.038483466362599694,
+          "x1": 0.24606696248487292,
+          "y1": 0.08922462941847209
+        },
+        "features": {
+          "header_hits": 0.0,
+          "overlap": 0.0,
+          "numeric_right": 0.0,
+          "rows": 3.0,
+          "totals_below": 1.0
+        },
+        "score": 3.5,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 3,
+        "header_hits": 0,
+        "selected": false,
+        "stop_rule": "numeric_fallback",
+        "stop_at": 4
+      },
+      {
+        "index": 2,
+        "source": "default",
+        "flavor": "lattice",
+        "bbox": {
+          "x0": 0.14118596208148448,
+          "y0": 0.04561003420752563,
+          "x1": 0.2355788624445341,
+          "y1": 0.08922462941847209
+        },
+        "features": {
+          "header_hits": 0.0,
+          "overlap": 0.0,
+          "numeric_right": 0.0,
+          "rows": 2.0,
+          "totals_below": 1.0
+        },
+        "score": 2.5,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 2,
+        "header_hits": 0,
+        "selected": false,
+        "stop_rule": "numeric_fallback",
+        "stop_at": 3
+      },
+      {
+        "index": 3,
+        "source": "default",
+        "flavor": "lattice",
+        "bbox": {
+          "x0": 0.14118596208148448,
+          "y0": 0.05444697833523371,
+          "x1": 0.22105687777329572,
+          "y1": 0.08922462941847209
+        },
+        "features": {
+          "header_hits": 0.0,
+          "overlap": 0.0,
+          "numeric_right": 0.0,
+          "rows": 1.0,
+          "totals_below": 1.0
+        },
+        "score": 1.5,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 1,
+        "header_hits": 0,
+        "selected": false,
+        "stop_rule": "numeric_fallback",
+        "stop_at": 2
+      },
+      {
+        "index": 4,
+        "source": "default",
+        "flavor": "lattice",
+        "bbox": {
+          "x0": 0.14118596208148448,
+          "y0": 0.04789053591790193,
+          "x1": 0.23033481242436465,
+          "y1": 0.08922462941847209
+        },
+        "features": {
+          "header_hits": 0.0,
+          "overlap": 0.0,
+          "numeric_right": 0.0,
+          "rows": 2.0,
+          "totals_below": 1.0
+        },
+        "score": 2.5,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 2,
+        "header_hits": 0,
+        "selected": false,
+        "stop_rule": "numeric_fallback",
+        "stop_at": 3
+      },
+      {
+        "index": 5,
+        "source": "default",
+        "flavor": "lattice",
+        "bbox": {
+          "x0": 0.051230334812424366,
+          "y0": 0.31385404789053584,
+          "x1": 0.9471561113352159,
+          "y1": 0.8623147092360319
+        },
+        "features": {
+          "header_hits": 6.0,
+          "overlap": 0.46619357435271924,
+          "numeric_right": 1.0,
+          "rows": 1.0,
+          "totals_below": 0.0
+        },
+        "score": 20.932387148705438,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 1,
+        "header_hits": 6,
+        "selected": false,
+        "stop_rule": "numeric_fallback",
+        "stop_at": 2
+      }
+    ],
+    "selected_index": 0
+  },
+  {
+    "page": 2,
+    "items_region": null,
+    "candidates": [
+      {
+        "index": 0,
+        "source": "default",
+        "flavor": "stream",
+        "bbox": {
+          "x0": 0.05546218487394958,
+          "y0": 0.04828978622327784,
+          "x1": 0.944544537815126,
+          "y1": 0.9598052256532067
+        },
+        "features": {
+          "header_hits": 2.0,
+          "overlap": 0.0,
+          "numeric_right": 1.0,
+          "rows": 3.0,
+          "totals_below": 0.0
+        },
+        "score": 10.0,
+        "eligible": true,
+        "header_row_index": 10,
+        "body_rows": 3,
+        "header_hits": 2,
+        "selected": true,
+        "stop_rule": "numeric_fallback",
+        "stop_at": 14,
+        "clip_y": 0.4456767616785431
+      },
+      {
+        "index": 1,
+        "source": "default",
+        "flavor": "lattice",
+        "bbox": {
+          "x0": 0.6478418717224688,
+          "y0": 0.3483466362599771,
+          "x1": 0.9491730536506655,
+          "y1": 0.3879703534777651
+        },
+        "features": {
+          "header_hits": 1.0,
+          "overlap": 0.0,
+          "numeric_right": 1.0,
+          "rows": 1.0,
+          "totals_below": 1.0
+        },
+        "score": 5.5,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 1,
+        "header_hits": 1,
+        "selected": false,
+        "stop_rule": "numeric_fallback",
+        "stop_at": 2
+      }
+    ],
+    "selected_index": 0
+  }
+]

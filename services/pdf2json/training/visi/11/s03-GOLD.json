@@ -1,0 +1,103 @@
+{
+  "client": "visi",
+  "variant": 11,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE PT.AIGINSURANCEINDONESIA Invoiceno. :9058006564 INDONESIASTOCKEXCHANGEBUILDING BillingDate :August29,2025 Tower2Level3A,Jl.Jend.SudirmanKav.52-53 12190,JAKARTASELATAN,DKIJAKARTA, Indonesia Attention:Tel:"
+        },
+        {
+          "key": "total",
+          "value": "SubTotal 10.200.000 TaxBase 9.350.000 PPN-VAT12% 1.122.000 TotalAmount 11.322.000"
+        },
+        {
+          "key": "seller",
+          "value": "Pleasekindlymakethepaymenttoourbankaccountasbelow: BankAccountName : PT.VISIGLOBALINDODATAUTAMA BankName : PT.BankPermataTbk BankAddress : ArionBuilding,JalanPemudaKav.17 JakartaTimur–13220 AccountNo.701275586 SWIFTCode-BBBAIDJA"
+        },
+        {
+          "key": "currency",
+          "value": "Amount(IDR)"
+        },
+        {
+          "key": "invoice_number",
+          "value": ":9058006564 :August29,2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": ":August29,2025"
+        },
+        {
+          "key": "buyer",
+          "value": "PT.AIGINSURANCEINDONESIA INDONESIASTOCKEXCHANGEBUILDING Tower2Level3A,Jl.Jend.SudirmanKav.52-53 12190,JAKARTASELATAN,DKIJAKARTA, Indonesia Attention:Tel:"
+        },
+        {
+          "key": "subtotal",
+          "value": "SubTotal 10.200.000"
+        },
+        {
+          "key": "tax_base",
+          "value": "TaxBase 9.350.000"
+        },
+        {
+          "key": "vat",
+          "value": "PPN-VAT12% 1.122.000"
+        },
+        {
+          "key": "total_amount",
+          "value": "TotalAmount 11.322.000"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE PT. AIG INSURANCE INDONESIA Invoice no. :9058006564 INDONESIA STOCK EXCHANGE BUILDING Billing Date :August 29 , 2025 Tower 2 Level 3A,Jl. Jend. Sudirman Kav.52-53 12190,JAKARTA SELATAN, DKI JAKARTA, Indonesia Attention : Tel:"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total 10.200.000 Tax Base 9.350.000 PPN - VAT 12% 1.122.000 Total Amount 11.322.000"
+        },
+        {
+          "key": "seller",
+          "value": "Please kindly make the payment to our bank account as below: Bank Account Name : PT. VISI GLOBALINDO DATA UTAMA Bank Name : PT. Bank Permata Tbk Bank Address : Arion Building,Jalan Pemuda Kav.17 Jakarta Timur – 13220 Account No. 701275586 SWIFT Code - BBBAIDJA"
+        },
+        {
+          "key": "currency",
+          "value": "Amount(IDR)"
+        },
+        {
+          "key": "invoice_number",
+          "value": ":9058006564 :August 29 , 2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": ":August 29 , 2025"
+        },
+        {
+          "key": "buyer",
+          "value": "PT. AIG INSURANCE INDONESIA INDONESIA STOCK EXCHANGE BUILDING Tower 2 Level 3A,Jl. Jend. Sudirman Kav.52-53 12190,JAKARTA SELATAN, DKI JAKARTA, Indonesia Attention : Tel:"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total 10.200.000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base 9.350.000"
+        },
+        {
+          "key": "vat",
+          "value": "PPN - VAT 12% 1.122.000"
+        },
+        {
+          "key": "total_amount",
+          "value": "Total Amount 11.322.000"
+        }
+      ]
+    }
+  }
+}

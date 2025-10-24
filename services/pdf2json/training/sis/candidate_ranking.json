@@ -1,0 +1,50 @@
+[
+  {
+    "page": 1,
+    "items_region": {
+      "x0": 0.0,
+      "x1": 1.0,
+      "y0": 0.2553670707070707,
+      "y1": 0.5986279292929293,
+      "start_anchor": {
+        "text": "DESCRIPTION UNIT PRICE (Rp) AMOUNT (Rp) QTY (UNIT)",
+        "y0": 0.2553670707070707,
+        "y1": 0.2643064646464647,
+        "hits": 5
+      },
+      "end_anchor": {
+        "text": "4,048,000 SUBTOTAL",
+        "y0": 0.6486279292929293,
+        "y1": 0.6596885353535354,
+        "hits": 1
+      }
+    },
+    "candidates": [
+      {
+        "index": 0,
+        "source": "roi",
+        "flavor": "lattice",
+        "bbox": {
+          "x0": 0.0,
+          "y0": 0.25515151515151524,
+          "x1": 1.0,
+          "y1": 0.5984848484848485
+        },
+        "features": {
+          "header_hits": 3.0,
+          "overlap": 0.9993721682847899,
+          "numeric_right": 0.0,
+          "rows": 1.0,
+          "totals_below": 1.0
+        },
+        "score": 13.198430420711974,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 1,
+        "header_hits": 3,
+        "selected": true
+      }
+    ],
+    "selected_index": 0
+  }
+]

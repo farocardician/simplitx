@@ -5,7 +5,7 @@
   "use_stage2_normalized": true,
   "profile": {
     "name": "kemas_invoice_v1",
-    "fail_mode": "hard",
+    "fail_mode": "soft",
     "required_fields": ["buyer_name", "invoice_number", "invoice_date", "subtotal", "tax_amount", "grand_total"],
     "expected_fields": ["buyer_name", "invoice_number", "invoice_date", "subtotal", "tax_base", "tax", "tax_amount", "income_tax", "income_tax_amount", "grand_total"],
     "optional_fields": ["tax_base", "tax", "income_tax", "income_tax_amount"]

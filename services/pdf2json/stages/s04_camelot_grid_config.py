@@ -25,7 +25,7 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 from statistics import median
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Pattern
 
 # ---------------------------------------------------------------------------
 # Utilities
@@ -77,11 +77,102 @@ def _trim_numeric_tail(text: str) -> str:
         return text.strip()
     start = match.start()
     end = match.end()
+    prefix_start = start
     if start > 0 and text[start - 1] == "(":
+        prefix_start = start - 1
         closing = text.find(")", end)
         if closing != -1:
             end = closing + 1
-    return text[:end].strip()
+    # Include trailing unit tokens (e.g., "KG", "PCS", "IDR") if present
+    suffix = text[end:]
+    if suffix:
+        unit_match = re.match(r"(?:\s*/?\s*[A-Z]{1,6})+", suffix)
+        if unit_match and unit_match.group(0).strip():
+            end += unit_match.end()
+    return text[prefix_start:end].strip()
+
+
+def _strip_alias_prefix(text: str, aliases: Iterable[str]) -> str:
+    if not text:
+        return text
+    stripped = text.lstrip()
+    leading = len(text) - len(stripped)
+    for alias in aliases:
+        alias_norm = (alias or "").strip()
+        if not alias_norm:
+            continue
+        pattern = r"^(?:" + re.escape(alias_norm) + r")(?:\s*[:.\-])?\s+"
+        if re.match(pattern, stripped, flags=re.IGNORECASE):
+            stripped = re.sub(pattern, "", stripped, count=1, flags=re.IGNORECASE)
+            break
+    return (" " * leading) + stripped
+
+
+def _strip_overlap_prefix(prev_text: str, curr_text: str) -> str:
+    prev = (prev_text or "").strip()
+    curr = (curr_text or "").strip()
+    if not prev or not curr:
+        return curr
+    prev_tokens = prev.split()
+    curr_lower = curr.casefold()
+    for cut in range(len(prev_tokens), 0, -1):
+        candidate = " ".join(prev_tokens[-cut:]).strip()
+        if len(candidate) < 4:
+            continue
+        cand_lower = candidate.casefold()
+        if curr_lower.startswith(cand_lower):
+            trimmed = curr[len(candidate):].lstrip(" -,:;")
+            return trimmed or curr
+    return curr
+
+
+def _cleanup_description(text: Optional[str]) -> str:
+    value = (text or "").strip()
+    if not value:
+        return ""
+    return value
+
+
+def _is_repeat_header_row(texts: List[str], col_map: List[str], prefix_map: Dict[str, List[str]]) -> bool:
+    hits = 0
+    total = 0
+    numeric_hits = 0
+    numeric_total = 0
+    for text, col_name in zip(texts, col_map):
+        if not text:
+            continue
+        total += 1
+        col_upper = (col_name or "").upper()
+        if col_upper in NUMERIC_FAMILIES:
+            numeric_total += 1
+            if not any(ch.isdigit() for ch in text):
+                numeric_hits += 1
+            continue
+        prefixes = prefix_map.get(col_upper, [])
+        canon_text = _canon(text)
+        if prefixes and any(canon_text.startswith(_canon(alias)) for alias in prefixes):
+            hits += 1
+    if total == 0:
+        return False
+    if numeric_total and numeric_hits == numeric_total and (hits + numeric_hits) >= max(2, total - 1):
+        return True
+    return False
+
+
+def _split_trailing_fragment(text: Optional[str]) -> Tuple[str, Optional[str]]:
+    value = (text or "").strip()
+    if not value:
+        return "", None
+    match = re.search(r"\b([A-Z][A-Z/&()\-\s]{3,})$", value)
+    if not match:
+        return value, None
+    fragment = match.group(1).strip()
+    head = value[: match.start(1)].rstrip()
+    if not head or not fragment:
+        return value, None
+    if any(ch.isdigit() for ch in fragment) and fragment.casefold() == fragment.lower():
+        return value, None
+    return head, fragment
 
 
 # ---------------------------------------------------------------------------
@@ -93,6 +184,7 @@ NUMERIC_FAMILIES = {"QTY", "UNIT_PRICE", "DISCOUNT", "TOTAL_PRICE", "TOTAL", "AM
 NUMERIC_ANCHOR_RE = re.compile(r"^[0-9][0-9.,]*$")
 NUMERIC_X_THRESHOLD_FRACTION = 0.45
 NUMERIC_TOKEN_RE = re.compile(r"-?\d[\d.,]*")
+DESC_FAMILIES = {"ITEM", "ITEM_NAME", "ITEM NAME", "DESCRIPTION", "ITEM_DESCRIPTION", "ITEM DESCRIPTION", "DESC"}
 
 
 @dataclass
@@ -127,6 +219,31 @@ class RankingConfig:
 
 
 @dataclass
+class ColumnOverrideRule:
+    match_index: Optional[int] = None
+    match_name_regex: Optional[Pattern[str]] = None
+    match_text_regex: Optional[Pattern[str]] = None
+    set_name: Optional[str] = None
+    set_text: Optional[str] = None
+
+    def matches(self, column: "ColumnBand", header_texts: Iterable[str]) -> bool:
+        if self.match_index is not None and column.index != self.match_index:
+            return False
+
+        if self.match_name_regex is not None:
+            names = [n for n in (column.name, getattr(column, "original_name", None)) if n]
+            if not any(self.match_name_regex.search(name) for name in names):
+                return False
+
+        if self.match_text_regex is not None:
+            texts = [t for t in header_texts if t]
+            if not any(self.match_text_regex.search(text) for text in texts):
+                return False
+
+        return True
+
+
+@dataclass
 class RowFixOptions:
     enabled: bool = False
     shadow_mode: bool = False
@@ -142,6 +259,14 @@ class RowFixOptions:
     use_llm_hints: bool = False
     debug_dump: bool = False
     cache_enabled: bool = True
+    column_overrides: List[ColumnOverrideRule] = field(default_factory=list)
+
+
+@dataclass
+class StopDecision:
+    rule: str = "none"
+    stop_index: int = 0
+    clip_y: Optional[float] = None
 
 
 @dataclass
@@ -196,6 +321,78 @@ def _validate_config(cfg: Dict[str, Any]) -> TemplateConfig:
             continue
 
     row_fix_cfg = cfg.get("row_fix") or {}
+
+    override_rules: List[ColumnOverrideRule] = []
+    for entry in row_fix_cfg.get("column_overrides", []) or []:
+        if not isinstance(entry, dict):
+            continue
+        match_cfg = entry.get("match") or {}
+        if not match_cfg:
+            simple_match = {k: entry.get(k) for k in ("name", "header_name", "text", "header_text", "index") if entry.get(k) is not None}
+            match_cfg = simple_match
+        if not isinstance(match_cfg, dict):
+            match_cfg = {}
+        set_cfg = entry.get("set") or entry.get("assign") or {}
+        if not set_cfg:
+            simple_set = {}
+            if entry.get("set_name") is not None:
+                simple_set["name"] = entry.get("set_name")
+            if entry.get("rename") is not None:
+                simple_set["name"] = entry.get("rename")
+            if entry.get("new_name") is not None:
+                simple_set["name"] = entry.get("new_name")
+            if entry.get("set_text") is not None:
+                simple_set["text"] = entry.get("set_text")
+            if entry.get("text_to") is not None:
+                simple_set["text"] = entry.get("text_to")
+            if entry.get("rename_text") is not None:
+                simple_set["text"] = entry.get("rename_text")
+            set_cfg = simple_set
+        if not isinstance(set_cfg, dict):
+            set_cfg = {}
+
+        if not set_cfg.get("name") and set_cfg.get("text") is None:
+            continue
+
+        match_index = None
+        try:
+            if match_cfg.get("index") is not None:
+                match_index = int(match_cfg.get("index"))
+        except Exception:
+            match_index = None
+
+        def _compile_regex(value: Any) -> Optional[Pattern[str]]:
+            if value is None:
+                return None
+            try:
+                return re.compile(str(value), re.IGNORECASE)
+            except re.error:
+                return None
+
+        match_name_regex = _compile_regex(match_cfg.get("name") or match_cfg.get("header_name"))
+        match_text_regex = _compile_regex(match_cfg.get("text") or match_cfg.get("header_text"))
+        set_name = set_cfg.get("name")
+        if isinstance(set_name, str):
+            set_name = set_name.strip() or None
+        else:
+            set_name = str(set_name).strip() if set_name is not None else None
+        set_text = set_cfg.get("text")
+        if set_text is not None:
+            set_text = str(set_text)
+
+        if not set_name and set_text is None:
+            continue
+
+        override_rules.append(
+            ColumnOverrideRule(
+                match_index=match_index,
+                match_name_regex=match_name_regex,
+                match_text_regex=match_text_regex,
+                set_name=set_name,
+                set_text=set_text,
+            )
+        )
+
     row_fix = RowFixOptions(
         enabled=bool(row_fix_cfg.get("enabled", False)),
         shadow_mode=bool(row_fix_cfg.get("shadow_mode", False)),
@@ -211,6 +408,7 @@ def _validate_config(cfg: Dict[str, Any]) -> TemplateConfig:
         use_llm_hints=bool(row_fix_cfg.get("use_llm_hints", False)),
         debug_dump=bool(row_fix_cfg.get("debug_dump", False)),
         cache_enabled=bool(row_fix_cfg.get("cache_enabled", True)),
+        column_overrides=override_rules,
     )
 
     region_cfg_raw = cfg.get("items_region") or {}
@@ -387,6 +585,52 @@ def load_tokens(tokens_path: Path, preferred_engine: Optional[str] = None) -> To
     return TokensData(doc_id=raw.get("doc_id"), tokens=tokens, page_meta=pages_meta, engine=engine_used)
 
 
+def load_totals_guardrails(tokens_path: Path, totals_keywords: Iterable[str]) -> Dict[int, float]:
+    s03_path = tokens_path.with_name("s03.json")
+    if not s03_path.exists():
+        return {}
+    try:
+        payload = json.loads(s03_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+    totals_canon = [_canon(k) for k in totals_keywords if k]
+    guardrails: Dict[int, float] = {}
+    segments = payload.get("segments")
+    if not isinstance(segments, list):
+        return guardrails
+
+    for seg in segments:
+        if not isinstance(seg, dict):
+            continue
+        if seg.get("type") and str(seg.get("type")).lower() not in {"region", "cell"}:
+            continue
+        try:
+            page = int(seg.get("page"))
+        except Exception:
+            continue
+        bbox = seg.get("bbox")
+        if not (isinstance(bbox, (list, tuple)) and len(bbox) == 4):
+            continue
+        try:
+            y0 = float(bbox[1])
+            y1 = float(bbox[3])
+        except Exception:
+            continue
+        top = min(y0, y1)
+        if not (0.0 <= top <= 1.0):
+            continue
+        label = str(seg.get("label") or "")
+        meta = seg.get("metadata") or {}
+        anchor_text = str(meta.get("start_anchor") or meta.get("anchor") or "")
+        haystack = _canon(label + " " + anchor_text)
+        if haystack and any(tkn and tkn in haystack for tkn in totals_canon):
+            current = guardrails.get(page)
+            guardrails[page] = top if current is None else min(current, top)
+
+    return guardrails
+
+
 # ---------------------------------------------------------------------------
 # Items region resolver
 # ---------------------------------------------------------------------------
@@ -552,6 +796,118 @@ def band_to_table_area(band: Dict[str, Any], page_dims: Optional[Tuple[float, fl
     return f"{x0:.2f},{top:.2f},{x1:.2f},{bottom:.2f}"
 
 
+def _clip_between(prev_bottom: Optional[float], boundary: float) -> float:
+    boundary = max(0.0, min(1.0, boundary))
+    if prev_bottom is None:
+        return max(0.0, min(boundary - 0.001, boundary))
+    prev_bottom = max(0.0, min(1.0, prev_bottom))
+    if boundary <= prev_bottom:
+        return min(1.0, prev_bottom + 0.002)
+    midpoint = prev_bottom + (boundary - prev_bottom) * 0.5
+    return max(0.0, min(midpoint, boundary - 0.001))
+
+
+def apply_stop_rules(
+    row_layouts: List[Dict[str, Any]],
+    header_idx: int,
+    data_start: int,
+    default_stop: int,
+    band: Optional[Dict[str, Any]],
+    totals_guard: Optional[float],
+    numeric_cols: Iterable[int],
+) -> StopDecision:
+    rows_count = len(row_layouts)
+    header_bottom = row_layouts[header_idx]["y1"] if 0 <= header_idx < rows_count else 0.0
+
+    def clamp_stop(idx: int) -> int:
+        return max(data_start, min(idx, rows_count))
+
+    numeric_cols = sorted({c for c in numeric_cols if isinstance(c, int) and c >= 0})
+    decision = StopDecision(rule="none", stop_index=clamp_stop(default_stop), clip_y=None)
+
+    anchor_y0 = None
+    if band and isinstance(band, dict):
+        end_anchor = band.get("end_anchor")
+        if isinstance(end_anchor, dict):
+            try:
+                anchor_y0 = float(end_anchor.get("y0"))
+            except Exception:
+                anchor_y0 = None
+
+    anchor_tol = 0.002
+    if anchor_y0 is not None and anchor_y0 > header_bottom + 0.001:
+        anchor_stop = None
+        for idx in range(data_start, rows_count):
+            row_info = row_layouts[idx]
+            if row_info["y0"] >= anchor_y0 - anchor_tol or row_info["y1"] >= anchor_y0 - anchor_tol:
+                anchor_stop = idx
+                break
+        if anchor_stop is None:
+            anchor_stop = rows_count
+        anchor_stop = clamp_stop(anchor_stop)
+        prev_bottom = row_layouts[anchor_stop - 1]["y1"] if anchor_stop - 1 >= data_start else row_layouts[header_idx]["y1"]
+        clip_y = _clip_between(prev_bottom, anchor_y0)
+        return StopDecision(rule="end_anchor", stop_index=anchor_stop, clip_y=clip_y)
+
+    if totals_guard is not None and totals_guard > header_bottom + 0.001:
+        guard_tol = 0.0015
+        guard_stop = None
+        for idx in range(data_start, rows_count):
+            row_info = row_layouts[idx]
+            if row_info["y0"] >= totals_guard - guard_tol or row_info["y1"] >= totals_guard - guard_tol:
+                guard_stop = idx
+                break
+        if guard_stop is None:
+            guard_stop = rows_count
+        guard_stop = clamp_stop(guard_stop)
+        prev_bottom = row_layouts[guard_stop - 1]["y1"] if guard_stop - 1 >= data_start else row_layouts[header_idx]["y1"]
+        clip_y = _clip_between(prev_bottom, totals_guard)
+        return StopDecision(rule="totals_guard", stop_index=guard_stop, clip_y=clip_y)
+
+    seen_numeric = False
+    last_numeric_idx: Optional[int] = None
+    note_idx: Optional[int] = None
+    note_keywords = {"says", "description", "declare", "catatan", "note"}
+    for idx in range(data_start, rows_count):
+        texts = row_layouts[idx]["texts"]
+        joined = _canon(" ".join(texts))
+        has_digits = False
+        if numeric_cols:
+            for col in numeric_cols:
+                if col < len(texts) and any(ch.isdigit() for ch in texts[col] or ""):
+                    has_digits = True
+                    break
+        else:
+            for cell_text in texts:
+                if any(ch.isdigit() for ch in cell_text or ""):
+                    has_digits = True
+                    break
+        if has_digits:
+            seen_numeric = True
+            last_numeric_idx = idx
+            continue
+        if seen_numeric and joined and any(keyword in joined for keyword in note_keywords):
+            note_idx = idx
+            break
+        if not seen_numeric:
+            continue
+
+    if note_idx is not None:
+        stop_idx = clamp_stop(min(note_idx, default_stop))
+        prev_idx = max(data_start, stop_idx - 1)
+        prev_bottom = row_layouts[prev_idx]["y1"] if prev_idx < rows_count else row_layouts[header_idx]["y1"]
+        boundary = row_layouts[stop_idx]["y0"] if stop_idx < rows_count else prev_bottom + 0.01
+        clip_y = _clip_between(prev_bottom, boundary)
+        return StopDecision(rule="numeric_fallback", stop_index=stop_idx, clip_y=clip_y)
+
+    if last_numeric_idx is None:
+        stop_idx = clamp_stop(default_stop)
+        return StopDecision(rule="numeric_fallback", stop_index=stop_idx, clip_y=None)
+
+    stop_idx = clamp_stop(min(last_numeric_idx + 1, default_stop))
+    return StopDecision(rule="numeric_fallback", stop_index=stop_idx, clip_y=None)
+
+
 # ---------------------------------------------------------------------------
 # Camelot runner — geometry first
 # ---------------------------------------------------------------------------
@@ -656,6 +1012,7 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
     for t in tokens.tokens:
         by_page_tokens.setdefault(int(t["page"]), []).append(t)
 
+    totals_guardrails = load_totals_guardrails(tokens_path, cfg.totals_keywords)
     items_regions = resolve_items_regions(cfg.items_region, by_page_tokens)
     table_areas: Dict[int, str] = {}
     if cfg.ranking.use_items_roi:
@@ -673,6 +1030,12 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
     )
 
     family_of_header = _build_family_matcher(cfg.header_aliases)
+    header_prefix_map: Dict[str, List[str]] = {}
+    for fam, aliases in cfg.header_aliases.items():
+        values = [a for a in aliases if a]
+        values.append(fam)
+        uniq = {v.strip() for v in values if v and v.strip()}
+        header_prefix_map[fam.upper()] = sorted(uniq, key=lambda s: (-len(s), s.lower()))
     totals_keys = {_canon(k) for k in cfg.totals_keywords if k}
     totals_pattern_seed = [k for k in cfg.totals_keywords if k]
     totals_pattern_seed.extend(cfg.items_region.end_patterns)
@@ -742,45 +1105,69 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
                 row_cache[idx] = row_text(tb, idx, page_no, pw, ph, page_tokens)
             return row_cache[idx]
 
+        row_layouts: List[Dict[str, Any]] = []
+        for r in range(rows):
+            texts = row_text_cached(r)
+            row_min = float("inf")
+            row_max = 0.0
+            for c in range(cols):
+                x0, y0, x1, y1 = get_cell_bbox(tb, r, c, pw, ph)
+                row_min = min(row_min, y0)
+                row_max = max(row_max, y1)
+            if row_min == float("inf"):
+                row_min = 0.0
+            row_layouts.append({"index": r, "texts": texts, "y0": row_min, "y1": row_max})
+
         best_idx: Optional[int] = None
-        best_stop_at = rows
+        best_decision: Optional[StopDecision] = None
         best_score = (-1, -1)
         best_fam_hits: set = set()
         row_candidates: List[Dict[str, Any]] = []
+        totals_guard = totals_guardrails.get(page_no) if cfg.stop_after_totals else None
         extra_keys = {_canon(k) for k in cfg.page_stop_keywords.get(page_no, []) if k}
 
         for r in range(min(rows, 12)):
-            texts = row_text_cached(r)
+            texts = row_layouts[r]["texts"]
             fam_hits: set = set()
+            col_families: List[Optional[str]] = []
             for txt in texts:
                 fam = family_of_header(txt)
+                col_families.append(fam)
                 if fam:
                     fam_hits.add(fam)
-            stop_at = rows
-            if cfg.stop_after_totals:
-                for rr in range(r + 1, rows):
-                    joined = _canon(" ".join(row_text_cached(rr)))
-                    if joined and any(k in joined for k in totals_keys):
-                        stop_at = rr
-                        break
-            if extra_keys:
-                for rr in range(r + 1, rows):
+
+            data_start = r + 1
+            default_stop = rows
+            if extra_keys and data_start < rows:
+                for rr in range(data_start, rows):
                     joined = _canon(" ".join(row_text_cached(rr)))
                     if joined and any(k in joined for k in extra_keys):
-                        stop_at = min(stop_at, rr)
+                        default_stop = rr
                         break
-            body_count = max(0, stop_at - (r + 1))
+
+            numeric_cols = [idx for idx, fam in enumerate(col_families) if fam in NUMERIC_FAMILIES]
+            decision = apply_stop_rules(
+                row_layouts=row_layouts,
+                header_idx=r,
+                data_start=data_start,
+                default_stop=default_stop,
+                band=band,
+                totals_guard=totals_guard,
+                numeric_cols=numeric_cols,
+            )
+
+            body_count = max(0, decision.stop_index - data_start)
             cand_score = (body_count, len(fam_hits))
             row_candidates.append({
                 "idx": r,
                 "body": body_count,
                 "fam_hits": set(fam_hits),
-                "stop_at": stop_at,
+                "decision": decision,
             })
             if cand_score > best_score:
                 best_score = cand_score
                 best_idx = r
-                best_stop_at = stop_at
+                best_decision = decision
                 best_fam_hits = fam_hits
 
         if best_idx is None:
@@ -796,9 +1183,12 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
                     alt = cand
             if alt:
                 best_idx = alt["idx"]
-                best_stop_at = alt["stop_at"]
+                best_decision = alt["decision"]
                 best_fam_hits = alt["fam_hits"]
                 best_score = (alt["body"], len(alt["fam_hits"]))
+
+        if best_decision is None:
+            best_decision = StopDecision(rule="none", stop_index=min(rows, (best_idx or 0) + 1), clip_y=None)
 
         header_hits = len(best_fam_hits)
         body_rows = best_score[0]
@@ -838,7 +1228,8 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
 
         numeric_rows = 0
         numeric_hits = 0
-        for rr in range(best_idx + 1, best_stop_at):
+        stop_limit = best_decision.stop_index if best_decision else rows
+        for rr in range(best_idx + 1, stop_limit):
             texts = row_text_cached(rr)
             if not texts:
                 continue
@@ -867,7 +1258,7 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
             "flavor": flavor,
             "source": source,
             "header_idx": best_idx,
-            "stop_at": best_stop_at,
+            "stop_at": best_decision.stop_index if best_decision else rows,
             "body_rows": body_rows,
             "header_hits": header_hits,
             "bbox": {"x0": tbx0, "y0": tby0, "x1": tbx1, "y1": tby1},
@@ -878,6 +1269,9 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
                 "rows": float(body_rows),
                 "totals_below": float(totals_flag),
             },
+            "stop_rule": best_decision.rule,
+            "clip_y": best_decision.clip_y,
+            "_stop_decision": best_decision,
         }
         return candidate
 
@@ -954,7 +1348,8 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
                     col_map.append(fam or f"COL{c+1}")
 
                 reuse_prev = False
-                if header_hits == 0:
+                header_contains_totals = any((_canon(text) and any(k in _canon(text) for k in totals_keys)) for text in header_texts)
+                if header_hits == 0 or header_contains_totals:
                     if prev_col_map is not None:
                         reuse_prev = True
                         col_map = prev_col_map[:]
@@ -967,31 +1362,34 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
 
                 data_start = header_idx + 1
                 if reuse_prev:
-                    data_start = header_idx
+                    data_start = 0
+
+                decision_obj = winner.get("_stop_decision")
+                if not isinstance(decision_obj, StopDecision):
+                    decision_obj = StopDecision(rule="none", stop_index=rows, clip_y=None)
+                stop_at = max(data_start, min(rows, int(decision_obj.stop_index or rows)))
+                clip_limit = decision_obj.clip_y
+                if clip_limit is not None:
+                    clip_thresh = max(0.0, min(1.0, float(clip_limit))) + 1e-4
+                    effective_tokens = [tok for tok in page_tokens if _tok_center(tok)[1] <= clip_thresh]
+                else:
+                    effective_tokens = page_tokens
 
                 def row_text_list(r: int) -> List[str]:
-                    return row_text(tb, r, page_no, pw, ph, page_tokens)
-
-                stop_at = rows
-                if cfg.stop_after_totals:
-                    scan_start = data_start
-                    extra_keys = {_canon(k) for k in cfg.page_stop_keywords.get(page_no, []) if k}
-                    for r in range(scan_start, rows):
-                        joined = _canon(" ".join(row_text_list(r)))
-                        if joined and any(k in joined for k in totals_keys):
-                            stop_at = r
-                            break
-                        if extra_keys and joined and any(k in joined for k in extra_keys):
-                            stop_at = r
-                            break
+                    return row_text(tb, r, page_no, pw, ph, effective_tokens)
 
                 grid_rows: List[Dict[str, Any]] = []
                 for r in range(data_start, stop_at):
                     texts = row_text_list(r)
+                    if _is_repeat_header_row(texts, col_map, header_prefix_map):
+                        continue
                     cells = []
                     for c in range(cols):
                         x0, y0, x1, y1 = get_cell_bbox(tb, r, c, pw, ph)
                         value = texts[c]
+                        prefixes = header_prefix_map.get(col_map[c].upper(), []) if col_map[c] else []
+                        if prefixes:
+                            value = _strip_alias_prefix(value, prefixes)
                         name_upper = (col_map[c] or "").upper()
                         if name_upper in NUMERIC_FAMILIES:
                             value = _trim_numeric_tail(value)
@@ -1007,13 +1405,22 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
                 if limit is not None:
                     grid_rows = grid_rows[:limit]
 
+                bbox = dict(winner.get("bbox", {}))
+                if decision_obj.clip_y is not None:
+                    clip_y_val = max(0.0, min(1.0, float(decision_obj.clip_y)))
+                    current_y1 = float(bbox.get("y1", clip_y_val))
+                    bbox["y1"] = min(current_y1, clip_y_val)
+                    bbox["_clip_y"] = clip_y_val
+                else:
+                    bbox = dict(bbox)
+
                 pages_out.append(BaseTable(
                     page=page_no,
                     flavor=flavor,
                     header_row_index=header_idx,
                     header_cells=[{"col": c, "text": header_texts[c], "name": col_map[c]} for c in range(cols)],
                     rows=grid_rows,
-                    bbox=winner.get("bbox", {}),
+                    bbox=bbox,
                 ))
 
                 prev_col_map = col_map[:]
@@ -1057,6 +1464,10 @@ def build_base_tables(pdf_path: Path, tokens_path: Path, out_path: Path, cfg: Te
                 "header_hits": cand.get("header_hits"),
                 "selected": bool(selected_index is not None and cand.get("index") == selected_index),
             }
+            summary["stop_rule"] = cand.get("stop_rule")
+            summary["stop_at"] = cand.get("stop_at")
+            if cand.get("clip_y") is not None:
+                summary["clip_y"] = cand.get("clip_y")
             if not cand.get("eligible", True):
                 summary["note"] = "skipped_by_limit"
             page_record["candidates"].append(summary)
@@ -1080,6 +1491,8 @@ class ColumnBand:
     name: str
     x0: float
     x1: float
+    original_name: Optional[str] = None
+    original_text: Optional[str] = None
 
     def center(self) -> float:
         return (self.x0 + self.x1) / 2.0
@@ -1144,6 +1557,12 @@ class RowFixer:
         self.debug_columns: Dict[int, List[Dict[str, Any]]] = {}
         self.cache = TemplateCache(cfg_path, cfg.row_fix.cache_enabled)
         self.partno_regexes = [re.compile(p, re.IGNORECASE) for p in cfg.row_fix.partno_regex_list if p]
+        self.header_prefix_map: Dict[str, List[str]] = {}
+        for fam, aliases in cfg.header_aliases.items():
+            values = [a for a in aliases if a]
+            values.append(fam)
+            uniq = {v.strip() for v in values if v and v.strip()}
+            self.header_prefix_map[fam.upper()] = sorted(uniq, key=lambda s: (-len(s), s.lower()))
 
     def apply(self) -> List[BaseTable]:
         result: List[BaseTable] = []
@@ -1175,22 +1594,24 @@ class RowFixer:
         slack = max(header_gap_norm, 0.02)
         body_top = max(table_top, header_bottom - slack)
         table_bottom = base.bbox.get("y1", body_top + 0.5)
+        clip_limit = base.bbox.get("_clip_y")
+        clip_value: Optional[float] = None
+        if clip_limit is not None:
+            try:
+                clip_value = float(clip_limit)
+                table_bottom = min(table_bottom, clip_value)
+            except Exception:
+                clip_value = None
 
-        totals_keys = {_canon(k) for k in self.cfg.totals_keywords if k}
-        totals_y_candidates: List[float] = []
-        for tok in page_tokens:
-            cy = _tok_center(tok)[1]
-            if cy <= body_top:
-                continue
-            canon = _canon(_token_text(tok))
-            if canon and any(k in canon for k in totals_keys):
-                totals_y_candidates.append(_tok_top(tok))
-        body_bottom = min(totals_y_candidates) if totals_y_candidates else table_bottom
-        if body_bottom <= body_top:
+        if clip_value is not None:
+            body_bottom = min(table_bottom, clip_value)
+        else:
             body_bottom = table_bottom
 
         table_tokens = [tok for tok in page_tokens if body_top <= _tok_center(tok)[1] <= body_bottom and base.bbox.get("x0", 0.0) - 0.02 <= _tok_center(tok)[0] <= base.bbox.get("x1", 1.0) + 0.02]
         table_tokens.sort(key=lambda t: (_tok_top(t), _tok_left(t)))
+        if not table_tokens:
+            return base
 
         columns = self._build_columns(base, cached_entry)
 
@@ -1253,7 +1674,7 @@ class RowFixer:
         )
 
     def _build_columns(self, base: BaseTable, cached_entry: Optional[Dict[str, Any]]) -> List[ColumnBand]:
-        cols = []
+        cols: List[ColumnBand] = []
         for idx, header in enumerate(base.header_cells):
             bbox = None
             # locate representative bbox from body to cover entire column width
@@ -1268,7 +1689,18 @@ class RowFixer:
                 bbox = header.get("bbox") or {}
             x0 = float(bbox.get("x0", header.get("bbox", {}).get("x0", base.bbox.get("x0", 0.0))))
             x1 = float(bbox.get("x1", header.get("bbox", {}).get("x1", base.bbox.get("x1", 1.0))))
-            cols.append(ColumnBand(index=idx, name=header.get("name") or header.get("text") or f"COL{idx+1}", x0=x0, x1=x1))
+            base_name = header.get("name") or header.get("text") or f"COL{idx+1}"
+            header_text = header.get("text") or None
+            cols.append(
+                ColumnBand(
+                    index=idx,
+                    name=base_name,
+                    x0=x0,
+                    x1=x1,
+                    original_name=base_name,
+                    original_text=header_text,
+                )
+            )
         cols.sort(key=lambda c: c.x0)
 
         if cached_entry and isinstance(cached_entry.get("columns"), list):
@@ -1282,7 +1714,36 @@ class RowFixer:
                     except Exception:
                         continue
             cols.sort(key=lambda c: c.x0)
+        self._apply_column_overrides(cols, base)
         return cols
+
+    def _apply_column_overrides(self, columns: List[ColumnBand], base: BaseTable) -> None:
+        rules = self.cfg.row_fix.column_overrides
+        if not rules:
+            return
+        for col in columns:
+            header = base.header_cells[col.index] if 0 <= col.index < len(base.header_cells) else None
+            header_texts: List[str] = []
+            if header is not None:
+                for key in ("text", "text_norm"):
+                    value = header.get(key)
+                    if isinstance(value, str) and value:
+                        header_texts.append(value)
+            original_text = getattr(col, "original_text", None)
+            if isinstance(original_text, str) and original_text:
+                header_texts.append(original_text)
+            for rule in rules:
+                if not rule.matches(col, header_texts):
+                    continue
+                if rule.set_name:
+                    col.name = rule.set_name
+                    if header is not None:
+                        header["name"] = rule.set_name
+                if rule.set_text is not None and header is not None:
+                    header["text"] = rule.set_text
+                    if header.get("text_norm") is not None:
+                        header["text_norm"] = rule.set_text
+                break
 
     def _header_fingerprint(self, base: BaseTable) -> str:
         names = []
@@ -1507,6 +1968,9 @@ class RowFixer:
                 continue
             gap = row.y0 - last_kept.y1
             row_numeric = any(self._tokens_have_numeric(row.column_tokens.get(idx, [])) for idx in numeric_cols)
+            if not row_numeric and self._row_is_header_repeat(row, columns):
+                self.fix_report.append({"type": "skip_repeated_header", "row": row.index})
+                continue
             if (not row_numeric) and gap <= gap_norm * 1.2:
                 for idx in desc_cols:
                     last_kept.column_tokens.setdefault(idx, []).extend(row.column_tokens.get(idx, []))
@@ -1522,6 +1986,44 @@ class RowFixer:
                 merged.append(row)
                 last_kept = row
         return merged
+
+    def _row_is_header_repeat(self, row: RowBand, columns: List[ColumnBand]) -> bool:
+        hits = 0
+        total = 0
+        for col in columns:
+            toks = row.column_tokens.get(col.index, [])
+            if not toks:
+                continue
+            text = " ".join((_token_text(tok) or "").strip() for tok in toks).strip()
+            if not text:
+                continue
+            total += 1
+            prefixes = self.header_prefix_map.get(col.name.upper(), []) if col.name else []
+            canon_text = _canon(text)
+            if prefixes and any(canon_text.startswith(_canon(alias)) for alias in prefixes):
+                hits += 1
+        if total == 0:
+            return False
+        return hits >= max(2, total - 1)
+
+    def _looks_like_fragment(self, text: str) -> bool:
+        sample = (text or "").strip()
+        if not sample or any(ch.isdigit() for ch in sample):
+            return False
+        return sample.isupper() or sample.replace("(", "").replace(")", "").isupper()
+
+    def _detach_leading_fragment(self, text: Optional[str]) -> Tuple[Optional[str], str]:
+        value = (text or "").strip()
+        if not value:
+            return None, ""
+        for marker in (" SZ ", " TS "):
+            idx = value.find(marker)
+            if idx > 0:
+                prefix = value[:idx].strip()
+                remainder = value[idx:].lstrip()
+                if prefix and prefix.upper() == prefix and not any(ch.isdigit() for ch in prefix):
+                    return prefix, remainder
+        return None, value
 
     def _split_token_lines(self, toks: Iterable[Dict[str, Any]]) -> List[List[Tuple[float, str]]]:
         items: List[Tuple[float, float, str]] = []
@@ -1598,6 +2100,16 @@ class RowFixer:
                 toks = row.column_tokens.get(col.index, [])
                 lines = self._split_token_lines(toks)
                 text, segments = self._compose_text_from_lines(lines)
+                prefixes = self.header_prefix_map.get(col.name.upper(), []) if col.name else []
+                if prefixes and segments:
+                    first_seg = segments[0]
+                    cleaned_first = _strip_alias_prefix(first_seg, prefixes).strip()
+                    if cleaned_first != first_seg:
+                        segments = [cleaned_first] + segments[1:]
+                if prefixes:
+                    text = _strip_alias_prefix(text, prefixes).strip()
+                if col.name.upper() in NUMERIC_FAMILIES:
+                    text = _trim_numeric_tail(text)
                 cell_entry = {
                     "col": col.index,
                     "name": col.name,
@@ -1636,6 +2148,63 @@ class RowFixer:
                                 new_text = self._clean_text(" ".join(remaining_segments)) if remaining_segments else ""
                                 desc_cell["text"] = new_text
             out_rows.append({"index": idx, "cells": cells, "y0": row.y0, "y1": row.y1})
+            desc_cell = next((cell for cell in cells if (cell.get("name") or "").upper() in DESC_FAMILIES), None)
+            if desc_cell and out_rows[:-1]:
+                prev_desc = None
+                prev_desc_cell = None
+                prev_cells = out_rows[-2]["cells"] if len(out_rows) >= 2 else []
+                for c in prev_cells:
+                    if (c.get("name") or "").upper() in DESC_FAMILIES:
+                        prev_desc = c.get("text")
+                        prev_desc_cell = c
+                        break
+                if prev_desc:
+                    meta_curr = column_meta.get(desc_cell["col"], {})
+                    segments = list(meta_curr.get("segments") or [])
+                    if segments and self._looks_like_fragment(segments[0]):
+                        fragment = segments[0].strip()
+                        if fragment and prev_desc_cell is not None:
+                            prev_text = prev_desc_cell.get("text", "")
+                            prev_desc_cell["text"] = (prev_text + " " + fragment).strip()
+                            prev_desc = prev_desc_cell["text"]
+                        segments = segments[1:]
+                        desc_cell["text"] = self._clean_text(" ".join(segments)) if segments else ""
+                        meta_curr["segments"] = segments
+                    desc_cell["text"] = _strip_overlap_prefix(prev_desc, desc_cell.get("text"))
+                fragment, remainder = self._detach_leading_fragment(desc_cell.get("text"))
+                if fragment and prev_desc_cell is not None:
+                    prev_text = prev_desc_cell.get("text", "")
+                    prev_desc_cell["text"] = (prev_text + " " + fragment).strip()
+                    prev_desc = prev_desc_cell["text"]
+                if fragment:
+                    desc_cell["text"] = remainder
+            if desc_cell:
+                desc_cell["text"] = _cleanup_description(desc_cell.get("text"))
+        for idx in range(1, len(out_rows)):
+            curr_desc_cell = next((cell for cell in out_rows[idx]["cells"] if (cell.get("name") or "").upper() in DESC_FAMILIES), None)
+            prev_desc_cell = next((cell for cell in out_rows[idx - 1]["cells"] if (cell.get("name") or "").upper() in DESC_FAMILIES), None)
+            if not curr_desc_cell or not prev_desc_cell:
+                continue
+            fragment, remainder = self._detach_leading_fragment(curr_desc_cell.get("text"))
+            if fragment and remainder != curr_desc_cell.get("text"):
+                prev_text = prev_desc_cell.get("text", "")
+                prev_desc_cell["text"] = (prev_text + " " + fragment).strip()
+                curr_desc_cell["text"] = remainder
+            if not curr_desc_cell.get("text"):
+                head, trailing = _split_trailing_fragment(prev_desc_cell.get("text"))
+                if trailing:
+                    prev_desc_cell["text"] = head
+                    curr_desc_cell["text"] = trailing
+        for idx in range(len(out_rows) - 1):
+            curr_desc_cell = next((cell for cell in out_rows[idx]["cells"] if (cell.get("name") or "").upper() in DESC_FAMILIES), None)
+            next_desc_cell = next((cell for cell in out_rows[idx + 1]["cells"] if (cell.get("name") or "").upper() in DESC_FAMILIES), None)
+            if not curr_desc_cell or not next_desc_cell:
+                continue
+            head, fragment = _split_trailing_fragment(curr_desc_cell.get("text"))
+            if fragment and fragment != curr_desc_cell.get("text"):
+                curr_desc_cell["text"] = head
+                combined = (fragment + " " + (next_desc_cell.get("text") or "")).strip()
+                next_desc_cell["text"] = combined
         return out_rows
 
     def _parse_number(self, text: str) -> Optional[Decimal]:

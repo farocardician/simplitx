@@ -1,0 +1,87 @@
+{
+  "client": "pdp",
+  "variant": 13,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. PARADIGM DINAMIKA PERSADA GEDUNG WORLD TRADE CENTRE 1, LT. 14 Jalan Jenderal Sudirman Kav 29-31 RT. 008 RW. 003, Karet Setiabudi, Kota Adm. Jakarta Selatan, DKI Jakarta 12920 INVOICE No. Invoice : 001/PDP-07/2025 Client : Invoice Date : 02/07/2025 PT Gunung Geulis Elok Abadi PO Number : Komplek Taman Budaya Sentul City, Jl Siliwangi No. 1, Term of payment : Net 15 Days from Invoice Date Sumur Batu, Babakan Madang, Bogor, Jawa Barat, 16710 Attention to: Benny Irnaidy (sentulgm@alanahotels.com) No Item Quantity Curr Unit Price Total 01 Quantity Surveyor Service - Month 21 - June 2025 1 Unit IDR 15.961.733 15.961.733"
+        },
+        {
+          "key": "total",
+          "value": "Tax Base VAT 14.631.589 VAT (12%) 1.755.791 Tax Art 4(2) (558.661) Grand Total 17.158.863"
+        },
+        {
+          "key": "currency",
+          "value": "Curr IDR"
+        },
+        {
+          "key": "invoice_number",
+          "value": "No. Invoice : 001/PDP-07/2025 Invoice Date : 02/07/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "No. Invoice : 001/PDP-07/2025 Invoice Date : 02/07/2025 PO Number :"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Client : PT Gunung Geulis Elok Abadi Komplek Taman Budaya Sentul City, Jl Siliwangi No. 1,"
+        },
+        {
+          "key": "subtotal",
+          "value": "Total 17.158.863"
+        },
+        {
+          "key": "vat",
+          "value": "VAT 14.631.589 (12%) 1.755.791"
+        },
+        {
+          "key": "grand_total",
+          "value": "Grand Total 17.158.863"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. PARADIGM DINAMIKA PERSADA GEDUNG WORLD TRADE CENTRE 1, LT. 14 Jalan Jenderal Sudirman Kav 29-31 RT. 008 RW. 003, Karet Setiabudi, Kota Adm. Jakarta Selatan, DKI Jakarta 12920 INVOICE No. Invoice : 001/PDP-07/2025 Client : Invoice Date : 02/07/2025 PT Gunung Geulis Elok Abadi PO Number : Komplek Taman Budaya Sentul City, Jl Siliwangi No. 1, Term of payment : Net 15 Days from Invoice Date Sumur Batu, Babakan Madang, Bogor, Jawa Barat, 16710 Attention to: Benny Irnaidy (sentulgm@alanahotels.com) No Item Quantity Curr Unit Price Total 01 Quantity Surveyor Service - Month 21 - June 2025 1 Unit IDR 15.961.733 15.961.733"
+        },
+        {
+          "key": "total",
+          "value": "Tax Base VAT 14.631.589 VAT (12%) 1.755.791 Tax Art 4(2) (558.661) Grand Total 17.158.863"
+        },
+        {
+          "key": "currency",
+          "value": "Curr IDR"
+        },
+        {
+          "key": "invoice_number",
+          "value": "No. Invoice : 001/PDP-07/2025 Invoice Date : 02/07/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "No. Invoice : 001/PDP-07/2025 Invoice Date : 02/07/2025 PO Number :"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Client : PT Gunung Geulis Elok Abadi Komplek Taman Budaya Sentul City, Jl Siliwangi No. 1,"
+        },
+        {
+          "key": "subtotal",
+          "value": "Total 17.158.863"
+        },
+        {
+          "key": "vat",
+          "value": "VAT 14.631.589 (12%) 1.755.791"
+        },
+        {
+          "key": "grand_total",
+          "value": "Grand Total 17.158.863"
+        }
+      ]
+    }
+  }
+}

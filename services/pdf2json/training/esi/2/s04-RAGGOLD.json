@@ -1,0 +1,43 @@
+{
+  "profile": "esi",
+  "source": {
+    "s02": "services/pdf2json/results/esi/2/s02.json",
+    "s03": "services/pdf2json/results/esi/2/s03.json",
+    "vendor_config": "services/pdf2json/config/s04_invoice_esi_rag_v1.json"
+  },
+  "page": 1,
+
+  "header_fields": {
+    "invoice_number": "INV/074/0825",
+    "invoice_date": "2025-08-27",
+    "buyer_name": "PT Schneider Electric Indonesia Office"
+  },
+
+  "rag_table_rows": [
+    {
+      "cells": {
+        "no": 1,
+        "article_no": "MC-PN-001",
+        "description": "[PODCAST NUSANTARA PRODUCTION EXCLUSIVE SPONSORSHIP] Topic : Membangun Kedaulatan Digital Indonesia dengan hadirnya Kawasan Ekonomi Khusus",
+        "qty": 1,
+        "uom": "Episode",
+        "unit_price": 51020408.00,
+        "total_price": 51020408.00
+      },
+      "currency": "IDR"
+    }
+  ],
+
+  "rag_total_fields": {
+    "currency": "IDR",
+    "subtotal": 51020408.00,
+    "vat_base": 46768707.00,
+    "vat": 5612245.00,
+    "grand_total": 56632653.00
+  },
+
+  "stats": {
+    "table_rows": 1,
+    "totals_found": 4
+  }
+}

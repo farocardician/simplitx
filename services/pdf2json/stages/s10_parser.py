@@ -169,7 +169,102 @@ def apply_transform(val: Any, transform: Optional[str]) -> Any:
     if transform == "string" and isinstance(val, str):
         s = val.strip()
         return s if s else None
+    if transform == "date_iso":
+        return transform_date_iso(val)
     return val
+
+def transform_date_iso(val: Any) -> Optional[str]:
+    """
+    Convert any common date format to ISO 8601 (YYYY-MM-DD).
+    Auto-detects format from input string.
+
+    Supported formats:
+      - "DD Mon YYYY" → "01 Sep 2025"
+      - "D Mon YYYY" → "1 Sept 2025"
+      - "DD/MM/YYYY" → "01/09/2025"
+      - "MM/DD/YYYY" → "09/01/2025"
+      - "DD-MM-YYYY" → "01-09-2025"
+      - "YYYY-MM-DD" → already ISO (passthrough)
+      - "DD.MM.YYYY" → "01.09.2025"
+
+    Returns ISO string or None if unparseable.
+    """
+    if val is None:
+        return None
+
+    if not isinstance(val, str):
+        return None
+
+    s = val.strip()
+    if not s:
+        return None
+
+    # Already ISO format - passthrough
+    if re.match(r"^\d{4}-\d{2}-\d{2}$", s):
+        return s
+
+    # Month name mapping (case-insensitive, handles abbreviations)
+    months = {
+        "jan": 1, "january": 1,
+        "feb": 2, "february": 2,
+        "mar": 3, "march": 3,
+        "apr": 4, "april": 4,
+        "may": 5,
+        "jun": 6, "june": 6,
+        "jul": 7, "july": 7,
+        "aug": 8, "august": 8,
+        "sep": 9, "sept": 9, "september": 9,
+        "oct": 10, "october": 10,
+        "nov": 11, "november": 11,
+        "dec": 12, "december": 12,
+    }
+
+    # Pattern 1: "DD Mon YYYY" or "D Mon YYYY" (e.g., "01 Sep 2025", "1 Sept 2025")
+    m = re.match(r"^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$", s)
+    if m:
+        day_str, month_str, year_str = m.groups()
+        month_num = months.get(month_str.lower())
+        if month_num:
+            try:
+                day = int(day_str)
+                year = int(year_str)
+                if 1 <= day <= 31 and 1 <= month_num <= 12 and 1900 <= year <= 2100:
+                    return f"{year:04d}-{month_num:02d}-{day:02d}"
+            except Exception:
+                pass
+
+    # Pattern 2: Separator-based dates (/, -, .)
+    # Try all common separators
+    for sep in ["/", "-", "."]:
+        m = re.match(rf"^(\d{{1,2}}){re.escape(sep)}(\d{{1,2}}){re.escape(sep)}(\d{{4}})$", s)
+        if m:
+            part1, part2, year_str = m.groups()
+            try:
+                p1 = int(part1)
+                p2 = int(part2)
+                year = int(year_str)
+
+                if not (1900 <= year <= 2100):
+                    continue
+
+                # Heuristic: if first part > 12, it's day/month format
+                if p1 > 12 and 1 <= p2 <= 12:
+                    day, month = p1, p2
+                # If second part > 12, it's month/day format
+                elif p2 > 12 and 1 <= p1 <= 12:
+                    month, day = p1, p2
+                # Both valid (≤12): assume day/month (international standard)
+                elif 1 <= p1 <= 31 and 1 <= p2 <= 12:
+                    day, month = p1, p2
+                else:
+                    continue
+
+                if 1 <= day <= 31 and 1 <= month <= 12:
+                    return f"{year:04d}-{month:02d}-{day:02d}"
+            except Exception:
+                pass
+
+    return None
 
 def text_matches_rule(text: str, target: str, rule: Dict[str, Any]) -> bool:
     match_type = (rule.get("match") or "contains").lower()
@@ -338,9 +433,24 @@ def main():
 
     # Header
     hdr = f.get("header", {}) or {}
+    header_cfg = config.get("header", {})
+    header_fields_cfg = header_cfg.get("fields") or {}
+
     # Support Stage-7 V3 (field objects with value_text) and legacy scalars
-    invoice_number = s7_value_text(hdr.get("invoice_number"))
-    invoice_date = s7_value_text(hdr.get("invoice_date"))
+    # Apply transforms if configured in header.fields
+    invoice_number_raw = s7_value_text(hdr.get("invoice_number"))
+    invoice_date_raw = s7_value_text(hdr.get("invoice_date"))
+
+    # Apply transforms from config
+    invoice_number = apply_transform(
+        invoice_number_raw,
+        header_fields_cfg.get("invoice_number", {}).get("transform")
+    )
+    invoice_date = apply_transform(
+        invoice_date_raw,
+        header_fields_cfg.get("invoice_date", {}).get("transform")
+    )
+
     # Some profiles expose customer ID as 'customer_id' (map to buyer_id)
     buyer_id = s7_value_text(hdr.get("buyer_id")) or s7_value_text(hdr.get("customer_id"))
     # Buyer name/address may be absent in segment-only V3

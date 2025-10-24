@@ -1,0 +1,103 @@
+{
+  "client": "visi",
+  "variant": 10,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE PT.CoatesHireIndonesia Invoiceno. :9058006582 WorldTradeCentre5,Level3A BillingDate :August29,2025 , 12920,Jl.Jend.SudirmanKav.29-31,jakarta Indonesia Attention:Tel:"
+        },
+        {
+          "key": "total",
+          "value": "SubTotal 1.300.000 TaxBase 1.191.667 PPN-VAT12% 143.000 TotalAmount 1.443.000"
+        },
+        {
+          "key": "seller",
+          "value": "Pleasekindlymakethepaymenttoourbankaccountasbelow: BankAccountName : PT.VISIGLOBALINDODATAUTAMA BankName : PT.BankPermataTbk BankAddress : ArionBuilding,JalanPemudaKav.17 JakartaTimur–13220 AccountNo.701275586 SWIFTCode-BBBAIDJA"
+        },
+        {
+          "key": "currency",
+          "value": "Amount(IDR)"
+        },
+        {
+          "key": "invoice_number",
+          "value": ":9058006582 :August29,2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": ":August29,2025"
+        },
+        {
+          "key": "buyer",
+          "value": "PT.CoatesHireIndonesia WorldTradeCentre5,Level3A , 12920,Jl.Jend.SudirmanKav.29-31,jakarta Indonesia Attention:Tel:"
+        },
+        {
+          "key": "subtotal",
+          "value": "SubTotal 1.300.000"
+        },
+        {
+          "key": "tax_base",
+          "value": "TaxBase 1.191.667"
+        },
+        {
+          "key": "vat",
+          "value": "PPN-VAT12% 143.000"
+        },
+        {
+          "key": "total_amount",
+          "value": "TotalAmount 1.443.000"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE PT. Coates Hire Indonesia Invoice no. :9058006582 World Trade Centre 5, Level 3A Billing Date :August 29 , 2025 , 12920,Jl. Jend. Sudirman Kav. 29 - 31, jakarta Indonesia Attention : Tel:"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total 1.300.000 Tax Base 1.191.667 PPN - VAT 12% 143.000 Total Amount 1.443.000"
+        },
+        {
+          "key": "seller",
+          "value": "Please kindly make the payment to our bank account as below: Bank Account Name : PT. VISI GLOBALINDO DATA UTAMA Bank Name : PT. Bank Permata Tbk Bank Address : Arion Building,Jalan Pemuda Kav.17 Jakarta Timur – 13220 Account No. 701275586 SWIFT Code - BBBAIDJA"
+        },
+        {
+          "key": "currency",
+          "value": "Amount(IDR)"
+        },
+        {
+          "key": "invoice_number",
+          "value": ":9058006582 :August 29 , 2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": ":August 29 , 2025"
+        },
+        {
+          "key": "buyer",
+          "value": "PT. Coates Hire Indonesia World Trade Centre 5, Level 3A , 12920,Jl. Jend. Sudirman Kav. 29 - 31, jakarta Indonesia Attention : Tel:"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total 1.300.000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base 1.191.667"
+        },
+        {
+          "key": "vat",
+          "value": "PPN - VAT 12% 143.000"
+        },
+        {
+          "key": "total_amount",
+          "value": "Total Amount 1.443.000"
+        }
+      ]
+    }
+  }
+}

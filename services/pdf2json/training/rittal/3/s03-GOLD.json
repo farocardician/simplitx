@@ -1,0 +1,111 @@
+{
+  "client": "rittal",
+  "variant": 3,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Rittal JL,. MH. THAMRIN MENARA BCA LT.5O MENTENG. : Kota Administrasi Jakarta Pusat DKI Jakarta Indonesia INVOICE To : Date Number 09 Sep 2025 SI.2025.09.00008 PT. TRI TELCON UTAMA Jl. H. Ismail No. 40 C RT. 08/RW. 03, Terms of Payment FOB Kel. Jatinegara, Kec. Cakung net 30 Jakarta Timur 13930 – Indonesia Shipment Shipment Date LAND 09 Sep 2025 PO No Currency 127/IX/PRC-PO/TTU/2025 Indonesian Rupiah"
+        },
+        {
+          "key": "table",
+          "value": "Article Number Item Name Qty @Price Discount Total Price 8612050 TS PUNCHED SECTIONS INT. 2 1.025.100 0 2.050.200 FOR 500 MM HORIZONTAL (PK OF 4)"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total 2.050.200 Tax Based 1.879.350 VAT 12% 225.522 Total 2.275.722 Prepared By :"
+        },
+        {
+          "key": "seller",
+          "value": "JL,. MH. THAMRIN MENARA BCA LT.5O MENTENG. Kota Administrasi Jakarta Pusat DKI Jakarta Indonesia INVOICE"
+        },
+        {
+          "key": "buyer_name",
+          "value": "To : PT. TRI TELCON UTAMA"
+        },
+        {
+          "key": "invoice_date",
+          "value": "09 Sep 2025"
+        },
+        {
+          "key": "invoice_number",
+          "value": "SI.2025.09.00008"
+        },
+        {
+          "key": "currency",
+          "value": "Indonesian Rupiah"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total 2.050.200"
+        },
+        {
+          "key": "tax_based",
+          "value": "Tax Based 1.879.350"
+        },
+        {
+          "key": "vat",
+          "value": "VAT 12% 225.522"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total 2.275.722"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Rittal JL,. MH. THAMRIN MENARA BCA LT.5O MENTENG. : Kota Administrasi Jakarta Pusat DKI Jakarta Indonesia INVOICE To : Date Number 09 Sep 2025 SI.2025.09.00008 PT. TRI TELCON UTAMA Jl. H. Ismail No. 40 C RT. 08/RW. 03, Terms of Payment FOB Kel. Jatinegara, Kec. Cakung net 30 Jakarta Timur 13930 – Indonesia Shipment Shipment Date LAND 09 Sep 2025 PO No Currency 127/IX/PRC-PO/TTU/2025 Indonesian Rupiah"
+        },
+        {
+          "key": "table",
+          "value": "Article Number Item Name Qty @Price Discount Total Price 8612050 TS PUNCHED SECTIONS INT. 2 1.025.100 0 2.050.200 FOR 500 MM HORIZONTAL (PK OF 4)"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total 2.050.200 Tax Based 1.879.350 VAT 12% 225.522 Total 2.275.722 Prepared By :"
+        },
+        {
+          "key": "seller",
+          "value": "JL,. MH. THAMRIN MENARA BCA LT.5O MENTENG. Kota Administrasi Jakarta Pusat DKI Jakarta Indonesia INVOICE"
+        },
+        {
+          "key": "buyer_name",
+          "value": "To : PT. TRI TELCON UTAMA"
+        },
+        {
+          "key": "invoice_date",
+          "value": "09 Sep 2025"
+        },
+        {
+          "key": "invoice_number",
+          "value": "SI.2025.09.00008"
+        },
+        {
+          "key": "currency",
+          "value": "Indonesian Rupiah"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total 2.050.200"
+        },
+        {
+          "key": "tax_based",
+          "value": "Tax Based 1.879.350"
+        },
+        {
+          "key": "vat",
+          "value": "VAT 12% 225.522"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total 2.275.722"
+        }
+      ]
+    }
+  }
+}

@@ -150,17 +150,39 @@ export function useUpload(options?: { getTemplate?: () => string }) {
         // Handle completion
         xhr.addEventListener('load', () => {
           if (xhr.status === 200) {
-            updateFileProgress({ fileId, progress: 100, status: 'completed' })
-            
             // Parse response to check if job was created successfully
             try {
               const response = JSON.parse(xhr.responseText)
               if (response.job) {
+                // Check if this is a duplicate
+                if (response.duplicate && response.original_filename) {
+                  // Update file as deduplicated
+                  setUploadState(prev => ({
+                    ...prev,
+                    files: prev.files.map(file =>
+                      file.id === fileId
+                        ? {
+                            ...file,
+                            progress: 100,
+                            status: 'deduplicated' as const,
+                            duplicateOf: {
+                              jobId: response.original_job_id,
+                              filename: response.original_filename
+                            }
+                          }
+                        : file
+                    )
+                  }))
+                } else {
+                  // Regular completion
+                  updateFileProgress({ fileId, progress: 100, status: 'completed' })
+                }
+
                 // Check if all uploads are complete after this one
                 setTimeout(() => {
                   setUploadState(current => {
-                    const allCompleted = current.files.every(f => 
-                      f.id === fileId ? true : f.status === 'completed'
+                    const allCompleted = current.files.every(f =>
+                      f.id === fileId ? true : (f.status === 'completed' || f.status === 'deduplicated')
                     )
                     if (allCompleted) {
                       startRedirectCountdown()
@@ -171,15 +193,16 @@ export function useUpload(options?: { getTemplate?: () => string }) {
               }
             } catch (e) {
               console.log('Response parsing error:', e)
+              updateFileProgress({ fileId, progress: 100, status: 'completed' })
             }
-            
+
             resolve()
           } else {
-            updateFileProgress({ 
-              fileId, 
-              progress: 0, 
-              status: 'error', 
-              error: `Upload failed: ${xhr.statusText}` 
+            updateFileProgress({
+              fileId,
+              progress: 0,
+              status: 'error',
+              error: `Upload failed: ${xhr.statusText}`
             })
             reject(new Error(xhr.statusText))
           }

@@ -55,7 +55,9 @@ async function uploadHandler(req: NextRequest, { sessionId }: { sessionId: strin
         status: existing.status,
         created_at: existing.createdAt.toISOString()
       },
-      deduped_from: existing.id
+      duplicate: true,
+      original_job_id: existing.id,
+      original_filename: existing.originalFilename
     });
   }
   

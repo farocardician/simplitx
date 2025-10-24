@@ -1,0 +1,8 @@
+Sub Total
+Rp 25.699.758
+Tax Base VAT
+Rp 586.025
+VAT
+Rp 70.323
+Grand Total
+Rp 25.770.081

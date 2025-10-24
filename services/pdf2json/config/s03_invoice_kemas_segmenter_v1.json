@@ -1,237 +1,435 @@
 {
-  "name": "KEMAS Invoice Segmenter Config V1",
-  "version": "1.0",
-  "coords": { "normalized": true, "y_origin": "top", "precision": 6 },
-  "defaults": { "min_height": 0.011 },
-  "regions": [
-    {
-      "id": "header",
-      "label": "Header",
-      "on_pages": "first",
-      "detect": {
-        "by": "anchors",
-        "start_anchor": {
-          "patterns": ["^INVOICE$"],
-          "flags": {
-            "ignore_case": false,
-            "normalize_space": true
-          },
-          "select": "first"
-        },
-        "capture_window": {
-          "mode": "below_only",
-          "dy_max": 0.1,
-          "width": "page"
-        },
-        "margin": {
-          "top": 0.0,
-          "right": 0.0,
-          "bottom": -0.015,
-          "left": 0.0
-        }
-      },
-      "fallbacks": [
+    "name": "KEMAS Invoice Segmenter Config V1",
+    "version": "1.0",
+    "coords": {
+        "normalized": true,
+        "y_origin": "top",
+        "precision": 6
+    },
+    "defaults": {
+        "min_height": 0.011
+    },
+    "regions": [
         {
-          "by": "y_cutoff",
-          "edge": "top",
-          "y": 0.22
-        }
-      ],
-      "keep": "first"
-    },
-    {
-      "id": "invoice_number",
-      "label": "invoice_number",
-      "inside": "@header",
-      "detect": {
-        "by": "anchors",
-        "start_anchor": {
-          "patterns": ["^Number$"],
-          "flags": {
-            "ignore_case": false,
-            "normalize_space": true
-          },
-          "select": "first"
+            "id": "header",
+            "label": "Header",
+            "on_pages": "first",
+            "detect": {
+                "by": "line_anchors",
+                "start_anchor": {
+                    "patterns": [
+                        "^INVOICE$"
+                    ],
+                    "flags": {
+                        "ignore_case": false,
+                        "normalize_space": true
+                    },
+                    "select": "first"
+                },
+                "end_anchor": {
+                    "patterns": [
+                        ".* Date.*"
+                    ],
+                    "flags": {
+                        "ignore_case": false,
+                        "normalize_space": true
+                    },
+                    "select": "first"
+                },
+                "margin": {
+                    "top": 0,
+                    "right": 0,
+                    "bottom": 0.01,
+                    "left": 0
+                }
+            },
+            "fallbacks": [
+                {
+                    "by": "y_cutoff",
+                    "edge": "top",
+                    "y": 0.22
+                }
+            ],
+            "keep": "first"
         },
-        "capture_window": {
-          "mode": "around",
-          "dx": 0.12,
-          "dy": 0.002
-        },
-        "margin": {
-          "top": 0.0,
-          "right": 0.0,
-          "bottom": 0.0,
-          "left": 0.0
-        }
-      }
-    },
-    {
-      "id": "invoice_date",
-      "inside": "@header",
-      "detect": {
-        "by": "anchors",
-        "start_anchor": {
-          "patterns": ["^Date$"],
-          "flags": {
-            "ignore_case": false,
-            "normalize_space": true
-          },
-          "select": "first"
-        },
-        "capture_window": {
-          "mode": "around",
-          "dx": 0.08,
-          "dy": 0.002
-        },
-        "margin": {
-          "top": 0.0,
-          "right": 0.0,
-          "bottom": 0.0,
-          "left": 0.0
-        }
-      }
-    },
-    {
-      "id": "buyer_name",
-      "label": "buyer_name",
-      "on_pages": "first",
-      "detect": {
-        "by": "anchors",
-        "start_anchor": {
-          "patterns": ["^TO$"],
-          "flags": {
-            "ignore_case": false,
-            "normalize_space": true
-          },
-          "select": "first"
-        },
-        "end_anchor": {
-          "patterns": ["^Invoice$"],
-          "flags": {
-            "ignore_case": false,
-            "normalize_space": true
-          },
-          "select": "first"
-        },
-        "capture_window": {
-          "mode": "right_then_rows",
-          "start_edge": "right",
-          "rows": 0,
-          "row_tol": 0.005,
-          "dx_max": 0.6,
-          "gap_x": 0.01
-        },
-        "margin": {
-          "top": 0.0,
-          "right": -0.05,
-          "bottom": 0.0,
-          "left": 0.0
-        }
-      }
-    },
-    {
-      "id": "total",
-      "label": "total",
-      "on_pages": "all",
-      "detect": {
-        "by": "anchors",
-        "start_anchor": {
-          "patterns": ["^TOTAL$"],
-          "flags": {
-            "ignore_case": false,
-            "normalize_space": true
-          },
-          "select": "first"
-        },
-        "capture_window": {
-          "mode": "below_only",
-          "dy_max": 0.05,
-          "width": "page"
-        },
-        "margin": {
-          "top": 0.01,
-          "bottom": 0.0,
-          "left": -0.5,
-          "right": 0.0
-        }
-      },
-      "fallbacks": [
         {
-          "by": "y_cutoff",
-          "edge": "bottom",
-          "y": 0.7
-        }
-      ]
-    },
-    {
-      "id": "subtotal",
-      "label": "subtotal",
-      "inside": "@total",
-      "detect": {
-        "by": "anchors",
-        "start_anchor": {
-          "patterns": ["^TOTAL$"],
-          "flags": {
-            "ignore_case": false,
-            "normalize_space": true
-          },
-          "select": "first"
+            "id": "invoice_number",
+            "label": "invoice_number",
+            "inside": "@header",
+            "detect": {
+                "by": "line_anchors",
+                "start_anchor": {
+                    "patterns": [
+                        "\\bInvoice\\b\\s+\\bNumber\\b"
+                    ],
+                    "flags": {
+                        "ignore_case": false,
+                        "normalize_space": true
+                    },
+                    "select": "first"
+                },
+                "capture_window": {
+                    "mode": "right_only",
+                    "dy_tol": 0.003,
+                    "start_edge": "left",
+                    "gap_x": 0.003,
+                    "dx_max": 0.25,
+                    "refine_with_tokens": true
+                },
+                "margin": {
+                    "top": 0.01,
+                    "right": 0,
+                    "bottom": -0.01,
+                    "left": 0
+                }
+            }
         },
-        "capture_window": {
-          "mode": "right_then_rows",
-          "start_edge": "left",
-          "rows": 0,
-          "dx_max": 0.5,
-          "dy_tol": 0.003
-        }
-      }
-    },
-    {
-      "id": "vat",
-      "label": "vat",
-      "inside": "@total",
-      "detect": {
-        "by": "anchors",
-        "start_anchor": {
-          "patterns": ["^PPn$"],
-          "flags": {
-            "ignore_case": false,
-            "normalize_space": true
-          },
-          "select": "first"
+        {
+            "id": "invoice_date",
+            "label": "invoice_date",
+            "inside": "@header",
+            "detect": {
+                "by": "line_anchors",
+                "start_anchor": {
+                    "patterns": [
+                        "\\b[A-Za-z]+\\b\\s+[Dd]ate\\b"
+                    ],
+                    "flags": {
+                        "ignore_case": false,
+                        "normalize_space": true
+                    },
+                    "select": "first"
+                },
+                "capture_window": {
+                    "mode": "right_only",
+                    "dy_tol": 0.003,
+                    "start_edge": "left",
+                    "gap_x": 0.003,
+                    "dx_max": 0.25,
+                    "refine_with_tokens": true
+                },
+                "margin": {
+                    "top": -0.01,
+                    "right": 0,
+                    "bottom": 0.01,
+                    "left": 0
+                }
+            }
         },
-        "capture_window": {
-          "mode": "right_then_rows",
-          "start_edge": "left",
-          "rows": 0,
-          "dx_max": 0.5,
-          "dy_tol": 0.003
-        }
-      }
-    },
-    {
-      "id": "grand_total",
-      "label": "grand_total",
-      "inside": "@total",
-      "detect": {
-        "by": "anchors",
-        "start_anchor": {
-          "patterns": ["^GRAND$"],
-          "flags": {
-            "ignore_case": false,
-            "normalize_space": true
-          },
-          "select": "first"
+        {
+            "id": "buyer_name",
+            "label": "buyer_name",
+            "inside": "@header",
+            "on_pages": "first",
+            "detect": {
+                "by": "anchors",
+                "start_anchor": {
+                    "patterns": [
+                        "^TO$"
+                    ],
+                    "flags": {
+                        "ignore_case": false,
+                        "normalize_space": true
+                    },
+                    "select": "first"
+                },
+                "end_anchor": {
+                    "patterns": [
+                        "^Invoice$"
+                    ],
+                    "flags": {
+                        "ignore_case": false,
+                        "normalize_space": true
+                    },
+                    "select": "first"
+                },
+                "capture_window": {
+                    "mode": "right_then_rows",
+                    "start_edge": "right",
+                    "rows": 0,
+                    "row_tol": 0.005,
+                    "dx_max": 0.6,
+                    "gap_x": 0.01
+                },
+                "margin": {
+                    "top": 0,
+                    "right": -0.05,
+                    "bottom": 0,
+                    "left": 0
+                }
+            }
         },
-        "capture_window": {
-          "mode": "right_then_rows",
-          "start_edge": "left",
-          "rows": 0,
-          "dx_max": 0.5,
-          "dy_tol": 0.003
+        {
+            "id": "table",
+            "label": "table",
+            "on_pages": "first",
+            "detect": {
+                "by": "line_anchors",
+                "start_anchor": {
+                    "patterns": [
+                        "^(?:QTY\\s+)?NO\\s+DESCRIPTION\\b"
+                    ],
+                    "flags": {
+                        "ignore_case": false,
+                        "normalize_space": true
+                    },
+                    "select": "first"
+                },
+                "end_anchor": {
+                    "patterns": [
+                        "^TOTAL\\b"
+                    ],
+                    "flags": {
+                        "ignore_case": false,
+                        "normalize_space": true
+                    },
+                    "select": "first"
+                },
+                "margin": {
+                    "top": 0.02,
+                    "right": 0,
+                    "bottom": -0.015,
+                    "left": 1
+                }
+            },
+            "fallbacks": [
+                {
+                    "by": "line_anchors",
+                    "start_anchor": {
+                        "patterns": [
+                            "^Harga\\b"
+                        ],
+                        "flags": {
+                            "ignore_case": false,
+                            "normalize_space": true
+                        },
+                        "select": "first"
+                    },
+                    "end_anchor": {
+                        "patterns": [
+                            "^TOTAL\\b"
+                        ],
+                        "flags": {
+                            "ignore_case": false,
+                            "normalize_space": true
+                        },
+                        "select": "first"
+                    },
+                    "margin": {
+                        "top": 0.005,
+                        "right": 0,
+                        "bottom": -0.015,
+                        "left": 1
+                    }
+                },
+                {
+                    "by": "anchors",
+                    "start_anchor": {
+                        "patterns": [
+                            "^(?:QTY\\s+)?NO\\s+DESCRIPTION\\b"
+                        ],
+                        "flags": {
+                            "ignore_case": false,
+                            "normalize_space": true
+                        },
+                        "select": "first"
+                    },
+                    "end_anchor": {
+                        "patterns": [
+                            "^TOTAL\\b"
+                        ],
+                        "flags": {
+                            "ignore_case": false,
+                            "normalize_space": true
+                        },
+                        "select": "first"
+                    },
+                    "margin": {
+                        "top": 0.02,
+                        "right": 0,
+                        "bottom": -0.015,
+                        "left": 1
+                    }
+                }
+            ]
+        },
+        {
+            "id": "total",
+            "label": "total",
+            "on_pages": "all",
+            "detect": {
+                "by": "line_anchors",
+                "anchor_scope": "page",
+                "start_anchor": {
+                    "patterns": [
+                        "^TOTAL\\b"
+                    ],
+                    "flags": {
+                        "ignore_case": false,
+                        "normalize_space": true
+                    },
+                    "select": "first"
+                },
+                "end_anchor": {
+                    "patterns": [
+                        "SUB.*TOTAL",
+                        "GRAND.*TOTAL",
+                        "Pembayaran.*Termin"
+                    ],
+                    "flags": {
+                        "ignore_case": false,
+                        "normalize_space": true
+                    },
+                    "select": "bottommost"
+                },
+                "margin": {
+                    "top": 0,
+                    "bottom": 0.01,
+                    "left": 0.0,
+                    "right": 0
+                }
+            },
+            "fallbacks": [
+                {
+                    "by": "line_anchors",
+                    "start_anchor": {
+                        "patterns": [
+                            "^TOTAL\\b"
+                        ],
+                        "flags": {
+                            "ignore_case": false,
+                            "normalize_space": true
+                        },
+                        "select": "first"
+                    },
+                    "capture_window": {
+                        "mode": "below_only",
+                        "dy_max": 0.065,
+                        "width": "anchor",
+                        "pad_left": 0.03,
+                        "pad_right": 0.05
+                    },
+                    "margin": {
+                        "top": 0,
+                        "bottom": 0,
+                        "left": 0,
+                        "right": 0
+                    }
+                },
+                {
+                    "by": "anchors",
+                    "start_anchor": {
+                        "patterns": [
+                            "^TOTAL\\b"
+                        ],
+                        "flags": {
+                            "ignore_case": false,
+                            "normalize_space": true
+                        },
+                        "select": "first"
+                    },
+                    "end_anchor": {
+                        "patterns": [
+                            "SUB.*TOTAL",
+                            "GRAND.*TOTAL",
+                            "Pembayaran.*Termin"
+                        ],
+                        "flags": {
+                            "ignore_case": false,
+                            "normalize_space": true
+                        },
+                        "select": "bottommost"
+                    },
+                    "margin": {
+                        "top": 0,
+                        "bottom": 0.01,
+                        "left": 0.4,
+                        "right": 0
+                    }
+                },
+                {
+                    "by": "y_cutoff",
+                    "edge": "bottom",
+                    "y": 0.7
+                }
+            ]
+        },
+        {
+            "id": "subtotal",
+            "label": "subtotal",
+            "inside": "@total",
+            "detect": {
+                "by": "line_anchors",
+                "start_anchor": {
+                    "patterns": [
+                        "\\bPPn\\b"
+                    ],
+                    "flags": {
+                        "ignore_case": false,
+                        "normalize_space": true
+                    },
+                    "select": "last"
+                },
+                "capture_window": {
+                    "mode": "above_rows",
+                    "rows": 1,
+                    "row_tol": 0.004,
+                    "width": "page",
+                    "pad_left": 0,
+                    "pad_right": 0
+                }
+            }
+        },
+        {
+            "id": "vat",
+            "label": "vat",
+            "inside": "@total",
+            "detect": {
+                "by": "anchors",
+                "start_anchor": {
+                    "patterns": [
+                        "^PPn$"
+                    ],
+                    "flags": {
+                        "ignore_case": false,
+                        "normalize_space": true
+                    },
+                    "select": "first"
+                },
+                "capture_window": {
+                    "mode": "right_then_rows",
+                    "start_edge": "left",
+                    "rows": 0,
+                    "dx_max": 0.5,
+                    "dy_tol": 0.003
+                }
+            }
+        },
+        {
+            "id": "grand_total",
+            "label": "grand_total",
+            "inside": "@total",
+            "detect": {
+                "by": "line_anchors",
+                "start_anchor": {
+                    "patterns": [
+                        "\\bPPn\\b"
+                    ],
+                    "flags": {
+                        "ignore_case": false,
+                        "normalize_space": true
+                    },
+                    "select": "last"
+                },
+                "capture_window": {
+                    "mode": "below_rows",
+                    "rows": 1,
+                    "row_tol": 0.004,
+                    "width": "page",
+                    "pad_left": 0,
+                    "pad_right": 0
+                }
+            }
         }
-      }
-    }
-  ]
+    ]
 }

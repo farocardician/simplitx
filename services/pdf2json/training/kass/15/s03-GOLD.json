@@ -1,0 +1,119 @@
+{
+  "client": "kass",
+  "variant": 15,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PAID Commercial Invoice TI No.# TI00361 PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, Balance Due JL. JENDERAL SUDIRMAN KAV. 1, IDR0 JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000 Bill To Invoice Date : 25 Sep 2025 PT Seroja Partners Indonesia Terms : Due on Receipt Sahid Sudirman Centre Jl. Jenderal Sudirman No. 86 42nd Floor Unit Due Date : 25 Sep 2025 C, Karet Tengsin, Tanah Abang Jakarta 10220 Indonesia Our Ref : T4687ID & T4688ID Subject : Trademark Search for TM \"QUIET VILLAS\" in Class 36 & 43"
+        },
+        {
+          "key": "table",
+          "value": "# Item & Description Qty Rate Amount 1 Availability - Similarity Search on Device or Composite 2 300,000 600,000 Mark Professional fees in receiving your instructions; conducting the relevant similarity trademark search for above mentioned device or composite mark in Class(es) 36 & 43; reporting and forwarding the search report to you; docketing your file for future action and general care rendered on these matters."
+        },
+        {
+          "key": "total",
+          "value": "Sub Total (IDR) 600,000 Tax Base VAT (IDR) 550,000 VAT (12%) 66,000 PPH 23 (2%) (-) 12,000 Total Net Amount (IDR) IDR654,000 Payment Made (-) 654,000 Balance Due IDR0"
+        },
+        {
+          "key": "seller",
+          "value": "PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, JL. JENDERAL SUDIRMAN KAV. 1, JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Bill To PT Seroja Partners Indonesia"
+        },
+        {
+          "key": "invoice_number",
+          "value": "TI No.# TI00361"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Invoice Date : 25 Sep 2025"
+        },
+        {
+          "key": "currency",
+          "value": "Balance Due IDR0"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total (IDR) 600,000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base VAT (IDR) 550,000"
+        },
+        {
+          "key": "tax",
+          "value": "VAT (12%) 66,000"
+        },
+        {
+          "key": "income_tax",
+          "value": "PPH 23 (2%) (-) 12,000"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total Net Amount (IDR) IDR654,000"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PAID Commercial Invoice TI No.# TI00361 PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, Balance Due JL. JENDERAL SUDIRMAN KAV. 1, IDR0 JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000 Bill To Invoice Date : 25 Sep 2025 PT Seroja Partners Indonesia Terms : Due on Receipt Sahid Sudirman Centre Jl. Jenderal Sudirman No. 86 42nd Floor Unit Due Date : 25 Sep 2025 C, Karet Tengsin, Tanah Abang Jakarta 10220 Indonesia Our Ref : T4687ID & T4688ID Subject : Trademark Search for TM \"QUIET VILLAS\" in Class 36 & 43"
+        },
+        {
+          "key": "table",
+          "value": "# Item & Description Qty Rate Amount 1 Availability - Similarity Search on Device or Composite 2 300,000 600,000 Mark Professional fees in receiving your instructions; conducting the relevant similarity trademark search for above mentioned device or composite mark in Class(es) 36 & 43; reporting and forwarding the search report to you; docketing your file for future action and general care rendered on these matters."
+        },
+        {
+          "key": "total",
+          "value": "Sub Total (IDR) 600,000 Tax Base VAT (IDR) 550,000 VAT (12%) 66,000 PPH 23 (2%) (-) 12,000 Total Net Amount (IDR) IDR654,000 Payment Made (-) 654,000 Balance Due IDR0"
+        },
+        {
+          "key": "seller",
+          "value": "PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, JL. JENDERAL SUDIRMAN KAV. 1, JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Bill To PT Seroja Partners Indonesia"
+        },
+        {
+          "key": "invoice_number",
+          "value": "TI No.# TI00361"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Invoice Date : 25 Sep 2025"
+        },
+        {
+          "key": "currency",
+          "value": "Balance Due IDR0"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total (IDR) 600,000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base VAT (IDR) 550,000"
+        },
+        {
+          "key": "tax",
+          "value": "VAT (12%) 66,000"
+        },
+        {
+          "key": "income_tax",
+          "value": "PPH 23 (2%) (-) 12,000"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total Net Amount (IDR) IDR654,000"
+        }
+      ]
+    }
+  }
+}

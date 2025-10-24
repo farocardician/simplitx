@@ -1,0 +1,103 @@
+{
+  "client": "visi",
+  "variant": 6,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE PT.BursaEfekIndonesia Invoiceno. :9058006594 aILt.GedungBursaEfekIndonesiaMena BillingDate :August29,2025 , 12190,Senayan,KebayoranBaru,JakartaSelatan Indonesia Attention:Tel:"
+        },
+        {
+          "key": "total",
+          "value": "SubTotal 9.000.000 TaxBase 8.250.000 PPN-VAT12% 990.000 TotalAmount 9.990.000"
+        },
+        {
+          "key": "seller",
+          "value": "Pleasekindlymakethepaymenttoourbankaccountasbelow: BankAccountName : PT.VISIGLOBALINDODATAUTAMA BankName : BankAddress : AccountNo. SWIFTCode-"
+        },
+        {
+          "key": "currency",
+          "value": "Amount(IDR)"
+        },
+        {
+          "key": "invoice_number",
+          "value": ":9058006594 :August29,2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": ":August29,2025"
+        },
+        {
+          "key": "buyer",
+          "value": "PT.BursaEfekIndonesia aILt.GedungBursaEfekIndonesiaMena , 12190,Senayan,KebayoranBaru,JakartaSelatan Indonesia Attention:Tel:"
+        },
+        {
+          "key": "subtotal",
+          "value": "SubTotal 9.000.000"
+        },
+        {
+          "key": "tax_base",
+          "value": "TaxBase 8.250.000"
+        },
+        {
+          "key": "vat",
+          "value": "PPN-VAT12% 990.000"
+        },
+        {
+          "key": "total_amount",
+          "value": "TotalAmount 9.990.000"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE PT. Bursa Efek Indonesia Invoice no. :9058006594 a I Lt. Gedung Bursa Efek Indonesia Mena Billing Date :August 29 , 2025 , 12190,Senayan, Kebayoran Baru, Jakarta Selatan Indonesia Attention : Tel:"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total 9.000.000 Tax Base 8.250.000 PPN - VAT 12% 990.000 Total Amount 9.990.000"
+        },
+        {
+          "key": "seller",
+          "value": "Please kindly make the payment to our bank account as below: Bank Account Name : PT. VISI GLOBALINDO DATA UTAMA Bank Name : Bank Address : Account No. SWIFT Code -"
+        },
+        {
+          "key": "currency",
+          "value": "Amount(IDR)"
+        },
+        {
+          "key": "invoice_number",
+          "value": ":9058006594 :August 29 , 2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": ":August 29 , 2025"
+        },
+        {
+          "key": "buyer",
+          "value": "PT. Bursa Efek Indonesia a I Lt. Gedung Bursa Efek Indonesia Mena , 12190,Senayan, Kebayoran Baru, Jakarta Selatan Indonesia Attention : Tel:"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total 9.000.000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base 8.250.000"
+        },
+        {
+          "key": "vat",
+          "value": "PPN - VAT 12% 990.000"
+        },
+        {
+          "key": "total_amount",
+          "value": "Total Amount 9.990.000"
+        }
+      ]
+    }
+  }
+}

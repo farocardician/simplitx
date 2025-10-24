@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TaxInvoiceBulk xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <TIN>0758900039064000</TIN>
+  <ListOfTaxInvoice>
+    <TaxInvoice>
+      <TaxInvoiceDate>2025-09-16</TaxInvoiceDate>
+      <TaxInvoiceOpt>Normal</TaxInvoiceOpt>
+      <TrxCode>04</TrxCode>
+      <AddInfo/>
+      <CustomDoc/>
+      <CustomDocMonthYear/>
+      <RefDesc>INV/079/0925</RefDesc>
+      <FacilityStamp/>
+      <SellerIDTKU>0758900039064000000000</SellerIDTKU>
+      <BuyerTin>0013486113062000</BuyerTin>
+      <BuyerDocument>TIN</BuyerDocument>
+      <BuyerCountry>IDN</BuyerCountry>
+      <BuyerDocumentNumber>-</BuyerDocumentNumber>
+      <BuyerName>PT PRG</BuyerName>
+      <BuyerAdress>JAKARTA</BuyerAdress>
+      <BuyerEmail>-</BuyerEmail>
+      <BuyerIDTKU>0013486113062000000000</BuyerIDTKU>
+      <ListOfGoodService>
+        <GoodService>
+          <Opt>A</Opt>
+          <Code>990000</Code>
+          <Name>SUREMDM SUITE - ON CLOUD
+1) SureMDM On-Cloud Software
+2) SureLock On-Cloud Software
+3) SureFox On-Cloud Software
+4) SureVideo On-Cloud Software</Name>
+          <Unit>UM.0018</Unit>
+          <Price>715000</Price>
+          <Qty>210</Qty>
+          <TotalDiscount>0</TotalDiscount>
+          <TaxBase>150150000</TaxBase>
+          <OtherTaxBase>137637500</OtherTaxBase>
+          <VATRate>12</VATRate>
+          <VAT>16516500</VAT>
+          <STLGRate>0</STLGRate>
+          <STLG>0</STLG>
+        </GoodService>
+      </ListOfGoodService>
+    </TaxInvoice>
+    <TaxInvoice>
+      <TaxInvoiceDate>2025-09-16</TaxInvoiceDate>
+      <TaxInvoiceOpt>Normal</TaxInvoiceOpt>
+      <TrxCode>04</TrxCode>
+      <AddInfo/>
+      <CustomDoc/>
+      <CustomDocMonthYear/>
+      <RefDesc>INV/080/0925</RefDesc>
+      <FacilityStamp/>
+      <SellerIDTKU>0758900039064000000000</SellerIDTKU>
+      <BuyerTin>0017880139063000</BuyerTin>
+      <BuyerDocument>TIN</BuyerDocument>
+      <BuyerCountry>IDN</BuyerCountry>
+      <BuyerDocumentNumber>-</BuyerDocumentNumber>
+      <BuyerName>PT PRG</BuyerName>
+      <BuyerAdress>JAKARTA</BuyerAdress>
+      <BuyerEmail>-</BuyerEmail>
+      <BuyerIDTKU>0017880139063000000000</BuyerIDTKU>
+      <ListOfGoodService>
+        <GoodService>
+          <Opt>B</Opt>
+          <Code>240900</Code>
+          <Name>Teaching Factory BCA Cash Management Academy: Period September 2025</Name>
+          <Unit>UM.0030</Unit>
+          <Price>3500000</Price>
+          <Qty>6</Qty>
+          <TotalDiscount>0</TotalDiscount>
+          <TaxBase>21000000</TaxBase>
+          <OtherTaxBase>19250000</OtherTaxBase>
+          <VATRate>12</VATRate>
+          <VAT>2310000</VAT>
+          <STLGRate>0</STLGRate>
+          <STLG>0</STLG>
+        </GoodService>
+      </ListOfGoodService>
+    </TaxInvoice>
+  </ListOfTaxInvoice>
+</TaxInvoiceBulk>

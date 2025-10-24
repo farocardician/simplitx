@@ -4,10 +4,11 @@
       "header_synonyms": [
         "\\bDESCRIPTION\\b",
         "DESCRIPTION OF GOODS",
-        "DESCRIPTION OF SERVICES"
+        "DESCRIPTION OF SERVICES",
+        "\\bNO\\b"
       ],
       "position_hint": {
-        "x0": 0.1,
+        "x0": 0.08,
         "x1": 0.6
       },
       "parsers": [
@@ -16,21 +17,42 @@
       "required": true,
       "merge": true,
       "merge_wrapped": true,
-      "glue_hyphenated_words": true
+      "glue_hyphenated_words": true,
+      "postprocess": [
+        {
+          "pattern": "^\\s*\\d+\\s+",
+          "replace": ""
+        },
+        {
+          "pattern": "-\\s*(?=[A-Za-z])",
+          "replace": "- "
+        },
+        {
+          "pattern": "\\b\\d+\\s+(Komersial,)",
+          "replace": "\\1"
+        },
+        {
+          "pattern": "^(Pekerjaan) Komersial, (Pembuatan Materi Promosi) (.*)$",
+          "replace": "\\1 \\2 Komersial, \\3"
+        },
+        {
+          "pattern": "\\s-\\s*(?=\\d)",
+          "replace": " - "
+        }
+      ]
     },
     "qty": {
       "header_synonyms": [
-        "\\bNO\\b",
-        "\\bNO\\.\\b",
         "\\bQTY\\b",
         "\\bQUANTITY\\b"
       ],
       "position_hint": {
-        "x0": 0.05,
-        "x1": 0.1
+        "x0": 0.37,
+        "x1": 0.56
       },
       "parsers": [
-        "parse_number"
+        "parse_number",
+        "split_qty_uom"
       ],
       "required": true,
       "merge": false
@@ -41,16 +63,17 @@
         "UNIT PRICE (IDR)",
         "UNIT COST",
         "PRICE",
-        "RATE"
+        "RATE",
+        "\\(Rp\\.?\\)"
       ],
       "position_hint": {
-        "x0": 0.65,
-        "x1": 0.8
+        "x0": 0.56,
+        "x1": 0.90
       },
       "parsers": [
         "parse_money"
       ],
-      "required": true,
+      "required": false,
       "merge": false
     },
     "amount": {
@@ -61,8 +84,8 @@
         "LINE TOTAL"
       ],
       "position_hint": {
-        "x0": 0.85,
-        "x1": 0.95
+        "x0": 0.73,
+        "x1": 0.90
       },
       "parsers": [
         "parse_money"
@@ -92,6 +115,10 @@
     "discount_percent": 0,
     "discount_amount": 0,
     "qty": 1
+  },
+  "derivation": {
+    "fill_amount_from_qty_price": true,
+    "fill_unit_price_from_amount_qty": true
   },
   "row_filters": [
     "^\\s*(TOTAL|SUB\\s*TOTAL|GRAND\\s*TOTAL|VAT|PPN|TAX BASE)\\s*$",

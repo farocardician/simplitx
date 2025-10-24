@@ -5,9 +5,13 @@ export interface UploadedFile {
   size: number
   sizeFormatted: string
   progress: number
-  status: 'pending' | 'uploading' | 'completed' | 'error' | 'cancelled'
+  status: 'pending' | 'uploading' | 'completed' | 'error' | 'cancelled' | 'deduplicated'
   error?: string
   abortController?: AbortController
+  duplicateOf?: {
+    jobId: string
+    filename: string
+  }
 }
 
 export interface UploadState {

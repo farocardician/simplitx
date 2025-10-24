@@ -258,7 +258,10 @@ export function PDFDropzone() {
                 className={styles.uploadButton}
                 aria-label="Start uploading all pending files"
               >
-                {isUploading ? 'Uploading...' : `Upload ${files.filter(f => f.status === 'pending').length} file(s)`}
+                {isUploading ? 'Uploading...' : (() => {
+                  const pendingCount = files.filter(f => f.status === 'pending').length
+                  return `Upload ${pendingCount} file${pendingCount !== 1 ? 's' : ''}`
+                })()}
               </button>
             )}
             
@@ -274,16 +277,32 @@ export function PDFDropzone() {
         </div>
       )}
 
-      {redirectCountdown !== null && (
-        <div className={styles.successMessage}>
-          <div className={styles.successTitle}>
-            ✅ PDF{files.length > 1 ? 's' : ''} uploaded successfully!
+      {redirectCountdown !== null && (() => {
+        const completedCount = files.filter(f => f.status === 'completed').length
+        const duplicateCount = files.filter(f => f.status === 'deduplicated').length
+        const totalFiles = files.length
+
+        return (
+          <div className={styles.successMessage}>
+            <div className={styles.successTitle}>
+              ✅ {totalFiles === 1 ? 'File' : 'Files'} processed successfully!
+            </div>
+            <div className={styles.successSubtitle}>
+              {duplicateCount > 0 ? (
+                <>
+                  {completedCount} new file{completedCount !== 1 ? 's' : ''} uploaded
+                  {duplicateCount > 0 && `, ${duplicateCount} duplicate${duplicateCount !== 1 ? 's' : ''} detected`}
+                </>
+              ) : (
+                `${completedCount} file${completedCount !== 1 ? 's' : ''} uploaded`
+              )}
+            </div>
+            <div className={styles.successSubtitle}>
+              Redirecting to processing queue in <span className={styles.countdown}>{redirectCountdown}</span> second{redirectCountdown !== 1 ? 's' : ''}
+            </div>
           </div>
-          <div className={styles.successSubtitle}>
-            Redirecting to processing queue in <span className={styles.countdown}>{redirectCountdown}</span> second{redirectCountdown !== 1 ? 's' : ''}
-          </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }

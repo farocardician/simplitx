@@ -36,7 +36,7 @@ import re
 import logging
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable, Sequence
+from typing import Any, Dict, List, Optional, Tuple, Union, Callable, Sequence, Set
 from collections import defaultdict, deque
 
 # PDF overlay generation (optional dependency)
@@ -271,26 +271,15 @@ class TableProvider:
         return tables
     
     def _is_table_header(self, row: List[Dict[str, Any]]) -> bool:
-        """Check if a row looks like a table header."""
-        if len(row) < 2:  # Need multiple columns
-            return False
-        
-        row_text = " ".join(t.get("norm", t.get("text", "")) for t in row).upper()
-        
-        # Score based on common header keywords
-        score = 0
-        header_keywords = [
-            ("NO", 1), ("ITEM", 1), ("QTY", 1), ("QUANTITY", 1),
-            ("DESC", 1), ("DESCRIPTION", 1), ("GOODS", 1),
-            ("PRICE", 1), ("AMOUNT", 1), ("TOTAL", 1),
-            ("UNIT", 1), ("RATE", 1), ("VALUE", 1)
-        ]
-        
-        for keyword, weight in header_keywords:
-            if keyword in row_text:
-                score += weight
-        
-        return score >= 3
+        """
+        Check if a row looks like a table header.
+
+        This method is deprecated and should not be used for new config-driven detection.
+        All table header patterns should be specified in config files.
+        """
+        # Return False - this method should not be used
+        # All table header detection should be config-driven
+        return False
     
     def _find_table_extent(self, rows: List[List[Dict[str, Any]]], 
                           header_idx: int) -> Optional[BBox]:
@@ -482,6 +471,18 @@ class DetectionModes:
 
         start_bbox_list = [float(v) for v in start_match["bbox"]]
 
+        # Refine with tokens if requested
+        if capture_window and capture_window.get("refine_with_tokens", False):
+            refined_bbox = DetectionModes._refine_line_match_with_tokens(
+                ctx=ctx,
+                line_bbox=start_bbox_list,
+                anchor_config=start_anchor,
+                matched_text=start_match.get("matched_text", "")
+            )
+            if refined_bbox:
+                start_bbox_list = refined_bbox
+                ctx.logger.debug(f"Refined line bbox with tokens: {start_bbox_list}")
+
         if capture_window:
             cw_bbox = DetectionModes._capture_window_bbox(
                 ctx=ctx,
@@ -529,6 +530,133 @@ class DetectionModes:
         )
 
     @staticmethod
+    def _refine_line_match_with_tokens(ctx: Context,
+                                       line_bbox: Sequence[float],
+                                       anchor_config: Dict[str, Any],
+                                       matched_text: str) -> Optional[List[float]]:
+        """
+        Refine a line-level match by finding the exact token span that matches the anchor pattern.
+
+        Process:
+        1. Collect tokens that intersect with the line bbox
+        2. Join their texts left→right
+        3. Re-run the anchor regex to find the exact character span
+        4. Map the character span back to the minimal consecutive token span
+        5. Return the union bbox of those tokens
+        """
+        lx0, ly0, lx1, ly1 = map(float, line_bbox)
+
+        # Find tokens that intersect with the line bbox (with small y tolerance)
+        y_tol = 0.005
+        line_tokens = []
+        for token in ctx.tokens:
+            tx0 = token["bbox"]["x0"]
+            ty0 = token["bbox"]["y0"]
+            tx1 = token["bbox"]["x1"]
+            ty1 = token["bbox"]["y1"]
+
+            # Check y overlap
+            if ty1 < ly0 - y_tol or ty0 > ly1 + y_tol:
+                continue
+            # Check x overlap
+            if tx1 < lx0 or tx0 > lx1:
+                continue
+
+            line_tokens.append(token)
+
+        if not line_tokens:
+            ctx.logger.debug("No tokens found intersecting line bbox")
+            return None
+
+        # Sort tokens left to right
+        line_tokens.sort(key=lambda t: (t["bbox"]["x0"], t["bbox"]["y0"]))
+
+        # Build concatenated text with character positions
+        # We need to track which character range belongs to which token
+        token_map = []  # List of (start_char, end_char, token_index)
+        full_text = []
+        char_pos = 0
+
+        for idx, token in enumerate(line_tokens):
+            text = token.get("norm", token.get("text", ""))
+            if idx > 0:
+                # Add space between tokens
+                full_text.append(" ")
+                char_pos += 1
+
+            start_char = char_pos
+            full_text.append(text)
+            char_pos += len(text)
+            end_char = char_pos
+
+            token_map.append((start_char, end_char, idx))
+
+        full_text_str = "".join(full_text)
+
+        # Compile the anchor pattern and find the match
+        patterns = anchor_config.get("patterns", anchor_config.get("pattern", ""))
+        if isinstance(patterns, str):
+            patterns = [patterns]
+
+        flags = anchor_config.get("flags", {})
+        regex_flags = 0
+        if flags.get("ignore_case", False):
+            regex_flags |= re.IGNORECASE
+
+        # Normalize space if required
+        search_text = full_text_str
+        if flags.get("normalize_space", False):
+            search_text = " ".join(search_text.split())
+
+        # Find the match
+        match_obj = None
+        for pattern in patterns:
+            try:
+                pattern_re = re.compile(pattern, regex_flags)
+                match_obj = pattern_re.search(search_text)
+                if match_obj:
+                    break
+            except re.error as e:
+                ctx.logger.warning(f"Invalid regex '{pattern}': {e}")
+
+        if not match_obj:
+            ctx.logger.debug("Regex did not match in token-refined text")
+            return None
+
+        # Get character span of the match
+        match_start, match_end = match_obj.span()
+
+        # Map character span back to token indices
+        # Find all tokens that overlap with [match_start, match_end)
+        involved_tokens = []
+        for start_char, end_char, token_idx in token_map:
+            # Check if this token overlaps with the match span
+            if end_char <= match_start or start_char >= match_end:
+                continue
+            involved_tokens.append(token_idx)
+
+        if not involved_tokens:
+            ctx.logger.debug("No tokens map to the regex match span")
+            return None
+
+        # Get the union bbox of involved tokens
+        min_idx = min(involved_tokens)
+        max_idx = max(involved_tokens)
+        span_tokens = line_tokens[min_idx:max_idx + 1]
+
+        if not span_tokens:
+            return None
+
+        refined_x0 = min(t["bbox"]["x0"] for t in span_tokens)
+        refined_y0 = min(t["bbox"]["y0"] for t in span_tokens)
+        refined_x1 = max(t["bbox"]["x1"] for t in span_tokens)
+        refined_y1 = max(t["bbox"]["y1"] for t in span_tokens)
+
+        ctx.logger.debug(f"Token refinement: '{search_text}' -> matched '{match_obj.group()}' -> {len(span_tokens)} tokens")
+
+        return [refined_x0, refined_y0, refined_x1, refined_y1]
+
+    @staticmethod
     def _capture_window_bbox(ctx: Context,
                              start_bbox: Sequence[float],
                              capture_window: Dict[str, Any]) -> Optional[BBox]:
@@ -563,11 +691,26 @@ class DetectionModes:
         ax0, ay0, ax1, ay1 = map(float, start_bbox)
         anchor_center_y = 0.5 * (ay0 + ay1)
 
-        # Defaults shared across modes
-        dx_max = float(capture_window.get("dx_max", 0.35))
-        dy_max = float(capture_window.get("dy_max", 0.15))
-        dy_tol = float(capture_window.get("dy_tol", 0.008))
-        gap_x  = max(0.0, float(capture_window.get("gap_x", 0.0)))
+        # Defaults shared across modes - clamp to non-negative values
+        dx_max_raw = float(capture_window.get("dx_max", 0.35))
+        dy_max_raw = float(capture_window.get("dy_max", 0.15))
+        dy_tol_raw = float(capture_window.get("dy_tol", 0.008))
+        gap_x_raw  = float(capture_window.get("gap_x", 0.0))
+
+        # Clamp and warn if negative
+        dx_max = max(0.0, dx_max_raw)
+        dy_max = max(0.0, dy_max_raw)
+        dy_tol = max(0.0, dy_tol_raw)
+        gap_x  = max(0.0, gap_x_raw)
+
+        if dx_max_raw < 0:
+            ctx.logger.warning(f"capture_window.dx_max is negative ({dx_max_raw}), clamped to 0")
+        if dy_max_raw < 0:
+            ctx.logger.warning(f"capture_window.dy_max is negative ({dy_max_raw}), clamped to 0")
+        if dy_tol_raw < 0:
+            ctx.logger.warning(f"capture_window.dy_tol is negative ({dy_tol_raw}), clamped to 0")
+        if gap_x_raw < 0:
+            ctx.logger.warning(f"capture_window.gap_x is negative ({gap_x_raw}), clamped to 0")
 
         # Helpers for row grouping
         def _build_rows(tokens: Sequence[Dict[str, Any]], row_tol: float) -> List[Dict[str, Any]]:
@@ -755,6 +898,11 @@ class DetectionModes:
         win_x0, win_x1 = max(0.0, min(win_x0, win_x1)), min(1.0, max(win_x0, win_x1))
         win_y0, win_y1 = max(0.0, min(win_y0, win_y1)), min(1.0, max(win_y0, win_y1))
         if win_x1 <= win_x0 or win_y1 <= win_y0:
+            ctx.logger.warning(
+                f"capture_window collapsed to zero area: mode={mode}, "
+                f"window=[{win_x0:.3f},{win_y0:.3f},{win_x1:.3f},{win_y1:.3f}], "
+                f"params: dx_max={dx_max}, dy_max={dy_max}, gap_x={gap_x}, dy_tol={dy_tol}"
+            )
             return None
 
         # Collect intersecting tokens
@@ -1029,6 +1177,8 @@ class AgnosticSegmenter:
         self.config = self._load_config(config_path)
         self.table_provider = TableProvider()
         self.mode_handlers = self._build_mode_registry()
+        self._marker_pattern_cache: Dict[Tuple[str, ...], List[re.Pattern]] = {}
+        self._table_header_pattern_cache: Optional[List[re.Pattern]] = None
         # Precompute region config index for quick lookups
         self._region_index: Dict[str, Dict[str, Any]] = {
             r.get("id"): r for r in self.config.get("regions", []) if isinstance(r, dict) and r.get("id")
@@ -1127,13 +1277,9 @@ class AgnosticSegmenter:
         page: int,
         page_tokens: List[Dict[str, Any]],
         rows: List[List[Dict[str, Any]]],
-        lines_by_page: Optional[Dict[int, List[Dict[str, Any]]]],
+        raw_lines: Optional[List[Dict[str, Any]]],
     ) -> Tuple[Optional[List[Dict[str, Any]]], bool]:
         """Prepare line records enriched with bounding boxes for line anchors."""
-        if lines_by_page is None:
-            return None, False
-
-        raw_lines = lines_by_page.get(page)
         if raw_lines is None:
             return None, False
 
@@ -1232,6 +1378,411 @@ class AgnosticSegmenter:
         if tb["y0"] >= (bbox.y1 + tol):
             return False
         return True
+
+    def _resolve_marker_config_value(self, region_config: Dict[str, Any], key: str) -> Any:
+        """Resolve marker-related config values with proper precedence."""
+        detect_cfg = region_config.get("detect") or {}
+        if isinstance(detect_cfg, dict) and key in detect_cfg:
+            return detect_cfg.get(key)
+
+        if key in region_config:
+            return region_config.get(key)
+
+        defaults = self.config.get("defaults", {})
+        if isinstance(defaults, dict) and key in defaults:
+            return defaults.get(key)
+
+        return self.config.get(key)
+
+    def _should_drop_page_markers(self, region_config: Dict[str, Any]) -> bool:
+        """Determine if page marker removal is enabled for this region."""
+        value = self._resolve_marker_config_value(region_config, "drop_page_markers")
+        if value is None:
+            return False
+        return bool(value)
+
+    def _get_marker_patterns(self, region_config: Dict[str, Any]) -> List[re.Pattern]:
+        """Load and compile marker regex patterns for the region."""
+        raw_patterns = self._resolve_marker_config_value(region_config, "page_marker_patterns")
+        if not raw_patterns:
+            return []
+
+        if isinstance(raw_patterns, str):
+            pattern_list = [raw_patterns]
+        elif isinstance(raw_patterns, Sequence):
+            pattern_list = [p for p in raw_patterns if isinstance(p, str)]
+        else:
+            pattern_list = []
+
+        if not pattern_list:
+            return []
+
+        cache_key = tuple(pattern_list)
+        if cache_key in self._marker_pattern_cache:
+            return self._marker_pattern_cache[cache_key]
+
+        compiled: List[re.Pattern] = []
+        for pattern in pattern_list:
+            try:
+                compiled.append(re.compile(pattern, re.IGNORECASE))
+            except re.error as exc:
+                logger.warning(f"Invalid page marker regex '{pattern}': {exc}")
+
+        self._marker_pattern_cache[cache_key] = compiled
+        return compiled
+
+    def _get_table_header_patterns(self) -> List[re.Pattern]:
+        """Compile table header whitelist patterns from defaults."""
+        if self._table_header_pattern_cache is not None:
+            return self._table_header_pattern_cache
+
+        defaults = self.config.get("defaults", {}) or {}
+        table_header_detection = defaults.get("table_header_detection", {}) or {}
+        raw_patterns = table_header_detection.get("patterns", []) or []
+
+        patterns: List[re.Pattern] = []
+        for pattern in raw_patterns:
+            if not isinstance(pattern, str):
+                continue
+            try:
+                patterns.append(re.compile(pattern, re.IGNORECASE))
+            except re.error as exc:
+                logger.warning(f"Invalid table header regex '{pattern}': {exc}")
+
+        self._table_header_pattern_cache = patterns
+        return self._table_header_pattern_cache
+
+    @staticmethod
+    def _normalize_marker_y_band(band: Any) -> Optional[Tuple[float, float]]:
+        """Normalize the optional y band hint to a (y0, y1) tuple."""
+        if band is None:
+            return None
+
+        try:
+            if isinstance(band, (int, float)):
+                y0 = float(band)
+                y1 = 1.0
+            elif isinstance(band, (list, tuple)):
+                if len(band) == 0:
+                    return None
+                if len(band) == 1:
+                    y0 = float(band[0])
+                    y1 = 1.0
+                else:
+                    y0 = float(band[0])
+                    y1 = float(band[1])
+            elif isinstance(band, dict):
+                if "y0" in band or "top" in band:
+                    y0 = float(band.get("y0", band.get("top", 0.0)))
+                else:
+                    y0 = 0.0
+                if "y1" in band or "bottom" in band:
+                    y1 = float(band.get("y1", band.get("bottom", 1.0)))
+                else:
+                    y1 = 1.0
+            else:
+                return None
+        except (TypeError, ValueError):
+            return None
+
+        y0 = max(0.0, min(1.0, y0))
+        y1 = max(0.0, min(1.0, y1))
+        if y1 < y0:
+            y0, y1 = y1, y0
+
+        return (y0, y1)
+
+    @staticmethod
+    def _header_repetition_key(text: str) -> str:
+        """Normalize header text for repetition checks (case/spacing/digit tolerant)."""
+        if not text:
+            return ""
+        normalized = " ".join(text.split()).lower()
+        normalized = re.sub(r"\d+", "#", normalized)
+        normalized = re.sub(r"#+", "#", normalized)
+        return normalized
+
+    def _get_marker_y_band(self, region_config: Dict[str, Any]) -> Optional[Tuple[float, float]]:
+        """Resolve the optional marker y band hint."""
+        raw_band = self._resolve_marker_config_value(region_config, "page_marker_y_band")
+        return self._normalize_marker_y_band(raw_band)
+
+    @staticmethod
+    def _bbox_from_token(token: Dict[str, Any]) -> Optional[BBox]:
+        """Build a BBox helper from token coordinates."""
+        tb = token.get("bbox")
+        if not isinstance(tb, dict):
+            return None
+        try:
+            return BBox(
+                float(tb.get("x0", 0.0)),
+                float(tb.get("y0", 0.0)),
+                float(tb.get("x1", 0.0)),
+                float(tb.get("y1", 0.0)),
+            )
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _bbox_overlaps_band(bbox: BBox, band: Optional[Tuple[float, float]]) -> bool:
+        """Check if bbox overlaps the supplied y band."""
+        if band is None:
+            return True
+        y0, y1 = band
+        return not (bbox.y1 < y0 or bbox.y0 > y1)
+
+    def _filter_page_markers_for_page(
+        self,
+        page: int,
+        page_tokens: List[Dict[str, Any]],
+        raw_lines: Optional[List[Dict[str, Any]]],
+        patterns: List[re.Pattern],
+        y_band: Optional[Tuple[float, float]],
+    ) -> Tuple[List[Dict[str, Any]], Optional[List[Dict[str, Any]]], List[BBox]]:
+        """Remove footer-like page markers from tokens and lines for a page."""
+        if not patterns:
+            tokens_copy = list(page_tokens) if page_tokens else []
+            lines_copy = list(raw_lines) if raw_lines is not None else None
+            return tokens_copy, lines_copy, []
+
+        tokens_copy = list(page_tokens) if page_tokens else []
+        lines_copy = list(raw_lines) if raw_lines is not None else None
+        removed_boxes: List[BBox] = []
+        to_remove: Set[int] = set()
+
+        # Row-level matching to capture multi-token markers.
+        if tokens_copy:
+            rows = self._group_rows_from_tokens(tokens_copy)
+            for row in rows:
+                if not row:
+                    continue
+                row_bbox = self._bbox_from_tokens(row)
+                if not row_bbox or not self._bbox_overlaps_band(row_bbox, y_band):
+                    continue
+
+                row_text = " ".join(
+                    (token.get("norm") or token.get("text") or "").strip()
+                    for token in row
+                ).strip()
+                normalized_row_text = " ".join(row_text.split())
+                if not normalized_row_text:
+                    continue
+
+                if any(pattern.search(normalized_row_text) for pattern in patterns):
+                    removed_boxes.append(row_bbox)
+                    for token in row:
+                        to_remove.add(id(token))
+
+        # Line-level matching when line information exists.
+        if lines_copy is not None:
+            filtered_lines: List[Dict[str, Any]] = []
+            for line in lines_copy:
+                text = str(line.get("text", "")).strip()
+                if not text:
+                    continue
+
+                normalized_text = " ".join(text.split())
+                raw_bbox = line.get("bbox")
+                bbox_obj = None
+                if isinstance(raw_bbox, dict):
+                    try:
+                        bbox_obj = BBox(
+                            float(raw_bbox.get("x0", 0.0)),
+                            float(raw_bbox.get("y0", 0.0)),
+                            float(raw_bbox.get("x1", 0.0)),
+                            float(raw_bbox.get("y1", 0.0)),
+                        )
+                    except (TypeError, ValueError):
+                        bbox_obj = None
+
+                if any(pattern.search(normalized_text) for pattern in patterns) and (
+                    bbox_obj is None or self._bbox_overlaps_band(bbox_obj, y_band)
+                ):
+                    if bbox_obj is not None:
+                        removed_boxes.append(bbox_obj)
+                        for token in tokens_copy:
+                            if self._token_intersects_bbox(token, bbox_obj, tol=0.0):
+                                to_remove.add(id(token))
+                    continue
+
+                filtered_lines.append(line)
+
+            lines_copy = filtered_lines
+
+        # Token-level fallback matching for isolated tokens.
+        for token in tokens_copy:
+            if id(token) in to_remove:
+                continue
+
+            text = (token.get("norm") or token.get("text") or "").strip()
+            if not text:
+                continue
+            normalized_text = " ".join(text.split())
+
+            if any(pattern.search(normalized_text) for pattern in patterns):
+                token_bbox = self._bbox_from_token(token)
+                if token_bbox is None or self._bbox_overlaps_band(token_bbox, y_band):
+                    if token_bbox is not None:
+                        removed_boxes.append(token_bbox)
+                    to_remove.add(id(token))
+
+        if to_remove:
+            filtered_tokens = [token for token in tokens_copy if id(token) not in to_remove]
+        else:
+            filtered_tokens = tokens_copy
+
+        return filtered_tokens, lines_copy, removed_boxes
+
+    def _filter_repeated_headers(
+        self,
+        walk: Sequence[int],
+        toks_by_page: Dict[int, List[Dict[str, Any]]],
+        local_lines_by_page: Dict[int, List[Dict[str, Any]]],
+        source_lines_by_page: Optional[Dict[int, List[Dict[str, Any]]]],
+        header_floor_by_page: Dict[int, Tuple[float, str]],
+        header_defaults: Dict[str, Any],
+        start_anchor_top: Optional[float],
+    ) -> Dict[int, List[BBox]]:
+        """Drop repeated header blocks on continuation pages and return their boxes."""
+        header_boxes_by_page: Dict[int, List[BBox]] = {int(p): [] for p in walk}
+        if not walk:
+            return header_boxes_by_page
+
+        whitelist_patterns = self._get_table_header_patterns()
+        margin_px = float(header_defaults.get("margin_px", 0.0) or 0.0)
+        seen_header_keys: Set[str] = set()
+
+        for index, page in enumerate(walk):
+            page_lines = local_lines_by_page.get(page, [])
+            if not page_lines:
+                continue
+
+            header_floor, _ = header_floor_by_page.get(
+                page,
+                (float(header_defaults.get("ratio_top_fallback", 0.15) or 0.15), "default"),
+            )
+            band_limit = float(header_floor) + margin_px
+            if start_anchor_top is not None:
+                band_limit = max(band_limit, float(start_anchor_top) + margin_px)
+
+            candidates: List[Dict[str, Any]] = []
+            for line in page_lines:
+                text = str(line.get("text", "")).strip()
+                if not text:
+                    continue
+                if whitelist_patterns and any(pattern.search(text) for pattern in whitelist_patterns):
+                    continue
+
+                raw_bbox = line.get("bbox")
+                if not isinstance(raw_bbox, dict):
+                    continue
+                try:
+                    bbox = BBox(
+                        float(raw_bbox.get("x0", 0.0)),
+                        float(raw_bbox.get("y0", 0.0)),
+                        float(raw_bbox.get("x1", 0.0)),
+                        float(raw_bbox.get("y1", 0.0)),
+                    )
+                except (TypeError, ValueError):
+                    continue
+
+                if bbox.y1 > band_limit + 1e-6:
+                    continue
+
+                key = self._header_repetition_key(text)
+                if not key:
+                    continue
+
+                candidates.append({
+                    "line": line,
+                    "bbox": bbox,
+                    "key": key,
+                })
+
+            if not candidates:
+                continue
+
+            # First page in walk establishes reference texts but is not pruned
+            if index == 0:
+                for candidate in candidates:
+                    seen_header_keys.add(candidate["key"])
+                continue
+
+            lines_to_remove: List[Dict[str, Any]] = []
+            for candidate in candidates:
+                key = candidate["key"]
+                if key in seen_header_keys:
+                    lines_to_remove.append(candidate)
+                else:
+                    seen_header_keys.add(key)
+
+            if not lines_to_remove:
+                continue
+
+            removal_ids = {id(item["line"]) for item in lines_to_remove}
+            header_boxes_by_page[page].extend(item["bbox"] for item in lines_to_remove)
+
+            # Remove matching lines from local/source collections
+            local_lines_by_page[page] = [
+                line for line in page_lines
+                if id(line) not in removal_ids
+            ]
+
+            if source_lines_by_page is not None and page in source_lines_by_page:
+                source_lines_by_page[page] = [
+                    line for line in source_lines_by_page.get(page, [])
+                    if id(line) not in removal_ids
+                ]
+
+            # Remove intersecting tokens from this page
+            page_tokens = toks_by_page.get(page, [])
+            if not page_tokens:
+                continue
+
+            token_ids_to_drop: Set[int] = set()
+            for item in lines_to_remove:
+                bbox_obj = item["bbox"]
+                for token in page_tokens:
+                    if self._token_intersects_bbox(token, bbox_obj, tol=0.0):
+                        token_ids_to_drop.add(id(token))
+
+            if token_ids_to_drop:
+                toks_by_page[page] = [
+                    token for token in page_tokens
+                    if id(token) not in token_ids_to_drop
+                ]
+
+        return header_boxes_by_page
+
+    def _trim_bbox_with_markers(
+        self,
+        bbox_list: List[float],
+        marker_boxes: List[BBox],
+        precision: int,
+    ) -> List[float]:
+        """Trim the bottom of a bbox when exclusion boxes (markers/headers) overlap."""
+        if not marker_boxes:
+            return bbox_list
+
+        bbox = BBox.from_list(bbox_list)
+        new_y1 = bbox.y1
+
+        for marker in marker_boxes:
+            if marker.x1 <= bbox.x0 or marker.x0 >= bbox.x1:
+                continue
+            if marker.y0 >= new_y1 or marker.y1 <= bbox.y0:
+                continue
+
+            cutoff = max(marker.y0 - 0.002, bbox.y0)
+            new_y1 = min(new_y1, cutoff)
+
+        if new_y1 <= bbox.y0:
+            new_y1 = min(bbox.y1, bbox.y0 + 1e-5)
+
+        if abs(new_y1 - bbox.y1) > 1e-9:
+            bbox.y1 = new_y1
+
+        return bbox.to_list(precision)
     
     def _check_guard(self, tokens: List[Dict[str, Any]], patterns: List[str]) -> bool:
         """Check if page contains any of the guard patterns."""
@@ -1292,10 +1843,12 @@ class AgnosticSegmenter:
 
         # Cross-page anchors path (document scope) — optional and backward compatible
         detect_cfg = region_config.get("detect", {}) or {}
-        is_anchors = (detect_cfg.get("by") == "anchors")
-        if is_anchors:
+        detection_by = detect_cfg.get("by", "")
+        is_anchors_mode = detection_by in ("anchors", "line_anchors")
+        if is_anchors_mode:
             anchor_scope = str(detect_cfg.get("anchor_scope", "auto")).lower()
-            max_gap = int(detect_cfg.get("max_page_gap", 1))
+            max_gap_value = detect_cfg.get("max_page_gap", 1)
+            max_gap = int(max_gap_value) if max_gap_value is not None else 999
             val_policy = str(detect_cfg.get("value_part_policy", "end")).lower()
 
             try_cross_page = False
@@ -1321,7 +1874,8 @@ class AgnosticSegmenter:
                     region_config=region_config,
                     pages=pages,
                     tokens=tokens,
-                    total_pages=total_pages
+                    total_pages=total_pages,
+                    lines_by_page=lines_by_page
                 )
                 if cross:
                     logger.info(f"End region '{region_id}': cross-page anchors canonical emitted")
@@ -1386,6 +1940,26 @@ class AgnosticSegmenter:
                 if self._token_intersects_bbox(t, parent_bbox, tol)
             ]
 
+        raw_lines = None
+        if lines_by_page is not None:
+            raw_lines = list(lines_by_page.get(page, []) or [])
+
+        drop_markers = self._should_drop_page_markers(region_config)
+        if drop_markers:
+            marker_patterns = self._get_marker_patterns(region_config)
+            if marker_patterns:
+                marker_band = self._get_marker_y_band(region_config)
+                filtered_tokens, filtered_lines, _ = self._filter_page_markers_for_page(
+                    page,
+                    page_tokens,
+                    raw_lines,
+                    marker_patterns,
+                    marker_band,
+                )
+                page_tokens = filtered_tokens
+                if raw_lines is not None:
+                    raw_lines = filtered_lines or []
+
         # Group tokens into rows
         rows = self._group_rows_from_tokens(page_tokens)
 
@@ -1394,7 +1968,7 @@ class AgnosticSegmenter:
             page=page,
             page_tokens=page_tokens,
             rows=rows,
-            lines_by_page=lines_by_page,
+            raw_lines=raw_lines,
         )
 
         # Build context with defaults
@@ -1627,11 +2201,233 @@ class AgnosticSegmenter:
     # ---------------------------------------------------------------------
     # Cross-page Anchors (document scope)
     # ---------------------------------------------------------------------
+
+    def _detect_header_floor(self,
+                            page_lines: List[Dict[str, Any]],
+                            config: Dict[str, Any]) -> Tuple[float, str]:
+        """
+        Detect page header floor using sentinels or ratio fallback.
+
+        Returns: (header_floor_y, detection_method)
+        """
+        header_detection = config.get("header_detection", {})
+        sentinels = header_detection.get("sentinels", [])
+        ratio_fallback = header_detection.get("ratio_top_fallback", 0.15)
+        margin_px = header_detection.get("margin_px", 0.01)
+
+        # Try sentinels first
+        if sentinels:
+            for line in page_lines:
+                text = str(line.get("text", "")).strip()
+                for pattern in sentinels:
+                    try:
+                        if re.search(pattern, text, re.IGNORECASE):
+                            bbox = line.get("bbox")
+                            if bbox:
+                                if isinstance(bbox, dict):
+                                    y1 = float(bbox.get("y1", 0))
+                                else:
+                                    y1 = float(bbox[3])
+                                return y1 + margin_px, "sentinel"
+                    except re.error:
+                        logger.warning(f"Invalid sentinel regex: {pattern}")
+
+        # Fallback to ratio
+        return ratio_fallback, "ratio_fallback"
+
+    def _detect_repeated_table_header(self,
+                                      page_lines: List[Dict[str, Any]],
+                                      header_floor: float,
+                                      config: Dict[str, Any]) -> Optional[float]:
+        """
+        Detect repeated table header on continuation pages.
+
+        Returns: y1 of the repeated header, or None if not found
+        """
+        table_header_detection = config.get("table_header_detection", {})
+        patterns = table_header_detection.get("patterns", [])
+        search_band_ratio = table_header_detection.get("search_band_ratio", 0.15)
+
+        if not patterns:
+            return None
+
+        search_top = header_floor
+        search_bottom = header_floor + search_band_ratio
+
+        for line in page_lines:
+            text = str(line.get("text", "")).strip()
+            bbox = line.get("bbox")
+            if not bbox:
+                continue
+
+            if isinstance(bbox, dict):
+                y0 = float(bbox.get("y0", 0))
+                y1 = float(bbox.get("y1", 0))
+            else:
+                y0 = float(bbox[1])
+                y1 = float(bbox[3])
+
+            # Check if line is within search band
+            if y0 < search_top or y1 > search_bottom:
+                continue
+
+            # Check if line matches any table header pattern
+            for pattern in patterns:
+                try:
+                    if re.search(pattern, text, re.IGNORECASE):
+                        return y1
+                except re.error:
+                    logger.warning(f"Invalid table header regex: {pattern}")
+
+        return None
+
+    def _find_first_data_row(self,
+                            page_tokens: List[Dict[str, Any]],
+                            top_y: float,
+                            config: Dict[str, Any]) -> Optional[float]:
+        """
+        Find the first data row that matches row patterns and has numeric content.
+
+        Returns: y0 of the first data row, or None
+        """
+        row_patterns = config.get("row_patterns", [])
+        numeric_locale = config.get("numeric_locale", {"thousands": ",", "decimal": "."})
+
+        if not row_patterns:
+            return None
+
+        # Group tokens into rows
+        rows = []
+        current_row = []
+        last_y = None
+        y_tol = 0.01
+
+        for token in sorted(page_tokens, key=lambda t: (t["bbox"]["y0"], t["bbox"]["x0"])):
+            ty0 = float(token["bbox"]["y0"])
+
+            if ty0 < top_y:
+                continue
+
+            if last_y is None or abs(ty0 - last_y) < y_tol:
+                current_row.append(token)
+                last_y = ty0
+            else:
+                if current_row:
+                    rows.append(current_row)
+                current_row = [token]
+                last_y = ty0
+
+        if current_row:
+            rows.append(current_row)
+
+        # Find first row matching patterns with numeric content
+        thousands = re.escape(numeric_locale.get("thousands", ","))
+        decimal = re.escape(numeric_locale.get("decimal", "."))
+        numeric_regex = re.compile(rf"\d{{1,3}}(?:{thousands}\d{{3}})*(?:{decimal}\d+)?")
+
+        for row in rows:
+            row_text = " ".join(t.get("norm", t.get("text", "")) for t in row)
+
+            # Check if row matches any pattern
+            matches_pattern = False
+            for pattern in row_patterns:
+                try:
+                    if re.search(pattern, row_text):
+                        matches_pattern = True
+                        break
+                except re.error:
+                    logger.warning(f"Invalid row pattern: {pattern}")
+
+            # Check if row has numeric content
+            has_numeric = bool(numeric_regex.search(row_text))
+
+            if matches_pattern and has_numeric:
+                return min(float(t["bbox"]["y0"]) for t in row)
+
+        return None
+
+    def _count_data_rows(self,
+                        page_tokens: List[Dict[str, Any]],
+                        bbox: List[float],
+                        config: Dict[str, Any]) -> int:
+        """
+        Count rows that look like data rows (match row patterns and have numeric content).
+        """
+        row_patterns = config.get("row_patterns", [])
+        numeric_locale = config.get("numeric_locale", {"thousands": ",", "decimal": "."})
+
+        # Filter tokens within bbox
+        bx0, by0, bx1, by1 = bbox
+        filtered_tokens = []
+        for t in page_tokens:
+            tx0 = float(t["bbox"]["x0"])
+            ty0 = float(t["bbox"]["y0"])
+            tx1 = float(t["bbox"]["x1"])
+            ty1 = float(t["bbox"]["y1"])
+
+            if tx1 > bx0 and tx0 < bx1 and ty1 > by0 and ty0 < by1:
+                filtered_tokens.append(t)
+
+        if not filtered_tokens:
+            return 0
+
+        # Group into rows
+        rows = []
+        current_row = []
+        last_y = None
+        y_tol = 0.01
+
+        for token in sorted(filtered_tokens, key=lambda t: (t["bbox"]["y0"], t["bbox"]["x0"])):
+            ty0 = float(token["bbox"]["y0"])
+
+            if last_y is None or abs(ty0 - last_y) < y_tol:
+                current_row.append(token)
+                last_y = ty0
+            else:
+                if current_row:
+                    rows.append(current_row)
+                current_row = [token]
+                last_y = ty0
+
+        if current_row:
+            rows.append(current_row)
+
+        # Count rows matching criteria
+        thousands = re.escape(numeric_locale.get("thousands", ","))
+        decimal = re.escape(numeric_locale.get("decimal", "."))
+        numeric_regex = re.compile(rf"\d{{1,3}}(?:{thousands}\d{{3}})*(?:{decimal}\d+)?")
+
+        count = 0
+        for row in rows:
+            row_text = " ".join(t.get("norm", t.get("text", "")) for t in row)
+
+            # Check pattern match
+            matches_pattern = False
+            if row_patterns:
+                for pattern in row_patterns:
+                    try:
+                        if re.search(pattern, row_text):
+                            matches_pattern = True
+                            break
+                    except re.error:
+                        pass
+            else:
+                matches_pattern = True  # If no patterns, count all numeric rows
+
+            # Check numeric content
+            has_numeric = bool(numeric_regex.search(row_text))
+
+            if matches_pattern and has_numeric:
+                count += 1
+
+        return count
+
     def _detect_anchors_cross_page(self,
                                    region_config: Dict[str, Any],
                                    pages: List[int],
                                    tokens: List[Dict[str, Any]],
-                                   total_pages: int) -> Optional[Dict[str, Any]]:
+                                   total_pages: int,
+                                   lines_by_page: Optional[Dict[int, List[Dict[str, Any]]]] = None) -> Optional[Dict[str, Any]]:
         """
         Document-scope anchor detector:
           - Finds start_anchor on some page N.
@@ -1647,12 +2443,14 @@ class AgnosticSegmenter:
 
         # Config knobs with defaults
         anchor_scope = str(detect.get("anchor_scope", "auto")).lower()
-        max_page_gap = int(detect.get("max_page_gap", 1))
+        max_page_gap_value = detect.get("max_page_gap", 1)
+        max_page_gap = int(max_page_gap_value) if max_page_gap_value is not None else 999
         value_part_policy = str(detect.get("value_part_policy", "end")).lower()
         canonical_bbox_mode = str(detect.get("canonical_bbox", "value")).lower()  # "value"|"union"
 
         # Margins and horizontal/row policy
         defaults = self.config.get("defaults", {}) or {}
+        header_defaults = defaults.get("header_detection", {}) or {}
         margin_cfg = detect.get("margin", {}) or {}
         mt = float(margin_cfg.get("top", 0.0))
         mb = float(margin_cfg.get("bottom", 0.0))
@@ -1679,29 +2477,144 @@ class AgnosticSegmenter:
             if p in pages:
                 toks_by_page.setdefault(p, []).append(t)
 
-        # Build row maps per page, using the segmenter's row grouper
-        rows_by_page: Dict[int, List[List[Dict[str, Any]]]] = {}
-        row_bounds_by_page: Dict[int, List[Tuple[float, float]]] = {}
         for p in pages:
-            rows = self._group_rows(tokens, p)
-            rows_by_page[p] = rows
-            bounds = []
-            for r in rows:
-                if not r:
-                    continue
-                y0 = min(float(t["bbox"]["y0"]) for t in r)
-                y1 = max(float(t["bbox"]["y1"]) for t in r)
-                bounds.append((y0, y1))
-            row_bounds_by_page[p] = bounds
+            toks_by_page.setdefault(p, [])
+
+        marker_boxes_by_page: Dict[int, List[BBox]] = {p: [] for p in pages}
+        filtered_input_lines_by_page: Dict[int, List[Dict[str, Any]]] = {}
+
+        drop_markers = self._should_drop_page_markers(region_config)
+        marker_patterns = self._get_marker_patterns(region_config) if drop_markers else []
+        marker_band = self._get_marker_y_band(region_config) if marker_patterns else None
+
+        for p in pages:
+            page_tokens = toks_by_page.get(p, [])
+            page_lines = list(lines_by_page.get(p, []) or []) if lines_by_page is not None else None
+
+            if marker_patterns:
+                filtered_tokens, filtered_lines, removed_boxes = self._filter_page_markers_for_page(
+                    p,
+                    page_tokens,
+                    page_lines,
+                    marker_patterns,
+                    marker_band,
+                )
+                toks_by_page[p] = filtered_tokens
+                marker_boxes_by_page[p] = removed_boxes
+                if page_lines is not None:
+                    filtered_input_lines_by_page[p] = filtered_lines or []
+            else:
+                if page_lines is not None:
+                    filtered_input_lines_by_page[p] = page_lines
+
+        # Build lines by page for header floor detection
+        # Check if we have skip_page_headers or use_per_page_header_floors configured
+        skip_page_headers = detect.get("skip_page_headers", False)
+        use_per_page_header_floors = detect.get("use_per_page_header_floors", False)
+
+        local_lines_by_page: Dict[int, List[Dict[str, Any]]] = {}
+        header_floor_by_page: Dict[int, Tuple[float, str]] = {}
+        source_lines_by_page: Optional[Dict[int, List[Dict[str, Any]]]] = None
+        if lines_by_page is not None:
+            source_lines_by_page = filtered_input_lines_by_page
+
+        if skip_page_headers or use_per_page_header_floors:
+            # Use provided lines_by_page if available AND if they have valid bboxes
+            use_existing_lines = False
+            if source_lines_by_page:
+                # Check if lines have valid bboxes
+                for p in pages:
+                    page_lines = source_lines_by_page.get(p, [])
+                    if page_lines:
+                        # Check if first line has a valid bbox
+                        first_bbox = page_lines[0].get("bbox", {})
+                        if isinstance(first_bbox, dict) and "y0" in first_bbox and "y1" in first_bbox:
+                            use_existing_lines = True
+                            break
+
+            if use_existing_lines and source_lines_by_page:
+                # Use existing lines from s02
+                for p in pages:
+                    page_lines = source_lines_by_page.get(p, [])
+                    local_lines_by_page[p] = page_lines
+                    if page_lines:
+                        header_floor_by_page[p] = self._detect_header_floor(page_lines, defaults)
+                    else:
+                        header_floor_by_page[p] = (defaults.get("header_detection", {}).get("ratio_top_fallback", 0.15), "default")
+            else:
+                # Fallback: construct pseudo-lines from tokens grouped by y-coordinate
+                for p in pages:
+                    page_toks = toks_by_page.get(p, [])
+                    if not page_toks:
+                        local_lines_by_page[p] = []
+                        header_floor_by_page[p] = (defaults.get("header_detection", {}).get("ratio_top_fallback", 0.15), "default")
+                        continue
+
+                    # Group tokens into lines
+                    line_groups = []
+                    current_line = []
+                    last_y = None
+                    y_tol = 0.005
+
+                    for tok in sorted(page_toks, key=lambda t: (t["bbox"]["y0"], t["bbox"]["x0"])):
+                        ty0 = float(tok["bbox"]["y0"])
+                        if last_y is None or abs(ty0 - last_y) < y_tol:
+                            current_line.append(tok)
+                            last_y = ty0
+                        else:
+                            if current_line:
+                                line_groups.append(current_line)
+                            current_line = [tok]
+                            last_y = ty0
+
+                    if current_line:
+                        line_groups.append(current_line)
+
+                    # Convert to line objects
+                    page_lines = []
+                    for line_tokens in line_groups:
+                        text = " ".join(t.get("norm", t.get("text", "")) for t in line_tokens)
+                        x0 = min(float(t["bbox"]["x0"]) for t in line_tokens)
+                        y0 = min(float(t["bbox"]["y0"]) for t in line_tokens)
+                        x1 = max(float(t["bbox"]["x1"]) for t in line_tokens)
+                        y1 = max(float(t["bbox"]["y1"]) for t in line_tokens)
+                        page_lines.append({
+                            "text": text,
+                            "bbox": {"x0": x0, "y0": y0, "x1": x1, "y1": y1}
+                        })
+
+                    local_lines_by_page[p] = page_lines
+
+                    # Detect header floor for this page
+                    header_floor_by_page[p] = self._detect_header_floor(page_lines, defaults)
+
+        # For line_anchors mode, convert lines to pseudo-tokens for AnchorMatcher
+        # Create pseudo-tokens from constructed lines
+        lines_as_tokens_by_page: Dict[int, List[Dict[str, Any]]] = {}
+        if local_lines_by_page:
+            for p, page_lines in local_lines_by_page.items():
+                pseudo_tokens = []
+                for line in page_lines:
+                    text = line.get("text", "")
+                    bbox = line.get("bbox", {})
+                    if text and bbox and isinstance(bbox, dict):
+                        pseudo_tokens.append({
+                            "text": text,
+                            "norm": text,
+                            "page": p,
+                            "bbox": bbox
+                        })
+                lines_as_tokens_by_page[p] = pseudo_tokens
 
         # Find start anchor on candidate pages in order
         start_page = None
         start_match = None
         for p in pages:
-            page_toks = toks_by_page.get(p, [])
-            if not page_toks:
+            # Use line-based pseudo-tokens if available, otherwise use regular tokens
+            search_items = lines_as_tokens_by_page.get(p, []) if lines_as_tokens_by_page else toks_by_page.get(p, [])
+            if not search_items:
                 continue
-            sm = AnchorMatcher.match(page_toks, start_spec)
+            sm = AnchorMatcher.match(search_items, start_spec)
             if sm:
                 start_page = p
                 start_match = sm
@@ -1715,7 +2628,8 @@ class AgnosticSegmenter:
         end_match = None
         if end_spec:
             # same page
-            em = AnchorMatcher.match(toks_by_page.get(start_page, []), end_spec, start_match)
+            search_items = lines_as_tokens_by_page.get(start_page, []) if lines_as_tokens_by_page else toks_by_page.get(start_page, [])
+            em = AnchorMatcher.match(search_items, end_spec, start_match)
             if em:
                 end_page, end_match = start_page, em
             else:
@@ -1727,7 +2641,8 @@ class AgnosticSegmenter:
                     idx = 0
                 lookahead = [p for p in pages[idx+1:] if (p - start_page) <= max_page_gap]
                 for p in lookahead:
-                    em2 = AnchorMatcher.match(toks_by_page.get(p, []), end_spec)
+                    search_items = lines_as_tokens_by_page.get(p, []) if lines_as_tokens_by_page else toks_by_page.get(p, [])
+                    em2 = AnchorMatcher.match(search_items, end_spec)
                     if em2:
                         end_page, end_match = p, em2
                         break
@@ -1798,6 +2713,61 @@ class AgnosticSegmenter:
 
         walk = pages[start_idx:end_idx+1]
 
+        start_anchor_top: Optional[float] = None
+        if start_match:
+            try:
+                start_anchor_top = float(start_match["bbox"][1])
+            except (KeyError, TypeError, ValueError):
+                start_anchor_top = None
+
+        if skip_page_headers and walk:
+            header_boxes_subset = self._filter_repeated_headers(
+                walk=walk,
+                toks_by_page=toks_by_page,
+                local_lines_by_page=local_lines_by_page,
+                source_lines_by_page=source_lines_by_page,
+                header_floor_by_page=header_floor_by_page,
+                header_defaults=header_defaults,
+                start_anchor_top=start_anchor_top,
+            )
+            for pg, boxes in header_boxes_subset.items():
+                if not boxes:
+                    continue
+                marker_boxes_by_page.setdefault(pg, [])
+                marker_boxes_by_page[pg].extend(boxes)
+
+            # Rebuild line pseudo tokens for pages that changed
+            if local_lines_by_page:
+                for pg in walk:
+                    page_lines = local_lines_by_page.get(pg, [])
+                    pseudo_tokens = []
+                    for line in page_lines:
+                        text = line.get("text", "")
+                        bbox = line.get("bbox", {})
+                        if text and bbox and isinstance(bbox, dict):
+                            pseudo_tokens.append({
+                                "text": text,
+                                "norm": text,
+                                "page": pg,
+                                "bbox": bbox
+                            })
+                    lines_as_tokens_by_page[pg] = pseudo_tokens
+
+        # Build row maps per page using potentially filtered tokens
+        rows_by_page: Dict[int, List[List[Dict[str, Any]]]] = {}
+        row_bounds_by_page: Dict[int, List[Tuple[float, float]]] = {}
+        for p in pages:
+            rows = self._group_rows_from_tokens(toks_by_page.get(p, []))
+            rows_by_page[p] = rows
+            bounds = []
+            for r in rows:
+                if not r:
+                    continue
+                y0 = min(float(t["bbox"]["y0"]) for t in r)
+                y1 = max(float(t["bbox"]["y1"]) for t in r)
+                bounds.append((y0, y1))
+            row_bounds_by_page[p] = bounds
+
         # Helper to find the row index containing the anchor (by center y)
         def _row_index_for_anchor(page: int, anchor_bbox: List[float]) -> int:
             bounds = row_bounds_by_page.get(page) or []
@@ -1816,11 +2786,34 @@ class AgnosticSegmenter:
                     best_d, best_i = d, i
             return best_i
 
+        # Track debug info per part
+        parts_debug_info = []
+
         for i, p in enumerate(walk):
+            # Initialize debug info for this part
+            part_debug = {
+                "page": p,
+                "header_floor": None,
+                "header_floor_method": None,
+                "repeated_table_header_found": False,
+                "first_data_row_y": None,
+                "continuation_strategy": None
+            }
+
+            # Get header floor for this page if available
+            page_header_floor = None
+            header_method = None
+            if use_per_page_header_floors and p in header_floor_by_page:
+                page_header_floor, header_method = header_floor_by_page[p]
+                part_debug["header_floor"] = page_header_floor
+                part_debug["header_floor_method"] = header_method
+
             if p == start_page and p == end_page:
-                # Single-page case in document-scope path: use exact start..end bounds
-                # Prefer row-aware bounds if configured
-                if (start_rows_above or start_rows_below or end_rows_above or end_rows_below) and row_bounds_by_page.get(p):
+                # Single-page case: use exact start..end bounds
+                # Apply header floor if configured
+                if page_header_floor is not None:
+                    sy0 = max(page_header_floor, float(start_match["bbox"][1]) + mt)
+                elif (start_rows_above or start_rows_below or end_rows_above or end_rows_below) and row_bounds_by_page.get(p):
                     ai = _row_index_for_anchor(p, start_match["bbox"]) if start_match else -1
                     ei = _row_index_for_anchor(p, end_match["bbox"]) if end_match else ai
                     bounds = row_bounds_by_page.get(p) or []
@@ -1835,47 +2828,116 @@ class AgnosticSegmenter:
                 else:
                     sy0 = float(start_match["bbox"][1]) - mt
                     ey1 = float((end_match or start_match)["bbox"][3]) + mb
+
+                if 'ey1' not in locals():
+                    ey1 = float((end_match or start_match)["bbox"][3]) + mb
+
                 bbox = _clamp_bbox(x0_fixed, max(0.0, sy0), x1_fixed, min(1.0, ey1))
+                part_debug["continuation_strategy"] = "single_page"
+
             elif p == start_page:
-                if (start_rows_above or start_rows_below) and row_bounds_by_page.get(p):
+                # Start page: use header floor as minimum, then start anchor
+                if page_header_floor is not None:
+                    sy0 = max(page_header_floor, float(start_match["bbox"][1]) + mt)
+                elif (start_rows_above or start_rows_below) and row_bounds_by_page.get(p):
                     ai = _row_index_for_anchor(p, start_match["bbox"]) if start_match else -1
                     bounds = row_bounds_by_page.get(p) or []
                     if bounds and ai >= 0:
                         lo = max(0, ai - max(0, start_rows_above))
                         hi = min(len(bounds) - 1, ai + max(0, start_rows_below))
                         sy0 = bounds[lo][0] - row_safety
-                        # Extend to bottom unless end is on same page
-                        bbox = _clamp_bbox(x0_fixed, max(0.0, sy0), x1_fixed, 1.0 - mb)
                     else:
                         sy0 = float(start_match["bbox"][1]) - mt
-                        bbox = _clamp_bbox(x0_fixed, max(0.0, sy0), x1_fixed, 1.0 - mb)
                 else:
                     sy0 = float(start_match["bbox"][1]) - mt
-                    bbox = _clamp_bbox(x0_fixed, max(0.0, sy0), x1_fixed, 1.0 - mb)
+
+                bbox = _clamp_bbox(x0_fixed, max(0.0, sy0), x1_fixed, 1.0 - mb)
+                part_debug["continuation_strategy"] = "start_page"
+
             elif p == end_page:
+                # End page: start from header floor (or top margin)
+                # Then try to find content start
+                if page_header_floor is not None:
+                    top_y = page_header_floor
+                else:
+                    top_y = mt
+
+                # On end page with skip_page_headers, try to skip repeated table header
+                if skip_page_headers and p in local_lines_by_page:
+                    repeated_header_y = self._detect_repeated_table_header(
+                        local_lines_by_page[p], top_y, defaults
+                    )
+                    if repeated_header_y is not None:
+                        top_y = repeated_header_y + 0.01
+                        part_debug["repeated_table_header_found"] = True
+                        part_debug["continuation_strategy"] = "skip_repeated_header"
+
+                # If no repeated header found, try to find first data row
+                if not part_debug["repeated_table_header_found"]:
+                    first_row_y = self._find_first_data_row(toks_by_page.get(p, []), top_y, defaults)
+                    if first_row_y is not None:
+                        top_y = first_row_y
+                        part_debug["first_data_row_y"] = first_row_y
+                        part_debug["continuation_strategy"] = "first_data_row"
+
+                # Bottom bound
                 if (end_rows_above or end_rows_below) and row_bounds_by_page.get(p):
                     ei = _row_index_for_anchor(p, (end_match or start_match)["bbox"]) if (end_match or start_match) else -1
                     bounds = row_bounds_by_page.get(p) or []
                     if bounds and ei >= 0:
                         lo = max(0, ei - max(0, end_rows_above))
                         hi = min(len(bounds) - 1, ei + max(0, end_rows_below))
-                        y0 = bounds[lo][0] - row_safety
-                        y1 = bounds[hi][1] + row_safety
-                        bbox = _clamp_bbox(x0_fixed, max(0.0, y0), x1_fixed, min(1.0, y1))
+                        ey1 = bounds[hi][1] + row_safety
                     else:
                         if end_match is not None:
                             ey1 = float(end_match["bbox"][3]) + mb
                         else:
                             ey1 = float(cutoff_y)
-                        bbox = _clamp_bbox(x0_fixed, mt, x1_fixed, min(1.0, ey1))
                 else:
                     if end_match is not None:
                         ey1 = float(end_match["bbox"][3]) + mb
                     else:
                         ey1 = float(cutoff_y)
-                    bbox = _clamp_bbox(x0_fixed, mt, x1_fixed, min(1.0, ey1))
+
+                bbox = _clamp_bbox(x0_fixed, max(0.0, top_y), x1_fixed, min(1.0, ey1))
+
             else:
-                bbox = _clamp_bbox(x0_fixed, mt, x1_fixed, 1.0 - mb)
+                # Middle/continuation page
+                if page_header_floor is not None:
+                    top_y = page_header_floor
+                else:
+                    top_y = mt
+
+                # Try to skip repeated table header on continuation pages
+                if skip_page_headers and p in local_lines_by_page:
+                    repeated_header_y = self._detect_repeated_table_header(
+                        local_lines_by_page[p], top_y, defaults
+                    )
+                    if repeated_header_y is not None:
+                        top_y = repeated_header_y + 0.01
+                        part_debug["repeated_table_header_found"] = True
+                        part_debug["continuation_strategy"] = "skip_repeated_header"
+
+                # If no repeated header, try to find first data row
+                if not part_debug["repeated_table_header_found"]:
+                    first_row_y = self._find_first_data_row(toks_by_page.get(p, []), top_y, defaults)
+                    if first_row_y is not None:
+                        top_y = first_row_y
+                        part_debug["first_data_row_y"] = first_row_y
+                        part_debug["continuation_strategy"] = "first_data_row"
+                    else:
+                        part_debug["continuation_strategy"] = "default_from_header_floor"
+
+                bbox = _clamp_bbox(x0_fixed, max(0.0, top_y), x1_fixed, 1.0 - mb)
+
+            trim_boxes = marker_boxes_by_page.get(p, [])
+            trimmed_bbox = self._trim_bbox_with_markers(
+                bbox,
+                trim_boxes,
+                precision,
+            )
+            part_debug["page_marker_trimmed"] = trimmed_bbox != bbox
+            bbox = trimmed_bbox
 
             parts.append({
                 "id": f"{region_config['id']}__p{i+1}",
@@ -1883,38 +2945,72 @@ class AgnosticSegmenter:
                 "bbox": bbox,
                 "metadata": {"role": "fragment"}
             })
+            parts_debug_info.append(part_debug)
 
         if not parts:
             return None
 
+        # Drop empty parts (parts with no data rows) if configured
+        drop_empty_parts = detect.get("drop_empty_parts", True)
+        if drop_empty_parts:
+            filtered_parts = []
+            filtered_debug = []
+            for idx, part in enumerate(parts):
+                row_count = self._count_data_rows(toks_by_page.get(part["page"], []), part["bbox"], defaults)
+                parts_debug_info[idx]["data_row_count"] = row_count
+                if row_count > 0:
+                    filtered_parts.append(part)
+                    filtered_debug.append(parts_debug_info[idx])
+                else:
+                    parts_debug_info[idx]["dropped"] = True
+
+            if not filtered_parts:
+                logger.info(f"All parts dropped for region '{region_config['id']}' (no data rows)")
+                return None
+
+            parts = filtered_parts
+            parts_debug_info = filtered_debug
+
+        # Count data rows for each part (for canonical selection and debug)
+        for idx, part in enumerate(parts):
+            if "data_row_count" not in parts_debug_info[idx]:
+                row_count = self._count_data_rows(toks_by_page.get(part["page"], []), part["bbox"], defaults)
+                parts_debug_info[idx]["data_row_count"] = row_count
+
         # Choose value part per policy
         value_idx = 0
-        if value_part_policy == "end":
+        canonical_selection_reason = None
+
+        if value_part_policy == "end" or value_part_policy == "last":
             value_idx = len(parts) - 1
-        elif value_part_policy == "start":
+            canonical_selection_reason = f"policy={value_part_policy}"
+        elif value_part_policy == "start" or value_part_policy == "first":
             value_idx = 0
+            canonical_selection_reason = f"policy={value_part_policy}"
+        elif value_part_policy == "first_numeric":
+            # Find first part with numeric rows
+            value_idx = 0
+            for i in range(len(parts)):
+                if parts_debug_info[i].get("data_row_count", 0) > 0:
+                    value_idx = i
+                    canonical_selection_reason = f"policy=first_numeric, page={parts[i]['page']}, rows={parts_debug_info[i]['data_row_count']}"
+                    break
+            if canonical_selection_reason is None:
+                canonical_selection_reason = f"policy=first_numeric (fallback to first, no numeric rows found)"
         elif value_part_policy == "last_numeric":
-            num_rx = re.compile(r"\d{1,3}(?:[.,]\d{3})*(?:[.,]\d+)?")
+            # Find last part with numeric rows (scan backward)
             value_idx = len(parts) - 1
             for i in range(len(parts) - 1, -1, -1):
-                part = parts[i]
-                page = part["page"]
-                bx = part["bbox"]
-                # collect tokens intersecting bbox on that page
-                hit = False
-                for t in toks_by_page.get(page, []):
-                    tb = t.get("bbox", {})
-                    if tb.get("x1", 0) <= bx[0] or tb.get("x0", 0) >= bx[2]:
-                        continue
-                    if tb.get("y0", 1) >= bx[3] or tb.get("y1", 0) <= bx[1]:
-                        continue
-                    text = t.get("norm") or t.get("text") or ""
-                    if num_rx.search(text):
-                        hit = True
-                        break
-                if hit:
+                if parts_debug_info[i].get("data_row_count", 0) > 0:
                     value_idx = i
+                    canonical_selection_reason = f"policy=last_numeric, page={parts[i]['page']}, rows={parts_debug_info[i]['data_row_count']}"
                     break
+            if canonical_selection_reason is None:
+                canonical_selection_reason = f"policy=last_numeric (fallback to last, no numeric rows found)"
+        else:
+            # Default to last
+            value_idx = len(parts) - 1
+            canonical_selection_reason = f"policy={value_part_policy} (unknown, defaulted to last)"
 
         value_part = parts[value_idx]
 
@@ -1943,9 +3039,31 @@ class AgnosticSegmenter:
                     "start": start_match.get("matched_text"),
                     "end": (end_match or {}).get("matched_text") if end_match else None
                 },
-                "value_part_policy": value_part_policy
+                "value_part_policy": value_part_policy,
+                "canonical_selection_reason": canonical_selection_reason,
+                "debug": {
+                    "start_page": start_page,
+                    "end_page": end_page,
+                    "total_parts": len(parts),
+                    "canonical_part_index": value_idx,
+                    "parts_debug": parts_debug_info,
+                    "config_used": {
+                        "skip_page_headers": skip_page_headers,
+                        "use_per_page_header_floors": use_per_page_header_floors,
+                        "max_page_gap": max_page_gap,
+                        "drop_empty_parts": drop_empty_parts
+                    }
+                }
             }
         }
+
+        canonical_page = canonical.get("page")
+        if canonical_page:
+            canonical["bbox"] = self._trim_bbox_with_markers(
+                canonical["bbox"],
+                marker_boxes_by_page.get(int(canonical_page), []),
+                precision,
+            )
 
         return canonical
 

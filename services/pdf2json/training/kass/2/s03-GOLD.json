@@ -1,0 +1,127 @@
+{
+  "client": "kass",
+  "variant": 2,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PAID Commercial Invoice TI No.# TI00338 PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, Balance Due JL. JENDERAL SUDIRMAN KAV. 1, IDR0 JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000 Invoice Date : 1 Sept 2025 Terms : Due on Receipt Bill To PT BEAUTY SOURCE INDONESIA Due Date : 1 Sept 2025 Ruko Tampak Siring Blok KJE No. 28B Kel. Kalideres, Kec. Kalideres, Jakarta Barat Our Ref : T4493ID Subject : TM Filling for TM \"HALAE\" in Class 3"
+        },
+        {
+          "key": "table",
+          "value": "# Item & Description Qty Rate Amount 1 Filing of Trademark Application 1 1,350,000 1,350,000 Professional fees in reviewing your instructions in preparing and filing the trademark application; reviewing, reporting and forwarding the filing particulars to you; docketing your file for future action and general care rendered on this matter. 2 Reimbursement - Official Fees 1 1,800,000 1,800,000 3 Photocopies, postage, facsimile, transportations & etc. 1 150,000 150,000"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total (IDR) 3,300,000 Tax Base VAT (IDR) 1,375,000 VAT (12%) 165,000 Zero TAX (0%) 0 PPH 23 (2%) (-) 30,000 Total Net Amount (IDR) IDR3,435,000 Payment Made (-) 3,435,000 Balance Due IDR0"
+        },
+        {
+          "key": "seller",
+          "value": "PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, JL. JENDERAL SUDIRMAN KAV. 1, JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000 Bill To"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Bill To PT BEAUTY SOURCE INDONESIA"
+        },
+        {
+          "key": "invoice_number",
+          "value": "TI No.# TI00338"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Invoice Date : 1 Sept 2025"
+        },
+        {
+          "key": "currency",
+          "value": "Balance Due IDR0"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total (IDR) 3,300,000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base VAT (IDR) 1,375,000"
+        },
+        {
+          "key": "tax",
+          "value": "VAT (12%) 165,000"
+        },
+        {
+          "key": "zero_tax",
+          "value": "Zero TAX (0%) 0"
+        },
+        {
+          "key": "income_tax",
+          "value": "PPH 23 (2%) (-) 30,000"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total Net Amount (IDR) IDR3,435,000"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PAID Commercial Invoice TI No.# TI00338 PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, Balance Due JL. JENDERAL SUDIRMAN KAV. 1, IDR0 JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000 Invoice Date : 1 Sept 2025 Terms : Due on Receipt Bill To PT BEAUTY SOURCE INDONESIA Due Date : 1 Sept 2025 Ruko Tampak Siring Blok KJE No. 28B Kel. Kalideres, Kec. Kalideres, Jakarta Barat Our Ref : T4493ID Subject : TM Filling for TM \"HALAE\" in Class 3"
+        },
+        {
+          "key": "table",
+          "value": "# Item & Description Qty Rate Amount 1 Filing of Trademark Application 1 1,350,000 1,350,000 Professional fees in reviewing your instructions in preparing and filing the trademark application; reviewing, reporting and forwarding the filing particulars to you; docketing your file for future action and general care rendered on this matter. 2 Reimbursement - Official Fees 1 1,800,000 1,800,000 3 Photocopies, postage, facsimile, transportations & etc. 1 150,000 150,000"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total (IDR) 3,300,000 Tax Base VAT (IDR) 1,375,000 VAT (12%) 165,000 Zero TAX (0%) 0 PPH 23 (2%) (-) 30,000 Total Net Amount (IDR) IDR3,435,000 Payment Made (-) 3,435,000 Balance Due IDR0"
+        },
+        {
+          "key": "seller",
+          "value": "PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, JL. JENDERAL SUDIRMAN KAV. 1, JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000 Bill To"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Bill To PT BEAUTY SOURCE INDONESIA"
+        },
+        {
+          "key": "invoice_number",
+          "value": "TI No.# TI00338"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Invoice Date : 1 Sept 2025"
+        },
+        {
+          "key": "currency",
+          "value": "Balance Due IDR0"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total (IDR) 3,300,000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base VAT (IDR) 1,375,000"
+        },
+        {
+          "key": "tax",
+          "value": "VAT (12%) 165,000"
+        },
+        {
+          "key": "zero_tax",
+          "value": "Zero TAX (0%) 0"
+        },
+        {
+          "key": "income_tax",
+          "value": "PPH 23 (2%) (-) 30,000"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total Net Amount (IDR) IDR3,435,000"
+        }
+      ]
+    }
+  }
+}

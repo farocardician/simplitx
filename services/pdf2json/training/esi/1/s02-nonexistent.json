@@ -1,0 +1,28 @@
+{
+  "doc_id": "1.pdf",
+  "page_count": 1,
+  "pages": [
+    {
+      "page": 1,
+      "width": 612.0,
+      "height": 792.0
+    }
+  ],
+  "page_header_band": [
+    {
+      "page": 1,
+      "bbox": {
+        "y0": 0.0,
+        "y1": 0.15
+      }
+    }
+  ],
+  "pymupdf": {
+    "token_count": 0,
+    "tokens": []
+  },
+  "plumber": {
+    "token_count": 0,
+    "tokens": []
+  }
+}

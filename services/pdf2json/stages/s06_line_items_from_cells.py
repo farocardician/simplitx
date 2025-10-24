@@ -389,6 +389,13 @@ PARSER_FUNCS = {
 
 # ---------------------------- data structures ----------------------------
 @dataclass
+class FieldPostprocessRule:
+    pattern: re.Pattern[str]
+    replacement: str
+    count: int = 0
+
+
+@dataclass
 class FieldSpec:
     name: str
     header_synonyms: List[str]
@@ -396,6 +403,70 @@ class FieldSpec:
     parsers: List[str]
     required: bool
     merge: bool
+    postprocess: List[FieldPostprocessRule]
+
+
+# ---------------------------- config helpers ----------------------------
+def _parse_field_postprocess(spec: Dict[str, Any]) -> List[FieldPostprocessRule]:
+    entries = spec.get("postprocess") or spec.get("post_process") or []
+    if isinstance(entries, (str, bytes)):
+        entries = [entries]
+    rules: List[FieldPostprocessRule] = []
+    for entry in entries:
+        pattern: Optional[str] = None
+        replacement = ""
+        count = 0
+        flags = re.IGNORECASE | re.U
+        if isinstance(entry, dict):
+            pattern = entry.get("pattern") or entry.get("regex")
+            replacement = entry.get("replace") or entry.get("replacement") or entry.get("value") or ""
+            try:
+                if entry.get("count") is not None:
+                    count = int(entry.get("count"))
+            except Exception:
+                count = 0
+            ignore_case = entry.get("ignore_case")
+            if ignore_case is False:
+                flags = re.U
+            extra_flags = entry.get("flags")
+            if extra_flags is not None:
+                try:
+                    flags |= int(extra_flags)
+                except Exception:
+                    pass
+        elif isinstance(entry, (str, bytes)):
+            pattern = str(entry)
+        if not pattern:
+            continue
+        try:
+            compiled = re.compile(pattern, flags)
+        except re.error:
+            continue
+        rules.append(FieldPostprocessRule(pattern=compiled, replacement=str(replacement), count=count))
+    return rules
+
+
+def _build_field_spec(name: str, spec: Dict[str, Any], include_postprocess: bool) -> FieldSpec:
+    position_hint: Optional[Tuple[float, float]] = None
+    pos_cfg = spec.get("position_hint")
+    if pos_cfg and isinstance(pos_cfg, dict):
+        try:
+            position_hint = (
+                float(pos_cfg.get("x0")),
+                float(pos_cfg.get("x1")),
+            )
+        except Exception:
+            position_hint = None
+    post_rules = _parse_field_postprocess(spec) if include_postprocess else []
+    return FieldSpec(
+        name=name,
+        header_synonyms=list(spec.get("header_synonyms", []) or []),
+        position_hint=position_hint,
+        parsers=list(spec.get("parsers", []) or []),
+        required=bool(spec.get("required", False)),
+        merge=bool(spec.get("merge", False)),
+        postprocess=post_rules,
+    )
 
 
 # ---------------------------- column mapping ----------------------------
@@ -440,19 +511,10 @@ def _concat_header_by_col(table: Dict[str, Any]) -> Dict[int, str]:
 def _map_columns(table: Dict[str, Any], cfg: Dict[str, Any]) -> Dict[int, str]:
     fields_cfg = cfg.get("fields") or {}
     # Build specs
-    specs: Dict[str, FieldSpec] = {}
-    for fname, spec in fields_cfg.items():
-        specs[fname] = FieldSpec(
-            name=fname,
-            header_synonyms=list(spec.get("header_synonyms", []) or []),
-            position_hint=(
-                float(spec.get("position_hint", {}).get("x0")) if spec.get("position_hint") else None,
-                float(spec.get("position_hint", {}).get("x1")) if spec.get("position_hint") else None,
-            ) if spec.get("position_hint") else None,
-            parsers=list(spec.get("parsers", []) or []),
-            required=bool(spec.get("required", False)),
-            merge=bool(spec.get("merge", False)),
-        )
+    specs: Dict[str, FieldSpec] = {
+        fname: _build_field_spec(fname, spec, include_postprocess=False)
+        for fname, spec in fields_cfg.items()
+    }
 
     header_by_col = _concat_header_by_col(table)
     col_centers = _compute_column_centers(table)
@@ -684,12 +746,34 @@ def _build_item_from_row(row_cells: List[Dict[str, Any]], colmap: Dict[int, str]
                          from_header: bool = False) -> Optional[Dict[str, Any]]:
     # Gather raw text per mapped field
     raw_by_field: Dict[str, str] = {}
+
+    def _has_letters(value: str) -> bool:
+        return any(ch.isalpha() for ch in value)
+
     for c in row_cells:
         col = int(c.get("col", 0))
         f = colmap.get(col)
         if not f:
             continue
-        raw_by_field[f] = _clean(c.get("text_norm") or c.get("text") or "")
+        raw_value = _clean(c.get("text_norm") or c.get("text") or "")
+        if raw_value == "":
+            continue
+        fs = field_specs.get(f)
+        if fs and fs.merge:
+            existing = raw_by_field.get(f)
+            if existing:
+                if not _has_letters(raw_value):
+                    continue
+                if raw_value in existing:
+                    continue
+                if existing in raw_value:
+                    raw_by_field[f] = raw_value
+                else:
+                    raw_by_field[f] = f"{existing} {raw_value}".strip()
+            else:
+                raw_by_field[f] = raw_value
+        else:
+            raw_by_field[f] = raw_value
 
     # Row-level filtering
     row_text = " ".join(_clean(c.get("text_norm") or c.get("text") or "") for c in row_cells)
@@ -704,6 +788,30 @@ def _build_item_from_row(row_cells: List[Dict[str, Any]], colmap: Dict[int, str]
             continue
         vals = _parse_field_value(raw, fname, fs, cfg)
         parsed.update(vals)
+
+    def _promote_qty_from_hybrid(raw_value: str) -> None:
+        candidate = raw_value.strip()
+        if not candidate:
+            return
+        match = re.match(r"^(?P<qty>\d+(?:[.,]\d+)?)\s+(?P<uom>[A-Z]{2,})$", candidate)
+        if not match:
+            return
+        qty_text = match.group("qty")
+        qty_val = _to_decimal_multi_format(qty_text, cfg)
+        if qty_val is None:
+            return
+        if parsed.get("qty") not in (None, ""):
+            return
+        parsed["qty"] = qty_val
+        parsed["uom"] = match.group("uom").upper()
+        parsed.pop("unit_price", None)
+        parsed.pop("_unit_price_d", None)
+        parsed["_qty_d"] = qty_val
+        notes.append("defaulted qty")
+
+    raw_unit = raw_by_field.get("unit_price")
+    if raw_unit:
+        _promote_qty_from_hybrid(raw_unit)
 
     # Required fields defaulting
     defaults = cfg.get("defaults", {}) or {}
@@ -723,6 +831,21 @@ def _build_item_from_row(row_cells: List[Dict[str, Any]], colmap: Dict[int, str]
     uom_val = _resolve_uom(parsed, header_text, cfg)
     if uom_val is not None:
         parsed["uom"] = uom_val
+
+    # Postprocess string fields when configured
+    for fname, fs in field_specs.items():
+        if not fs.postprocess:
+            continue
+        current = parsed.get(fname)
+        if not isinstance(current, str) or current == "":
+            continue
+        updated = current
+        for rule in fs.postprocess:
+            if rule.count:
+                updated = rule.pattern.sub(rule.replacement, updated, count=rule.count)
+            else:
+                updated = rule.pattern.sub(rule.replacement, updated)
+        parsed[fname] = _clean(updated)
 
     # Build item output structure
     currency_decimals = int(cfg.get("currency_decimals", 2) or 0)
@@ -890,19 +1013,29 @@ def _finalize_amounts_and_validate(items: List[Dict[str, Any]], cfg: Dict[str, A
         qty = it.get("_qty_d")
         up = it.get("_unit_price_d")
         amt_src = it.get("_amount_d")
-        computed = None
+        amount_basis: Optional[Decimal] = None
+
         if qty is not None and up is not None:
             computed = _round_half_up(qty * up, currency_decimals)
-        if computed is None:
+            amount_basis = computed
+            if amt_src is not None:
+                diff = abs(computed - amt_src)
+                thresh = abs_tol + (rel_tol * (abs(computed)))
+                if diff > thresh:
+                    notes.append("amount recomputed from qty*unit_price")
+            it["amount"] = _num_out(computed)
+            it["_amount_d"] = computed
+        else:
+            if isinstance(amt_src, Decimal):
+                amount_basis = amt_src
             it["amount"] = _num_out(amt_src) if amt_src is not None else None
-            continue
-        # Compare if src amount exists
-        if amt_src is not None:
-            diff = abs(computed - amt_src)
-            thresh = abs_tol + (rel_tol * (abs(computed)))
-            if diff > thresh:
-                notes.append("amount recomputed from qty*unit_price")
-        it["amount"] = _num_out(computed)
+            if amt_src is not None:
+                it["_amount_d"] = amt_src
+
+        if (it.get("unit_price") in (None, "")) and qty is not None and qty != 0 and amount_basis is not None:
+            derived = _round_half_up(amount_basis / qty, currency_decimals)
+            it["unit_price"] = _num_out(derived)
+            it["_unit_price_d"] = derived
 
 
 def _maybe_parse_header_as_row(table: Dict[str, Any], cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -937,6 +1070,10 @@ def process(input_path: Path, config_path: Path) -> Dict[str, Any]:
     cfg = json.loads(config_path.read_text(encoding="utf-8"))
 
     notes: List[str] = []
+    static_notes = cfg.get("notes_static") or []
+    if isinstance(static_notes, (str, bytes)):
+        static_notes = [static_notes]
+    notes.extend([_clean(n) for n in static_notes if _clean(n)])
 
     # cache header text corpus (for UOM/doc discount detection)
     header_text_corpus = []
@@ -952,20 +1089,11 @@ def process(input_path: Path, config_path: Path) -> Dict[str, Any]:
 
         colmap = _map_columns(table, cfg)
 
-        # Build field specs for parsing
-        field_specs: Dict[str, FieldSpec] = {}
-        for fname, spec in (cfg.get("fields") or {}).items():
-            field_specs[fname] = FieldSpec(
-                name=fname,
-                header_synonyms=list(spec.get("header_synonyms", []) or []),
-                position_hint=(
-                    float(spec.get("position_hint", {}).get("x0")) if spec.get("position_hint") else None,
-                    float(spec.get("position_hint", {}).get("x1")) if spec.get("position_hint") else None,
-                ) if spec.get("position_hint") else None,
-                parsers=list(spec.get("parsers", []) or []),
-                required=bool(spec.get("required", False)),
-                merge=bool(spec.get("merge", False)),
-            )
+        # Build field specs for parsing (with postprocess rules)
+        field_specs: Dict[str, FieldSpec] = {
+            fname: _build_field_spec(fname, spec, include_postprocess=True)
+            for fname, spec in (cfg.get("fields") or {}).items()
+        }
 
         # Try header row as a potential data row first (handles one-row tables)
         pseudo_rows = _maybe_parse_header_as_row(table, cfg)

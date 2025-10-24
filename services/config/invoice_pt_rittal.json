@@ -16,7 +16,7 @@
     { "script": "s05_normalize_cells.py", "config": "invoice_simon_min.json",
       "args": ["--in", "{cells_raw}", "--out", "{cells}", "--config", "{config}", "--common-words", "{common_words}"]
     },
-    { "script": "s06_line_items_from_cells.py", "config": "s06_invoice_rittal_lineItem.json",
+    { "script": "s06_line_items_from_cells.py", "config": "s06_invoice_rittal_lineItem_v1.json",
       "args": ["--input", "{cells}", "--out", "{items}", "--config", "{config}"]
     },
     { "script": "s07_extractor.py", "config": "s07_invoice_rittal_extractor_v1.json",

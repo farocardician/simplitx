@@ -1,0 +1,111 @@
+{
+  "client": "rittal",
+  "variant": 1,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Rittal JL,. MH. THAMRIN MENARA BCA LT.5O MENTENG. : Kota Administrasi Jakarta Pusat DKI Jakarta Indonesia INVOICE To : Date Number 04 Sep 2025 SI.2025.09.00002 PT. Jago Gaya Metal Pergudangan Duta Indah Iconic Blok D62 Terms of Payment FOB Cikokol Tangerang net 30 Shipment Shipment Date SEA 03 Sep 2025 PO No Currency 882501014 Indonesian Rupiah"
+        },
+        {
+          "key": "table",
+          "value": "Article Number Item Name Qty @Price Discount Total Price 5050154 TS SINGLE DOOR 600x2000 1 5.037.460 0 5.037.460 RAL7035 8800040 TS FIXING COMPONENTS FRAME 1 317.816 0 317.816 5050067 TS SINGLE DOOR 800x2000 2 5.502.378 0 11.004.756 RAL7035 8800040 TS FIXING COMPONENTS FRAME 2 317.816 0 635.632 5050165 TS DOOR RH 500x2000 RAL7035 2 4.556.669 0 9.113.338 5050167 TS DOOR RH 500x2000 RAL7035 2 5.173.722 0 10.347.444 5050412 TS lock part for two-door TS 2 622.472 0 1.244.944 PU=4EA"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total 37.701.390 Tax Based 34.559.608 VAT 12% 4.147.153 Total 41.848.543 Prepared By :"
+        },
+        {
+          "key": "seller",
+          "value": "JL,. MH. THAMRIN MENARA BCA LT.5O MENTENG. Kota Administrasi Jakarta Pusat DKI Jakarta Indonesia INVOICE"
+        },
+        {
+          "key": "buyer_name",
+          "value": "To : PT. Jago Gaya Metal"
+        },
+        {
+          "key": "invoice_date",
+          "value": "04 Sep 2025"
+        },
+        {
+          "key": "invoice_number",
+          "value": "SI.2025.09.00002"
+        },
+        {
+          "key": "currency",
+          "value": "Indonesian Rupiah"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total 37.701.390"
+        },
+        {
+          "key": "tax_based",
+          "value": "Tax Based 34.559.608"
+        },
+        {
+          "key": "vat",
+          "value": "VAT 12% 4.147.153"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total 41.848.543"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Rittal JL,. MH. THAMRIN MENARA BCA LT.5O MENTENG. : Kota Administrasi Jakarta Pusat DKI Jakarta Indonesia INVOICE To : Date Number 04 Sep 2025 SI.2025.09.00002 PT. Jago Gaya Metal Pergudangan Duta Indah Iconic Blok D62 Terms of Payment FOB Cikokol Tangerang net 30 Shipment Shipment Date SEA 03 Sep 2025 PO No Currency 882501014 Indonesian Rupiah"
+        },
+        {
+          "key": "table",
+          "value": "Article Number Item Name Qty @Price Discount Total Price 5050154 TS SINGLE DOOR 600x2000 1 5.037.460 0 5.037.460 RAL7035 8800040 TS FIXING COMPONENTS FRAME 1 317.816 0 317.816 5050067 TS SINGLE DOOR 800x2000 2 5.502.378 0 11.004.756 RAL7035 8800040 TS FIXING COMPONENTS FRAME 2 317.816 0 635.632 5050165 TS DOOR RH 500x2000 RAL7035 2 4.556.669 0 9.113.338 5050167 TS DOOR RH 500x2000 RAL7035 2 5.173.722 0 10.347.444 5050412 TS lock part for two-door TS 2 622.472 0 1.244.944 PU=4EA"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total 37.701.390 Tax Based 34.559.608 VAT 12% 4.147.153 Total 41.848.543 Prepared By :"
+        },
+        {
+          "key": "seller",
+          "value": "JL,. MH. THAMRIN MENARA BCA LT.5O MENTENG. Kota Administrasi Jakarta Pusat DKI Jakarta Indonesia INVOICE"
+        },
+        {
+          "key": "buyer_name",
+          "value": "To : PT. Jago Gaya Metal"
+        },
+        {
+          "key": "invoice_date",
+          "value": "04 Sep 2025"
+        },
+        {
+          "key": "invoice_number",
+          "value": "SI.2025.09.00002"
+        },
+        {
+          "key": "currency",
+          "value": "Indonesian Rupiah"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total 37.701.390"
+        },
+        {
+          "key": "tax_based",
+          "value": "Tax Based 34.559.608"
+        },
+        {
+          "key": "vat",
+          "value": "VAT 12% 4.147.153"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total 41.848.543"
+        }
+      ]
+    }
+  }
+}

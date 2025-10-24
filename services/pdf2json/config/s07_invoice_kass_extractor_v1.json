@@ -74,7 +74,7 @@
     "seller_name": {
       "strategy": "constant",
       "post": { "value": "PT KASS INDONESIA IP SERVICES" }
-    },    
+    },
     "subtotal": {
       "segment": "subtotal",
       "strategy": "regex_capture",

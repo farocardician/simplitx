@@ -1,0 +1,87 @@
+{
+  "client": "pdp",
+  "variant": 17,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. PARADIGM DINAMIKA PERSADA GEDUNG WORLD TRADE CENTRE 1, LT. 14 Jalan Jenderal Sudirman Kav 29-31 RT. 008 RW. 003, Karet Setiabudi, Kota Adm. Jakarta Selatan, DKI Jakarta 12920 INVOICE No. Invoice : 002/PDP-02/2025 Client : Invoice Date : 13/02/2025 PT Asian Bearindo Sejahtera PO Number : Jl. Lautze Raya No 103-105 RT 011 RW 003 Term of payment : Net 14 Days from Invoice Date Karang Anyar, Sawah Besar Attention to: Sheila (sheila@abs-bearing.com)"
+        },
+        {
+          "key": "total",
+          "value": "Tax Base VAT 82,901,042 VAT (12%) 9,948,125 Tax Art 4(2) (3,165,313) Grand Total 97,220,313"
+        },
+        {
+          "key": "currency",
+          "value": "Curr IDR"
+        },
+        {
+          "key": "invoice_number",
+          "value": "No. Invoice : 002/PDP-02/2025 Invoice Date : 13/02/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "No. Invoice : 002/PDP-02/2025 Invoice Date : 13/02/2025 PO Number :"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Client : PT Asian Bearindo Sejahtera Jl. Lautze Raya No 103-105 RT 011 RW 003"
+        },
+        {
+          "key": "subtotal",
+          "value": "Total 97,220,313"
+        },
+        {
+          "key": "vat",
+          "value": "VAT 82,901,042 (12%) 9,948,125"
+        },
+        {
+          "key": "grand_total",
+          "value": "Grand Total 97,220,313"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. PARADIGM DINAMIKA PERSADA GEDUNG WORLD TRADE CENTRE 1, LT. 14 Jalan Jenderal Sudirman Kav 29-31 RT. 008 RW. 003, Karet Setiabudi, Kota Adm. Jakarta Selatan, DKI Jakarta 12920 INVOICE No. Invoice : 002/PDP-02/2025 Client : Invoice Date : 13/02/2025 PT Asian Bearindo Sejahtera PO Number : Jl. Lautze Raya No 103-105 RT 011 RW 003 Term of payment : Net 14 Days from Invoice Date Karang Anyar, Sawah Besar Attention to: Sheila (sheila@abs-bearing.com)"
+        },
+        {
+          "key": "total",
+          "value": "Tax Base VAT 82,901,042 VAT (12%) 9,948,125 Tax Art 4(2) (3,165,313) Grand Total 97,220,313"
+        },
+        {
+          "key": "currency",
+          "value": "Curr IDR"
+        },
+        {
+          "key": "invoice_number",
+          "value": "No. Invoice : 002/PDP-02/2025 Invoice Date : 13/02/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "No. Invoice : 002/PDP-02/2025 Invoice Date : 13/02/2025 PO Number :"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Client : PT Asian Bearindo Sejahtera Jl. Lautze Raya No 103-105 RT 011 RW 003"
+        },
+        {
+          "key": "subtotal",
+          "value": "Total 97,220,313"
+        },
+        {
+          "key": "vat",
+          "value": "VAT 82,901,042 (12%) 9,948,125"
+        },
+        {
+          "key": "grand_total",
+          "value": "Grand Total 97,220,313"
+        }
+      ]
+    }
+  }
+}

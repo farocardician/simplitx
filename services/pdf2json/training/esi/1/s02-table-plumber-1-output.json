@@ -1,0 +1,33 @@
+{
+    "items": [
+        {
+            "no": 1,
+            "hs_code": null,
+            "sku": "NDCA-DCDA",
+            "code": null,
+            "description": "DISCOUNT PRICE [Public Training] Data Center Design Awareness from DCD Academy Date: 17 - 19 September 2025 Place: Wyndham Casablanca Jakarta Participants: Mohd Nurul Anuar Bin Haji Sha'ri",
+            "qty": 1,
+            "uom": "PAX",
+            "unit_price": 19573311,
+            "discount_amount": null,
+            "discount_percent": null,
+            "amount": 19573311
+        },
+        {
+            "no": 2,
+            "hs_code": null,
+            "sku": "NDCA-ES",
+            "code": null,
+            "description": "DISCOUNT PRICE [Public Training] Energy & Sustainability from DCD Academy Date: 17 - 19 September 2025 Place: Wyndham Casablanca Jakarta Participants: Mohd Nurul Anuar Bin Haji Sha'ri",
+            "qty": 1,
+            "uom": "PAX",
+            "unit_price": 19573311,
+            "discount_amount": null,
+            "discount_percent": null,
+            "amount": 19573311
+        }
+    ],
+    "stage": null,
+    "version": null,
+    "notes": null
+}

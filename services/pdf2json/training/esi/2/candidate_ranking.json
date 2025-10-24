@@ -1,0 +1,74 @@
+[
+  {
+    "page": 1,
+    "items_region": {
+      "x0": 0.0,
+      "x1": 1.0,
+      "y0": 0.33450252525252516,
+      "y1": 0.41608901515151525,
+      "start_anchor": {
+        "text": "NO ARTICLE NO. DESCRIPTION QTY UOM UNIT PRICE TOTAL PRICE",
+        "y0": 0.33450252525252516,
+        "y1": 0.3446035353535353,
+        "hits": 7
+      },
+      "end_anchor": {
+        "text": "Say : Fifty Six Million Six Hundred And Thirty Two Thousand Six Hundred And Fifty Three Rupiah",
+        "y0": 0.7160890151515152,
+        "y1": 0.7255587121212121,
+        "hits": 1
+      }
+    },
+    "candidates": [
+      {
+        "index": 0,
+        "source": "roi",
+        "flavor": "stream",
+        "bbox": {
+          "x0": 0.0,
+          "y0": 0.3345025252525252,
+          "x1": 0.9536764705882352,
+          "y1": 0.41924558080808083
+        },
+        "features": {
+          "header_hits": 4.0,
+          "overlap": 0.9627513353646281,
+          "numeric_right": 1.0,
+          "rows": 4.0,
+          "totals_below": 1.0
+        },
+        "score": 20.50687833841157,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 4,
+        "header_hits": 4,
+        "selected": true
+      },
+      {
+        "index": 1,
+        "source": "roi",
+        "flavor": "lattice",
+        "bbox": {
+          "x0": 0.0,
+          "y0": 0.33424242424242423,
+          "x1": 1.0,
+          "y1": 0.41606060606060613
+        },
+        "features": {
+          "header_hits": 4.0,
+          "overlap": 0.9968209876543219,
+          "numeric_right": 0.0,
+          "rows": 1.0,
+          "totals_below": 1.0
+        },
+        "score": 16.192052469135803,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 1,
+        "header_hits": 4,
+        "selected": false
+      }
+    ],
+    "selected_index": 0
+  }
+]

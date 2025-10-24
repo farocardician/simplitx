@@ -124,8 +124,8 @@
   "page_stop_keywords": {},
   "page_row_limit": {},
   "row_fix": {
-    "enabled": false,
-    "shadow_mode": true,
+    "enabled": true,
+    "shadow_mode": false,
     "continuation_gap_points": 5.0,
     "header_margin_points": 3.0,
     "numeric_column_mode": "right_edge_cluster",
@@ -137,6 +137,26 @@
     "subtotal_rel_tolerance": 0.003,
     "use_llm_hints": false,
     "debug_dump": true,
-    "cache_enabled": false
+    "cache_enabled": false,
+    "column_overrides": [
+      {
+        "match": {
+          "name": "^COL3$"
+        },
+        "set": {
+          "name": "QTY",
+          "text": "QTY"
+        }
+      },
+      {
+        "match": {
+          "name": "^COL4$"
+        },
+        "set": {
+          "name": "UNIT_PRICE",
+          "text": "UNIT PRICE"
+        }
+      }
+    ]
   }
 }

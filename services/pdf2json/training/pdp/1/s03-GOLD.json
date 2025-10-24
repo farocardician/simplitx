@@ -1,0 +1,87 @@
+{
+  "client": "pdp",
+  "variant": 1,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. PARADIGM DINAMIKA PERSADA GEDUNG WORLD TRADE CENTRE 1, LT. 14 Jalan Jenderal Sudirman Kav 29-31 RT. 008 RW. 003, Karet Setiabudi, Kota Adm. Jakarta Selatan, DKI Jakarta 12920 INVOICE No. Invoice : 001/PDP-06/2021 Client : Invoice Date : 14/06/2021 PT. Kino Indonesia, Tbk. PO Number : 1130005188 Kino Tower Lt. 17 , Jl. Jalur Sutera Boulevard No. 1 Term of payment : 15 days after invoice Received Alam Sutera, Panunggangan Timur Pinang Kota Tangerang Banten Attention to : Fenella G. ( Head of Purchasing)"
+        },
+        {
+          "key": "total",
+          "value": "Total 254.400.000 VAT 25.440.000 Grand Total 279.840.000"
+        },
+        {
+          "key": "currency",
+          "value": "Curr IDR"
+        },
+        {
+          "key": "invoice_number",
+          "value": "No. Invoice : 001/PDP-06/2021 Invoice Date : 14/06/2021"
+        },
+        {
+          "key": "invoice_date",
+          "value": "No. Invoice : 001/PDP-06/2021 Invoice Date : 14/06/2021 PO Number : 1130005188"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Client : PT. Kino Indonesia, Tbk. Kino Tower Lt. 17 , Jl. Jalur Sutera Boulevard No. 1"
+        },
+        {
+          "key": "subtotal",
+          "value": "Total 254.400.000 VAT 25.440.000"
+        },
+        {
+          "key": "vat",
+          "value": "VAT 25.440.000 Grand Total 279.840.000"
+        },
+        {
+          "key": "grand_total",
+          "value": "Grand Total 279.840.000"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. PARADIGM DINAMIKA PERSADA GEDUNG WORLD TRADE CENTRE 1, LT. 14 Jalan Jenderal Sudirman Kav 29-31 RT. 008 RW. 003, Karet Setiabudi, Kota Adm. Jakarta Selatan, DKI Jakarta 12920 INVOICE No. Invoice : 001/PDP-06/2021 Client : Invoice Date : 14/06/2021 PT. Kino Indonesia, Tbk. PO Number : 1130005188 Kino Tower Lt. 17 , Jl. Jalur Sutera Boulevard No. 1 Term of payment : 15 days after invoice Received Alam Sutera, Panunggangan Timur Pinang Kota Tangerang Banten Attention to : Fenella G. ( Head of Purchasing)"
+        },
+        {
+          "key": "total",
+          "value": "Total 254.400.000 VAT 25.440.000 Grand Total 279.840.000"
+        },
+        {
+          "key": "currency",
+          "value": "Curr IDR"
+        },
+        {
+          "key": "invoice_number",
+          "value": "No. Invoice : 001/PDP-06/2021 Invoice Date : 14/06/2021"
+        },
+        {
+          "key": "invoice_date",
+          "value": "No. Invoice : 001/PDP-06/2021 Invoice Date : 14/06/2021 PO Number : 1130005188"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Client : PT. Kino Indonesia, Tbk. Kino Tower Lt. 17 , Jl. Jalur Sutera Boulevard No. 1"
+        },
+        {
+          "key": "subtotal",
+          "value": "Total 254.400.000 VAT 25.440.000"
+        },
+        {
+          "key": "vat",
+          "value": "VAT 25.440.000 Grand Total 279.840.000"
+        },
+        {
+          "key": "grand_total",
+          "value": "Grand Total 279.840.000"
+        }
+      ]
+    }
+  }
+}

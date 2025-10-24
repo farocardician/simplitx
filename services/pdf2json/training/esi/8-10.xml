@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TaxInvoiceBulk xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <TIN>0758900039064000</TIN>
+  <ListOfTaxInvoice>
+    <TaxInvoice>
+      <TaxInvoiceDate>2025-09-29</TaxInvoiceDate>
+      <TaxInvoiceOpt>Normal</TaxInvoiceOpt>
+      <TrxCode>04</TrxCode>
+      <AddInfo/>
+      <CustomDoc/>
+      <CustomDocMonthYear/>
+      <RefDesc>INV/083/0925</RefDesc>
+      <FacilityStamp/>
+      <SellerIDTKU>0758900039064000000000</SellerIDTKU>
+      <BuyerTin>0848756425043000</BuyerTin>
+      <BuyerDocument>TIN</BuyerDocument>
+      <BuyerCountry>IDN</BuyerCountry>
+      <BuyerDocumentNumber>-</BuyerDocumentNumber>
+      <BuyerName>PT Sarana Energi Investama</BuyerName>
+      <BuyerAdress>JAKARTAGREEN SEDAYU BIZPARK GS 9 A NO 21 JALAN CAKUNG
+CILINCING TIMUR RAYA KILOMETER 2, CAKUNG TIMUR,
+CAKUNG, KOTA ADM. JAKARTA TIMUR, DKI JAKARTA,
+13910</BuyerAdress>
+      <BuyerEmail>-</BuyerEmail>
+      <BuyerIDTKU>0848756425043000000000</BuyerIDTKU>
+      <ListOfGoodService>
+        <GoodService>
+          <Opt>B</Opt>
+          <Code>240900</Code>
+          <Name>[Public training without certification]Cooling Professional</Name>
+          <Unit>UM.0030</Unit>
+          <Price>5000000</Price>
+          <Qty>1</Qty>
+          <TotalDiscount>0</TotalDiscount>
+          <TaxBase>5000000</TaxBase>
+          <OtherTaxBase>4583333.33</OtherTaxBase>
+          <VATRate>12</VATRate>
+          <VAT>550000</VAT>
+          <STLGRate>0</STLGRate>
+          <STLG>0</STLG>
+        </GoodService>
+      </ListOfGoodService>
+    </TaxInvoice>
+    <TaxInvoice>
+      <TaxInvoiceDate>2025-09-29</TaxInvoiceDate>
+      <TaxInvoiceOpt>Normal</TaxInvoiceOpt>
+      <TrxCode>04</TrxCode>
+      <AddInfo/>
+      <CustomDoc/>
+      <CustomDocMonthYear/>
+      <RefDesc>INV/084/0925</RefDesc>
+      <FacilityStamp/>
+      <SellerIDTKU>0758900039064000000000</SellerIDTKU>
+      <BuyerTin>0028609691032000</BuyerTin>
+      <BuyerDocument>TIN</BuyerDocument>
+      <BuyerCountry>IDN</BuyerCountry>
+      <BuyerDocumentNumber>-</BuyerDocumentNumber>
+      <BuyerName>PT Forthen Indonesia</BuyerName>
+      <BuyerAdress>JL MANGGA BESAR I, 61G, MANGGA BESAR, TAMAN
+SARI, KOTA ADM. JAKARTA BARAT, DKI JAKARTA, 11180</BuyerAdress>
+      <BuyerEmail>-</BuyerEmail>
+      <BuyerIDTKU>0028609691032000000000</BuyerIDTKU>
+      <ListOfGoodService>
+        <GoodService>
+          <Opt>B</Opt>
+          <Code>240900</Code>
+          <Name>[Public training without certification]Energy &amp; Sustainability Professional</Name>
+          <Unit>UM.0030</Unit>
+          <Price>5000000</Price>
+          <Qty>1</Qty>
+          <TotalDiscount>0</TotalDiscount>
+          <TaxBase>5000000</TaxBase>
+          <OtherTaxBase>4583333.33</OtherTaxBase>
+          <VATRate>12</VATRate>
+          <VAT>550000</VAT>
+          <STLGRate>0</STLGRate>
+          <STLG>0</STLG>
+        </GoodService>
+      </ListOfGoodService>
+    </TaxInvoice>
+    <TaxInvoice>
+      <TaxInvoiceDate>2025-09-29</TaxInvoiceDate>
+      <TaxInvoiceOpt>Normal</TaxInvoiceOpt>
+      <TrxCode>04</TrxCode>
+      <AddInfo/>
+      <CustomDoc/>
+      <CustomDocMonthYear/>
+      <RefDesc>INV/085/0925</RefDesc>
+      <FacilityStamp/>
+      <SellerIDTKU>0758900039064000000000</SellerIDTKU>
+      <BuyerTin>0020059713073000</BuyerTin>
+      <BuyerDocument>TIN</BuyerDocument>
+      <BuyerCountry>IDN</BuyerCountry>
+      <BuyerDocumentNumber>-</BuyerDocumentNumber>
+      <BuyerName>PT Kelola Jasa Artha</BuyerName>
+      <BuyerAdress>JL IR. H. JUANDA NO.28, RT 000, RW 000, KEBON KELAPA, GAMBIR, KOTA ADM. JAKARTA PUSAT,
+DKI JAKARTA 10120</BuyerAdress>
+      <BuyerEmail>-</BuyerEmail>
+      <BuyerIDTKU>0020059713073000000000</BuyerIDTKU>
+      <ListOfGoodService>
+        <GoodService>
+          <Opt>B</Opt>
+          <Code>240900</Code>
+          <Name>Teaching Factory BCA Cash Management Academy: Period September 2025</Name>
+          <Unit>UM.0030</Unit>
+          <Price>4050000</Price>
+          <Qty>20</Qty>
+          <TotalDiscount>0</TotalDiscount>
+          <TaxBase>81000000</TaxBase>
+          <OtherTaxBase>74250000</OtherTaxBase>
+          <VATRate>12</VATRate>
+          <VAT>8910000</VAT>
+          <STLGRate>0</STLGRate>
+          <STLG>0</STLG>
+        </GoodService>
+      </ListOfGoodService>
+    </TaxInvoice>
+  </ListOfTaxInvoice>
+</TaxInvoiceBulk>

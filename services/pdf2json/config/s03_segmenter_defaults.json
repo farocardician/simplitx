@@ -1,0 +1,33 @@
+{
+  "defaults": {
+    "anchor_scope": "auto",
+    "max_page_gap": null,
+    "skip_page_headers": "auto",
+    "start_rows_below": 1,
+    "value_part_policy": "last_numeric",
+    "canonical_bbox": "value",
+    "margins": {
+      "top": 0.0,
+      "right": 0.0,
+      "bottom": 0.01,
+      "left": 0.0
+    },
+    "x_policy": "full",
+    "row_patterns": [
+      "^\\s*\\d"
+    ],
+    "numeric_locale": {
+      "thousands": ",",
+      "decimal": "."
+    },
+    "header_detection": {
+      "sentinels": [],
+      "ratio_top_fallback": 0.18,
+      "margin_px": 8
+    },
+    "table_header_detection": {
+      "patterns": [],
+      "search_band_ratio": 0.14
+    }
+  }
+}

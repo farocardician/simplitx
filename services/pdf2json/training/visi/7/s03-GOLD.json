@@ -1,0 +1,103 @@
+{
+  "client": "visi",
+  "variant": 7,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE PT.CJFeedandCare Invoiceno. :9058006548 38MenaraJamsostek15thFloorJl. BillingDate :August25,2025 , 12710,KuninganBarat,MampangPrapatan,Jakart Indonesia Attention:Tel:"
+        },
+        {
+          "key": "total",
+          "value": "SubTotal 50.000.000 TaxBase 45.833.333 PPN-VAT12% 5.500.000 TotalAmount 55.500.000"
+        },
+        {
+          "key": "seller",
+          "value": "Pleasekindlymakethepaymenttoourbankaccountasbelow: BankAccountName : PT.VISIGLOBALINDODATAUTAMA BankName : PT.BankPermataTbk BankAddress : ArionBuilding,JalanPemudaKav.17 JakartaTimur–13220 AccountNo.701275586 SWIFTCode-BBBAIDJA"
+        },
+        {
+          "key": "currency",
+          "value": "Amount(IDR)"
+        },
+        {
+          "key": "invoice_number",
+          "value": ":9058006548 :August25,2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": ":August25,2025"
+        },
+        {
+          "key": "buyer",
+          "value": "PT.CJFeedandCare 38MenaraJamsostek15thFloorJl. , 12710,KuninganBarat,MampangPrapatan,Jakart Indonesia Attention:Tel:"
+        },
+        {
+          "key": "subtotal",
+          "value": "SubTotal 50.000.000"
+        },
+        {
+          "key": "tax_base",
+          "value": "TaxBase 45.833.333"
+        },
+        {
+          "key": "vat",
+          "value": "PPN-VAT12% 5.500.000"
+        },
+        {
+          "key": "total_amount",
+          "value": "TotalAmount 55.500.000"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE PT. CJ Feed and Care Invoice no. :9058006548 38 Menara Jamsostek 15th Floor Jl. Billing Date :August 25 , 2025 , 12710,Kuningan Barat, Mampang Prapatan, Jakart Indonesia Attention : Tel:"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total 50.000.000 Tax Base 45.833.333 PPN - VAT 12% 5.500.000 Total Amount 55.500.000"
+        },
+        {
+          "key": "seller",
+          "value": "Please kindly make the payment to our bank account as below: Bank Account Name : PT. VISI GLOBALINDO DATA UTAMA Bank Name : PT. Bank Permata Tbk Bank Address : Arion Building,Jalan Pemuda Kav.17 Jakarta Timur – 13220 Account No. 701275586 SWIFT Code - BBBAIDJA"
+        },
+        {
+          "key": "currency",
+          "value": "Amount(IDR)"
+        },
+        {
+          "key": "invoice_number",
+          "value": ":9058006548 :August 25 , 2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": ":August 25 , 2025"
+        },
+        {
+          "key": "buyer",
+          "value": "PT. CJ Feed and Care 38 Menara Jamsostek 15th Floor Jl. , 12710,Kuningan Barat, Mampang Prapatan, Jakart Indonesia Attention : Tel:"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total 50.000.000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base 45.833.333"
+        },
+        {
+          "key": "vat",
+          "value": "PPN - VAT 12% 5.500.000"
+        },
+        {
+          "key": "total_amount",
+          "value": "Total Amount 55.500.000"
+        }
+      ]
+    }
+  }
+}

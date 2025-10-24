@@ -1,0 +1,220 @@
+{
+  "doc_id": "1.pdf",
+  "pages": [
+    {
+      "page_index": 0,
+      "hypothesis_id": "y006_conservative_up",
+      "rows": [
+        {
+          "row_id": 1,
+          "cells": {
+            "qty": {
+              "text": "1"
+            },
+            "uom": {
+              "text": "PAX"
+            },
+            "unit_price": {
+              "text": "Rp 19.573.311"
+            },
+            "amount": {
+              "text": "Rp 19.573.311"
+            },
+            "no": {
+              "text": "1"
+            },
+            "sku": {
+              "text": "NDCA-DCDA"
+            },
+            "description": {
+              "text": "DISCOUNT PRICE [Public Training] Data Design Awareness from DCD Academy Date: 17 - 19 September 2025 Place: Wyndham Casablanca Jakarta Participants: Mohd Nurul Anuar Bin Haji Sha'ri"
+            }
+          },
+          "tie_break": {
+            "qty": {
+              "candidates": [
+                "1"
+              ],
+              "scores": [
+                1.0
+              ],
+              "chosen_index": 0
+            },
+            "uom": {
+              "candidates": [
+                "PAX"
+              ],
+              "scores": [
+                1.0
+              ],
+              "chosen_index": 0
+            },
+            "unit_price": {
+              "candidates": [
+                "Rp 19.573.311"
+              ],
+              "scores": [
+                1.0
+              ],
+              "chosen_index": 0
+            },
+            "amount": {
+              "candidates": [
+                "Rp 19.573.311"
+              ],
+              "scores": [
+                1.0
+              ],
+              "chosen_index": 0
+            }
+          },
+          "flags": {
+            "has_left_anchor": true,
+            "has_right_anchor": true,
+            "unresolved_fields": []
+          }
+        },
+        {
+          "row_id": 2,
+          "cells": {
+            "qty": {
+              "text": "1"
+            },
+            "uom": {
+              "text": "PAX"
+            },
+            "unit_price": {
+              "text": "Rp 19.573.311"
+            },
+            "amount": {
+              "text": "Rp 19.573.311"
+            },
+            "no": {
+              "text": "2"
+            },
+            "sku": {
+              "text": "NDCA-ES"
+            },
+            "description": {
+              "text": "DISCOUNT PRICE [Public Training] Energy Sustainability from DCD Academy Date: 17 - 19 September 2025 Place: Wyndham Casablanca Jakarta Participants: Mohd Nurul Anuar Bin Haji Sha'ri"
+            }
+          },
+          "tie_break": {
+            "qty": {
+              "candidates": [
+                "1"
+              ],
+              "scores": [
+                1.0
+              ],
+              "chosen_index": 0
+            },
+            "uom": {
+              "candidates": [
+                "PAX"
+              ],
+              "scores": [
+                1.0
+              ],
+              "chosen_index": 0
+            },
+            "unit_price": {
+              "candidates": [
+                "Rp 19.573.311"
+              ],
+              "scores": [
+                1.0
+              ],
+              "chosen_index": 0
+            },
+            "amount": {
+              "candidates": [
+                "Rp 19.573.311"
+              ],
+              "scores": [
+                1.0
+              ],
+              "chosen_index": 0
+            }
+          },
+          "flags": {
+            "has_left_anchor": true,
+            "has_right_anchor": true,
+            "unresolved_fields": []
+          }
+        },
+        {
+          "row_id": 3,
+          "cells": {
+            "qty": {
+              "text": "Seven Hundred"
+            },
+            "uom": {
+              "text": "And"
+            },
+            "unit_price": {
+              "text": "Fifty Rupiah Sub total"
+            },
+            "amount": {
+              "text": "Rp 39.146.622,00"
+            },
+            "no": {
+              "text": ""
+            },
+            "sku": {
+              "text": "Say : Forty Three Million"
+            },
+            "description": {
+              "text": "Four Hundred And Fifty Two Thousand"
+            }
+          },
+          "tie_break": {
+            "qty": {
+              "candidates": [
+                "Seven Hundred"
+              ],
+              "scores": [
+                1.0
+              ],
+              "chosen_index": 0
+            },
+            "uom": {
+              "candidates": [
+                "And"
+              ],
+              "scores": [
+                1.0
+              ],
+              "chosen_index": 0
+            },
+            "unit_price": {
+              "candidates": [
+                "Fifty Rupiah Sub total"
+              ],
+              "scores": [
+                1.0
+              ],
+              "chosen_index": 0
+            },
+            "amount": {
+              "candidates": [
+                "Rp 39.146.622,00"
+              ],
+              "scores": [
+                1.0
+              ],
+              "chosen_index": 0
+            }
+          },
+          "flags": {
+            "has_left_anchor": true,
+            "has_right_anchor": true,
+            "unresolved_fields": []
+          }
+        }
+      ]
+    }
+  ],
+  "config_version": "v1.0",
+  "created_at": "2025-10-12T23:27:19.542917Z"
+}

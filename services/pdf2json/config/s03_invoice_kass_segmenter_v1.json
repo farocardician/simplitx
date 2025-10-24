@@ -146,21 +146,42 @@
       "detect": {
         "by": "line_anchors",
         "start_anchor": {
-          "patterns": ["\\bInvoice\\s*Date\\s*:"],
+          "patterns": ["\\d{1,2}\\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*"],
           "flags": {
-            "ignore_case": true
+            "ignore_case": true,
+            "normalize_space": true
           },
-          "select": "leftmost"
+          "select": "first"
         },
         "capture_window": {
-          "mode": "right_then_rows",
+          "mode": "right_then_down",
           "start_edge": "left",
-          "rows": 0,
-          "row_tol": 0.006,
-          "dx_max": 0.28,
-          "gap_x": 0.002
+          "dx_max": 0.12,
+          "dy_max": 0.02,
+          "gap_x": 0.001,
+          "refine_with_tokens": true
         }
       },
+      "fallbacks": [
+        {
+          "by": "anchors",
+          "start_anchor": {
+            "patterns": ["\\d{1,2}\\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*"],
+            "flags": {
+              "ignore_case": true,
+              "normalize_space": true
+            },
+            "select": "first"
+          },
+          "capture_window": {
+            "mode": "right_then_down",
+            "dx_max": 0.12,
+            "dy_max": 0.03,
+            "pad_right": 0.02,
+            "refine_with_tokens": true
+          }
+        }
+      ],
       "keep": "all"
     },
     {
@@ -193,10 +214,15 @@
       "label": "Table",
       "on_pages": "first",
       "detect": {
-        "by": "line_anchors",
+        "by": "anchors",
         "start_anchor": {
           "patterns": [
-            "# Item & Description Qty Rate Amount"
+            "^#$",
+            "^Item$",
+            "^Description$",
+            "^Qty$",
+            "^Rate$",
+            "^Amount$"
           ],
           "flags": {
             "ignore_case": true
@@ -205,19 +231,20 @@
         },
         "end_anchor": {
           "patterns": [
-            "Sub Total",
-            "Tax Base",
-            "Total"
+            "^Sub$",
+            "^Sub Total$",
+            "^Tax$",
+            "^Total$"
           ],
           "flags": {
             "ignore_case": true
           }
         },
         "margin": {
-          "top": 0.005,
-          "bottom": -0.02,
-          "right": 0.02,
-          "left": 0.04
+          "top": -0.01,
+          "bottom": -0.01,
+          "right": 1,
+          "left": 1
         }
       },
       "fallbacks": [
