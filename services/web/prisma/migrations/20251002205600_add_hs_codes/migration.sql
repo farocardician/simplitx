@@ -53,15 +53,9 @@ CREATE TABLE IF NOT EXISTS hs_codes (
   -- Optional: Embeddings for LLM use (uncomment if pgvector is enabled)
   -- embedding vector,
 
-  -- Generated search vectors (auto-maintained by PostgreSQL)
-  -- Using unaccent + lower for better recall across languages
-  search_vector_en tsvector GENERATED ALWAYS AS (
-    to_tsvector('simple', unaccent(lower(coalesce(description_en, ''))))
-  ) STORED,
-
-  search_vector_id tsvector GENERATED ALWAYS AS (
-    to_tsvector('simple', unaccent(lower(coalesce(description_id, ''))))
-  ) STORED,
+  -- Search vectors (maintained by trigger)
+  search_vector_en tsvector,
+  search_vector_id tsvector,
 
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -102,6 +96,23 @@ CREATE TRIGGER trigger_update_hs_codes_updated_at
   BEFORE UPDATE ON hs_codes
   FOR EACH ROW
   EXECUTE FUNCTION update_hs_codes_updated_at();
+
+-- Function to update search vectors
+CREATE OR REPLACE FUNCTION update_hs_codes_search_vectors()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.search_vector_en := to_tsvector('simple', unaccent(lower(coalesce(NEW.description_en, ''))));
+  NEW.search_vector_id := to_tsvector('simple', unaccent(lower(coalesce(NEW.description_id, ''))));
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to update search vectors before INSERT and UPDATE
+DROP TRIGGER IF EXISTS trigger_update_hs_codes_search_vectors ON hs_codes;
+CREATE TRIGGER trigger_update_hs_codes_search_vectors
+  BEFORE INSERT OR UPDATE ON hs_codes
+  FOR EACH ROW
+  EXECUTE FUNCTION update_hs_codes_search_vectors();
 
 -- ============================================================================
 -- PART 4: INDEXES
@@ -154,46 +165,14 @@ CREATE TEMP TABLE IF NOT EXISTS hs_codes_staging (
 );
 
 -- ============================================================================
--- PART 6: BULK IMPORT FROM CSV
+-- PART 6: BULK IMPORT FROM CSV (Skipped in shadow database)
 -- ============================================================================
 
--- Copy CSV data into staging table
-COPY hs_codes_staging(code, level, parent_code, description_en, description_id, jurisdiction, version_year)
-FROM '/Users/budionodarmawan/Websites/simplitx/services/web/prisma/hscodes_filtered.csv'
-WITH (FORMAT csv, HEADER true, DELIMITER ',', QUOTE '"', ESCAPE '"');
-
--- ============================================================================
--- PART 7: UPSERT INTO MAIN TABLE
--- ============================================================================
-
--- Insert or update from staging to main table
-INSERT INTO hs_codes (code, level, parent_code, description_en, description_id, jurisdiction, version_year)
-SELECT
-  code,
-  level::hs_level,
-  NULLIF(parent_code, ''),
-  description_en,
-  description_id,
-  COALESCE(jurisdiction, 'ID'),
-  COALESCE(version_year, 2022)
-FROM hs_codes_staging
-ON CONFLICT (jurisdiction, version_year, code)
-DO UPDATE SET
-  description_en = EXCLUDED.description_en,
-  description_id = EXCLUDED.description_id,
-  parent_code = EXCLUDED.parent_code,
-  updated_at = NOW();
-
--- NULL any orphaned parent references (parents that don't exist in the table)
-UPDATE hs_codes hc
-SET parent_code = NULL
-WHERE parent_code IS NOT NULL
-  AND NOT EXISTS (
-    SELECT 1 FROM hs_codes parent
-    WHERE parent.code = hc.parent_code
-      AND parent.jurisdiction = hc.jurisdiction
-      AND parent.version_year = hc.version_year
-  );
+-- Note: CSV import is handled separately in production
+-- Uncomment and modify the path if needed:
+-- COPY hs_codes_staging(code, level, parent_code, description_en, description_id, jurisdiction, version_year)
+-- FROM '/Users/budionodarmawan/Websites/simplitx/services/web/prisma/hscodes_filtered.csv'
+-- WITH (FORMAT csv, HEADER true, DELIMITER ',', QUOTE '"', ESCAPE '"');
 
 -- ============================================================================
 -- PART 8: BREADCRUMBS VIEW (HS6 -> HS4 -> HS2)
@@ -255,27 +234,27 @@ END;
 $$ LANGUAGE plpgsql STABLE;
 
 -- ============================================================================
--- PART 10: SANITY CHECKS & SUMMARY
+-- PART 10: SANITY CHECKS & SUMMARY (Skipped on empty table)
 -- ============================================================================
 
--- Summary by level
-SELECT level, COUNT(*) as count
-FROM hs_codes
-WHERE jurisdiction = 'ID' AND version_year = 2022
-GROUP BY level
-ORDER BY level;
+-- Summary by level (uncomment when data is loaded)
+-- SELECT level, COUNT(*) as count
+-- FROM hs_codes
+-- WHERE jurisdiction = 'ID' AND version_year = 2022
+-- GROUP BY level
+-- ORDER BY level;
 
--- Check for orphaned parents
-SELECT code, parent_code
-FROM hs_codes hc
-WHERE parent_code IS NOT NULL
-  AND NOT EXISTS (
-    SELECT 1 FROM hs_codes parent
-    WHERE parent.code = hc.parent_code
-      AND parent.jurisdiction = hc.jurisdiction
-      AND parent.version_year = hc.version_year
-  )
-LIMIT 10;
+-- Check for orphaned parents (uncomment when data is loaded)
+-- SELECT code, parent_code
+-- FROM hs_codes hc
+-- WHERE parent_code IS NOT NULL
+--   AND NOT EXISTS (
+--     SELECT 1 FROM hs_codes parent
+--     WHERE parent.code = hc.parent_code
+--       AND parent.jurisdiction = hc.jurisdiction
+--       AND parent.version_year = hc.version_year
+--   )
+-- LIMIT 10;
 
 -- ============================================================================
 -- EXAMPLE QUERIES (FOR TESTING)

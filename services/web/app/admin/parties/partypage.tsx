@@ -1,14 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import TransactionCodeDropdown from '@/components/TransactionCodeDropdown';
 
 interface Party {
   id: string;
   displayName: string;
   tinDisplay: string;
   countryCode: string | null;
-  transactionCode: string | null;
   addressFull: string | null;
   email: string | null;
   buyerDocument: string | null;
@@ -16,12 +14,6 @@ interface Party {
   buyerIdtku: string | null;
   createdAt: string;
   updatedAt: string;
-}
-
-interface TransactionCode {
-  code: string;
-  name: string;
-  description: string;
 }
 
 interface PaginationInfo {
@@ -52,8 +44,6 @@ export default function PartiesManagementPage() {
     totalPages: 0,
     hasMore: false
   });
-  const [transactionCodes, setTransactionCodes] = useState<TransactionCode[]>([]);
-  const [transactionCodesError, setTransactionCodesError] = useState<string | null>(null);
 
   // Debounce search query
   useEffect(() => {
@@ -67,34 +57,6 @@ export default function PartiesManagementPage() {
   useEffect(() => {
     fetchParties();
   }, [debouncedQuery, countryFilter, pagination.page]);
-
-  useEffect(() => {
-    const fetchTransactionCodes = async () => {
-      try {
-        const response = await fetch('/api/transaction-codes');
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch transaction codes');
-        }
-
-        const rawCodes = await response.json();
-        const normalizedCodes: TransactionCode[] = (rawCodes || []).map((code: any) => ({
-          code: code.code,
-          name: code.name,
-          description: code.description ?? ''
-        }));
-
-        setTransactionCodes(normalizedCodes);
-        setTransactionCodesError(null);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load transaction codes';
-        console.error(message, err);
-        setTransactionCodesError(message);
-      }
-    };
-
-    fetchTransactionCodes();
-  }, []);
 
   const fetchParties = async () => {
     try {
@@ -116,11 +78,7 @@ export default function PartiesManagementPage() {
       if (!response.ok) throw new Error('Failed to fetch parties');
 
       const data = await response.json();
-      const normalizedParties: Party[] = (Array.isArray(data.parties) ? data.parties : []).map((party: any) => ({
-        ...party,
-        transactionCode: party.transactionCode ?? null
-      }));
-      setParties(normalizedParties);
+      setParties(data.parties);
       setPagination(data.pagination);
       setError(null);
     } catch (err) {
@@ -279,10 +237,9 @@ export default function PartiesManagementPage() {
     setEditValue('');
   };
 
-  const saveEdit = (party: Party, overrideValue?: string) => {
+  const saveEdit = (party: Party) => {
     if (editingCell) {
-      const valueToSave = overrideValue !== undefined ? overrideValue : editValue;
-      handleUpdateParty(party.id, editingCell.field, valueToSave, party);
+      handleUpdateParty(party.id, editingCell.field, editValue, party);
     }
   };
 
@@ -377,19 +334,12 @@ export default function PartiesManagementPage() {
           </div>
         )}
 
-        {transactionCodesError && (
-          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700">
-            {transactionCodesError}. Transaction code editing is temporarily unavailable.
-          </div>
-        )}
-
         {/* Add Party Form */}
         {showAddForm && (
           <AddPartyForm
             onClose={() => setShowAddForm(false)}
             onSuccess={handleAddParty}
             onError={(msg) => showToast(msg, 'error')}
-            transactionCodes={transactionCodes}
           />
         )}
 
@@ -407,9 +357,6 @@ export default function PartiesManagementPage() {
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Country
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Transaction Code
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Email
@@ -443,7 +390,6 @@ export default function PartiesManagementPage() {
                     onSaveEdit={saveEdit}
                     onEditValueChange={setEditValue}
                     onDelete={handleDeleteParty}
-                    transactionCodes={transactionCodes}
                   />
                 ))}
               </tbody>
@@ -522,8 +468,7 @@ function PartyRow({
   onCancelEdit,
   onSaveEdit,
   onEditValueChange,
-  onDelete,
-  transactionCodes
+  onDelete
 }: {
   party: Party;
   editingCell: { partyId: string; field: string } | null;
@@ -533,7 +478,6 @@ function PartyRow({
   onSaveEdit: (party: Party) => void;
   onEditValueChange: (value: string) => void;
   onDelete: (party: Party) => void;
-  transactionCodes: TransactionCode[];
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -546,47 +490,6 @@ function PartyRow({
 
   const isEditing = (field: string) =>
     editingCell?.partyId === party.id && editingCell?.field === field;
-
-  const renderTransactionCodeCell = () => {
-    const activeValue = isEditing('transactionCode') ? editValue || '' : party.transactionCode || '';
-    const selectedCode = transactionCodes.find(code => code.code === activeValue);
-    const fallbackText = activeValue ? activeValue.padStart(2, '0') : null;
-    const displayText = selectedCode
-      ? `${selectedCode.code.padStart(2, '0')} – ${selectedCode.name}`
-      : fallbackText
-        ? fallbackText
-        : <span className="text-gray-400 italic">—</span>;
-
-    if (!isEditing('transactionCode') || transactionCodes.length === 0) {
-      const canEdit = transactionCodes.length > 0;
-
-      return (
-        <div
-          onClick={() => canEdit && onStartEdit(party.id, 'transactionCode', party.transactionCode || '')}
-          className={`${canEdit ? 'cursor-pointer hover:bg-gray-50' : ''} px-2 py-1 rounded min-h-[32px] text-sm text-gray-700`}
-          role={canEdit ? 'button' : undefined}
-          tabIndex={canEdit ? 0 : undefined}
-          aria-label={canEdit ? `Edit transaction code for ${party.displayName}` : undefined}
-        >
-          {displayText}
-        </div>
-      );
-    }
-
-    return (
-      <div className="min-w-[220px]">
-        <TransactionCodeDropdown
-          codes={transactionCodes}
-          selectedCode={editValue || null}
-          onChange={(code) => {
-            onEditValueChange(code);
-            onSaveEdit(party, code);
-          }}
-          compact
-        />
-      </div>
-    );
-  };
 
   const renderCell = (field: keyof Party, value: string | null, editable: boolean = true) => {
     if (!editable || !isEditing(field)) {
@@ -644,9 +547,6 @@ function PartyRow({
         </span>
       </td>
       <td className="px-4 py-3">
-        {renderTransactionCodeCell()}
-      </td>
-      <td className="px-4 py-3">
         <span className="text-sm text-gray-700">
           {renderCell('email', party.email)}
         </span>
@@ -688,13 +588,11 @@ function PartyRow({
 function AddPartyForm({
   onClose,
   onSuccess,
-  onError,
-  transactionCodes
+  onError
 }: {
   onClose: () => void;
   onSuccess: (data: Omit<Party, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onError: (message: string) => void;
-  transactionCodes: TransactionCode[];
 }) {
   const [displayName, setDisplayName] = useState('');
   const [tinDisplay, setTinDisplay] = useState('');
@@ -704,7 +602,6 @@ function AddPartyForm({
   const [buyerDocument, setBuyerDocument] = useState('TIN');
   const [buyerDocumentNumber, setBuyerDocumentNumber] = useState('');
   const [buyerIdtku, setBuyerIdtku] = useState('');
-  const [transactionCode, setTransactionCode] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const displayNameRef = useRef<HTMLInputElement>(null);
@@ -727,7 +624,6 @@ function AddPartyForm({
         displayName: displayName.trim(),
         tinDisplay: tinDisplay.trim(),
         countryCode: countryCode.trim() || null,
-        transactionCode: transactionCode || null,
         email: email.trim() || null,
         addressFull: addressFull.trim() || null,
         buyerDocument: buyerDocument.trim() || null,
@@ -739,7 +635,6 @@ function AddPartyForm({
       setDisplayName('');
       setTinDisplay('');
       setCountryCode('');
-      setTransactionCode(null);
       setEmail('');
       setAddressFull('');
       setBuyerDocument('TIN');
@@ -796,7 +691,7 @@ function AddPartyForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="party-country" className="block text-sm font-medium text-gray-700 mb-1">
               Country Code
@@ -812,18 +707,6 @@ function AddPartyForm({
               pattern="[A-Z]{3}"
             />
             <p className="text-xs text-gray-500 mt-1">3-letter uppercase ISO code</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Transaction Code
-            </label>
-            <TransactionCodeDropdown
-              codes={transactionCodes}
-              selectedCode={transactionCode}
-              onChange={(code) => setTransactionCode(code)}
-              compact
-            />
-            <p className="text-xs text-gray-500 mt-1">Helps categorize invoices and reporting.</p>
           </div>
           <div>
             <label htmlFor="party-email" className="block text-sm font-medium text-gray-700 mb-1">

@@ -25,6 +25,7 @@ export async function PUT(
       buyerDocumentNumber,
       buyerIdtku,
       updatedBy,
+      transactionCode,
       updatedAt: clientUpdatedAt // For optimistic concurrency
     } = body;
 
@@ -212,6 +213,7 @@ export async function PUT(
         tinDisplay,
         countryCode: countryCode || null,
         addressFull: addressFull || null,
+        transactionCode: transactionCode !== undefined ? (transactionCode || null) : undefined,
         email: email || null,
         buyerDocument: buyerDocument !== undefined ? buyerDocument : undefined,
         buyerDocumentNumber: buyerDocumentNumber !== undefined ? buyerDocumentNumber : undefined,

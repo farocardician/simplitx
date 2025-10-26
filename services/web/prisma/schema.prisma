@@ -104,6 +104,7 @@ model Party {
   tinDisplay      String    @map("tin_display")
   tinNormalized   String    @map("tin_normalized")
   countryCode     String?   @map("country_code") @db.Char(3)
+  transactionCode String?   @map("transaction_code") @db.VarChar(10)
   addressFull     String?   @map("address_full")
   email           String?
   buyerDocument   String?   @default("TIN") @map("buyer_document") @db.VarChar(50)
