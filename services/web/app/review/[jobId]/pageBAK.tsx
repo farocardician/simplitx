@@ -1242,7 +1242,7 @@ export default function ReviewPage() {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-[60px_4px_minmax(140px,1fr)_8px_80px_8px_56px_8px_100px_8px_120px_8px_140px_8px_50px_8px_140px_8px_140px_8px_auto] items-start gap-y-2 min-h-[56px]">
+                    <div className="grid grid-cols-[60px_4px_minmax(160px,240px)_8px_70px_8px_50px_8px_80px_8px_105px_8px_115px_8px_42px_8px_115px_8px_115px_8px_auto] items-start gap-y-2 min-h-[56px]">
                     {/* Type Column */}
                     <div className="flex flex-col gap-1.5 group relative">
                       <div className="flex flex-col gap-1.5 relative">
@@ -1524,10 +1524,10 @@ export default function ReviewPage() {
                         Total
                       </span>
                       <div
-                        className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-right font-semibold text-gray-800 tabular-nums h-[34px] flex items-center justify-end"
+                        className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-right font-semibold text-gray-800 tabular-nums h-[34px] flex items-center justify-end overflow-hidden"
                         title={formatCurrency(lineTotal)}
                       >
-                        {formatCurrency(lineTotal)}
+                        <span className="truncate">{formatCurrency(lineTotal)}</span>
                       </div>
                     </div>
 
@@ -1544,7 +1544,7 @@ export default function ReviewPage() {
                         value={taxRateValue}
                         onChange={(e) => updateItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
                         min="0"
-                        step="1"
+                        step="0.01"
                         className="w-full h-[34px] rounded border border-gray-300 px-2 py-1 text-right tabular-nums focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-300"
                       />
                     </div>
@@ -1558,10 +1558,10 @@ export default function ReviewPage() {
                         Tax Base
                       </span>
                       <div
-                        className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-right font-medium text-gray-800 tabular-nums h-[34px] flex items-center justify-end"
+                        className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-right font-medium text-gray-800 tabular-nums h-[34px] flex items-center justify-end overflow-hidden"
                         title={formatCurrency(taxBase)}
                       >
-                        {formatCurrency(taxBase)}
+                        <span className="truncate">{formatCurrency(taxBase)}</span>
                       </div>
                     </div>
 
@@ -1574,10 +1574,10 @@ export default function ReviewPage() {
                         Tax Amount
                       </span>
                       <div
-                        className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-right font-medium text-gray-800 tabular-nums h-[34px] flex items-center justify-end"
+                        className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-right font-medium text-gray-800 tabular-nums h-[34px] flex items-center justify-end overflow-hidden"
                         title={formatCurrency(taxAmount)}
                       >
-                        {formatCurrency(taxAmount)}
+                        <span className="truncate">{formatCurrency(taxAmount)}</span>
                       </div>
                     </div>
 

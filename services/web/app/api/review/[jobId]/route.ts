@@ -137,11 +137,19 @@ export const GET = withSession(async (
     }
 
     // Load from parser_results.final (source of truth for metadata)
-    // Try by jobId first, then fallback to original filename
+    // Try by jobId first, then jobId.pdf, then fallback to original filename
     let parserResult = await prisma.parserResult.findUnique({
       where: { docId: jobId },
       select: { final: true }
     });
+
+    // Try jobId with .pdf extension (most common case for new jobs)
+    if (!parserResult) {
+      parserResult = await prisma.parserResult.findUnique({
+        where: { docId: `${jobId}.pdf` },
+        select: { final: true }
+      });
+    }
 
     // Fallback: try finding by original filename (for legacy/test data)
     if (!parserResult && job.resultPath) {
@@ -155,14 +163,6 @@ export const GET = withSession(async (
       if (job2?.originalFilename) {
         parserResult = await prisma.parserResult.findUnique({
           where: { docId: job2.originalFilename },
-          select: { final: true }
-        });
-      }
-
-      // Try jobId with .pdf extension
-      if (!parserResult) {
-        parserResult = await prisma.parserResult.findUnique({
-          where: { docId: `${jobId}.pdf` },
           select: { final: true }
         });
       }
@@ -646,6 +646,14 @@ export const POST = withSession(async (
       select: { final: true }
     });
 
+    // Try jobId with .pdf extension (most common case for new jobs)
+    if (!parserResult) {
+      parserResult = await prisma.parserResult.findUnique({
+        where: { docId: `${jobId}.pdf` },
+        select: { final: true }
+      });
+    }
+
     // Fallback to legacy data
     if (!parserResult) {
       const job2 = await prisma.job.findUnique({
@@ -656,14 +664,6 @@ export const POST = withSession(async (
       if (job2?.originalFilename) {
         parserResult = await prisma.parserResult.findUnique({
           where: { docId: job2.originalFilename },
-          select: { final: true }
-        });
-      }
-
-      // Try jobId with .pdf extension
-      if (!parserResult) {
-        parserResult = await prisma.parserResult.findUnique({
-          where: { docId: `${jobId}.pdf` },
           select: { final: true }
         });
       }
