@@ -291,6 +291,7 @@ interface ScoredCandidate {
   buyerDocument: string | null;
   buyerDocumentNumber: string | null;
   buyerIdtku: string | null;
+  transactionCode: string | null;
   score: number;
   tokenOverlap: number;
 }
@@ -370,6 +371,7 @@ export interface ResolvedParty {
   buyerDocument: string | null;
   buyerDocumentNumber: string | null;
   buyerIdtku: string | null;
+  transactionCode: string | null;
 }
 
 export interface CandidateParty extends ResolvedParty {
@@ -417,7 +419,8 @@ export async function resolveBuyerParty(
       email: true,
       buyerDocument: true,
       buyerDocumentNumber: true,
-      buyerIdtku: true
+      buyerIdtku: true,
+      transactionCode: true
     }
   });
 
@@ -455,7 +458,8 @@ export async function resolveBuyerParty(
       email: true,
       buyerDocument: true,
       buyerDocumentNumber: true,
-      buyerIdtku: true
+      buyerIdtku: true,
+      transactionCode: true
     }
   });
 
@@ -572,6 +576,7 @@ export async function validateBuyerPartyId(
       buyerDocument: true,
       buyerDocumentNumber: true,
       buyerIdtku: true,
+      transactionCode: true,
       deletedAt: true
     }
   });

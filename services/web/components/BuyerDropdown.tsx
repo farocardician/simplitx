@@ -13,6 +13,7 @@ interface ResolvedParty {
   buyerDocument: string | null;
   buyerDocumentNumber: string | null;
   buyerIdtku: string | null;
+  transactionCode: string | null;
 }
 
 interface CandidateParty extends ResolvedParty {

@@ -50,6 +50,7 @@ interface ResolvedParty {
   buyerDocument: string | null;
   buyerDocumentNumber: string | null;
   buyerIdtku: string | null;
+  transactionCode: string | null;
 }
 
 interface CandidateParty extends ResolvedParty {
@@ -345,17 +346,29 @@ export default function ReviewPage() {
         const partiesToUse = invoiceData.buyer_candidates || [];
 
         // Auto-select top candidate for pending_confirmation and pending_selection
-        let initialBuyerSelection = null;
+        let initialBuyerSelection: string | null = null;
+        let initialBuyerCandidateTrxCode: string | null = null;
         if (invoiceData.buyer_resolution_status === 'pending_confirmation' ||
             invoiceData.buyer_resolution_status === 'pending_selection') {
           if (partiesToUse.length > 0) {
-            initialBuyerSelection = partiesToUse[0].id;
+            const topCandidate = partiesToUse[0];
+            initialBuyerSelection = topCandidate.id;
+            initialBuyerCandidateTrxCode = topCandidate.transactionCode ?? null;
           }
         }
 
-        const initialTrx = invoiceData.trx_code && invoiceData.trx_code.trim()
-          ? invoiceData.trx_code.trim()
-          : null;
+        const normalizeTrxPrefill = (value: string | null | undefined) => {
+          if (typeof value !== 'string') {
+            return null;
+          }
+          const trimmed = value.trim();
+          return trimmed.length > 0 ? trimmed : null;
+        };
+
+        const initialTrx =
+          normalizeTrxPrefill(invoiceData.trx_code) ??
+          normalizeTrxPrefill(invoiceData.buyer_resolved?.transactionCode) ??
+          normalizeTrxPrefill(initialBuyerCandidateTrxCode);
 
         const normalizedItems = (invoiceData.items || []).map((item: LineItemBase, index: number) =>
           createLineItemState(item, index)

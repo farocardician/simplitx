@@ -254,7 +254,8 @@ export const GET = withSession(async (
             email: true,
             buyerDocument: true,
             buyerDocumentNumber: true,
-            buyerIdtku: true
+            buyerIdtku: true,
+            transactionCode: true
           }
         });
 
@@ -294,7 +295,8 @@ export const GET = withSession(async (
               email: true,
               buyerDocument: true,
               buyerDocumentNumber: true,
-              buyerIdtku: true
+              buyerIdtku: true,
+              transactionCode: true
             }
           });
 
@@ -333,7 +335,8 @@ export const GET = withSession(async (
       }
 
       const xmlTrxCode = normalizeTrxCode((xmlData as any).trx_code);
-      const resolvedTrxCode = xmlTrxCode ?? defaultTrxCode ?? null;
+      const buyerTrxCode = normalizeTrxCode(buyerResolved?.transactionCode ?? null);
+      const resolvedTrxCode = buyerTrxCode ?? xmlTrxCode ?? defaultTrxCode ?? null;
       const trxCodeRequired = defaultTrxCode === null;
 
       return NextResponse.json({
@@ -451,7 +454,8 @@ export const GET = withSession(async (
           email: true,
           buyerDocument: true,
           buyerDocumentNumber: true,
-          buyerIdtku: true
+          buyerIdtku: true,
+          transactionCode: true
         }
       });
 
@@ -491,7 +495,8 @@ export const GET = withSession(async (
             email: true,
             buyerDocument: true,
             buyerDocumentNumber: true,
-            buyerIdtku: true
+            buyerIdtku: true,
+            transactionCode: true
           }
         });
 
@@ -530,7 +535,8 @@ export const GET = withSession(async (
     }
 
     const trxCodeRequired = defaultTrxCode === null;
-    const resolvedTrxCode = defaultTrxCode ?? null;
+    const buyerTrxCode = normalizeTrxCode(buyerResolved?.transactionCode ?? null);
+    const resolvedTrxCode = buyerTrxCode ?? defaultTrxCode ?? null;
 
     return NextResponse.json({
       invoice_number: final.invoice?.number || final.invoice_number || '',
