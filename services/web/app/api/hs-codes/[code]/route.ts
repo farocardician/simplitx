@@ -1,104 +1,95 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { computeStatus, expectedParent, normalizeHsCode, type HsLevel } from '@/lib/hsCodes';
+import {
+  expectedParent,
+  normalizeHsCode,
+  padHsCodeToSix,
+  type HsLevel,
+  type HsType
+} from '@/lib/hsCodes';
 
-interface RouteParams {
-  params: {
-    code: string;
+function parseTypeParam(value: string | null): HsType | null {
+  if (!value) return null;
+  const normalized = value.trim().toUpperCase();
+  if (normalized === 'BARANG' || normalized === 'A') return 'BARANG';
+  if (normalized === 'JASA' || normalized === 'B') return 'JASA';
+  return null;
+}
+
+function mapRecord(record: any) {
+  return {
+    id: record.id,
+    code: record.code,
+    type: record.type,
+    level: record.level,
+    sectionCode: record.sectionCode,
+    chapterCode: record.chapterCode,
+    groupCode: record.groupCode,
+    descriptionEn: record.descriptionEn,
+    descriptionId: record.descriptionId,
+    parentId: record.parentId,
+    parentCode: expectedParent(record.code),
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt
   };
 }
 
-function parseJurisdiction(searchParams: URLSearchParams): { jurisdiction: string; versionYear: number } {
-  const jurisdiction = (searchParams.get('jurisdiction') ?? 'ID').toUpperCase();
-  const versionYear = parseInt(searchParams.get('versionYear') ?? '2022', 10);
-  return { jurisdiction, versionYear: Number.isNaN(versionYear) ? 2022 : versionYear };
+async function buildBreadcrumbs(record: any) {
+  const breadcrumbs: Array<{ code: string; level: HsLevel; descriptionEn: string; type: HsType }> = [];
+  let currentParentId = record.parentId as string | null;
+
+  while (currentParentId) {
+    const parent = await prisma.hsCode.findUnique({
+      where: { id: currentParentId },
+      select: {
+        id: true,
+        code: true,
+        level: true,
+        descriptionEn: true,
+        type: true,
+        parentId: true
+      }
+    });
+
+    if (!parent) break;
+    breadcrumbs.unshift({ code: parent.code, level: parent.level, descriptionEn: parent.descriptionEn, type: parent.type as HsType });
+    currentParentId = parent.parentId as string | null;
+  }
+
+  return breadcrumbs;
 }
 
-export async function GET(req: NextRequest, { params }: RouteParams) {
+export async function GET(req: NextRequest, { params }: { params: { code: string } }) {
   try {
-    const hsDelegate = (prisma as any).hsCode;
-    if (!hsDelegate?.findFirst) {
+    const type = parseTypeParam(req.nextUrl.searchParams.get('type'));
+    if (!type) {
       return NextResponse.json(
-        {
-          error: {
-            code: 'PRISMA_CLIENT_OUTDATED',
-            message: 'HS codes schema not generated. Run `npx prisma generate` and apply the hs_codes migration.'
-          }
-        },
-        { status: 503 }
+        { error: { code: 'INVALID_REQUEST', message: 'Query parameter `type=barang|jasa` is required.' } },
+        { status: 400 }
       );
     }
 
-    const { jurisdiction, versionYear } = parseJurisdiction(req.nextUrl.searchParams);
-    const codeParam = normalizeHsCode(params.code);
+    const normalized = normalizeHsCode(params.code);
+    const code = padHsCodeToSix(normalized);
 
-    const record = await hsDelegate.findFirst({
-      where: {
-        jurisdiction,
-        versionYear,
-        code: codeParam
-      }
+    const record = await prisma.hsCode.findFirst({
+      where: { code, type }
     });
 
     if (!record) {
       return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'HS code not found.' } },
+        { error: { code: 'NOT_FOUND', message: 'HS code not found for the requested type.' } },
         { status: 404 }
       );
     }
 
-    const breadcrumbs: Array<{ code: string; level: string; descriptionEn: string }> = [];
-
-    async function fetchParent(parentCode: string | null) {
-      if (!parentCode) return null;
-      return hsDelegate.findFirst({
-        where: {
-          jurisdiction,
-          versionYear,
-          code: parentCode
-        },
-        select: {
-          code: true,
-          level: true,
-          descriptionEn: true
-        }
-      });
-    }
-
-    const parent = await fetchParent(record.parentCode);
-    if (parent) {
-      breadcrumbs.unshift({ code: parent.code, level: parent.level, descriptionEn: parent.descriptionEn });
-      if (parent.level === 'HS4') {
-        const grandParentCode = expectedParent(parent.code, parent.level as HsLevel);
-        if (grandParentCode) {
-          const grandParent = await fetchParent(grandParentCode);
-          if (grandParent) {
-            breadcrumbs.unshift({ code: grandParent.code, level: grandParent.level, descriptionEn: grandParent.descriptionEn });
-          }
-        }
-      }
-    }
+    const breadcrumbs = await buildBreadcrumbs(record);
 
     return NextResponse.json({
-      record: {
-        ...record,
-        status: computeStatus(record.validFrom, record.validTo)
-      },
+      record: { ...mapRecord(record), status: 'active' as const },
       breadcrumbs
     });
-  } catch (error: any) {
-    if (error?.code === 'P2021') {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'TABLE_MISSING',
-            message: 'The hs_codes table is missing. Run the prisma migration to create it.'
-          }
-        },
-        { status: 503 }
-      );
-    }
-
+  } catch (error) {
     console.error('Error fetching HS code detail:', error);
     return NextResponse.json(
       { error: { code: 'INTERNAL_ERROR', message: 'Failed to load HS code.' } },
@@ -107,126 +98,66 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: RouteParams) {
+export async function PATCH(req: NextRequest, { params }: { params: { code: string } }) {
   try {
-    const hsDelegate = (prisma as any).hsCode;
-    if (!hsDelegate?.findFirst || !hsDelegate?.updateMany) {
+    const type = parseTypeParam(req.nextUrl.searchParams.get('type'));
+    if (!type) {
       return NextResponse.json(
-        {
-          error: {
-            code: 'PRISMA_CLIENT_OUTDATED',
-            message: 'HS codes schema not generated. Run `npx prisma generate` and apply the hs_codes migration.'
-          }
-        },
-        { status: 503 }
+        { error: { code: 'INVALID_REQUEST', message: 'Query parameter `type=barang|jasa` is required.' } },
+        { status: 400 }
       );
     }
 
-    const body = await req.json();
-    const { jurisdiction, versionYear } = parseJurisdiction(req.nextUrl.searchParams);
-    const codeParam = normalizeHsCode(params.code);
+    const normalized = normalizeHsCode(params.code);
+    const code = padHsCodeToSix(normalized);
 
-    const existing = await hsDelegate.findFirst({
-      where: {
-        jurisdiction,
-        versionYear,
-        code: codeParam
-      }
+    const existing = await prisma.hsCode.findFirst({
+      where: { code, type }
     });
 
     if (!existing) {
       return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'HS code not found.' } },
+        { error: { code: 'NOT_FOUND', message: 'HS code not found for the requested type.' } },
         { status: 404 }
       );
     }
 
-    const descriptionEn = body.descriptionEn?.trim();
-    const descriptionId = body.descriptionId?.trim();
-    const notes = body.notes !== undefined ? String(body.notes).trim() || null : existing.notes;
-    const validFrom = body.validFrom ? new Date(body.validFrom) : body.validFrom === null ? null : existing.validFrom;
-    const validTo = body.validTo ? new Date(body.validTo) : body.validTo === null ? null : existing.validTo;
+    const body = await req.json();
+    const descriptionEn = body.descriptionEn !== undefined ? String(body.descriptionEn).trim() : undefined;
+    const descriptionId = body.descriptionId !== undefined ? String(body.descriptionId).trim() : undefined;
+    const updatedAt = body.updatedAt ? new Date(body.updatedAt) : null;
 
-    // Check for optimistic locking - compare timestamps
-    if (body.updatedAt) {
-      const clientUpdatedAt = new Date(body.updatedAt).toISOString();
-      const existingUpdatedAt = new Date(existing.updatedAt).toISOString();
+    if (descriptionEn !== undefined && !descriptionEn) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_DESCRIPTION', message: 'English description cannot be empty.' } },
+        { status: 400 }
+      );
+    }
 
-      if (clientUpdatedAt !== existingUpdatedAt) {
-        return NextResponse.json(
-          { error: { code: 'CONFLICT', message: 'Updated elsewhere. Review changes?', meta: { current: existing } } },
-          { status: 409 }
-        );
+    if (descriptionId !== undefined && !descriptionId) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_DESCRIPTION', message: 'Indonesian description cannot be empty.' } },
+        { status: 400 }
+      );
+    }
+
+    if (updatedAt && existing.updatedAt.toISOString() !== updatedAt.toISOString()) {
+      return NextResponse.json(
+        { error: { code: 'CONFLICT', message: 'Record was updated elsewhere. Refresh to continue.', meta: mapRecord(existing) } },
+        { status: 409 }
+      );
+    }
+
+    const updated = await prisma.hsCode.update({
+      where: { id: existing.id },
+      data: {
+        ...(descriptionEn !== undefined ? { descriptionEn } : {}),
+        ...(descriptionId !== undefined ? { descriptionId } : {})
       }
-    }
-
-    if (body.descriptionEn !== undefined && !descriptionEn) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_DESCRIPTION', message: 'English description is required.' } },
-        { status: 400 }
-      );
-    }
-
-    if (body.descriptionId !== undefined && !descriptionId) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_DESCRIPTION', message: 'Indonesian description is required.' } },
-        { status: 400 }
-      );
-    }
-
-    if (validFrom && isNaN(validFrom.getTime())) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_DATE', message: 'Valid from date is invalid.' } },
-        { status: 400 }
-      );
-    }
-
-    if (validTo && isNaN(validTo.getTime())) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_DATE', message: 'Valid to date is invalid.' } },
-        { status: 400 }
-      );
-    }
-
-    if (validFrom && validTo && validFrom > validTo) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_DATE_RANGE', message: 'Valid to date must be after valid from.' } },
-        { status: 400 }
-      );
-    }
-
-    const updateData = {
-      descriptionEn: descriptionEn ?? existing.descriptionEn,
-      descriptionId: descriptionId ?? existing.descriptionId,
-      notes,
-      validFrom,
-      validTo
-    };
-
-    const updated = await hsDelegate.update({
-      where: {
-        id: existing.id
-      },
-      data: updateData
     });
 
-    return NextResponse.json({
-      ...updated,
-      status: computeStatus(updated.validFrom, updated.validTo)
-    });
-  } catch (error: any) {
-    if (error?.code === 'P2021') {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'TABLE_MISSING',
-            message: 'The hs_codes table is missing. Run the prisma migration to create it.'
-          }
-        },
-        { status: 503 }
-      );
-    }
-
+    return NextResponse.json({ ...mapRecord(updated), status: 'active' as const });
+  } catch (error) {
     console.error('Error updating HS code:', error);
     return NextResponse.json(
       { error: { code: 'INTERNAL_ERROR', message: 'Failed to update HS code.' } },
