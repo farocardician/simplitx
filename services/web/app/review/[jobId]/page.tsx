@@ -92,6 +92,29 @@ interface ItemErrors {
   type?: string;
 }
 
+interface HsCodeData {
+  code: string;
+  type: 'BARANG' | 'JASA';
+  descriptionId: string;
+  descriptionEn: string;
+  level: string;
+}
+
+interface HsCodeValidation {
+  isValid: boolean;
+  warning?: string;
+  data?: HsCodeData;
+}
+
+interface HsCodeSuggestion {
+  id: string;
+  code: string;
+  type: 'BARANG' | 'JASA';
+  level: string;
+  descriptionEn: string;
+  descriptionId: string;
+}
+
 // Default UOM to use when a line item is marked as "Jasa"
 const JASA_UOM_CODE = 'UM.0030';
 
@@ -208,6 +231,29 @@ export default function ReviewPage() {
   const descriptionInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [descriptionTruncationMap, setDescriptionTruncationMap] = useState<Record<number, boolean>>({});
 
+  // HS Code validation and hover states
+  const [hsCodeValidations, setHsCodeValidations] = useState<Record<number, HsCodeValidation>>({});
+  const [hoveredHsCode, setHoveredHsCode] = useState<{
+    index: number;
+    position: 'top' | 'bottom';
+  } | null>(null);
+  const [hsCodeTooltipLang, setHsCodeTooltipLang] = useState<Record<number, 'id' | 'en'>>({});
+  const hsCodeFieldRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const hsCodeDebounceTimers = useRef<Record<number, NodeJS.Timeout>>({});
+  const hsCodeHideTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // HS Code autocomplete states
+  const [hsCodeSuggestions, setHsCodeSuggestions] = useState<Record<number, HsCodeSuggestion[]>>({});
+  const [hsCodeSearchLoading, setHsCodeSearchLoading] = useState<Record<number, boolean>>({});
+  const [focusedHsCodeIndex, setFocusedHsCodeIndex] = useState<number | null>(null);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<Record<number, number>>({});
+  const hsCodeSearchTimers = useRef<Record<number, NodeJS.Timeout>>({});
+  const hsCodeInputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const hsCodeDropdownRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  // HS Code preservation per type - stores last valid code for each type per item
+  const hsCodeMemory = useRef<Record<number, { barang: string | null; jasa: string | null }>>({});
+
   const recomputeDescriptionTruncation = useCallback(() => {
     const next: Record<number, boolean> = {};
 
@@ -276,12 +322,344 @@ export default function ReviewPage() {
     return input.scrollWidth - input.clientWidth > 0.5;
   };
 
+  // HS Code validation and hover handlers (defined before useEffects that use them)
+  const validateHsCode = useCallback(async (index: number, code: string, type: 'Barang' | 'Jasa') => {
+    // Clear existing timer for this index
+    if (hsCodeDebounceTimers.current[index]) {
+      clearTimeout(hsCodeDebounceTimers.current[index]);
+    }
+
+    // If code is empty or not digits only, clear validation
+    if (!code || !/^\d+$/.test(code)) {
+      setHsCodeValidations(prev => {
+        const next = { ...prev };
+        delete next[index];
+        return next;
+      });
+      return;
+    }
+
+    // Pad code to 6 digits for lookup
+    const paddedCode = code.padEnd(6, '0').slice(0, 6);
+    const apiType = type === 'Barang' ? 'BARANG' : 'JASA';
+
+    // Debounce API call
+    hsCodeDebounceTimers.current[index] = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/hs-codes/${paddedCode}?type=${apiType}`);
+
+        if (!response.ok) {
+          // HS code not found
+          setHsCodeValidations(prev => ({
+            ...prev,
+            [index]: {
+              isValid: false,
+              warning: `HS Code "${code}" not found in database`
+            }
+          }));
+          return;
+        }
+
+        const data = await response.json();
+
+        // Check if type matches
+        if (data.record.type !== apiType) {
+          setHsCodeValidations(prev => ({
+            ...prev,
+            [index]: {
+              isValid: false,
+              warning: `HS Code type mismatch: Expected ${type}, but code is for ${data.record.type === 'BARANG' ? 'Barang' : 'Jasa'}`,
+              data: {
+                code: data.record.code,
+                type: data.record.type,
+                descriptionId: data.record.descriptionId,
+                descriptionEn: data.record.descriptionEn,
+                level: data.record.level
+              }
+            }
+          }));
+          return;
+        }
+
+        // Valid HS code
+        setHsCodeValidations(prev => ({
+          ...prev,
+          [index]: {
+            isValid: true,
+            data: {
+              code: data.record.code,
+              type: data.record.type,
+              descriptionId: data.record.descriptionId,
+              descriptionEn: data.record.descriptionEn,
+              level: data.record.level
+            }
+          }
+        }));
+      } catch (error) {
+        console.error('Failed to validate HS code:', error);
+        setHsCodeValidations(prev => ({
+          ...prev,
+          [index]: {
+            isValid: false,
+            warning: 'Failed to validate HS code'
+          }
+        }));
+      }
+    }, 500); // 500ms debounce
+  }, []);
+
+  const handleHsCodeMouseEnter = (index: number) => {
+    // Don't show tooltip if dropdown is active
+    if (focusedHsCodeIndex === index) {
+      return;
+    }
+
+    // Clear any pending hide timeout
+    if (hsCodeHideTimeout.current) {
+      clearTimeout(hsCodeHideTimeout.current);
+      hsCodeHideTimeout.current = null;
+    }
+
+    const validation = hsCodeValidations[index];
+    if (!validation?.data) {
+      return;
+    }
+
+    const container = hsCodeFieldRefs.current[index];
+    if (!container) {
+      return;
+    }
+
+    const rect = container.getBoundingClientRect();
+    const viewportHeight = typeof window !== 'undefined'
+      ? window.innerHeight || document.documentElement.clientHeight || 0
+      : 0;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const preferTop = spaceBelow < 150 && spaceAbove > spaceBelow;
+
+    setHoveredHsCode({ index, position: preferTop ? 'top' : 'bottom' });
+  };
+
+  const handleHsCodeMouseLeave = () => {
+    // Add a delay to allow mouse to move to tooltip
+    hsCodeHideTimeout.current = setTimeout(() => {
+      setHoveredHsCode(null);
+    }, 200);
+  };
+
+  const handleHsCodeTooltipMouseEnter = (index: number) => {
+    // Clear any pending hide timeout when entering tooltip
+    if (hsCodeHideTimeout.current) {
+      clearTimeout(hsCodeHideTimeout.current);
+      hsCodeHideTimeout.current = null;
+    }
+  };
+
+  const handleHsCodeTooltipMouseLeave = () => {
+    // Hide immediately when leaving tooltip
+    setHoveredHsCode(null);
+  };
+
+  // HS Code search function
+  const searchHsCodes = useCallback(async (index: number, query: string, type: 'Barang' | 'Jasa') => {
+    // Clear existing timer
+    if (hsCodeSearchTimers.current[index]) {
+      clearTimeout(hsCodeSearchTimers.current[index]);
+    }
+
+    // Clear suggestions if query is empty
+    if (!query || query.trim().length === 0) {
+      setHsCodeSuggestions(prev => {
+        const next = { ...prev };
+        delete next[index];
+        return next;
+      });
+      setHsCodeSearchLoading(prev => {
+        const next = { ...prev };
+        delete next[index];
+        return next;
+      });
+      return;
+    }
+
+    const trimmedQuery = query.trim();
+
+    // Don't search if query is too short (less than 2 characters)
+    if (trimmedQuery.length < 2) {
+      return;
+    }
+
+    const apiType = type === 'Barang' ? 'BARANG' : 'JASA';
+
+    // Set loading state
+    setHsCodeSearchLoading(prev => ({ ...prev, [index]: true }));
+
+    // Debounce the search
+    hsCodeSearchTimers.current[index] = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams();
+        params.set('search', trimmedQuery);
+        params.set('type', apiType);
+        params.set('limit', '10'); // Limit to 10 suggestions
+
+        const response = await fetch(`/api/hs-codes?${params.toString()}`);
+
+        if (!response.ok) {
+          throw new Error('Failed to search HS codes');
+        }
+
+        const data = await response.json();
+        const suggestions: HsCodeSuggestion[] = (data.items || []).map((item: any) => ({
+          id: item.id,
+          code: item.code,
+          type: item.type,
+          level: item.level,
+          descriptionEn: item.descriptionEn,
+          descriptionId: item.descriptionId
+        }));
+
+        setHsCodeSuggestions(prev => ({ ...prev, [index]: suggestions }));
+        setSelectedSuggestionIndex(prev => ({ ...prev, [index]: -1 }));
+      } catch (error) {
+        console.error('Failed to search HS codes:', error);
+        setHsCodeSuggestions(prev => {
+          const next = { ...prev };
+          delete next[index];
+          return next;
+        });
+      } finally {
+        setHsCodeSearchLoading(prev => {
+          const next = { ...prev };
+          delete next[index];
+          return next;
+        });
+      }
+    }, 300); // 300ms debounce
+  }, []);
+
+  const selectHsCodeSuggestion = useCallback((index: number, suggestion: HsCodeSuggestion) => {
+    updateItem(index, 'hs_code', suggestion.code);
+    setHsCodeSuggestions(prev => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+    setFocusedHsCodeIndex(null);
+    setSelectedSuggestionIndex(prev => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+  }, []);
+
+  const handleHsCodeKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    const suggestions = hsCodeSuggestions[index] || [];
+    const currentSelectedIndex = selectedSuggestionIndex[index] ?? -1;
+
+    if (suggestions.length === 0) {
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        const nextIndex = currentSelectedIndex < suggestions.length - 1 ? currentSelectedIndex + 1 : 0;
+        setSelectedSuggestionIndex(prev => ({ ...prev, [index]: nextIndex }));
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        const prevIndex = currentSelectedIndex > 0 ? currentSelectedIndex - 1 : suggestions.length - 1;
+        setSelectedSuggestionIndex(prev => ({ ...prev, [index]: prevIndex }));
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (currentSelectedIndex >= 0 && currentSelectedIndex < suggestions.length) {
+          selectHsCodeSuggestion(index, suggestions[currentSelectedIndex]);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setHsCodeSuggestions(prev => {
+          const next = { ...prev };
+          delete next[index];
+          return next;
+        });
+        setFocusedHsCodeIndex(null);
+        break;
+    }
+  }, [hsCodeSuggestions, selectedSuggestionIndex, selectHsCodeSuggestion]);
+
   useEffect(() => {
     descriptionFieldRefs.current = descriptionFieldRefs.current.slice(0, items.length);
     descriptionInputRefs.current = descriptionInputRefs.current.slice(0, items.length);
+    hsCodeFieldRefs.current = hsCodeFieldRefs.current.slice(0, items.length);
+    hsCodeInputRefs.current = hsCodeInputRefs.current.slice(0, items.length);
+    hsCodeDropdownRefs.current = hsCodeDropdownRefs.current.slice(0, items.length);
     setFocusedDescriptionIndex(current => (current !== null && current >= items.length ? null : current));
     setHoveredDescription(current => (current && current.index >= items.length ? null : current));
+    setHoveredHsCode(current => (current && current.index >= items.length ? null : current));
+    setFocusedHsCodeIndex(current => (current !== null && current >= items.length ? null : current));
   }, [items.length]);
+
+  // Click outside handler for HS Code dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (focusedHsCodeIndex === null) return;
+
+      const target = event.target as Node;
+      const inputRef = hsCodeInputRefs.current[focusedHsCodeIndex];
+      const dropdownRef = hsCodeDropdownRefs.current[focusedHsCodeIndex];
+
+      if (
+        inputRef && !inputRef.contains(target) &&
+        dropdownRef && !dropdownRef.contains(target)
+      ) {
+        setFocusedHsCodeIndex(null);
+        setHsCodeSuggestions(prev => {
+          const next = { ...prev };
+          delete next[focusedHsCodeIndex];
+          return next;
+        });
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [focusedHsCodeIndex]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hsCodeHideTimeout.current) {
+        clearTimeout(hsCodeHideTimeout.current);
+      }
+    };
+  }, []);
+
+  // Initialize HS code memory and trigger validation on initial load
+  useEffect(() => {
+    items.forEach((item, index) => {
+      // Initialize memory for this item if not exists
+      if (!hsCodeMemory.current[index]) {
+        hsCodeMemory.current[index] = { barang: null, jasa: null };
+      }
+
+      // Store the initial HS code in the appropriate type slot
+      if (item.hs_code && item.hs_code.trim() !== '') {
+        if (item.type === 'Barang') {
+          hsCodeMemory.current[index].barang = item.hs_code;
+        } else {
+          hsCodeMemory.current[index].jasa = item.hs_code;
+        }
+      }
+
+      // Validate the code
+      if (item.hs_code && item.type) {
+        validateHsCode(index, item.hs_code, item.type);
+      }
+    });
+  }, [items, validateHsCode]);
 
   const handleDescriptionMouseEnter = (index: number) => {
     if (focusedDescriptionIndex === index) {
@@ -311,6 +689,7 @@ export default function ReviewPage() {
   const handleDescriptionMouseLeave = () => {
     setHoveredDescription(null);
   };
+
   const [trxCode, setTrxCode] = useState<string | null>(null);
   const [trxCodeRequired, setTrxCodeRequired] = useState(false);
 
@@ -420,11 +799,9 @@ export default function ReviewPage() {
       errors.unit_price = 'Unit price must be ≥ 0';
     }
 
-    // HS Code is required only for Barang
-    if (item.type === 'Barang') {
-      if (!item.hs_code || !/^\d+$/.test(item.hs_code)) {
-        errors.hs_code = 'HS Code must be digits only';
-      }
+    // HS Code is required for both Barang and Jasa
+    if (!item.hs_code || !/^\d+$/.test(item.hs_code)) {
+      errors.hs_code = 'HS Code must be digits only';
     }
 
     if (!item.uom || item.uom.trim() === '') {
@@ -543,11 +920,115 @@ export default function ReviewPage() {
       ...prev,
       [index]: itemErrors
     }));
+
+    // Trigger HS code validation when hs_code or type changes
+    if (field === 'hs_code' || field === 'type') {
+      const hsCode = field === 'hs_code' ? value : newItem.hs_code;
+      const itemType = field === 'type' ? value : newItem.type;
+      if (hsCode && itemType) {
+        validateHsCode(index, hsCode, itemType);
+      }
+    }
   };
 
-  const handleTypeSelect = (index: number, type: 'Barang' | 'Jasa') => {
-    // Update the current item
-    updateItem(index, 'type', type);
+  const checkHsCodeValidForType = useCallback(async (code: string, type: 'Barang' | 'Jasa'): Promise<boolean> => {
+    if (!code || code.trim() === '') return false;
+
+    const paddedCode = code.padEnd(6, '0').slice(0, 6);
+    const apiType = type === 'Barang' ? 'BARANG' : 'JASA';
+
+    try {
+      const response = await fetch(`/api/hs-codes/${paddedCode}?type=${apiType}`);
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
+  }, []);
+
+  const handleTypeSelect = async (index: number, type: 'Barang' | 'Jasa') => {
+    const currentItem = items[index];
+    const currentType = currentItem.type;
+    const currentHsCode = currentItem.hs_code;
+
+    // Initialize memory for this item if not exists
+    if (!hsCodeMemory.current[index]) {
+      hsCodeMemory.current[index] = { barang: null, jasa: null };
+    }
+
+    // Save current HS code to memory for the current type
+    if (currentHsCode && currentHsCode.trim() !== '') {
+      if (currentType === 'Barang') {
+        hsCodeMemory.current[index].barang = currentHsCode;
+      } else {
+        hsCodeMemory.current[index].jasa = currentHsCode;
+      }
+    }
+
+    // Check if current HS code is valid for the new type
+    let newHsCode = currentHsCode;
+
+    if (currentHsCode && currentHsCode.trim() !== '') {
+      const isValid = await checkHsCodeValidForType(currentHsCode, type);
+
+      if (!isValid) {
+        // Code not valid for new type, check if we have a saved code for this type
+        const savedCode = type === 'Barang'
+          ? hsCodeMemory.current[index].barang
+          : hsCodeMemory.current[index].jasa;
+
+        newHsCode = savedCode || '';
+      }
+    } else {
+      // No current code, try to restore from memory
+      const savedCode = type === 'Barang'
+        ? hsCodeMemory.current[index].barang
+        : hsCodeMemory.current[index].jasa;
+
+      newHsCode = savedCode || '';
+    }
+
+    // Update the item with new type and potentially new HS code
+    setItems(prev => {
+      const updated = [...prev];
+      const nextItem = { ...updated[index] };
+
+      nextItem.type = type;
+      nextItem.hs_code = newHsCode;
+
+      // If type switches to Jasa, set UOM to default Jasa UOM (if present)
+      if (type === 'Jasa') {
+        const jasaUomAvailable = uomList.some(u => u.code === JASA_UOM_CODE);
+        nextItem.uom = jasaUomAvailable ? JASA_UOM_CODE : (nextItem.uom || '');
+      }
+
+      updated[index] = nextItem;
+      return updated;
+    });
+
+    // Validate the new item
+    const newItem = { ...currentItem, type, hs_code: newHsCode };
+    if (type === 'Jasa') {
+      const jasaUomAvailable = uomList.some(u => u.code === JASA_UOM_CODE);
+      newItem.uom = jasaUomAvailable ? JASA_UOM_CODE : (newItem.uom || '');
+    }
+
+    const itemErrors = validateItem(newItem as LineItem, index);
+    setErrors(prev => ({
+      ...prev,
+      [index]: itemErrors
+    }));
+
+    // Trigger validation for the new HS code if it exists
+    if (newHsCode && newHsCode.trim() !== '') {
+      validateHsCode(index, newHsCode, type);
+    } else {
+      // Clear validation if no code
+      setHsCodeValidations(prev => {
+        const next = { ...prev };
+        delete next[index];
+        return next;
+      });
+    }
 
     // Show "Apply to All" only if multiple items exist
     if (items.length > 1) {
@@ -804,6 +1285,22 @@ export default function ReviewPage() {
     return Object.values(errors).some(itemErrors => Object.keys(itemErrors).length > 0);
   }, [errors]);
 
+  // Check if there are any HS code validation warnings
+  const hasHsCodeWarnings = useMemo(() => {
+    return items.some((item, index) => {
+      // HS Code is required for both Barang and Jasa
+      // Empty or invalid format
+      if (!item.hs_code || !/^\d+$/.test(item.hs_code)) {
+        return true;
+      }
+      // Has validation warning from API
+      if (hsCodeValidations[index]?.warning) {
+        return true;
+      }
+      return false;
+    });
+  }, [items, hsCodeValidations]);
+
   // Check if buyer is unresolved
   const buyerUnresolved = useMemo(() => {
     if (!invoiceData) return false;
@@ -838,8 +1335,8 @@ export default function ReviewPage() {
       return true;
     }
 
-    return (!isDirty && !buyerSelectionChanged) || hasErrors || buyerUnresolved;
-  }, [trxCodeRequired, trxCode, isDirty, buyerSelectionChanged, hasErrors, buyerUnresolved]);
+    return (!isDirty && !buyerSelectionChanged) || hasErrors || buyerUnresolved || hasHsCodeWarnings;
+  }, [trxCodeRequired, trxCode, isDirty, buyerSelectionChanged, hasErrors, buyerUnresolved, hasHsCodeWarnings]);
 
   const handleCancel = () => {
     router.push('/queue');
@@ -1377,28 +1874,242 @@ export default function ReviewPage() {
                     {/* HS Code Column */}
                     <div className="flex flex-col gap-1 group relative">
                       <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1">
-                        HS Code {item.type === 'Barang' && <span className="text-red-500">*</span>}
+                        HS Code <span className="text-red-500">*</span>
                         {itemErrors.hs_code && (
                           <span className="text-red-500" title="Error">⚠️</span>
                         )}
+                        {/* Show warning for empty HS code or validation warnings */}
+                        {!itemErrors.hs_code && (
+                          (!item.hs_code || item.hs_code.trim() === '') ||
+                          hsCodeValidations[index]?.warning
+                        ) && (
+                          <span className="text-amber-500" title={
+                            (!item.hs_code || item.hs_code.trim() === '')
+                              ? 'HS Code is required'
+                              : hsCodeValidations[index]?.warning
+                          }>⚠️</span>
+                        )}
                       </span>
-                      <div className="relative">
+                      <div
+                        className="relative"
+                        ref={(el) => {
+                          hsCodeFieldRefs.current[index] = el;
+                        }}
+                        onMouseEnter={() => handleHsCodeMouseEnter(index)}
+                        onMouseLeave={handleHsCodeMouseLeave}
+                      >
                         <input
+                          ref={(el) => {
+                            hsCodeInputRefs.current[index] = el;
+                          }}
                           type="text"
                           value={item.hs_code ?? ''}
-                          onChange={(e) => updateItem(index, 'hs_code', e.target.value)}
-                          placeholder="000000"
-                          inputMode="numeric"
-                          pattern="\d*"
-                          className={`w-full h-[34px] rounded border px-2 py-1 font-mono focus:outline-none focus:ring-1 ${
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            updateItem(index, 'hs_code', value);
+                            searchHsCodes(index, value, item.type);
+                          }}
+                          onFocus={() => {
+                            setFocusedHsCodeIndex(index);
+                            // Clear hover tooltip when focusing input
+                            setHoveredHsCode(null);
+                            if (item.hs_code && item.hs_code.length >= 2) {
+                              searchHsCodes(index, item.hs_code, item.type);
+                            }
+                          }}
+                          onKeyDown={(e) => handleHsCodeKeyDown(e, index)}
+                          placeholder="Search or type..."
+                          className={`w-full h-[34px] rounded border px-2 py-1 font-mono text-xs focus:outline-none focus:ring-1 ${
                             itemErrors.hs_code
                               ? 'border-red-300 focus:border-red-400 focus:ring-red-400'
-                              : 'border-gray-300 focus:border-blue-400 focus:ring-blue-300'
+                              : (
+                                ((!item.hs_code || item.hs_code.trim() === '') || hsCodeValidations[index]?.warning)
+                                  ? 'border-amber-300 focus:border-amber-400 focus:ring-amber-300'
+                                  : 'border-gray-300 focus:border-blue-400 focus:ring-blue-300'
+                              )
                           }`}
+                          autoComplete="off"
+                          aria-autocomplete="list"
+                          aria-expanded={focusedHsCodeIndex === index && (hsCodeSuggestions[index]?.length || 0) > 0}
+                          aria-controls={`hs-code-dropdown-${index}`}
                         />
                         {itemErrors.hs_code && (
                           <div className="hidden group-hover:block absolute top-full left-0 mt-1 z-50 w-max max-w-[250px] bg-red-50 border border-red-200 rounded px-2 py-1 text-[11px] text-red-700 shadow-md">
                             {itemErrors.hs_code}
+                          </div>
+                        )}
+
+                        {/* HS Code Autocomplete Dropdown */}
+                        {focusedHsCodeIndex === index && (hsCodeSearchLoading[index] || (hsCodeSuggestions[index]?.length || 0) > 0) && (
+                          <div
+                            id={`hs-code-dropdown-${index}`}
+                            ref={(el) => {
+                              hsCodeDropdownRefs.current[index] = el;
+                            }}
+                            className="absolute top-full left-0 mt-1 w-[400px] max-h-[320px] overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-xl z-[60]"
+                            role="listbox"
+                          >
+                            {hsCodeSearchLoading[index] ? (
+                              <div className="flex items-center justify-center py-4 text-sm text-gray-500">
+                                <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Searching...
+                              </div>
+                            ) : (hsCodeSuggestions[index] || []).length > 0 ? (
+                              <>
+                                <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500 bg-gray-50 border-b border-gray-200 sticky top-0">
+                                  {item.type === 'Barang' ? 'Barang' : 'Jasa'} HS Codes ({hsCodeSuggestions[index].length} results)
+                                </div>
+                                {hsCodeSuggestions[index].map((suggestion, sugIndex) => (
+                                  <div
+                                    key={suggestion.id}
+                                    role="option"
+                                    aria-selected={selectedSuggestionIndex[index] === sugIndex}
+                                    className={`px-3 py-2.5 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0 ${
+                                      selectedSuggestionIndex[index] === sugIndex
+                                        ? 'bg-blue-50 border-blue-200'
+                                        : 'hover:bg-gray-50'
+                                    }`}
+                                    onClick={() => selectHsCodeSuggestion(index, suggestion)}
+                                    onMouseEnter={() => setSelectedSuggestionIndex(prev => ({ ...prev, [index]: sugIndex }))}
+                                  >
+                                    <div className="flex items-start gap-2">
+                                      <div className="flex-shrink-0">
+                                        <span className="inline-block px-2 py-0.5 text-xs font-mono font-semibold bg-gray-100 text-gray-800 rounded">
+                                          {suggestion.code}
+                                        </span>
+                                        <span className="ml-1 inline-block px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">
+                                          {suggestion.level}
+                                        </span>
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="text-xs text-gray-900 font-medium line-clamp-1">
+                                          {suggestion.descriptionEn}
+                                        </div>
+                                        <div className="text-[11px] text-gray-600 mt-0.5 line-clamp-2">
+                                          {suggestion.descriptionId}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </>
+                            ) : (
+                              focusedHsCodeIndex === index && item.hs_code && item.hs_code.length >= 2 && !hsCodeSearchLoading[index] && (
+                                <div className="px-3 py-4 text-center text-sm text-gray-500">
+                                  No matching HS codes found
+                                </div>
+                              )
+                            )}
+                          </div>
+                        )}
+
+                        {/* HS Code Hover Tooltip - Only show when dropdown is not active */}
+                        {hoveredHsCode?.index === index && hsCodeValidations[index]?.data && focusedHsCodeIndex !== index && (
+                          <div
+                            data-hs-tooltip
+                            className={`absolute ${
+                              hoveredHsCode.position === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'
+                            } left-0 z-50 w-max max-w-[320px] rounded-lg border border-gray-200 bg-white shadow-xl`}
+                            role="tooltip"
+                            style={{ pointerEvents: 'auto' }}
+                            onMouseEnter={() => handleHsCodeTooltipMouseEnter(index)}
+                            onMouseLeave={handleHsCodeTooltipMouseLeave}
+                          >
+                            <div className="p-3">
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-xs font-mono font-semibold text-gray-900">
+                                      {hsCodeValidations[index].data.code}
+                                    </span>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                      hsCodeValidations[index].data.type === 'BARANG'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-green-100 text-green-700'
+                                    }`}>
+                                      {hsCodeValidations[index].data.type === 'BARANG' ? 'Barang' : 'Jasa'}
+                                    </span>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">
+                                      {hsCodeValidations[index].data.level}
+                                    </span>
+                                  </div>
+                                </div>
+                                <a
+                                  href={`/admin/hs-codes?search=${hsCodeValidations[index].data.code}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-shrink-0 text-blue-600 hover:text-blue-800 transition-colors"
+                                  title="Open in HS Code Management"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                    />
+                                  </svg>
+                                </a>
+                              </div>
+                              <div className="border-t border-gray-100 pt-2">
+                                {/* Language Tab Switcher */}
+                                <div className="flex items-center gap-1 mb-2">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setHsCodeTooltipLang(prev => ({ ...prev, [index]: 'id' }));
+                                    }}
+                                    className={`px-2 py-1 text-[10px] font-medium rounded transition-colors ${
+                                      (hsCodeTooltipLang[index] || 'id') === 'id'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    🇮🇩 ID
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setHsCodeTooltipLang(prev => ({ ...prev, [index]: 'en' }));
+                                    }}
+                                    className={`px-2 py-1 text-[10px] font-medium rounded transition-colors ${
+                                      hsCodeTooltipLang[index] === 'en'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    🇬🇧 EN
+                                  </button>
+                                </div>
+                                {/* Description Content */}
+                                <div className="text-xs text-gray-700 leading-relaxed">
+                                  <p className="whitespace-pre-wrap break-words leading-snug">
+                                    {(hsCodeTooltipLang[index] || 'id') === 'id'
+                                      ? hsCodeValidations[index].data.descriptionId
+                                      : hsCodeValidations[index].data.descriptionEn
+                                    }
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {/* HS Code Validation Warning */}
+                        {hsCodeValidations[index]?.warning && (
+                          <div className="absolute top-full left-0 mt-1 z-40 w-max max-w-[280px] bg-amber-50 border border-amber-300 rounded px-2 py-1.5 text-[11px] text-amber-800 shadow-md flex items-start gap-1.5">
+                            <span className="text-amber-600 flex-shrink-0">⚠</span>
+                            <span>{hsCodeValidations[index].warning}</span>
                           </div>
                         )}
                       </div>

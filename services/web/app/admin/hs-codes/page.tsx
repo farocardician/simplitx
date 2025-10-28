@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { FormEvent } from 'react';
 
 import type { HsLevel, HsType } from '@/lib/hsCodes';
@@ -129,6 +130,7 @@ function highlight(text: string, term: string) {
 }
 
 export default function HsCodeManagerPage() {
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
@@ -145,6 +147,14 @@ export default function HsCodeManagerPage() {
   const debouncedSearch = useDebouncedValue(search);
 
   const selectedRow = useMemo(() => items.find(item => item.id === selectedId) ?? null, [items, selectedId]);
+
+  // Initialize search from URL parameter
+  useEffect(() => {
+    const searchParam = searchParams?.get('search');
+    if (searchParam) {
+      setSearch(searchParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const cached = typeof window !== 'undefined' ? window.localStorage.getItem('hs-code-filters') : null;
