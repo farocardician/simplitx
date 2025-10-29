@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,45 +8,38 @@ datasource db {
 }
 
 model Job {
-  id              String    @id @default(uuid())
-  ownerSessionId  String?   @map("owner_session_id")
-  userId          String?   @map("user_id")
-
-  originalFilename String   @map("original_filename")
-  contentType     String    @default("application/pdf") @map("content_type")
-  bytes           BigInt
-  sha256          String    @db.Char(64)
-  mapping         String    @default("pt_simon_invoice_v1")
-
-  status          JobStatus @default(uploaded)
-  uploadPath      String?   @map("upload_path")
-  resultPath      String?   @map("result_path")
-  artifactPath    String?   @map("artifact_path")
-  errorCode       String?   @map("error_code")
-  errorMessage    String?   @map("error_message")
-
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-  queuedAt        DateTime? @map("queued_at")
-  startedAt       DateTime? @map("started_at")
-  completedAt     DateTime? @map("completed_at")
-  failedAt        DateTime? @map("failed_at")
-
-  leasedBy        String?   @map("leased_by")
-  leaseExpiresAt  DateTime? @map("lease_expires_at")
-  attemptCount    Int       @default(0) @map("attempt_count")
-
-  expiresAt       DateTime? @map("expires_at")
-  downloadCount   Int       @default(0) @map("download_count")
-  firstDownloadAt DateTime? @map("first_downloaded_at")
-
-  approved        Boolean   @default(false)
-  approvedAt      DateTime? @map("approved_at")
-
+  id                        String    @id @default(uuid())
+  ownerSessionId            String?   @map("owner_session_id")
+  userId                    String?   @map("user_id")
+  originalFilename          String    @map("original_filename")
+  contentType               String    @default("application/pdf") @map("content_type")
+  bytes                     BigInt
+  sha256                    String    @db.Char(64)
+  mapping                   String    @default("pt_simon_invoice_v1")
+  status                    JobStatus @default(uploaded)
+  uploadPath                String?   @map("upload_path")
+  resultPath                String?   @map("result_path")
+  errorCode                 String?   @map("error_code")
+  errorMessage              String?   @map("error_message")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  updatedAt                 DateTime  @updatedAt @map("updated_at")
+  queuedAt                  DateTime? @map("queued_at")
+  startedAt                 DateTime? @map("started_at")
+  completedAt               DateTime? @map("completed_at")
+  failedAt                  DateTime? @map("failed_at")
+  leasedBy                  String?   @map("leased_by")
+  leaseExpiresAt            DateTime? @map("lease_expires_at")
+  attemptCount              Int       @default(0) @map("attempt_count")
+  expiresAt                 DateTime? @map("expires_at")
+  downloadCount             Int       @default(0) @map("download_count")
+  firstDownloadAt           DateTime? @map("first_downloaded_at")
+  approved                  Boolean   @default(false)
+  approvedAt                DateTime? @map("approved_at")
+  artifactPath              String?   @map("artifact_path")
   buyerPartyId              String?   @map("buyer_party_id") @db.Uuid
-  buyerResolutionStatus     String?   @map("buyer_resolution_status")
   buyerResolutionConfidence Float?    @map("buyer_resolution_confidence")
   buyerResolutionDecidedAt  DateTime? @map("buyer_resolution_decided_at")
+  buyerResolutionStatus     String?   @map("buyer_resolution_status")
 
   @@unique([ownerSessionId, sha256, mapping, bytes])
   @@index([status, createdAt(sort: Desc)])
@@ -57,15 +47,6 @@ model Job {
   @@index([ownerSessionId, createdAt(sort: Desc)])
   @@index([leaseExpiresAt])
   @@map("jobs")
-}
-
-enum JobStatus {
-  uploaded
-  queued
-  processing
-  complete
-  failed
-  @@map("job_status")
 }
 
 model ParserResult {
@@ -79,9 +60,10 @@ model ParserResult {
 }
 
 model UnitOfMeasure {
-  code    String     @id
-  name    String
-  aliases UomAlias[]
+  code     String     @id
+  name     String
+  products Product[]
+  aliases  UomAlias[]
 
   @@map("unit_of_measures")
 }
@@ -89,32 +71,32 @@ model UnitOfMeasure {
 model UomAlias {
   alias     String        @id
   uomCode   String        @map("uom_code")
-  uom       UnitOfMeasure @relation(fields: [uomCode], references: [code], onDelete: Cascade)
   isPrimary Boolean       @default(false) @map("is_primary")
   createdAt DateTime      @default(now()) @map("created_at")
+  uom       UnitOfMeasure @relation(fields: [uomCode], references: [code], onDelete: Cascade)
 
   @@index([uomCode])
   @@map("uom_aliases")
 }
 
 model Party {
-  id              String    @id @default(uuid()) @db.Uuid
-  displayName     String    @map("display_name")
-  nameNormalized  String    @map("name_normalized")
-  tinDisplay      String    @map("tin_display")
-  tinNormalized   String    @map("tin_normalized")
-  countryCode     String?   @map("country_code") @db.Char(3)
-  transactionCode String?   @map("transaction_code") @db.VarChar(10)
-  addressFull     String?   @map("address_full")
-  email           String?
-  buyerDocument   String?   @default("TIN") @map("buyer_document") @db.VarChar(50)
-  buyerDocumentNumber String? @map("buyer_document_number") @db.VarChar(100)
-  buyerIdtku      String?   @map("buyer_idtku") @db.VarChar(100)
-  deletedAt       DateTime? @map("deleted_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-  createdBy       String?   @map("created_by")
-  updatedBy       String?   @map("updated_by")
+  id                  String    @id @default(uuid()) @db.Uuid
+  displayName         String    @map("display_name")
+  nameNormalized      String    @map("name_normalized")
+  tinDisplay          String    @map("tin_display")
+  tinNormalized       String    @map("tin_normalized")
+  countryCode         String?   @map("country_code") @db.Char(3)
+  transactionCode     String?   @map("transaction_code") @db.VarChar(10)
+  addressFull         String?   @map("address_full")
+  email               String?
+  buyerDocument       String?   @default("TIN") @map("buyer_document") @db.VarChar(50)
+  buyerDocumentNumber String?   @map("buyer_document_number") @db.VarChar(100)
+  buyerIdtku          String?   @map("buyer_idtku") @db.VarChar(100)
+  deletedAt           DateTime? @map("deleted_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  createdBy           String?   @map("created_by")
+  updatedBy           String?   @map("updated_by")
 
   @@index([deletedAt], map: "idx_parties_deleted_at")
   @@map("parties")
@@ -124,7 +106,7 @@ model TransactionCode {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   code        String   @unique @db.VarChar(10)
   name        String   @db.VarChar(255)
-  description String?  @db.Text
+  description String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
 
@@ -133,27 +115,124 @@ model TransactionCode {
 }
 
 model HsCode {
-  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code          String      @db.Char(6)
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String     @db.VarChar(6)
   type          HsCodeType
   level         HsLevel
-  sectionCode   String      @map("section_code") @db.Char(2)
-  chapterCode   String      @map("chapter_code") @db.Char(2)
-  groupCode     String      @map("group_code") @db.Char(2)
-  descriptionEn String      @map("description_en") @db.Text
-  descriptionId String      @map("description_id") @db.Text
-  parentId      String?     @map("parent_id") @db.Uuid
-  parent        HsCode?     @relation("HsCodeHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children      HsCode[]    @relation("HsCodeHierarchy")
-  createdAt     DateTime    @default(now()) @map("created_at")
-  updatedAt     DateTime    @default(now()) @updatedAt @map("updated_at")
+  sectionCode   String     @map("section_code") @db.Char(2)
+  chapterCode   String     @map("chapter_code") @db.Char(2)
+  groupCode     String     @map("group_code") @db.Char(2)
+  descriptionEn String     @map("description_en")
+  descriptionId String     @map("description_id")
+  parentId      String?    @map("parent_id") @db.Uuid
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @default(now()) @updatedAt @map("updated_at")
+  parent        HsCode?    @relation("HsCodeHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children      HsCode[]   @relation("HsCodeHierarchy")
 
   @@unique([code, type], name: "hs_codes_code_type_key")
   @@index([code], map: "idx_hs_codes_code")
-  @@index([code(ops: raw("text_pattern_ops"))], map: "idx_hs_codes_code_pattern")
+  @@index([code], map: "idx_hs_codes_code_pattern")
   @@index([type, level], map: "idx_hs_codes_type_level")
   @@index([parentId], map: "idx_hs_codes_parent")
   @@map("hs_codes")
+}
+
+model Product {
+  id          String         @id @default(uuid()) @db.Uuid
+  description String
+  hsCode      String?        @map("hs_code") @db.VarChar(6)
+  type        HsCodeType?
+  uomCode     String?        @map("uom_code")
+  status      ProductStatus  @default(active)
+  deletedAt   DateTime?      @map("deleted_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  createdBy   String?        @map("created_by")
+  updatedBy   String?        @map("updated_by")
+  aliases     ProductAlias[]
+  uom         UnitOfMeasure? @relation(fields: [uomCode], references: [code])
+
+  @@index([status])
+  @@index([deletedAt])
+  @@map("products")
+}
+
+model ProductAlias {
+  id               String             @id @default(uuid()) @db.Uuid
+  productId        String             @map("product_id") @db.Uuid
+  aliasDescription String             @map("alias_description")
+  status           ProductAliasStatus @default(draft)
+  deletedAt        DateTime?          @map("deleted_at")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  createdBy        String?            @map("created_by")
+  updatedBy        String?            @map("updated_by")
+  product          Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("product_aliases")
+}
+
+model ProductDraft {
+  id                String             @id @default(uuid()) @db.Uuid
+  kind              ProductDraftKind
+  description       String?
+  hsCode            String?            @map("hs_code") @db.VarChar(6)
+  type              HsCodeType?
+  uomCode           String?            @map("uom_code")
+  targetProductId   String?            @map("target_product_id") @db.Uuid
+  aliasDescription  String?            @map("alias_description")
+  sourceInvoiceId   String?            @map("source_invoice_id")
+  sourcePdfLineText String?            @map("source_pdf_line_text")
+  confidenceScore   Float?             @map("confidence_score")
+  status            ProductDraftStatus @default(draft)
+  reviewedBy        String?            @map("reviewed_by")
+  reviewedAt        DateTime?          @map("reviewed_at")
+  reviewNotes       String?            @map("review_notes")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  createdBy         String?            @map("created_by")
+
+  @@index([status])
+  @@index([kind])
+  @@index([createdAt])
+  @@map("product_drafts")
+}
+
+model EnrichmentEvent {
+  id               String      @id @default(uuid()) @db.Uuid
+  invoiceId        String?     @map("invoice_id")
+  lineItemIndex    Int?        @map("line_item_index")
+  inputDescription String      @map("input_description")
+  matchedProductId String?     @map("matched_product_id") @db.Uuid
+  matchScore       Float?      @map("match_score")
+  threshold        Float       @map("threshold")
+  autoFilled       Boolean     @map("auto_filled")
+  enrichedHsCode   String?     @map("enriched_hs_code") @db.VarChar(6)
+  enrichedType     HsCodeType? @map("enriched_type")
+  enrichedUomCode  String?     @map("enriched_uom_code")
+  draftCreated     Boolean     @default(false) @map("draft_created")
+  draftId          String?     @map("draft_id") @db.Uuid
+  createdAt        DateTime    @default(now()) @map("created_at")
+  createdBy        String?     @map("created_by")
+
+  @@index([invoiceId])
+  @@index([matchedProductId])
+  @@index([createdAt])
+  @@map("enrichment_events")
+}
+
+enum JobStatus {
+  uploaded
+  queued
+  processing
+  complete
+  failed
+
+  @@map("job_status")
 }
 
 enum HsLevel {
@@ -169,4 +248,33 @@ enum HsCodeType {
   JASA
 
   @@map("hs_code_type")
+}
+
+enum ProductStatus {
+  active
+  inactive
+
+  @@map("product_status")
+}
+
+enum ProductAliasStatus {
+  active
+  draft
+
+  @@map("product_alias_status")
+}
+
+enum ProductDraftKind {
+  new_product
+  alias
+
+  @@map("product_draft_kind")
+}
+
+enum ProductDraftStatus {
+  draft
+  approved
+  rejected
+
+  @@map("product_draft_status")
 }

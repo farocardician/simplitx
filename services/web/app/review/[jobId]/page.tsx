@@ -929,7 +929,112 @@ export default function ReviewPage() {
         validateHsCode(index, hsCode, itemType);
       }
     }
+
+    // Trigger enrichment when description changes
+    if (field === 'description' && value && typeof value === 'string') {
+      debouncedEnrich(index, value);
+    }
   };
+
+  // Product enrichment function
+  const enrichProductDescription = useCallback(async (index: number, description: string) => {
+    if (!description || description.trim().length === 0) return;
+
+    try {
+      const response = await fetch('/api/products/enrich', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: description.trim(),
+          invoiceId: jobId,
+          lineItemIndex: index
+        })
+      });
+
+      if (!response.ok) return;
+
+      const result = await response.json();
+
+      // Auto-fill if score is high enough (>= 0.80)
+      if (result.autoFilled && result.enrichedFields) {
+        setItems(prev => {
+          const updated = [...prev];
+          const currentItem = updated[index];
+
+          // Auto-fill empty or invalid fields
+          // HS Code: fill if empty, or if it's a placeholder like "None00" or invalid
+          const isInvalidHsCode = !currentItem.hs_code ||
+                                  currentItem.hs_code.toLowerCase().includes('none') ||
+                                  !/^\d{6}$/.test(currentItem.hs_code);
+          if (isInvalidHsCode && result.enrichedFields.hsCode) {
+            currentItem.hs_code = result.enrichedFields.hsCode;
+          }
+          if ((!currentItem.type || currentItem.type === 'Barang') && result.enrichedFields.type) {
+            currentItem.type = result.enrichedFields.type === 'JASA' ? 'Jasa' : 'Barang';
+          }
+          if (!currentItem.uom && result.enrichedFields.uomCode) {
+            currentItem.uom = result.enrichedFields.uomCode;
+          }
+
+          return updated;
+        });
+
+        // Validate the auto-filled fields
+        if (result.enrichedFields.hsCode && result.enrichedFields.type) {
+          const itemType = result.enrichedFields.type === 'JASA' ? 'Jasa' : 'Barang';
+          validateHsCode(index, result.enrichedFields.hsCode, itemType);
+        }
+      }
+    } catch (error) {
+      console.error('Enrichment error:', error);
+    }
+  }, [jobId, validateHsCode]);
+
+  // Debounce enrichment calls
+  const enrichmentTimeouts = useRef<Record<number, NodeJS.Timeout>>({});
+
+  const debouncedEnrich = useCallback((index: number, description: string) => {
+    // Clear existing timeout for this index
+    if (enrichmentTimeouts.current[index]) {
+      clearTimeout(enrichmentTimeouts.current[index]);
+    }
+
+    // Set new timeout
+    enrichmentTimeouts.current[index] = setTimeout(() => {
+      enrichProductDescription(index, description);
+    }, 500); // 500ms debounce
+  }, [enrichProductDescription]);
+
+  // Auto-enrich items on initial load
+  useEffect(() => {
+    if (!items || items.length === 0 || loading) return;
+
+    // Only enrich once when items are first loaded
+    const enrichAllItems = async () => {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+
+        // Only enrich if description exists and fields are empty/default/invalid
+        if (item.description && item.description.trim().length > 0) {
+          const isInvalidHsCode = !item.hs_code ||
+                                  item.hs_code.toLowerCase().includes('none') ||
+                                  !/^\d{6}$/.test(item.hs_code);
+          const needsEnrichment = isInvalidHsCode ||
+                                  !item.type ||
+                                  item.type === 'Barang' ||
+                                  !item.uom;
+
+          if (needsEnrichment) {
+            // Add small delay between requests to avoid overwhelming the server
+            await new Promise(resolve => setTimeout(resolve, 100 * i));
+            enrichProductDescription(i, item.description);
+          }
+        }
+      }
+    };
+
+    enrichAllItems();
+  }, [items.length, loading, enrichProductDescription]); // Only run when items are first loaded
 
   const checkHsCodeValidForType = useCallback(async (code: string, type: 'Barang' | 'Jasa'): Promise<boolean> => {
     if (!code || code.trim() === '') return false;
