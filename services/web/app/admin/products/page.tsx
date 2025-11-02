@@ -1,7 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { HsCodeType } from '@prisma/client';
+import {
+  fetchHsCodeSuggestions,
+  formatHsTypeLabel,
+  type HsCodeSuggestion
+} from '@/lib/hsCodes';
+import { DEFAULT_JASA_UOM_CODE, formatUomLabel, normalizeUomPayload, type UomOption } from '@/lib/uom';
 
 interface Product {
   id: string;
@@ -47,6 +54,23 @@ export default function ProductManagementPage() {
     type: '' as '' | 'BARANG' | 'JASA',
     uomCode: '',
   });
+  const [createHsSuggestions, setCreateHsSuggestions] = useState<HsCodeSuggestion[]>([]);
+  const [createHsLoading, setCreateHsLoading] = useState(false);
+  const [createHsDropdownOpen, setCreateHsDropdownOpen] = useState(false);
+  const [createHsSelectedIndex, setCreateHsSelectedIndex] = useState(-1);
+  const [createHsLastQuery, setCreateHsLastQuery] = useState('');
+  const [createHsError, setCreateHsError] = useState<string | null>(null);
+  const createHsSearchTimer = useRef<NodeJS.Timeout | null>(null);
+  const createHsInputRef = useRef<HTMLInputElement | null>(null);
+  const createHsDropdownRef = useRef<HTMLDivElement | null>(null);
+  const [createHsSelectedData, setCreateHsSelectedData] = useState<HsCodeSuggestion | null>(null);
+  const [createHsTooltipVisible, setCreateHsTooltipVisible] = useState(false);
+  const [createHsTooltipLang, setCreateHsTooltipLang] = useState<'id' | 'en'>('id');
+  const createHsTooltipHideTimer = useRef<NodeJS.Timeout | null>(null);
+  const createHsLatestRequestRef = useRef<{ token: symbol } | null>(null);
+  const [uomList, setUomList] = useState<UomOption[]>([]);
+  const [uomLoading, setUomLoading] = useState(false);
+  const [uomError, setUomError] = useState<string | null>(null);
 
   // Toast notifications
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -111,6 +135,114 @@ export default function ProductManagementPage() {
     }
   }, [deletedProduct]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadUoms = async () => {
+      try {
+        setUomLoading(true);
+        const response = await fetch('/api/uom');
+        if (!response.ok) {
+          throw new Error('Failed to fetch UOM list');
+        }
+
+        const payload: unknown = await response.json();
+        if (!cancelled) {
+          setUomList(normalizeUomPayload(payload));
+          setUomError(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setUomError(err instanceof Error ? err.message : 'Failed to load UOM list');
+          setUomList([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setUomLoading(false);
+        }
+      }
+    };
+
+    loadUoms();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (uomList.length === 0) {
+      if (createValues.uomCode) {
+        setCreateValues(prev => (prev.uomCode ? { ...prev, uomCode: '' } : prev));
+      }
+      return;
+    }
+
+    if (createValues.type === 'JASA') {
+      const jasaOption = uomList.find(option => option.code === DEFAULT_JASA_UOM_CODE);
+      const currentValid = createValues.uomCode
+        ? uomList.some(option => option.code === createValues.uomCode)
+        : false;
+
+      if (jasaOption && !currentValid) {
+        setCreateValues(prev => ({ ...prev, uomCode: jasaOption.code }));
+      }
+    } else if (createValues.uomCode && !uomList.some(option => option.code === createValues.uomCode)) {
+      setCreateValues(prev => ({ ...prev, uomCode: '' }));
+    }
+  }, [createValues.type, createValues.uomCode, uomList]);
+
+  useEffect(() => {
+    return () => {
+      if (createHsSearchTimer.current) {
+        clearTimeout(createHsSearchTimer.current);
+        createHsSearchTimer.current = null;
+      }
+      if (createHsTooltipHideTimer.current) {
+        clearTimeout(createHsTooltipHideTimer.current);
+        createHsTooltipHideTimer.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!createHsDropdownOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const inputEl = createHsInputRef.current;
+      const dropdownEl = createHsDropdownRef.current;
+
+      if (!inputEl) {
+        return;
+      }
+
+      const clickedInsideInput = inputEl.contains(target);
+      const clickedInsideDropdown = dropdownEl ? dropdownEl.contains(target) : false;
+
+      if (!clickedInsideInput && !clickedInsideDropdown) {
+        setCreateHsDropdownOpen(false);
+        setCreateHsSelectedIndex(-1);
+        setCreateHsTooltipVisible(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [createHsDropdownOpen]);
+
+  useEffect(() => {
+    if (!createHsSelectedData) {
+      setCreateHsTooltipVisible(false);
+    }
+  }, [createHsSelectedData]);
+
+  useEffect(() => {
+    if (createHsDropdownOpen) {
+      setCreateHsTooltipVisible(false);
+    }
+  }, [createHsDropdownOpen]);
+
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -141,6 +273,249 @@ export default function ProductManagementPage() {
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
+  };
+
+  const resetCreateHsState = useCallback(() => {
+    if (createHsSearchTimer.current) {
+      clearTimeout(createHsSearchTimer.current);
+      createHsSearchTimer.current = null;
+    }
+    if (createHsTooltipHideTimer.current) {
+      clearTimeout(createHsTooltipHideTimer.current);
+      createHsTooltipHideTimer.current = null;
+    }
+    setCreateHsSuggestions([]);
+    setCreateHsDropdownOpen(false);
+    setCreateHsSelectedIndex(-1);
+    setCreateHsLastQuery('');
+    setCreateHsError(null);
+    setCreateHsLoading(false);
+    setCreateHsSelectedData(null);
+    setCreateHsTooltipVisible(false);
+    setCreateHsTooltipLang('id');
+    createHsLatestRequestRef.current = null;
+  }, []);
+
+  const openCreateModal = useCallback(() => {
+    resetCreateHsState();
+    setCreateValues({ description: '', hsCode: '', type: '', uomCode: '' });
+    setShowCreateModal(true);
+  }, [resetCreateHsState]);
+
+  const closeCreateModal = useCallback(() => {
+    setShowCreateModal(false);
+    setCreateValues({ description: '', hsCode: '', type: '', uomCode: '' });
+    resetCreateHsState();
+  }, [resetCreateHsState]);
+
+  const searchCreateHsCodes = useCallback((query: string, type: '' | 'BARANG' | 'JASA') => {
+    if (createHsSearchTimer.current) {
+      clearTimeout(createHsSearchTimer.current);
+      createHsSearchTimer.current = null;
+    }
+
+    const trimmed = query.trim();
+    setCreateHsError(null);
+
+    if (!trimmed) {
+      setCreateHsSuggestions([]);
+      setCreateHsDropdownOpen(false);
+      setCreateHsSelectedIndex(-1);
+      setCreateHsLastQuery('');
+      setCreateHsLoading(false);
+      setCreateHsSelectedData(null);
+      setCreateHsTooltipVisible(false);
+      setCreateHsTooltipLang('id');
+      createHsLatestRequestRef.current = null;
+      return;
+    }
+
+    if (trimmed.length < 2) {
+      setCreateHsSuggestions([]);
+      setCreateHsDropdownOpen(false);
+      setCreateHsSelectedIndex(-1);
+      setCreateHsLastQuery(trimmed);
+      setCreateHsLoading(false);
+      setCreateHsSelectedData(null);
+      setCreateHsTooltipVisible(false);
+      setCreateHsTooltipLang('id');
+      createHsLatestRequestRef.current = null;
+      return;
+    }
+
+    setCreateHsLoading(true);
+    setCreateHsDropdownOpen(true);
+    setCreateHsLastQuery(trimmed);
+    setCreateHsError(null);
+    const requestMeta = { token: Symbol('hs-search') };
+    createHsLatestRequestRef.current = requestMeta;
+
+    createHsSearchTimer.current = setTimeout(async () => {
+      try {
+        const suggestions = await fetchHsCodeSuggestions(trimmed, type, 10);
+        if (createHsLatestRequestRef.current === requestMeta) {
+          setCreateHsSuggestions(suggestions);
+          setCreateHsSelectedIndex(suggestions.length > 0 ? 0 : -1);
+        }
+      } catch (error) {
+        console.error('Failed to search HS codes:', error);
+        if (createHsLatestRequestRef.current === requestMeta) {
+          setCreateHsSuggestions([]);
+          setCreateHsError('Failed to search HS codes');
+        }
+      } finally {
+        if (createHsLatestRequestRef.current === requestMeta) {
+          setCreateHsLoading(false);
+          createHsLatestRequestRef.current = null;
+        }
+        createHsSearchTimer.current = null;
+      }
+    }, 300);
+  }, []);
+
+  const selectCreateHsSuggestion = useCallback((suggestion: HsCodeSuggestion) => {
+    if (createHsSearchTimer.current) {
+      clearTimeout(createHsSearchTimer.current);
+      createHsSearchTimer.current = null;
+    }
+    setCreateValues(prev => ({
+      ...prev,
+      hsCode: suggestion.code,
+      type: suggestion.type,
+    }));
+    setCreateHsDropdownOpen(false);
+    setCreateHsSuggestions([]);
+    setCreateHsSelectedIndex(-1);
+    setCreateHsLastQuery(suggestion.code);
+    setCreateHsError(null);
+    setCreateHsSelectedData(suggestion);
+    setCreateHsTooltipLang('id');
+    setCreateHsTooltipVisible(false);
+    createHsLatestRequestRef.current = null;
+
+    setTimeout(() => {
+      if (createHsInputRef.current) {
+        createHsInputRef.current.focus();
+        const length = createHsInputRef.current.value.length;
+        try {
+          createHsInputRef.current.setSelectionRange(length, length);
+        } catch {
+          // Some input types do not support setSelectionRange; ignore
+        }
+      }
+    }, 0);
+  }, []);
+
+  const handleCreateHsMouseEnter = useCallback(() => {
+    if (createHsTooltipHideTimer.current) {
+      clearTimeout(createHsTooltipHideTimer.current);
+      createHsTooltipHideTimer.current = null;
+    }
+    if (!createHsSelectedData || createHsDropdownOpen) {
+      return;
+    }
+    setCreateHsTooltipVisible(true);
+  }, [createHsDropdownOpen, createHsSelectedData]);
+
+  const handleCreateHsMouseLeave = useCallback(() => {
+    if (createHsTooltipHideTimer.current) {
+      clearTimeout(createHsTooltipHideTimer.current);
+    }
+    if (!createHsTooltipVisible) {
+      return;
+    }
+    createHsTooltipHideTimer.current = setTimeout(() => {
+      setCreateHsTooltipVisible(false);
+      createHsTooltipHideTimer.current = null;
+    }, 200);
+  }, [createHsTooltipVisible]);
+
+  const handleCreateHsTooltipMouseEnter = useCallback(() => {
+    if (createHsTooltipHideTimer.current) {
+      clearTimeout(createHsTooltipHideTimer.current);
+      createHsTooltipHideTimer.current = null;
+    }
+  }, []);
+
+  const handleCreateHsTooltipMouseLeave = useCallback(() => {
+    if (createHsTooltipHideTimer.current) {
+      clearTimeout(createHsTooltipHideTimer.current);
+    }
+    createHsTooltipHideTimer.current = setTimeout(() => {
+      setCreateHsTooltipVisible(false);
+      createHsTooltipHideTimer.current = null;
+    }, 150);
+  }, []);
+
+  const handleCreateHsInputChange = useCallback((value: string) => {
+    setCreateValues(prev => ({ ...prev, hsCode: value }));
+    setCreateHsSelectedData(null);
+    setCreateHsTooltipVisible(false);
+    setCreateHsTooltipLang('id');
+    searchCreateHsCodes(value, createValues.type);
+  }, [searchCreateHsCodes, createValues.type]);
+
+  const handleCreateHsFocus = () => {
+    if (createHsTooltipHideTimer.current) {
+      clearTimeout(createHsTooltipHideTimer.current);
+      createHsTooltipHideTimer.current = null;
+    }
+    setCreateHsTooltipVisible(false);
+
+    const trimmed = createValues.hsCode.trim();
+    if (trimmed.length < 2) {
+      return;
+    }
+
+    if (createHsSuggestions.length === 0 && !createHsLoading) {
+      searchCreateHsCodes(trimmed, createValues.type);
+    } else {
+      setCreateHsDropdownOpen(true);
+    }
+  };
+
+  const handleCreateHsKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (!createHsDropdownOpen) {
+      if (event.key === 'ArrowDown' && createHsSuggestions.length > 0) {
+        event.preventDefault();
+        setCreateHsDropdownOpen(true);
+        setCreateHsSelectedIndex(prev => (prev >= 0 ? prev : 0));
+      }
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setCreateHsSelectedIndex(prev => {
+        if (createHsSuggestions.length === 0) return -1;
+        const next = prev + 1;
+        return next >= createHsSuggestions.length ? 0 : next;
+      });
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setCreateHsSelectedIndex(prev => {
+        if (createHsSuggestions.length === 0) return -1;
+        if (prev <= 0) {
+          return createHsSuggestions.length - 1;
+        }
+        return prev - 1;
+      });
+    } else if (event.key === 'Enter') {
+      if (createHsSuggestions.length === 0) {
+        return;
+      }
+      event.preventDefault();
+      const index = createHsSelectedIndex >= 0 ? createHsSelectedIndex : 0;
+      const suggestion = createHsSuggestions[index];
+      if (suggestion) {
+        selectCreateHsSuggestion(suggestion);
+      }
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      setCreateHsDropdownOpen(false);
+      setCreateHsSelectedIndex(-1);
+      setCreateHsTooltipVisible(false);
+    }
   };
 
   const loadThresholdSettings = async () => {
@@ -205,8 +580,7 @@ export default function ProductManagementPage() {
       }
 
       await fetchProducts();
-      setShowCreateModal(false);
-      setCreateValues({ description: '', hsCode: '', type: '', uomCode: '' });
+      closeCreateModal();
       showToast('Product created successfully');
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to create product', 'error');
@@ -563,7 +937,7 @@ export default function ProductManagementPage() {
         </select>
 
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={openCreateModal}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           + New Product
@@ -662,13 +1036,21 @@ export default function ProductManagementPage() {
                               </select>
                             </td>
                             <td className="px-6 py-4">
-                              <input
-                                type="text"
+                              <select
                                 value={editValues.uomCode || ''}
-                                onChange={(e) => setEditValues({ ...editValues, uomCode: e.target.value.toUpperCase() })}
-                                placeholder="UOM"
-                                className="w-24 px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              />
+                                onChange={(e) => setEditValues({ ...editValues, uomCode: e.target.value })}
+                                disabled={uomLoading || uomList.length === 0}
+                                className={`w-32 px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                                  uomLoading || uomList.length === 0 ? 'bg-gray-100 text-gray-500 border-gray-200' : ''
+                                }`}
+                              >
+                                <option value="">{uomLoading ? 'Loading...' : 'Select UOM'}</option>
+                                {uomList.map(uom => (
+                                  <option key={uom.code} value={uom.code}>
+                                    {formatUomLabel(uom)}
+                                  </option>
+                                ))}
+                              </select>
                             </td>
                             <td className="px-6 py-4">
                               <span className={`px-2 py-1 text-xs rounded ${
@@ -798,23 +1180,9 @@ export default function ProductManagementPage() {
                 <input
                   type="text"
                   value={createValues.description}
-                  onChange={(e) => setCreateValues({ ...createValues, description: e.target.value })}
+                  onChange={(e) => setCreateValues(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Product description"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  HS Code
-                </label>
-                <input
-                  type="text"
-                  value={createValues.hsCode}
-                  onChange={(e) => setCreateValues({ ...createValues, hsCode: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="6 digits"
-                  maxLength={6}
                 />
               </div>
 
@@ -824,35 +1192,300 @@ export default function ProductManagementPage() {
                 </label>
                 <select
                   value={createValues.type}
-                  onChange={(e) => setCreateValues({ ...createValues, type: e.target.value as any })}
+                  onChange={(e) => {
+                    const nextType = e.target.value as '' | 'BARANG' | 'JASA';
+                    setCreateValues(prev => {
+                      let nextUomCode = prev.uomCode;
+                      const isCurrentValid = nextUomCode
+                        ? uomList.some(option => option.code === nextUomCode)
+                        : false;
+
+                      if (!isCurrentValid) {
+                        nextUomCode = '';
+                      }
+
+                      if (nextType === 'JASA') {
+                        const jasaOption = uomList.find(option => option.code === DEFAULT_JASA_UOM_CODE);
+                        if (!nextUomCode && jasaOption) {
+                          nextUomCode = jasaOption.code;
+                        }
+                      }
+
+                      return { ...prev, type: nextType, uomCode: nextUomCode };
+                    });
+                    setCreateHsSelectedIndex(-1);
+                    setCreateHsSelectedData(null);
+                    setCreateHsSuggestions([]);
+                    if (createHsTooltipHideTimer.current) {
+                      clearTimeout(createHsTooltipHideTimer.current);
+                      createHsTooltipHideTimer.current = null;
+                    }
+                    setCreateHsTooltipVisible(false);
+                    setCreateHsTooltipLang('id');
+                    setCreateHsError(null);
+                    createHsLatestRequestRef.current = null;
+                    const currentValue = createHsInputRef.current?.value ?? createValues.hsCode;
+                    searchCreateHsCodes(currentValue, nextType);
+                    setTimeout(() => {
+                      if (createHsInputRef.current) {
+                        createHsInputRef.current.focus();
+                      }
+                    }, 0);
+                  }}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select type</option>
                   <option value="BARANG">BARANG</option>
                   <option value="JASA">JASA</option>
                 </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Selecting a type narrows HS code suggestions.
+                </p>
+              </div>
+
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  HS Code
+                </label>
+                <div
+                  className="relative"
+                  onMouseEnter={handleCreateHsMouseEnter}
+                  onMouseLeave={handleCreateHsMouseLeave}
+                >
+                  <input
+                    ref={createHsInputRef}
+                    type="text"
+                    value={createValues.hsCode}
+                    onChange={(e) => handleCreateHsInputChange(e.target.value)}
+                    onFocus={handleCreateHsFocus}
+                    onKeyDown={handleCreateHsKeyDown}
+                    autoComplete="off"
+                    className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none ${
+                      createHsError
+                        ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-400'
+                        : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                    } font-mono text-sm`}
+                    placeholder="Search HS codes by code or description"
+                  />
+
+                  {createHsSelectedData && (
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-2 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        if (createHsTooltipHideTimer.current) {
+                          clearTimeout(createHsTooltipHideTimer.current);
+                          createHsTooltipHideTimer.current = null;
+                        }
+                        setCreateHsTooltipVisible(prev => !prev);
+                      }}
+                      onFocus={(event) => {
+                        event.stopPropagation();
+                        if (createHsTooltipHideTimer.current) {
+                          clearTimeout(createHsTooltipHideTimer.current);
+                          createHsTooltipHideTimer.current = null;
+                        }
+                        setCreateHsTooltipVisible(true);
+                      }}
+                      onBlur={() => {
+                        if (createHsTooltipHideTimer.current) {
+                          clearTimeout(createHsTooltipHideTimer.current);
+                        }
+                        createHsTooltipHideTimer.current = setTimeout(() => {
+                          setCreateHsTooltipVisible(false);
+                          createHsTooltipHideTimer.current = null;
+                        }, 150);
+                      }}
+                      aria-label="Toggle HS code details"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 5a7 7 0 100 14 7 7 0 000-14z" />
+                      </svg>
+                    </button>
+                  )}
+
+                  {createHsDropdownOpen && (
+                    <div
+                      ref={createHsDropdownRef}
+                      className="absolute left-0 right-0 mt-1 max-h-72 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl z-30"
+                    >
+                      {createHsLoading ? (
+                        <div className="flex items-center justify-center gap-2 py-4 text-sm text-gray-500">
+                          <svg className="h-4 w-4 animate-spin text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Searching HS codes...
+                        </div>
+                      ) : createHsSuggestions.length > 0 ? (
+                        <>
+                          <div className="sticky top-0 bg-gray-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
+                            {createValues.type
+                              ? `${formatHsTypeLabel(createValues.type)} HS Codes`
+                              : 'HS Codes'}
+                          </div>
+                          {createHsSuggestions.map((suggestion, index) => (
+                            <div
+                              key={suggestion.id}
+                              onMouseDown={(event) => {
+                                event.preventDefault();
+                                selectCreateHsSuggestion(suggestion);
+                              }}
+                              className={`cursor-pointer px-3 py-2 transition-colors ${
+                                createHsSelectedIndex === index
+                                  ? 'bg-blue-50'
+                                  : 'hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-mono text-sm font-semibold text-gray-900">{suggestion.code}</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                  {formatHsTypeLabel(suggestion.type)} • {suggestion.level}
+                                </span>
+                              </div>
+                              <div className="mt-1 text-xs text-gray-700 leading-snug">
+                                {suggestion.descriptionEn}
+                              </div>
+                              <div className="mt-0.5 text-[11px] text-gray-500 leading-snug">
+                                {suggestion.descriptionId}
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      ) : createHsError ? (
+                        <div className="px-3 py-2 text-sm text-red-600">
+                          {createHsError}
+                        </div>
+                      ) : createHsLastQuery.length >= 2 ? (
+                        <div className="px-3 py-3 text-sm text-gray-500">
+                          No matching HS codes found.
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+
+                  {createHsTooltipVisible && createHsSelectedData && (
+                    <div
+                      className="absolute top-full left-0 mt-2 w-[320px] max-w-[calc(100vw-4rem)] rounded-lg border border-gray-200 bg-white shadow-xl z-20"
+                      role="tooltip"
+                      style={{ pointerEvents: 'auto' }}
+                      onMouseEnter={handleCreateHsTooltipMouseEnter}
+                      onMouseLeave={handleCreateHsTooltipMouseLeave}
+                    >
+                      <div className="p-3">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-mono font-semibold text-gray-900">
+                                {createHsSelectedData.code}
+                              </span>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                createHsSelectedData.type === 'BARANG'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-green-100 text-green-700'
+                              }`}>
+                                {formatHsTypeLabel(createHsSelectedData.type)}
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">
+                                {createHsSelectedData.level}
+                              </span>
+                            </div>
+                          </div>
+                          <a
+                            href={`/admin/hs-codes?search=${createHsSelectedData.code}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-shrink-0 text-blue-600 hover:text-blue-800 transition-colors"
+                            title="Open in HS Code Management"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h6m0 0v6m0-6l-8 8M7 11V7a2 2 0 012-2h4" />
+                            </svg>
+                          </a>
+                        </div>
+                        <div className="border-t border-gray-100 pt-2">
+                          <div className="flex items-center gap-1 mb-2">
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setCreateHsTooltipLang('id');
+                              }}
+                              className={`px-2 py-1 text-[10px] font-medium rounded transition-colors ${
+                                createHsTooltipLang === 'id'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                            >
+                              🇮🇩 ID
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setCreateHsTooltipLang('en');
+                              }}
+                              className={`px-2 py-1 text-[10px] font-medium rounded transition-colors ${
+                                createHsTooltipLang === 'en'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                            >
+                              🇬🇧 EN
+                            </button>
+                          </div>
+                          <div className="text-xs text-gray-700 leading-relaxed">
+                            <p className="whitespace-pre-wrap break-words leading-snug">
+                              {createHsTooltipLang === 'id'
+                                ? (createHsSelectedData.descriptionId || 'Tidak ada deskripsi Bahasa Indonesia.')
+                                : (createHsSelectedData.descriptionEn || 'No English description available.')}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   UOM Code
                 </label>
-                <input
-                  type="text"
+                <select
                   value={createValues.uomCode}
-                  onChange={(e) => setCreateValues({ ...createValues, uomCode: e.target.value.toUpperCase() })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., UNIT, PCS, JAM"
-                />
+                  onChange={(e) => setCreateValues(prev => ({ ...prev, uomCode: e.target.value }))}
+                  disabled={uomLoading || uomList.length === 0}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none ${
+                    uomLoading || uomList.length === 0
+                      ? 'bg-gray-100 text-gray-500 border-gray-200'
+                      : 'focus:ring-2 focus:ring-blue-500 border-gray-300'
+                  }`}
+                >
+                  <option value="">
+                    {uomLoading ? 'Loading UOMs...' : 'Select UOM'}
+                  </option>
+                  {uomList.map(uom => (
+                    <option key={uom.code} value={uom.code}>
+                      {formatUomLabel(uom)}
+                    </option>
+                  ))}
+                </select>
+                {uomError && (
+                  <p className="mt-1 text-xs text-red-600">{uomError}</p>
+                )}
+                {!uomLoading && !uomError && uomList.length === 0 && (
+                  <p className="mt-1 text-xs text-gray-500">No UOM options available.</p>
+                )}
               </div>
             </div>
 
             <div className="mt-6 flex justify-end space-x-3">
               <button
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setCreateValues({ description: '', hsCode: '', type: '', uomCode: '' });
-                }}
+                onClick={closeCreateModal}
                 className="px-4 py-2 border rounded-lg hover:bg-gray-50"
               >
                 Cancel

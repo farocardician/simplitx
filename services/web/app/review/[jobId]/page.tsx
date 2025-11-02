@@ -4,6 +4,13 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import BuyerDropdown from '@/components/BuyerDropdown';
 import TransactionCodeDropdown from '@/components/TransactionCodeDropdown';
+import {
+  fetchHsCodeSuggestions,
+  formatHsTypeLabel,
+  normalizeHsType,
+  type HsCodeSuggestion
+} from '@/lib/hsCodes';
+import { DEFAULT_JASA_UOM_CODE, formatUomLabel, normalizeUomPayload, type UomOption } from '@/lib/uom';
 
 interface LineItemBase {
   no?: number;
@@ -72,11 +79,6 @@ interface InvoiceData {
   buyer_resolution_confidence?: number | null;
 }
 
-interface UOM {
-  code: string;
-  name: string;
-}
-
 interface TransactionCode {
   code: string;
   name: string;
@@ -106,18 +108,7 @@ interface HsCodeValidation {
   data?: HsCodeData;
 }
 
-interface HsCodeSuggestion {
-  id: string;
-  code: string;
-  type: 'BARANG' | 'JASA';
-  level: string;
-  descriptionEn: string;
-  descriptionId: string;
-}
-
 // Default UOM to use when a line item is marked as "Jasa"
-const JASA_UOM_CODE = 'UM.0030';
-
 const generateItemId = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -209,7 +200,7 @@ export default function ReviewPage() {
   } | null>(null);
   const orderKeyRef = useRef(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [uomList, setUomList] = useState<UOM[]>([]);
+  const [uomList, setUomList] = useState<UomOption[]>([]);
   const [errors, setErrors] = useState<Record<number, ItemErrors>>({});
   const [applyToAllState, setApplyToAllState] = useState<{
     itemIndex: number;
@@ -341,7 +332,7 @@ export default function ReviewPage() {
 
     // Pad code to 6 digits for lookup
     const paddedCode = code.padEnd(6, '0').slice(0, 6);
-    const apiType = type === 'Barang' ? 'BARANG' : 'JASA';
+    const apiType = normalizeHsType(type) ?? 'BARANG';
 
     // Debounce API call
     hsCodeDebounceTimers.current[index] = setTimeout(async () => {
@@ -368,7 +359,7 @@ export default function ReviewPage() {
             ...prev,
             [index]: {
               isValid: false,
-              warning: `HS Code type mismatch: Expected ${type}, but code is for ${data.record.type === 'BARANG' ? 'Barang' : 'Jasa'}`,
+              warning: `HS Code type mismatch: Expected ${formatHsTypeLabel(type)}, but code is for ${formatHsTypeLabel(data.record.type)}`,
               data: {
                 code: data.record.code,
                 type: data.record.type,
@@ -490,34 +481,13 @@ export default function ReviewPage() {
       return;
     }
 
-    const apiType = type === 'Barang' ? 'BARANG' : 'JASA';
-
     // Set loading state
     setHsCodeSearchLoading(prev => ({ ...prev, [index]: true }));
 
     // Debounce the search
     hsCodeSearchTimers.current[index] = setTimeout(async () => {
       try {
-        const params = new URLSearchParams();
-        params.set('search', trimmedQuery);
-        params.set('type', apiType);
-        params.set('limit', '10'); // Limit to 10 suggestions
-
-        const response = await fetch(`/api/hs-codes?${params.toString()}`);
-
-        if (!response.ok) {
-          throw new Error('Failed to search HS codes');
-        }
-
-        const data = await response.json();
-        const suggestions: HsCodeSuggestion[] = (data.items || []).map((item: any) => ({
-          id: item.id,
-          code: item.code,
-          type: item.type,
-          level: item.level,
-          descriptionEn: item.descriptionEn,
-          descriptionId: item.descriptionId
-        }));
+        const suggestions = await fetchHsCodeSuggestions(trimmedQuery, type, 10);
 
         setHsCodeSuggestions(prev => ({ ...prev, [index]: suggestions }));
         setSelectedSuggestionIndex(prev => ({ ...prev, [index]: -1 }));
@@ -712,7 +682,7 @@ export default function ReviewPage() {
         }
 
         const invoiceData = await invoiceResponse.json();
-        const uoms = uomResponse.ok ? await uomResponse.json() : [];
+        const uomsPayload = uomResponse.ok ? await uomResponse.json() : [];
         const trxCodesRaw = trxCodesResponse.ok ? await trxCodesResponse.json() : [];
         const normalizedTrxCodes: TransactionCode[] = (trxCodesRaw || []).map((code: any) => ({
           code: code.code,
@@ -759,7 +729,7 @@ export default function ReviewPage() {
         setInvoiceDate(invoiceData.invoice_date);
         setInvoiceNo(invoiceData.invoice_number);
         setItems(normalizedItems);
-        setUomList(uoms);
+        setUomList(normalizeUomPayload(uomsPayload));
         setAllParties(partiesToUse);
         setTransactionCodes(normalizedTrxCodes);
         setTrxCode(initialTrx);
@@ -884,8 +854,8 @@ export default function ReviewPage() {
 
       // If type switches to Jasa, only set UOM to default Jasa UOM (if present)
       if (field === 'type' && value === 'Jasa') {
-        const jasaUomAvailable = uomList.some(u => u.code === JASA_UOM_CODE);
-        nextItem.uom = jasaUomAvailable ? JASA_UOM_CODE : (nextItem.uom || '');
+        const jasaUomAvailable = uomList.some(u => u.code === DEFAULT_JASA_UOM_CODE);
+        nextItem.uom = jasaUomAvailable ? DEFAULT_JASA_UOM_CODE : (nextItem.uom || '');
       }
 
       updated[index] = nextItem;
@@ -904,8 +874,8 @@ export default function ReviewPage() {
 
     // Mirror the side effects for validation preview object
     if (field === 'type' && value === 'Jasa') {
-      const jasaUomAvailable = uomList.some(u => u.code === JASA_UOM_CODE);
-      newItem.uom = jasaUomAvailable ? JASA_UOM_CODE : (newItem.uom || '');
+      const jasaUomAvailable = uomList.some(u => u.code === DEFAULT_JASA_UOM_CODE);
+      newItem.uom = jasaUomAvailable ? DEFAULT_JASA_UOM_CODE : (newItem.uom || '');
     }
 
     if (field === 'qty' || field === 'unit_price') {
@@ -1040,7 +1010,7 @@ export default function ReviewPage() {
     if (!code || code.trim() === '') return false;
 
     const paddedCode = code.padEnd(6, '0').slice(0, 6);
-    const apiType = type === 'Barang' ? 'BARANG' : 'JASA';
+    const apiType = normalizeHsType(type) ?? 'BARANG';
 
     try {
       const response = await fetch(`/api/hs-codes/${paddedCode}?type=${apiType}`);
@@ -1102,8 +1072,8 @@ export default function ReviewPage() {
 
       // If type switches to Jasa, set UOM to default Jasa UOM (if present)
       if (type === 'Jasa') {
-        const jasaUomAvailable = uomList.some(u => u.code === JASA_UOM_CODE);
-        nextItem.uom = jasaUomAvailable ? JASA_UOM_CODE : (nextItem.uom || '');
+        const jasaUomAvailable = uomList.some(u => u.code === DEFAULT_JASA_UOM_CODE);
+        nextItem.uom = jasaUomAvailable ? DEFAULT_JASA_UOM_CODE : (nextItem.uom || '');
       }
 
       updated[index] = nextItem;
@@ -1113,8 +1083,8 @@ export default function ReviewPage() {
     // Validate the new item
     const newItem = { ...currentItem, type, hs_code: newHsCode };
     if (type === 'Jasa') {
-      const jasaUomAvailable = uomList.some(u => u.code === JASA_UOM_CODE);
-      newItem.uom = jasaUomAvailable ? JASA_UOM_CODE : (newItem.uom || '');
+      const jasaUomAvailable = uomList.some(u => u.code === DEFAULT_JASA_UOM_CODE);
+      newItem.uom = jasaUomAvailable ? DEFAULT_JASA_UOM_CODE : (newItem.uom || '');
     }
 
     const itemErrors = validateItem(newItem as LineItem, index);
@@ -1144,11 +1114,11 @@ export default function ReviewPage() {
   const handleApplyToAll = (type: 'Barang' | 'Jasa') => {
     setItems(prev => prev.map(item => {
       if (type === 'Jasa') {
-        const jasaUomAvailable = uomList.some(u => u.code === JASA_UOM_CODE);
+        const jasaUomAvailable = uomList.some(u => u.code === DEFAULT_JASA_UOM_CODE);
         return {
           ...item,
           type: 'Jasa',
-          uom: jasaUomAvailable ? JASA_UOM_CODE : (item.uom || '')
+          uom: jasaUomAvailable ? DEFAULT_JASA_UOM_CODE : (item.uom || '')
         };
       }
       // Barang: only change type; keep other fields as-is
@@ -2065,7 +2035,7 @@ export default function ReviewPage() {
                             ) : (hsCodeSuggestions[index] || []).length > 0 ? (
                               <>
                                 <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500 bg-gray-50 border-b border-gray-200 sticky top-0">
-                                  {item.type === 'Barang' ? 'Barang' : 'Jasa'} HS Codes ({hsCodeSuggestions[index].length} results)
+                                  {formatHsTypeLabel(item.type)} HS Codes ({hsCodeSuggestions[index].length} results)
                                 </div>
                                 {hsCodeSuggestions[index].map((suggestion, sugIndex) => (
                                   <div
@@ -2081,14 +2051,23 @@ export default function ReviewPage() {
                                     onMouseEnter={() => setSelectedSuggestionIndex(prev => ({ ...prev, [index]: sugIndex }))}
                                   >
                                     <div className="flex items-start gap-2">
-                                      <div className="flex-shrink-0">
-                                        <span className="inline-block px-2 py-0.5 text-xs font-mono font-semibold bg-gray-100 text-gray-800 rounded">
-                                          {suggestion.code}
-                                        </span>
-                                        <span className="ml-1 inline-block px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">
-                                          {suggestion.level}
-                                        </span>
-                                      </div>
+                                    <div className="flex-shrink-0">
+                                      <span className="inline-block px-2 py-0.5 text-xs font-mono font-semibold bg-gray-100 text-gray-800 rounded">
+                                        {suggestion.code}
+                                      </span>
+                                      <span
+                                        className={`ml-1 inline-block px-1.5 py-0.5 text-[10px] font-medium rounded ${
+                                          suggestion.type === 'BARANG'
+                                            ? 'bg-blue-100 text-blue-700'
+                                            : 'bg-green-100 text-green-700'
+                                        }`}
+                                      >
+                                        {formatHsTypeLabel(suggestion.type)}
+                                      </span>
+                                      <span className="ml-1 inline-block px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">
+                                        {suggestion.level}
+                                      </span>
+                                    </div>
                                       <div className="flex-1 min-w-0">
                                         <div className="text-xs text-gray-900 font-medium line-clamp-1">
                                           {suggestion.descriptionEn}
@@ -2135,7 +2114,7 @@ export default function ReviewPage() {
                                         ? 'bg-blue-100 text-blue-700'
                                         : 'bg-green-100 text-green-700'
                                     }`}>
-                                      {hsCodeValidations[index].data.type === 'BARANG' ? 'Barang' : 'Jasa'}
+                                      {formatHsTypeLabel(hsCodeValidations[index].data.type)}
                                     </span>
                                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">
                                       {hsCodeValidations[index].data.level}
@@ -2276,7 +2255,7 @@ export default function ReviewPage() {
                           <option value="">Select UOM</option>
                           {uomList.map(uom => (
                             <option key={uom.code} value={uom.code}>
-                              {uom.name}
+                              {formatUomLabel(uom)}
                             </option>
                           ))}
                         </select>

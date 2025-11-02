@@ -60,3 +60,112 @@ export function computeStatus(validFrom: Date | null, validTo: Date | null, now:
   if (validFrom && validFrom > now) return 'expired';
   return 'active';
 }
+
+export interface HsCodeSuggestion {
+  id: string;
+  code: string;
+  type: HsType;
+  level: string;
+  descriptionEn: string;
+  descriptionId: string;
+}
+
+export function normalizeHsCodeSuggestions(payload: unknown): HsCodeSuggestion[] {
+  if (!Array.isArray(payload)) {
+    return [];
+  }
+
+  return payload
+    .map(item => {
+      if (!item || typeof item !== 'object') {
+        return null;
+      }
+
+      const candidate = item as {
+        id?: unknown;
+        code?: unknown;
+        type?: unknown;
+        level?: unknown;
+        descriptionEn?: unknown;
+        descriptionId?: unknown;
+      };
+
+      const id = typeof candidate.id === 'string' ? candidate.id : null;
+      const code = typeof candidate.code === 'string' ? candidate.code : null;
+      if (!id || !code) {
+        return null;
+      }
+
+      const typeRaw = typeof candidate.type === 'string' ? candidate.type.toUpperCase() : null;
+      const type: HsType = typeRaw === 'JASA' ? 'JASA' : 'BARANG';
+      const level = typeof candidate.level === 'string' ? candidate.level : inferLevel(code) ?? 'HS6';
+      const descriptionEn = typeof candidate.descriptionEn === 'string' ? candidate.descriptionEn : '';
+      const descriptionId = typeof candidate.descriptionId === 'string' ? candidate.descriptionId : '';
+
+      return {
+        id,
+        code,
+        type,
+        level,
+        descriptionEn,
+        descriptionId
+      } satisfies HsCodeSuggestion;
+    })
+    .filter((item): item is HsCodeSuggestion => item !== null);
+}
+
+export function normalizeHsCodeSearchPayload(payload: unknown): HsCodeSuggestion[] {
+  if (payload && typeof payload === 'object' && payload !== null) {
+    const items = (payload as { items?: unknown }).items;
+    if (Array.isArray(items)) {
+      return normalizeHsCodeSuggestions(items);
+    }
+  }
+  return normalizeHsCodeSuggestions(payload);
+}
+
+export function normalizeHsType(value: string | null | undefined): HsType | null {
+  if (!value) return null;
+  const normalized = value.trim().toUpperCase();
+  if (normalized === 'BARANG' || normalized === 'JASA') {
+    return normalized as HsType;
+  }
+  return null;
+}
+
+export function formatHsTypeLabel(value: string | null | undefined): string {
+  if (!value) return '';
+  const normalized = value.toString().trim().toUpperCase();
+  if (normalized === 'BARANG') return 'Barang';
+  if (normalized === 'JASA') return 'Jasa';
+  return value.toString();
+}
+
+
+export async function fetchHsCodeSuggestions(
+  query: string,
+  type: string | null | undefined,
+  limit = 10
+): Promise<HsCodeSuggestion[]> {
+  const trimmed = query.trim();
+  if (trimmed.length < 2) {
+    return [];
+  }
+
+  const params = new URLSearchParams();
+  params.set('search', trimmed);
+  params.set('limit', String(Math.max(1, limit)));
+
+  const normalizedType = normalizeHsType(type);
+  if (normalizedType) {
+    params.set('type', normalizedType);
+  }
+
+  const response = await fetch(`/api/hs-codes?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error('Failed to search HS codes');
+  }
+
+  const data = await response.json();
+  return normalizeHsCodeSearchPayload(data);
+}
