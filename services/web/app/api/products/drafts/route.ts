@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createDraftFromManualEntry, createAliasDraft } from '@/lib/productEnrichment';
+import { prisma } from '@/lib/prisma';
 import type { HsCodeType } from '@prisma/client';
 
 /**
@@ -150,17 +151,88 @@ export async function GET(req: NextRequest) {
     }
 
     const [drafts, total] = await Promise.all([
-      (await import('@/lib/prisma')).prisma.productDraft.findMany({
+      prisma.productDraft.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      (await import('@/lib/prisma')).prisma.productDraft.count({ where }),
+      prisma.productDraft.count({ where }),
     ]);
 
+    let draftsWithMeta = drafts;
+
+    if (drafts.length > 0) {
+      const draftIds = drafts.map(draft => draft.id);
+
+      const events = await prisma.enrichmentEvent.findMany({
+        where: { draftId: { in: draftIds } },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          draftId: true,
+          matchScore: true,
+          matchedProductId: true,
+          autoFilled: true,
+          inputDescription: true,
+          createdAt: true,
+        },
+      });
+
+      const latestEventByDraft = new Map<string, typeof events[number]>();
+      for (const event of events) {
+        if (!latestEventByDraft.has(event.draftId)) {
+          latestEventByDraft.set(event.draftId, event);
+        }
+      }
+
+      const matchedProductIds = Array.from(latestEventByDraft.values())
+        .map(event => event.matchedProductId)
+        .filter((id): id is string => Boolean(id));
+
+      const targetProductIds = drafts
+        .map(draft => draft.targetProductId)
+        .filter((id): id is string => Boolean(id));
+
+      const combinedProductIds = Array.from(new Set([...matchedProductIds, ...targetProductIds]));
+
+      const relatedProducts = combinedProductIds.length > 0
+        ? await prisma.product.findMany({
+            where: {
+              id: { in: combinedProductIds },
+              deletedAt: null,
+            },
+            select: {
+              id: true,
+              description: true,
+              hsCode: true,
+              type: true,
+              uomCode: true,
+            },
+          })
+        : [];
+
+      const productMap = new Map<string, typeof relatedProducts[number]>();
+      for (const product of relatedProducts) {
+        productMap.set(product.id, product);
+      }
+
+      draftsWithMeta = drafts.map(draft => {
+        const event = latestEventByDraft.get(draft.id) || null;
+        const matched = event?.matchedProductId ? productMap.get(event.matchedProductId) || null : null;
+        const assignedTarget = draft.targetProductId ? productMap.get(draft.targetProductId) || null : null;
+
+        return {
+          ...draft,
+          enrichmentEvent: event,
+          targetProduct: assignedTarget,
+          suggestedProduct: matched,
+        };
+      });
+    }
+
     return NextResponse.json({
-      drafts,
+      drafts: draftsWithMeta,
       total,
       page,
       pageSize,

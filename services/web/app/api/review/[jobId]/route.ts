@@ -9,6 +9,7 @@ import { existsSync } from 'fs';
 import { createUomResolverSnapshot } from '@/lib/uomResolver';
 import { resolveBuyerParty, validateBuyerPartyId, type ResolvedParty, type CandidateParty } from '@/lib/partyResolver';
 import { auditResolutionAttempt } from '@/lib/auditLogger';
+import type { HsCodeType } from '@prisma/client';
 
 const trxCodeDefaultCache = new Map<string, string | null>();
 
@@ -70,6 +71,186 @@ function normalizeType(raw: unknown): 'Barang' | 'Jasa' {
   }
 
   return 'Barang';
+}
+
+function normalizeHsCodeForDraft(raw: unknown): string | null {
+  if (typeof raw !== 'string') {
+    return null;
+  }
+
+  const digitsOnly = raw.replace(/[^0-9]/g, '');
+  if (!digitsOnly) {
+    return null;
+  }
+
+  return digitsOnly.padEnd(6, '0').slice(0, 6);
+}
+
+function normalizeHsTypeForDraft(raw: unknown): HsCodeType | null {
+  if (typeof raw !== 'string') {
+    return null;
+  }
+
+  const value = raw.trim().toUpperCase();
+  if (value === 'JASA' || value === 'B') {
+    return 'JASA';
+  }
+  if (value === 'BARANG' || value === 'A' || value === 'BAR') {
+    return 'BARANG';
+  }
+  if (value === 'J' || value === 'JS') {
+    return 'JASA';
+  }
+  return null;
+}
+
+function normalizeUomForDraft(raw: unknown): string | null {
+  if (typeof raw !== 'string') {
+    return null;
+  }
+
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function cleanDescription(raw: unknown): string | null {
+  if (typeof raw !== 'string') {
+    return null;
+  }
+
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+async function syncDraftsFromInvoice(
+  jobId: string,
+  items: Array<{ description?: string; hs_code?: string; type?: string; uom?: string }> | undefined,
+  sessionId: string | null
+) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return;
+  }
+
+  const events = await prisma.enrichmentEvent.findMany({
+    where: { invoiceId: jobId },
+    orderBy: [{ lineItemIndex: 'asc' }, { createdAt: 'desc' }]
+  });
+
+  if (events.length === 0) {
+    return;
+  }
+
+  const latestByIndex = new Map<number, typeof events[number]>();
+  for (const event of events) {
+    if (event.lineItemIndex === null) continue;
+    if (!latestByIndex.has(event.lineItemIndex)) {
+      latestByIndex.set(event.lineItemIndex, event);
+    }
+  }
+
+  for (let index = 0; index < items.length; index++) {
+    const event = latestByIndex.get(index);
+    if (!event) {
+      continue;
+    }
+
+    if (event.autoFilled) {
+      continue;
+    }
+
+    const item = items[index] || {};
+
+    const description = cleanDescription(item.description) ?? cleanDescription(event.inputDescription);
+    if (!description) {
+      continue;
+    }
+
+    const draftData = {
+      kind: 'new_product' as const,
+      description,
+      hsCode: normalizeHsCodeForDraft(item.hs_code) ?? null,
+      type: normalizeHsTypeForDraft(item.type) ?? null,
+      uomCode: normalizeUomForDraft(item.uom) ?? null,
+      sourceInvoiceId: jobId,
+      sourcePdfLineText: event.inputDescription ?? null,
+      confidenceScore: event.matchScore ?? null,
+      createdBy: sessionId,
+    } satisfies {
+      kind: 'new_product';
+      description: string;
+      hsCode: string | null;
+      type: HsCodeType | null;
+      uomCode: string | null;
+      sourceInvoiceId: string;
+      sourcePdfLineText: string | null;
+      confidenceScore: number | null;
+      createdBy: string | null;
+    };
+
+    if (event.draftCreated && event.draftId) {
+      const existing = await prisma.productDraft.findUnique({ where: { id: event.draftId } });
+
+      if (!existing) {
+        // Draft reference missing - recreate to maintain linkage
+        const recreated = await prisma.productDraft.create({ data: draftData });
+        await prisma.enrichmentEvent.update({
+          where: { id: event.id },
+          data: {
+            draftId: recreated.id,
+            draftCreated: true,
+          }
+        });
+      }
+
+      // If draft exists and still pending, only enrich missing metadata without overriding user edits
+      if (existing && existing.status === 'draft') {
+        const updates: Record<string, unknown> = {};
+
+        if (!existing.hsCode && draftData.hsCode) {
+          updates.hsCode = draftData.hsCode;
+        }
+
+        if (!existing.type && draftData.type) {
+          updates.type = draftData.type;
+        }
+
+        if (!existing.uomCode && draftData.uomCode) {
+          updates.uomCode = draftData.uomCode;
+        }
+
+        if (!existing.description && draftData.description) {
+          updates.description = draftData.description;
+        }
+
+        if (!existing.sourcePdfLineText && draftData.sourcePdfLineText) {
+          updates.sourcePdfLineText = draftData.sourcePdfLineText;
+        }
+
+        if (existing.confidenceScore === null && draftData.confidenceScore !== null) {
+          updates.confidenceScore = draftData.confidenceScore;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await prisma.productDraft.update({
+            where: { id: existing.id },
+            data: updates,
+          });
+        }
+      }
+
+      continue;
+    }
+
+    const newDraft = await prisma.productDraft.create({ data: draftData });
+
+    await prisma.enrichmentEvent.update({
+      where: { id: event.id },
+      data: {
+        draftCreated: true,
+        draftId: newDraft.id,
+      }
+    });
+  }
 }
 
 export const GET = withSession(async (
@@ -814,6 +995,12 @@ export const POST = withSession(async (
         { error: { code: 'WRITE_ERROR', message: errorMessage } },
         { status: 500 }
       );
+    }
+
+    try {
+      await syncDraftsFromInvoice(jobId, items, sessionId);
+    } catch (draftError) {
+      console.error(`Failed to sync product drafts for job ${jobId}:`, draftError);
     }
 
     return NextResponse.json({
