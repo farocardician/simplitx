@@ -60,3 +60,18 @@ services:
     ports:
       - "9000:8000"
     restart: unless-stopped
+
+  kurs_pajak:
+    build:
+      context: .
+      dockerfile: docker/kurs_pajak.Dockerfile
+      target: production
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
+      - BACKUP_TARGET_URL=${BACKUP_TARGET_URL}
+      - BACKUP_ENCRYPTION_KEY=${BACKUP_ENCRYPTION_KEY}
+      - SERVICE_POLL_INTERVAL_SECONDS=86400
+      - SERVICE_LOOKBACK_WEEKS=12
+    restart: unless-stopped
+    ports:
+      - "8010:8000"
