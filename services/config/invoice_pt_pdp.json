@@ -1,4 +1,5 @@
 {
+  "enabled": true,
   "document": { "type": "invoice", "vendor": "PT PDP", "version": "1" },
   "stages": [
     { "script": "s01_tokenizer.py",

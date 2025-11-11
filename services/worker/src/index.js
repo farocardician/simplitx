@@ -40,9 +40,23 @@ async function main() {
 
 async function acquireJob() {
   try {
+    // First, recover any jobs with expired leases
+    await prisma.$queryRaw`
+      UPDATE jobs
+      SET
+        status = 'queued'::"job_status",
+        leased_by = NULL,
+        lease_expires_at = NULL,
+        updated_at = NOW()
+      WHERE status = 'processing'::"job_status"
+        AND lease_expires_at IS NOT NULL
+        AND lease_expires_at < NOW()
+    `;
+
+    // Then acquire the next queued job
     const result = await prisma.$queryRaw`
       UPDATE jobs
-      SET 
+      SET
         status = 'processing'::"job_status",
         leased_by = ${WORKER_ID},
         lease_expires_at = NOW() + INTERVAL '5 minutes',
@@ -58,7 +72,7 @@ async function acquireJob() {
       )
       RETURNING *
     `;
-    
+
     return result[0] || null;
   } catch (error) {
     logger.error('Error acquiring job:', error);

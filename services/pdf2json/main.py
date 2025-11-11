@@ -56,6 +56,9 @@ async def get_templates():
                     try:
                         with open(config_file, "r", encoding="utf-8") as f:
                             cfg = json.load(f)
+                            # Filter out disabled configurations
+                            if not cfg.get("enabled", True):
+                                continue
                             # Build label from document fields if present
                             doc = cfg.get("document", {}) if isinstance(cfg, dict) else {}
                             dtype = doc.get("type")

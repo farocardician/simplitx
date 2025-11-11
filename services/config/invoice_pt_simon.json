@@ -1,4 +1,5 @@
 {
+  "enabled": true,
   "document": { "type": "invoice", "vendor": "PT Simon", "version": "1.4" },
   "stages": [
     { "script": "s01_tokenizer.py",

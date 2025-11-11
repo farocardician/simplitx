@@ -10,6 +10,7 @@ interface Template {
   version: string
   filename: string
   display_name: string
+  enabled?: boolean  // Optional - backend already filters disabled configs
 }
 
 export function PDFDropzone() {

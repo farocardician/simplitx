@@ -1,4 +1,5 @@
 {
+  "enabled": true,
   "document": { "type": "invoice", "vendor": "PT Rittal", "version": "1" },
   "stages": [
     { "script": "s01_tokenizer.py",
@@ -16,8 +17,8 @@
     { "script": "s05_normalize_cells.py", "config": "invoice_simon_min.json",
       "args": ["--in", "{cells_raw}", "--out", "{cells}", "--config", "{config}", "--common-words", "{common_words}"]
     },
-    { "script": "s06_line_items_from_cells.py", "config": "s06_invoice_rittal_lineItem_v1.json",
-      "args": ["--input", "{cells}", "--out", "{items}", "--config", "{config}"]
+    { "script": "s06_line_items_from_cells_rittal.py",
+      "args": ["--input", "{normalized}", "--out", "{items}"]
     },
     { "script": "s07_extractor.py", "config": "s07_invoice_rittal_extractor_v1.json",
       "args": ["--tokens", "{normalized}", "--tokenizer", "plumber", "--segments", "{segments}", "--config", "{config}", "--out", "{fields}"]
