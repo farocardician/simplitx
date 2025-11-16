@@ -1,0 +1,22 @@
+{
+  "doc_id": "22.pdf",
+  "items": [
+    {
+      "no": 1,
+      "hs_code": 330200,
+      "sku": "000010",
+      "code": null,
+      "description": "M101180_FLAVOUR SINGAPORE CARTON BOX 25 KG Country of origin: Singapore",
+      "type": null,
+      "qty": 60,
+      "uom": "KG",
+      "unit_price": 478760,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 28725600
+    }
+  ],
+  "stage": "line_items",
+  "version": "silesia-line-items-1.0",
+  "notes": "defaulted discount_percent"
+}
