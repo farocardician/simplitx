@@ -34,7 +34,8 @@ export const GET = withSession(async (req: NextRequest, { sessionId }: { session
       completedAt: true,
       errorCode: true,
       errorMessage: true,
-      mapping: true
+      mapping: true,
+      artifactPath: true
     }
   });
   
@@ -47,7 +48,7 @@ export const GET = withSession(async (req: NextRequest, { sessionId }: { session
   });
   
   return NextResponse.json({
-    jobs: jobs.map(job => ({
+    jobs: jobs.map((job: any) => ({
       id: job.id,
       filename: job.originalFilename,
       bytes: Number(job.bytes),
@@ -62,7 +63,9 @@ export const GET = withSession(async (req: NextRequest, { sessionId }: { session
         code: job.errorCode,
         message: job.errorMessage
       } : null,
-      canDownload: job.status === 'complete'
+      canDownload: job.status === 'complete',
+      hasArtifacts: job.status === 'complete' && !!job.artifactPath,
+      canReview: job.status === 'complete'
     })),
     activeCount,
     timestamp: new Date().toISOString() // For next incremental fetch

@@ -1,0 +1,29 @@
+Expected subtotal block text (no extras)
+
+Variant 1
+SUB TOTAL 750.823.216
+
+Variant 2
+TOTAL 1.621.621.622
+
+Variant 3
+TOTAL 1.621.621.622
+PPn 178.378.378
+
+Variant 4
+TOTAL 1.621.621.622
+
+Variant 5
+SUB TOTAL 36.652.000
+
+Variant 6
+SUB TOTAL 175.475.384
+
+Variant 7
+TOTAL 777.800.100
+
+Variant 8
+TOTAL 1.621.621.622
+
+Variant 9
+SUB TOTAL 750.823.216

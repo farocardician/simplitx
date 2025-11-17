@@ -1,0 +1,139 @@
+{
+  "name": "MDT Invoice Segmenter Config V1",
+  "version": "1.0",
+  "coords": { "normalized": true, "y_origin": "top", "precision": 6 },
+  "defaults": { "min_height": 0.02 },
+  "regions": [
+    {
+      "id": "header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^PT$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "below_only",
+          "dy_max": 0.25,
+          "width": "page"
+        },
+        "margin": {
+          "top": 0.018,
+          "bottom": 0.0,
+          "left": 0.0,
+          "right": 0.0
+        }
+      }
+    },
+    {
+      "id": "invoice_number",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Invoice$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "above_rows",
+          "rows": 1,
+          "width": "page"
+        },
+        "margin": {
+          "top": 0.0,
+          "bottom": 0.0,
+          "left": 0.0,
+          "right": 0.0
+        }
+      }
+    },
+    {
+      "id": "invoice_date",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Invoice$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "below_rows",
+          "rows": 1,
+          "width": "anchor"
+        },
+        "margin": {
+          "top": 0.0,
+          "bottom": 0.0,
+          "left": 0.0,
+          "right": 0.0
+        }
+      }
+    },
+    {
+      "id": "buyer",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Invoice$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_up",
+          "dx_max": 0.38,
+          "dy_max": 0.148,
+          "dy_tol": 0.0,
+          "gap_x": 0.45,
+          "start_edge": "right"
+        },
+        "margin": {
+          "top": 0.0,
+          "bottom": 0.0,
+          "left": 0.0,
+          "right": 0.0
+        }
+      }
+    },
+    {
+      "id": "total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Untaxed$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "below_only",
+          "dy_max": 0.1,
+          "width": "page"
+        },
+        "margin": {
+          "top": 0.02,
+          "bottom": 0.01,
+          "left": 0.0,
+          "right": 0.0
+        }
+      }
+    }
+  ]
+}

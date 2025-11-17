@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import type { UploadedFile, UploadState, UploadProgress } from '@/types/files'
 import { formatBytes, exceedsLimit } from '@/lib/bytes'
 import { isValidPDF, getPDFValidationError } from '@/lib/mime'
@@ -8,12 +8,14 @@ import { isValidPDF, getPDFValidationError } from '@/lib/mime'
 const MAX_FILE_SIZE_MB = 50
 const MAX_CONCURRENT_UPLOADS = 3
 
-export function useUpload() {
+export function useUpload(options?: { getTemplate?: () => string }) {
   const [uploadState, setUploadState] = useState<UploadState>({
     files: [],
     isUploading: false,
     error: null
   })
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null)
+  const redirectIntervalRef = useRef<NodeJS.Timeout>()
 
   const generateFileId = useCallback(() => {
     return `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -121,6 +123,13 @@ export function useUpload() {
     try {
       const formData = new FormData()
       formData.append('file', fileData.file)
+      // Forward selected template (if provided) so backend enqueues with it
+      try {
+        const tpl = options?.getTemplate?.() || ''
+        if (tpl) {
+          formData.append('template', tpl)
+        }
+      } catch {}
 
       // Use XMLHttpRequest for upload progress
       const xhr = new XMLHttpRequest()
@@ -141,28 +150,59 @@ export function useUpload() {
         // Handle completion
         xhr.addEventListener('load', () => {
           if (xhr.status === 200) {
-            updateFileProgress({ fileId, progress: 100, status: 'completed' })
-            
             // Parse response to check if job was created successfully
             try {
               const response = JSON.parse(xhr.responseText)
               if (response.job) {
-                // Redirect to queue page on successful job creation
+                // Check if this is a duplicate
+                if (response.duplicate && response.original_filename) {
+                  // Update file as deduplicated
+                  setUploadState(prev => ({
+                    ...prev,
+                    files: prev.files.map(file =>
+                      file.id === fileId
+                        ? {
+                            ...file,
+                            progress: 100,
+                            status: 'deduplicated' as const,
+                            duplicateOf: {
+                              jobId: response.original_job_id,
+                              filename: response.original_filename
+                            }
+                          }
+                        : file
+                    )
+                  }))
+                } else {
+                  // Regular completion
+                  updateFileProgress({ fileId, progress: 100, status: 'completed' })
+                }
+
+                // Check if all uploads are complete after this one
                 setTimeout(() => {
-                  window.location.href = '/queue'
-                }, 500) // Small delay to show completion
+                  setUploadState(current => {
+                    const allCompleted = current.files.every(f =>
+                      f.id === fileId ? true : (f.status === 'completed' || f.status === 'deduplicated')
+                    )
+                    if (allCompleted) {
+                      startRedirectCountdown()
+                    }
+                    return current
+                  })
+                }, 100) // Small delay to ensure state updates
               }
             } catch (e) {
               console.log('Response parsing error:', e)
+              updateFileProgress({ fileId, progress: 100, status: 'completed' })
             }
-            
+
             resolve()
           } else {
-            updateFileProgress({ 
-              fileId, 
-              progress: 0, 
-              status: 'error', 
-              error: `Upload failed: ${xhr.statusText}` 
+            updateFileProgress({
+              fileId,
+              progress: 0,
+              status: 'error',
+              error: `Upload failed: ${xhr.statusText}`
             })
             reject(new Error(xhr.statusText))
           }
@@ -204,7 +244,35 @@ export function useUpload() {
         error: 'Upload failed. Please try again.' 
       })
     }
-  }, [uploadState.files, updateFileProgress])
+  }, [uploadState.files, updateFileProgress, options?.getTemplate])
+
+  const startRedirectCountdown = useCallback(() => {
+    // Clear any existing interval
+    if (redirectIntervalRef.current) {
+      clearInterval(redirectIntervalRef.current)
+    }
+    
+    console.log('Starting countdown at 3')
+    setRedirectCountdown(3)
+    
+    redirectIntervalRef.current = setInterval(() => {
+      setRedirectCountdown((prev) => {
+        console.log('Countdown tick, prev:', prev)
+        if (prev === null) return null
+        
+        if (prev === 1) {
+          console.log('Countdown reached 1, redirecting...')
+          clearInterval(redirectIntervalRef.current!)
+          window.location.href = '/queue'
+          return null
+        }
+        
+        const nextValue = prev - 1
+        console.log('Setting countdown to:', nextValue)
+        return nextValue
+      })
+    }, 1000)
+  }, [])
 
   const startUploads = useCallback(async () => {
     const pendingFiles = uploadState.files.filter(f => f.status === 'pending')
@@ -223,7 +291,7 @@ export function useUpload() {
     }
 
     setUploadState(prev => ({ ...prev, isUploading: false }))
-  }, [uploadState.files, realUpload])
+  }, [uploadState.files, realUpload, startRedirectCountdown])
 
   const clearError = useCallback(() => {
     setUploadState(prev => ({ ...prev, error: null }))
@@ -246,6 +314,7 @@ export function useUpload() {
 
   return {
     ...uploadState,
+    redirectCountdown,
     addFiles,
     removeFile,
     cancelUpload,

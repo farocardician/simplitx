@@ -1,0 +1,201 @@
+{
+  "name": "Azu Invoice Segmenter Config V1",
+  "version": "1.0",
+  "coords": { "normalized": true, "y_origin": "top", "precision": 6 },
+  "defaults": { "min_height": 0.02 },
+  "regions": [
+    {
+      "id": "header",
+      "label": "header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^PT$"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "below_only",
+          "dy_max": 0.285,
+          "width": "page"
+        },
+        "margin": { "top": 0.04, "right": 0.0, "bottom": -0.05, "left": 0.01 },
+        "min_height": 0.05
+      },
+      "keep": "all"
+    },
+    {
+      "id": "invoice",
+      "label": "invoice",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["INVOICE"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "end_anchor": {
+          "patterns": ["CONTRACT"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "margin": { "top": -0.031, "right": 0.2, "bottom": -0.01, "left": 0.0 },
+        "min_height": 0.008
+      }
+    },
+    {
+      "id": "seller",
+      "label": "seller",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Electronic$"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "below_only",
+          "dy_max": 0.110,
+          "width": "page"
+        },
+        "margin": { "top": 0.016, "right": -0.3, "bottom": 0.0, "left": 0.005 },
+        "min_height": 0.045
+      }
+    },
+    {
+      "id": "buyer",
+      "label": "buyer",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^To$"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 5,
+          "row_tol": 0,
+          "dx_max": 0.25
+        },
+        "margin": { "top": 0, "right": 0.15, "bottom": 0.01, "left": 0.0 },
+        "min_height": 0.030
+      }
+    },
+    {
+      "id": "total",
+      "label": "total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^RECEIVABLE$"],
+          "flags": { "ignore_case": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 3,
+          "row_tol": 0.008,
+          "dx_max": 0.45,
+          "dy_max": 0.05
+        },
+        "margin": { "top": -0.005, "right": 0.02, "bottom": 0.005, "left": 0.0 },
+        "min_height": 0.045
+      },
+      "keep": "all"
+    },
+    {
+      "id": "subtotal",
+      "label": "subtotal",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^RECEIVABLE$"],
+          "flags": { "ignore_case": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "right_only",
+          "start_edge": "left",
+          "dx_max": 0.42,
+          "gap_x": 0.01
+        },
+        "margin": { "top": 0.0, "right": 0.02, "bottom": 0.0, "left": 0.0 }
+      },
+      "min_height": 0.008
+    },
+    {
+      "id": "tax_based",
+      "label": "tax_based",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": { "patterns": ["^Tax$"], "flags": { "ignore_case": true }, "select": "topmost" },
+        "capture_window": { "mode": "right_only", "start_edge": "left", "dx_max": 0.22, "height": "anchor" }
+      },
+      "min_height": 0.008
+    },
+    {
+      "id": "vat",
+      "label": "vat",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^VAT$"],
+          "flags": { "ignore_case": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "right_only",
+          "start_edge": "left",
+          "dx_max": 0.42,
+          "gap_x": 0.01
+        },
+        "margin": { "top": 0.0, "right": 0.02, "bottom": 0.0, "left": 0.0 }
+      },
+      "min_height": 0.008
+    },
+    {
+      "id": "vat_rate",
+      "label": "vat_rate",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": { "patterns": ["^VAT$"], "flags": { "ignore_case": true }, "select": "topmost" },
+        "capture_window": { "mode": "right_only", "start_edge": "left", "dx_max": 0.01, "height": "anchor" }
+      },
+      "min_height": 0.008
+    },
+    {
+      "id": "grand_total",
+      "label": "grand_total",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^TOTAL$"],
+          "flags": { "ignore_case": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 1,
+          "dx_max": 0.42,
+          "gap_x": 0.01,
+          "row_tol": 0.006
+        }
+      },
+      "min_height": 0.008,
+      "keep": "all"
+    }
+
+  ]
+}

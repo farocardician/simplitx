@@ -1,0 +1,121 @@
+{
+  "fields": {
+    "description": {
+      "header_synonyms": [
+        "DESCRIPTION",
+        "DESC"
+      ],
+      "position_hint": {
+        "x0": 0.14,
+        "x1": 0.65
+      },
+      "parsers": [
+        "strip_nonprint"
+      ],
+      "required": true,
+      "merge": true,
+      "merge_wrapped": true,
+      "glue_hyphenated_words": true
+    },
+    "qty": {
+      "header_synonyms": [
+        "QTY \\(UNIT\\)"
+      ],
+      "position_hint": {
+        "x0": 0.05,
+        "x1": 0.15
+      },
+      "parsers": [
+        "parse_number"
+      ],
+      "required": true,
+      "merge": false,
+      "extract_from": "text",
+      "pattern": "QTY \\(UNIT\\)\\s+([,\\d]+)"
+    },
+    "unit_price": {
+      "header_synonyms": [
+        "UNIT PRICE \\(Rp\\)"
+      ],
+      "position_hint": {
+        "x0": 0.55,
+        "x1": 0.80
+      },
+      "parsers": [
+        "parse_money"
+      ],
+      "required": true,
+      "merge": false,
+      "extract_from": "text",
+      "pattern": "UNIT PRICE \\(Rp\\)\\s+(\\d+[.,]?\\d*)"
+    },
+    "amount": {
+      "header_synonyms": [
+        "AMOUNT \\(Rp\\)"
+      ],
+      "position_hint": {
+        "x0": 0.75,
+        "x1": 0.95
+      },
+      "parsers": [
+        "parse_money"
+      ],
+      "required": true,
+      "merge": false,
+      "extract_from": "text",
+      "pattern": "AMOUNT \\(Rp\\)\\s+(\\d+[.,]?\\d*)"
+    }
+  },
+  "currency_hints": [
+    "IDR",
+    "Rp",
+    "RP"
+  ],
+  "number_format": {
+    "decimal": ",",
+    "thousands": ".",
+    "allow_parens": true
+  },
+  "qty_decimal": ",",
+  "currency_decimals": 0,
+  "qty_format": {
+    "decimal_places": 2,
+    "decimal_separator": ",",
+    "thousands_separator": "."
+  },
+  "tolerances": {
+    "amount_from_qty_price": {
+      "abs": 0,
+      "rel": 0
+    }
+  },
+  "defaults": {
+    "discount_percent": 0,
+    "discount_amount": 0,
+    "qty": 1
+  },
+  "row_filters": [
+    "^\\s*(TOTAL|SUB\\s*TOTAL|GRAND\\s*TOTAL|VAT|PPN|TAX BASE)\\s*$",
+    "^\\s*NO\\s*$",
+    "^\\s*DESCRIPTION\\s*$",
+    "^\\s*QTY\\s*$",
+    "^\\s*UNIT\\s*$",
+    "^\\s*PRICE\\s*$",
+    "^\\s*TOTAL\\s*$",
+    "^\\s*#\\s*$"
+  ],
+  "post_processors": {
+    "description": [
+      {
+        "type": "regex_replace",
+        "pattern": "^DESCRIPTION\\s+",
+        "replacement": ""
+      },
+      {
+        "type": "regex_replace",
+        "pattern": "(AC\\s+Maintenance\\s+BTH_MAY\\s+22)\\s+\\1",
+        "replacement": "$1"
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+Kode,Name,Deskripsi
+1,Penyerahan ke PKP,"Penjualan barang/jasa ke pembeli yang juga PKP, di mana penjual wajib memungut dan menyetor PPN."
+2,Pemungut Bendahara,"Penjualan ke instansi pemerintah. PPN dipungut langsung oleh bendahara pemerintah, bukan penjual."
+3,Pemungut Lainnya,"Penjualan ke pihak tertentu yang ditunjuk sebagai pemungut PPN selain pemerintah, misalnya BUMN tertentu."
+4,DPP Nilai Lain,Transaksi khusus yang memakai dasar pengenaan pajak “nilai lain” yang sudah ditentukan pemerintah (contoh: jasa telekomunikasi prabayar).
+5,Besaran Tertentu,"Penjualan barang/jasa dengan PPN yang ditetapkan pemerintah dalam jumlah atau persentase tertentu, bukan perhitungan normal."
+6,VAT Refund Turis,Penjualan barang kepada turis asing yang bisa mengajukan pengembalian PPN saat meninggalkan Indonesia.
+7,PPN DTP,"Penjualan barang/jasa yang mendapat fasilitas PPN tidak dipungut atau ditanggung pemerintah (PPN ditanggung, penjual tidak perlu setor)."
+8,Bebas PPN/PPnBM,Penjualan barang/jasa yang memang dibebaskan dari PPN/PPnBM menurut aturan (contoh: kebutuhan pokok tertentu).
+9,Penyerahan Aktiva,Penjualan aset perusahaan yang awalnya tidak untuk dijual (misalnya jual kendaraan kantor).
+10,Penyerahan Lainnya,"Penjualan atau transaksi lain yang tidak masuk kategori di atas, tetap perlu dicatat sesuai aturan PPN."

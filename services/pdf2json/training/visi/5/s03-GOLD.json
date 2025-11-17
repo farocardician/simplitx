@@ -1,0 +1,103 @@
+{
+  "client": "visi",
+  "variant": 5,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE PT.BioIntiAgrindo Invoiceno. :9058006592 PacificCenturyPlaceBuilding,Level17,SCBD,Jl.Jenderal BillingDate :August29,2025 , 12190,Senayan,KebayoranBaru,JakartaSelatan Indonesia Attention:Tel:"
+        },
+        {
+          "key": "total",
+          "value": "SubTotal 1.200.000 TaxBase 1.100.000 PPN-VAT12% 132.000 TotalAmount 1.332.000"
+        },
+        {
+          "key": "seller",
+          "value": "Pleasekindlymakethepaymenttoourbankaccountasbelow: BankAccountName : PT.VISIGLOBALINDODATAUTAMA BankName : PT.BankPermataTbk BankAddress : ArionBuilding,JalanPemudaKav.17 JakartaTimur–13220 AccountNo.701275586 SWIFTCode-BBBAIDJA"
+        },
+        {
+          "key": "currency",
+          "value": "Amount(IDR)"
+        },
+        {
+          "key": "invoice_number",
+          "value": ":9058006592 :August29,2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": ":August29,2025"
+        },
+        {
+          "key": "buyer",
+          "value": "PT.BioIntiAgrindo PacificCenturyPlaceBuilding,Level17,SCBD,Jl.Jenderal , 12190,Senayan,KebayoranBaru,JakartaSelatan Indonesia Attention:Tel:"
+        },
+        {
+          "key": "subtotal",
+          "value": "SubTotal 1.200.000"
+        },
+        {
+          "key": "tax_base",
+          "value": "TaxBase 1.100.000"
+        },
+        {
+          "key": "vat",
+          "value": "PPN-VAT12% 132.000"
+        },
+        {
+          "key": "total_amount",
+          "value": "TotalAmount 1.332.000"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE PT. Bio Inti Agrindo Invoice no. :9058006592 Pacific Century Place Building, Level 17, SCBD, Jl. Jenderal Billing Date :August 29 , 2025 , 12190,Senayan, Kebayoran Baru, Jakarta Selatan Indonesia Attention : Tel:"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total 1.200.000 Tax Base 1.100.000 PPN - VAT 12% 132.000 Total Amount 1.332.000"
+        },
+        {
+          "key": "seller",
+          "value": "Please kindly make the payment to our bank account as below: Bank Account Name : PT. VISI GLOBALINDO DATA UTAMA Bank Name : PT. Bank Permata Tbk Bank Address : Arion Building,Jalan Pemuda Kav.17 Jakarta Timur – 13220 Account No. 701275586 SWIFT Code - BBBAIDJA"
+        },
+        {
+          "key": "currency",
+          "value": "Amount(IDR)"
+        },
+        {
+          "key": "invoice_number",
+          "value": ":9058006592 :August 29 , 2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": ":August 29 , 2025"
+        },
+        {
+          "key": "buyer",
+          "value": "PT. Bio Inti Agrindo Pacific Century Place Building, Level 17, SCBD, Jl. Jenderal , 12190,Senayan, Kebayoran Baru, Jakarta Selatan Indonesia Attention : Tel:"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total 1.200.000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base 1.100.000"
+        },
+        {
+          "key": "vat",
+          "value": "PPN - VAT 12% 132.000"
+        },
+        {
+          "key": "total_amount",
+          "value": "Total Amount 1.332.000"
+        }
+      ]
+    }
+  }
+}

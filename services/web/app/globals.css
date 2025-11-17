@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Modern CSS Reset */
 *,
 *::before,
@@ -46,6 +50,56 @@ button {
   border: none;
   padding: 0;
   cursor: pointer;
+}
+
+/* Restore styles for action buttons */
+button.action-button {
+  background: revert !important;
+  border: revert !important;
+  padding: revert !important;
+}
+
+/* Force Tailwind color classes for action buttons */
+button.action-button.bg-blue-600 {
+  background-color: #2563eb !important;
+}
+
+button.action-button.bg-blue-600:hover {
+  background-color: #1d4ed8 !important;
+}
+
+button.action-button.bg-green-600 {
+  background-color: #16a34a !important;
+}
+
+button.action-button.bg-green-600:hover {
+  background-color: #15803d !important;
+}
+
+button.action-button.bg-red-600 {
+  background-color: #dc2626 !important;
+}
+
+button.action-button.bg-red-600:hover {
+  background-color: #b91c1c !important;
+}
+
+button.action-button.bg-gray-300 {
+  background-color: #d1d5db !important;
+}
+
+button.action-button.text-white {
+  color: white !important;
+}
+
+button.action-button.text-gray-500 {
+  color: #6b7280 !important;
+}
+
+/* Ensure proper button appearance */
+button.action-button {
+  border: 1px solid transparent !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Global styles */
@@ -136,6 +190,21 @@ body {
 
 .fade-in {
   animation: fadeIn 0.3s ease-out;
+}
+
+/* Queue page progress animations */
+@keyframes indeterminate {
+  0% { 
+    transform: translateX(-100%); 
+  }
+  100% { 
+    transform: translateX(200%); 
+  }
+}
+
+.progress-indeterminate {
+  animation: indeterminate 1.5s linear infinite;
+  width: 30%;
 }
 
 /* Responsive utilities */

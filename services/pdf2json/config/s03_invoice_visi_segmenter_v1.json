@@ -1,0 +1,265 @@
+{
+  "name": "Visi Invoice Segmenter Config V1",
+  "version": "3.0",
+  "coords": { "normalized": true, "y_origin": "top", "precision": 6 },
+  "defaults": { "min_height": 0.02 },
+  "regions": [
+    {
+      "id": "header",
+      "label": "Header",
+      "on_pages": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^INVOICE$"],
+          "flags": { "ignore_case": true }
+        },
+        "end_anchor": {
+          "patterns": [
+            "^Amount\\(IDR\\)$",
+            "^Description$",
+            "^No\\.$"
+          ],
+          "flags": { "ignore_case": true }
+        },
+        "margin": {
+          "right": 0.43,
+          "bottom": -0.02
+        }
+      },
+      "fallbacks": [
+        {
+          "by": "y_cutoff",
+          "edge": "bottom",
+          "y": 0.24
+        }
+      ],
+      "keep": "all"
+    },
+    {
+      "id": "total",
+      "label": "Total Values",
+      "on_pages": "all",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Sub\\s*Total$", "^Subtotal$", "^Sub\\s*Total\\s*$"],
+          "flags": { "ignore_case": true }
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "rows": 4,
+          "row_tol": 0.016,
+          "dx_max": 0.92,
+          "start_edge": "right",
+          "gap_x": 0.006
+        },
+        "margin": {
+          "right": 0.02,
+          "top": -0.002,
+          "bottom": 0.002
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "subtotal",
+      "label": "Sub Total",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Sub$", "^SubTotal$", "^Subtotal$"],
+          "flags": { "ignore_case": true },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "row_tol": 0.010,
+          "dx_max": 0.92,
+          "gap_x": 0.001
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "tax_base",
+      "label": "Tax Base",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Tax\\s*Base$", "^TaxBase$"],
+          "flags": { "ignore_case": true },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "row_tol": 0.010,
+          "dx_max": 0.92,
+          "gap_x": 0.001
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "vat",
+      "label": "VAT",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["PPN"],
+          "flags": { "ignore_case": true },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "row_tol": 0.010,
+          "dx_max": 0.92,
+          "gap_x": 0.001
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "total_amount",
+      "label": "Total Amount",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Total\\s*Amount$", "^TotalAmount$"],
+          "flags": { "ignore_case": true },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "row_tol": 0.010,
+          "dx_max": 0.92,
+          "gap_x": 0.001
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "invoice_number",
+      "label": "Invoice Number",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["Invoice\\s*no\\.", "Invoiceno\\."],
+          "flags": { "ignore_case": true }
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "rows": 0,
+          "row_tol": 0.010,
+          "dx_max": 0.55,
+          "start_edge": "right",
+          "gap_x": 0.000
+        },
+        "margin": { "left": 0.025 }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "invoice_date",
+      "label": "Invoice Date",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["Billing\\s*Date", "BillingDate"],
+          "flags": { "ignore_case": true }
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "rows": 0,
+          "dx_max": 0.55,
+          "start_edge": "right",
+          "gap_x": 0.000
+        },
+        "margin": { "left": 0.025 }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "buyer",
+      "label": "Buyer",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["Invoice no\\.", "Invoiceno\\."],
+          "flags": {"ignore_case": true}
+        },
+        "capture_window": {
+          "mode": "left_then_down",
+          "dx_max": 0.5,
+          "dy_max": 0.15
+        }
+      },
+      "fallbacks": [
+        {
+          "by": "anchors",
+          "start_anchor": {
+            "patterns": ["Attention.*Tel", "Attention:.*Tel:"],
+            "flags": {"ignore_case": true}
+          },
+          "capture_window": {
+            "mode": "left_then_up",
+            "dx_max": 0.5,
+            "dy_max": 0.15
+          }
+        }
+      ],
+      "keep": "all"
+    },
+    {
+      "id": "seller",
+      "label": "Seller",
+      "on_pages": "all",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["Bank Account Name", "BankAccountName"],
+          "flags": {"ignore_case": true}
+        },
+        "capture_window": {
+          "mode": "right_then_down",
+          "dx_max": 0.4,
+          "dy_max": 0.08
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "currency",
+      "label": "Currency",
+      "on_pages": "all",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["Amount \\(IDR\\)", "Amount\\(IDR\\)"],
+          "flags": {"ignore_case": true}
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",          
+          "rows": 0
+        }
+      },
+      "keep": "all"
+    }
+  ]
+}

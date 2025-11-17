@@ -1,0 +1,47 @@
+{
+  "enabled": true,
+  "document": { "type": "invoice", "vendor": "PT KEMAS", "version": "1" },
+  "stages": [
+    { "script": "s01_tokenizer.py",
+      "args": ["--in", "{pdf}", "--out", "{tokens}"]
+    },
+    { "script": "s02_normalizer.py",
+      "args": ["--in", "{tokens}", "--out", "{normalized}"]
+    },
+    { "script": "s03_segmenter.py", "config": "s03_invoice_kemas_segmenter_v1.json",
+      "args": ["--in", "{normalized}", "--out", "{segments}", "--tokenizer", "plumber", "--config", "{config}", "--overlay", "{pdf}"]
+    },
+    { "script": "s04_camelot_grid_config.py", "config": "s04_invoice_kemas_camelot_v1.json",
+      "args": ["--pdf", "{pdf}", "--tokens", "{normalized}", "--tokenizer", "plumber", "--out", "{cells_raw}", "--config", "{config}"]
+    },
+    { "script": "s05_normalize_cells.py", "config": "invoice_simon_min.json",
+      "args": ["--in", "{cells_raw}", "--out", "{cells}", "--config", "{config}", "--common-words", "{common_words}"]
+    },
+    { "script": "s06_line_items_from_cells.py", "config": "s06_invoice_kemas_lineItem_v1.json",
+      "args": ["--input", "{cells}", "--out", "{items}", "--config", "{config}"]
+    },
+    { "script": "s07_extractor.py", "config": "s07_invoice_kemas_extractor_v1.json",
+      "args": ["--tokens", "{normalized}", "--tokenizer", "plumber", "--segments", "{segments}", "--config", "{config}", "--out", "{fields}"]
+    },
+    { "script": "s08_validator.py",
+      "args": ["--stage7", "{fields}", "--items", "{items}", "--out", "{validation}"]
+    },
+    { "script": "s09_confidence.py",
+      "args": ["--stage7", "{fields}", "--items", "{items}", "--validation", "{validation}", "--out", "{confidence}", "--tokens", "{normalized}", "--tokenizer", "plumber"]
+    },
+    { "script": "s10_parser.py", "config": "s10_invoice_kemas_parser_v1.json",
+      "args": ["--fields", "{fields}", "--items", "{items}", "--validation", "{validation}", "--confidence", "{confidence}", "--cells", "{cells}", "--final", "{final}", "--manifest", "{manifest}", "--config", "{config}"]
+    }
+  ],
+  "json2xml": {
+    "profiles": {
+      "default": {
+        "mapping": "mappings/pt_simon_invoice_v1.json",
+        "converter": {
+          "module": "json2xml.converter",
+          "callable": "convert_json_to_xml"
+        }
+      }
+    }
+  }
+}

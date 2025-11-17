@@ -1,0 +1,80 @@
+[
+  {
+    "page": 1,
+    "items_region": {
+      "x0": 0.0,
+      "x1": 1.0,
+      "y0": 0.2081909004514136,
+      "y1": 0.2681909004514136,
+      "start_anchor": {
+        "text": "QTY NO DESCRIPTION AMOUNT",
+        "y0": 0.2081909004514136,
+        "y1": 0.21983262057495848,
+        "hits": 3
+      },
+      "end_anchor": {
+        "text": "TOTAL 33.320.000",
+        "y0": 0.24239142314088852,
+        "y1": 0.2534391779520076,
+        "hits": 1
+      }
+    },
+    "candidates": [
+      {
+        "index": 0,
+        "source": "roi",
+        "flavor": "lattice",
+        "bbox": {
+          "x0": 0.0,
+          "y0": 0.20815511833475908,
+          "x1": 1.0,
+          "y1": 0.2674650698602795
+        },
+        "features": {
+          "header_hits": 3.0,
+          "overlap": 0.9993966928696758,
+          "numeric_right": 0.0,
+          "rows": 1.0,
+          "totals_below": 1.0
+        },
+        "score": 13.198491732174189,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 1,
+        "header_hits": 3,
+        "selected": true,
+        "stop_rule": "end_anchor",
+        "stop_at": 2,
+        "clip_y": 0.24124133461007932
+      },
+      {
+        "index": 1,
+        "source": "roi",
+        "flavor": "stream",
+        "bbox": {
+          "x0": 0.08954973118279569,
+          "y0": 0.20225124732715605,
+          "x1": 0.8953212365591396,
+          "y1": 0.2734082917557614
+        },
+        "features": {
+          "header_hits": 2.0,
+          "overlap": 0.8432053422370612,
+          "numeric_right": 0.0,
+          "rows": 1.0,
+          "totals_below": 1.0
+        },
+        "score": 9.808013355592653,
+        "eligible": true,
+        "header_row_index": 1,
+        "body_rows": 1,
+        "header_hits": 2,
+        "selected": false,
+        "stop_rule": "end_anchor",
+        "stop_at": 3,
+        "clip_y": 0.23516880494179135
+      }
+    ],
+    "selected_index": 0
+  }
+]

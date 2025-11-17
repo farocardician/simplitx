@@ -1,0 +1,87 @@
+{
+  "client": "kemas",
+  "variant": 7,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE TO : PT PERTAMINA TRAINING AND CONSULTING Invoice Invoice Date Number 25-Jul-25 11/INV-7/2025"
+        },
+        {
+          "key": "table",
+          "value": "Harga NO DESCRIPTION QTY AMOUNT (Rp.) 1 Sobat Aksi Ramadhan 2025 1 UNT 777.800.100 777.800.100"
+        },
+        {
+          "key": "total",
+          "value": "TOTAL 777.800.100 PPn 85.558.011 GRAND TOTAL 863.358.111 Jakarta, 25 Juli 2025"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice Number 11/INV-7/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Invoice Date 25-Jul-25"
+        },
+        {
+          "key": "buyer_name",
+          "value": ": PT PERTAMINA TRAINING AND CONSULTING Invoice Invoice"
+        },
+        {
+          "key": "subtotal",
+          "value": "TOTAL 777.800.100"
+        },
+        {
+          "key": "vat",
+          "value": "PPn 85.558.011"
+        },
+        {
+          "key": "grand_total",
+          "value": "GRAND TOTAL 863.358.111"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE TO : PT PERTAMINA TRAINING AND CONSULTING Invoice Invoice Date Number 25-Jul-25 11/INV-7/2025"
+        },
+        {
+          "key": "table",
+          "value": "Harga NO DESCRIPTION QTY AMOUNT (Rp.) 1 Sobat Aksi Ramadhan 2025 1 UNT 777.800.100 777.800.100"
+        },
+        {
+          "key": "total",
+          "value": "TOTAL 777.800.100 PPn 85.558.011 GRAND TOTAL 863.358.111 Jakarta, 25 Juli 2025"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice Number 11/INV-7/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Invoice Date 25-Jul-25"
+        },
+        {
+          "key": "buyer_name",
+          "value": ": PT PERTAMINA TRAINING AND CONSULTING Invoice Invoice"
+        },
+        {
+          "key": "subtotal",
+          "value": "TOTAL 777.800.100"
+        },
+        {
+          "key": "vat",
+          "value": "PPn 85.558.011"
+        },
+        {
+          "key": "grand_total",
+          "value": "GRAND TOTAL 863.358.111"
+        }
+      ]
+    }
+  }
+}

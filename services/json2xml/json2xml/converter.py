@@ -1,11 +1,14 @@
 """Core JSON to XML conversion logic."""
 
+import ast
 import json
-import re
+import operator
+from decimal import Decimal
 from typing import Any, Dict, List, Optional, Union
 from lxml import etree
 from .formatting import format_decimal
-from .mapping import resolve_mapping_placeholders, MappingError
+from .mapping import resolve_mapping_placeholders
+from .party_resolver import get_buyer_field
 
 
 class ConversionError(Exception):
@@ -13,7 +16,31 @@ class ConversionError(Exception):
     pass
 
 
-def parse_jsonpath(path: str, data: Dict[str, Any]) -> Any:
+ALLOWED_BINARY_OPERATORS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.Mod: operator.mod,
+    ast.Pow: operator.pow,
+}
+
+ALLOWED_UNARY_OPERATORS = {
+    ast.UAdd: operator.pos,
+    ast.USub: operator.neg,
+}
+
+SAFE_FUNCTIONS = {
+    "str": str,
+    "float": float,
+    "int": int,
+    "round": round,
+    "Decimal": Decimal,
+    "abs": abs,
+}
+
+
+def parse_jsonpath(path: str, data: Any) -> Any:
     """Simple JSONPath parser supporting basic selectors like $.field and $.array[*]."""
     if not path.startswith('$'):
         raise ConversionError(f"JSONPath must start with '$': {path}")
@@ -65,33 +92,184 @@ def format_field_value(value: Any, format_config: Optional[Dict[str, Any]] = Non
         return str(value)
 
 
-def compute_value(computation_name: str, value: Any, computations: Dict[str, str]) -> str:
-    """Execute computed value transformation."""
-    if computation_name not in computations:
-        raise ConversionError(f"Unknown computation: {computation_name}")
-    
-    computation = computations[computation_name]
-    
-    # Simple built-in computations for invoice data
-    if computation_name == "hs_code_to_full":
-        return str(value) + "00"
-    elif computation_name == "other_tax_base":
-        return format_decimal(float(value) / 12 * 11, 2)
-    elif computation_name == "vat_amount":
-        return format_decimal(float(value) * 0.11, 2)
+def _evaluate_expression(expression: str, context: Dict[str, Any]) -> Any:
+    """Safely evaluate a limited arithmetic/string expression."""
+    try:
+        parsed = ast.parse(expression, mode="eval")
+    except SyntaxError as exc:
+        raise ConversionError(f"Invalid expression '{expression}': {exc}") from exc
+
+    def _eval(node: ast.AST) -> Any:
+        if isinstance(node, ast.Expression):
+            return _eval(node.body)
+        if isinstance(node, ast.Constant):
+            return node.value
+        if isinstance(node, ast.Num):  # pragma: no cover - legacy for <3.8 ast
+            return node.n
+        if isinstance(node, ast.BinOp):
+            op_type = type(node.op)
+            if op_type not in ALLOWED_BINARY_OPERATORS:
+                raise ConversionError(f"Unsupported binary operator: {ast.dump(node.op)}")
+            left = _eval(node.left)
+            right = _eval(node.right)
+            return ALLOWED_BINARY_OPERATORS[op_type](left, right)
+        if isinstance(node, ast.UnaryOp):
+            op_type = type(node.op)
+            if op_type not in ALLOWED_UNARY_OPERATORS:
+                raise ConversionError(f"Unsupported unary operator: {ast.dump(node.op)}")
+            operand = _eval(node.operand)
+            return ALLOWED_UNARY_OPERATORS[op_type](operand)
+        if isinstance(node, ast.Name):
+            if node.id in context:
+                return context[node.id]
+            if node.id in SAFE_FUNCTIONS:
+                return SAFE_FUNCTIONS[node.id]
+            raise ConversionError(f"Unknown identifier '{node.id}' in expression '{expression}'")
+        if isinstance(node, ast.Call):
+            func = _eval(node.func)
+            if func not in SAFE_FUNCTIONS.values():
+                raise ConversionError(f"Unsupported function call in expression '{expression}'")
+            args = [_eval(arg) for arg in node.args]
+            kwargs = {kw.arg: _eval(kw.value) for kw in node.keywords}
+            return func(*args, **kwargs)
+        raise ConversionError(f"Unsupported expression component: {ast.dump(node)}")
+
+    return _eval(parsed)
+
+
+def _resolve_input_spec(
+    spec: Any,
+    current_data: Any,
+    root_data: Any,
+    field_value: Any
+) -> Any:
+    """Resolve an input specification for computations."""
+    if isinstance(spec, dict):
+        source = spec.get("source")
+        if source == "field":
+            return field_value
+        if "value" in spec:
+            return spec["value"]
+        context = spec.get("context", "current")
+        target = root_data if context == "root" else current_data
+        if "path" in spec:
+            return parse_jsonpath(spec["path"], target)
+    elif isinstance(spec, str):
+        if spec == "field":
+            return field_value
+        if spec.startswith("$"):
+            return parse_jsonpath(spec, current_data)
+    return spec
+
+
+def compute_field_value(
+    field_config: Dict[str, Any],
+    current_data: Dict[str, Any],
+    root_data: Dict[str, Any],
+    computations: Dict[str, Any]
+) -> str:
+    """Compute a derived field value using mapping-provided instructions."""
+
+    computation_name = field_config.get("compute")
+    if not computation_name:
+        raise ConversionError("Field configuration missing 'compute' key")
+
+    computation = computations.get(computation_name)
+    if computation is None:
+        raise ConversionError(f"Unknown computation '{computation_name}'")
+
+    # Check for builtin function (special handling for party resolution, etc.)
+    builtin = computation.get("builtin")
+    if builtin:
+        if builtin == "resolve_buyer_field":
+            # Special handling for buyer party resolution
+            # Extract buyer_name from path
+            if "path" in field_config:
+                buyer_name = parse_jsonpath(field_config["path"], current_data)
+            elif "value" in field_config:
+                buyer_name = field_config["value"]
+            else:
+                buyer_name = None
+
+            if not buyer_name:
+                return ""
+
+            # Get field name from parameters
+            field_name = field_config.get("parameters", {}).get("field") or computation.get("parameters", {}).get("field")
+            if not field_name:
+                raise ConversionError(f"resolve_buyer_field requires 'field' parameter")
+
+            try:
+                result = get_buyer_field(str(buyer_name), field_name)
+                return result or ""
+            except Exception as exc:
+                raise ConversionError(f"Buyer field resolution failed: {exc}") from exc
+        else:
+            raise ConversionError(f"Unknown builtin function '{builtin}'")
+
+    # Determine base field value (from path or literal)
+    if "path" in field_config:
+        field_value = parse_jsonpath(field_config["path"], current_data)
+    elif "value" in field_config:
+        field_value = field_config["value"]
     else:
-        # For safety, only allow predefined computations
-        raise ConversionError(f"Unsupported computation: {computation_name}")
+        field_value = None
+
+    context: Dict[str, Any] = {}
+
+    # Merge computation-level inputs with field-level overrides
+    comp_inputs = computation.get("inputs", {})
+    field_inputs = field_config.get("inputs", {})
+    for key in set(comp_inputs.keys()) | set(field_inputs.keys()):
+        if key in field_inputs:
+            spec = field_inputs[key]
+        else:
+            spec = comp_inputs[key]
+        context[key] = _resolve_input_spec(spec, current_data, root_data, field_value)
+
+    if "value" not in context and field_value is not None:
+        context["value"] = field_value
+
+    # Add parameters (constants)
+    for params_source in (computation.get("parameters", {}), field_config.get("parameters", {})):
+        if params_source:
+            context.update(params_source)
+
+    expression = computation.get("expression")
+    if not expression:
+        # For builtin functions, expression is not required
+        if not computation.get("builtin"):
+            raise ConversionError(f"Computation '{computation_name}' missing expression definition")
+        return ""
+
+    try:
+        result = _evaluate_expression(expression, context)
+    except ConversionError as exc:
+        raise ConversionError(f"Computation '{computation_name}' failed: {exc}") from exc
+
+    if result is None:
+        return ""
+
+    format_cfg = field_config.get("format") or computation.get("format")
+    if format_cfg:
+        return format_field_value(result, format_cfg)
+    return str(result)
+
+
+def _is_field_definition(value: Dict[str, Any]) -> bool:
+    field_keys = {"path", "value", "compute", "format", "inputs", "parameters"}
+    return any(key in value for key in field_keys)
 
 
 def process_structure(
     structure: Union[str, Dict[str, Any], List[Any]], 
     parent: etree.Element, 
     data: Dict[str, Any],
-    computations: Dict[str, str]
+    root_data: Dict[str, Any],
+    computations: Dict[str, Any]
 ) -> None:
     """Recursively process structure definition to build XML."""
-    
+
     if isinstance(structure, str):
         # String value - could be literal or JSONPath
         if structure.startswith('$'):
@@ -106,21 +284,15 @@ def process_structure(
         # Dictionary structure - process each key-value pair
         for key, value in structure.items():
             if key == "_array":
-                # Special array processing indicator
                 continue
-            elif key == "_computed":
-                # Special computed value indicator
-                continue
-            elif isinstance(value, dict) and "_array" in value:
-                # This is an array container
-                array_path = value["_array"]
-                array_data = parse_jsonpath(array_path, data)
-                
+
+            if isinstance(value, dict) and "_array" in value:
+                array_spec = value["_array"]
+                array_data = _resolve_input_spec(array_spec, data, root_data, None)
+
                 if array_data and isinstance(array_data, list):
-                    # Create container element
                     container = etree.SubElement(parent, key)
-                    
-                    # Find the item structure (should be the other key besides _array)
+
                     item_structure = None
                     item_tag = None
                     for item_key, item_value in value.items():
@@ -128,46 +300,40 @@ def process_structure(
                             item_tag = item_key
                             item_structure = item_value
                             break
-                    
-                    if item_structure:
-                        # Process each array item
+
+                    if item_structure and item_tag:
                         for item_data in array_data:
                             item_element = etree.SubElement(container, item_tag)
-                            process_structure(item_structure, item_element, item_data, computations)
-            
-            elif isinstance(value, dict) and ("_computed" in value or "format" in value or "path" in value):
-                # Field with special processing
+                            process_structure(item_structure, item_element, item_data, root_data, computations)
+                continue
+
+            if isinstance(value, dict) and _is_field_definition(value):
                 child = etree.SubElement(parent, key)
-                
-                if "_computed" in value:
-                    # Computed field
-                    computation_name = value["_computed"]
-                    source_path = value["path"]
-                    source_value = parse_jsonpath(source_path, data)
-                    computed_value = compute_value(computation_name, source_value, computations)
-                    child.text = computed_value
-                
-                elif "path" in value:
-                    # Field with JSONPath and optional formatting
-                    field_path = value["path"]
-                    format_config = value.get("format")
-                    field_value = parse_jsonpath(field_path, data)
-                    formatted_value = format_field_value(field_value, format_config)
-                    child.text = formatted_value
-                
+                if value.get("compute"):
+                    child.text = compute_field_value(value, data, root_data, computations)
                 else:
-                    # Regular field processing
-                    process_structure(value, child, data, computations)
-            
-            elif isinstance(value, dict):
-                # Nested structure
+                    if "path" in value:
+                        raw_value = parse_jsonpath(value["path"], data)
+                    elif "value" in value:
+                        raw_value = value["value"]
+                    else:
+                        raw_value = None
+                    if value.get("format"):
+                        child.text = format_field_value(raw_value, value.get("format"))
+                    else:
+                        child.text = "" if raw_value is None else str(raw_value)
+                continue
+
+            if isinstance(value, dict):
                 child = etree.SubElement(parent, key)
-                process_structure(value, child, data, computations)
-            
+                process_structure(value, child, data, root_data, computations)
             else:
-                # Simple field
                 child = etree.SubElement(parent, key)
-                process_structure(value, child, data, computations)
+                if isinstance(value, str) and value.startswith('$'):
+                    resolved = parse_jsonpath(value, data)
+                    child.text = "" if resolved is None else str(resolved)
+                else:
+                    child.text = "" if value is None else str(value)
 
 
 def convert_json_to_xml(
@@ -206,7 +372,7 @@ def convert_json_to_xml(
     computations = resolved_mapping.get('computations', {})
     
     # Process structure
-    process_structure(structure, root_element, data, computations)
+    process_structure(structure, root_element, data, data, computations)
     
     # Convert to bytes
     if pretty:

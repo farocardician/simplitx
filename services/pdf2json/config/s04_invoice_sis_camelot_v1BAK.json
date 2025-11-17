@@ -1,0 +1,135 @@
+{
+  "name": "Invoice SIS Camelot Grid",
+  "version": "1.0",
+  "header_aliases": {
+    "NO": [
+      "NO",
+      "NO.",
+      "ITEM",
+      "ITEM NO",
+      "SEQ"
+    ],
+    "DESC": [
+      "DESCRIPTION",
+      "DESCRIPTION OF GOODS",
+      "DESCRIPTION OF SERVICES",
+      "GOODS",
+      "PARTICULARS",
+      "ITEM DESCRIPTION",
+      "DETAILS"
+    ],
+    "TAX": [
+      "TAX",
+      "PPN",
+      "VAT",
+      "TAX (IDR)",
+      "VAT (IDR)"
+    ],
+    "UNIT_PRICE": [
+      "UNIT PRICE",
+      "UNIT PRICE (IDR)",
+      "UNIT PRICE IDR",
+      "UNIT COST",
+      "PRICE (IDR)",
+      "PRICE/UNIT"
+    ],
+    "AMOUNT": [
+      "AMOUNT",
+      "AMOUNT (IDR)",
+      "LINE TOTAL",
+      "TOTAL",
+      "TOTAL (IDR)",
+      "AMOUNT IDR"
+    ]
+  },
+  "totals_keywords": [
+    "SUBTOTAL",
+    "SUB TOTAL",
+    "TOTAL",
+    "TOTAL DUE",
+    "GRAND TOTAL",
+    "AMOUNT DUE",
+    "TOTAL PAYMENT",
+    "VAT",
+    "PPN",
+    "TAX"
+  ],
+  "camelot": {
+    "flavor_order": [
+      "lattice"
+    ],
+    "line_scale": 80,
+    "row_tol": 10,
+    "edge_tol": 600,
+    "join_tol": 30
+  },
+  "items_region": {
+    "detect": {
+      "by": "anchors"
+    },
+    "start_anchor": {
+      "patterns": [
+        "\\bQTY\\b",
+        "\\bDESCRIPTION\\b",
+        "\\bUNIT\\b",
+        "\\bPRICE\\b",
+        "\\bAMOUNT\\b"
+      ]
+    },
+    "end_anchor": {
+      "patterns": [
+        "(?i)\\bSUB\\s*TOTAL\\b",
+        "(?i)\\bTOTAL\\b",
+        "(?i)\\bVAT\\b",
+        "(?i)\\bPPN\\b",
+        "(?i)\\bTAX\\b",
+        "(?i)\\bTAX\\s+BASE\\b",
+        "(?i)\\bGRAND\\s*TOTAL\\b"
+      ],
+      "select": "next_below"
+    },
+    "flags": {
+      "ignore_case": true
+    },
+    "select": "next_below",
+    "x_policy": "full",
+    "margin": {
+      "top": 0.0,
+      "bottom": 0.05,
+      "left": 0.0,
+      "right": 0.0
+    },
+    "min_height": 0.06
+  },
+  "ranking": {
+    "weights": {
+      "header": 3.0,
+      "overlap_items_region": 2.5,
+      "numeric_right": 0.8,
+      "rows": 1.2,
+      "totals_below": 0.5
+    },
+    "overlap_threshold": 0.2,
+    "max_candidates": 6,
+    "use_items_roi": true
+  },
+  "stop_after_totals": true,
+  "page_stop_keywords": {},
+  "page_row_limit": {},
+  "row_fix": {
+    "enabled": true,
+    "shadow_mode": false,
+    "continuation_gap_points": 8.0,
+    "header_margin_points": 10.0,
+    "numeric_column_mode": "right_edge_cluster",
+    "numeric_band_tolerance_points": 10.0,
+    "partno_regex_list": [],
+    "arithmetic_abs_tolerance": 1.0,
+    "arithmetic_rel_tolerance": 0.005,
+    "subtotal_abs_tolerance": 2.0,
+    "subtotal_rel_tolerance": 0.003,
+    "use_llm_hints": false,
+    "debug_dump": true,
+    "cache_enabled": false
+  }
+}

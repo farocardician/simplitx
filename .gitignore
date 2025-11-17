@@ -1,0 +1,156 @@
+# # -------------------------
+# # OS & Editor cruft
+# # -------------------------
+.DS_Store
+._*
+Thumbs.db
+.Spotlight-V100
+.Trashes
+*.swp
+*.swo
+*.orig
+*.rej
+.idea/
+.vscode/
+*.code-workspace
+
+# # -------------------------
+# # Node / TypeScript / Next.js
+# # -------------------------
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# # build & framework outputs
+.next/
+out/
+.turbo/
+.vercel/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# # -------------------------
+# # Python (FastAPI gateway, pdf2json, json2xml)
+# # -------------------------
+__pycache__/
+# *.py[cod]
+# *.pyo
+# *.pyd
+# *.so
+# *.egg-info/
+# .eggs/
+# dist/
+# build/
+.mypy_cache/
+.pytest_cache/
+# .venv/
+# venv/
+# .coverage
+# coverage.xml
+# htmlcov/
+
+# # -------------------------
+# # Env & secrets
+# # -------------------------
+# .env
+# .env.*
+# !.env.example
+# .envrc
+# *.env
+
+# # -------------------------
+# # Logs
+# # -------------------------
+logs/
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# # -------------------------
+# # Runtime storage, uploads, artifacts
+# # (kept out of git; add .gitkeep if you need folders present)
+# # -------------------------
+artifacts/
+!artifacts/.gitkeep
+results/
+results/*
+uploads/
+storage/
+tmp/
+temp/
+cache/
+.cache/
+
+# # If your processor writes per-service artifacts:
+# **/artifacts/**
+
+# # -------------------------
+# # Docker / Compose local data (generic)
+# # We still ignore generic runtime dirs, but explicitly ALLOW DB data paths.
+# # Replace these exception paths with your actual Postgres volume paths.
+# # -------------------------
+# volumes/*
+# !volumes/.gitkeep
+# # allow DB data inside volumes/
+# !volumes/postgres-data/
+# volumes/postgres-data/*
+# !volumes/postgres-data/**
+
+# !volumes/pgdata/
+# volumes/pgdata/*
+# !volumes/pgdata/**
+
+# !volumes/db-data/
+# volumes/db-data/*
+# !volumes/db-data/**
+
+# data/*
+# !data/.gitkeep
+# # allow DB data inside data/
+# !data/postgres-data/
+# data/postgres-data/*
+# !data/postgres-data/**
+
+# !data/pgdata/
+# data/pgdata/*
+# !data/pgdata/**
+
+# !data/db-data/
+# data/db-data/*
+# !data/db-data/**
+
+# # common cache files
+# dump.rdb
+
+# # -------------------------
+# # Sample test files & ad-hoc outputs
+# # Remove these lines if you want to version sample PDFs.
+# # -------------------------
+pdf/*.pdf
+pdf/
+# **/output.json
+# **/output.xml
+# **/outputs/**
+
+# # -------------------------
+# # Prisma
+# # Keep migrations in git; ignore accidental sqlite files if used locally.
+# # -------------------------
+# prisma/*.db
+# !prisma/migrations/
+
+# # -------------------------
+# # Misc
+# # -------------------------
+# *.bak
+# *.tmp

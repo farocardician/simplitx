@@ -1,0 +1,826 @@
+[
+  {
+    "page": 1,
+    "header_fingerprint": "article|item|qty|col4|unitprice|discount|col7|totalprice",
+    "arithmetic": {
+      "rows": [
+        {
+          "row": 0,
+          "qty": "3",
+          "unit_price": "24101805",
+          "discount": "0",
+          "total": "72305415",
+          "diff": "0",
+          "tolerance": "361527.0750",
+          "ok": true
+        },
+        {
+          "row": 1,
+          "qty": "1",
+          "unit_price": "7207070",
+          "discount": "0",
+          "total": "7207070",
+          "diff": "0",
+          "tolerance": "36035.3500",
+          "ok": true
+        },
+        {
+          "row": 2,
+          "qty": "2",
+          "unit_price": "24101805",
+          "discount": "0",
+          "total": "48203610",
+          "diff": "0",
+          "tolerance": "241018.0500",
+          "ok": true
+        },
+        {
+          "row": 3,
+          "qty": "3",
+          "unit_price": "589615",
+          "discount": "0",
+          "total": "1768845",
+          "diff": "0",
+          "tolerance": "8844.2250",
+          "ok": true
+        },
+        {
+          "row": 4,
+          "qty": "3",
+          "unit_price": "3389750",
+          "discount": "0",
+          "total": "10169250",
+          "diff": "0",
+          "tolerance": "50846.2500",
+          "ok": true
+        },
+        {
+          "row": 5,
+          "qty": "3",
+          "unit_price": "556985",
+          "discount": "0",
+          "total": "1670955",
+          "diff": "0",
+          "tolerance": "8354.7750",
+          "ok": true
+        },
+        {
+          "row": 6,
+          "qty": "3",
+          "unit_price": "304655",
+          "discount": "0",
+          "total": "913965",
+          "diff": "0",
+          "tolerance": "4569.8250",
+          "ok": true
+        },
+        {
+          "row": 7,
+          "qty": "3",
+          "unit_price": "230685",
+          "discount": "0",
+          "total": "692055",
+          "diff": "0",
+          "tolerance": "3460.2750",
+          "ok": true
+        },
+        {
+          "row": 8,
+          "qty": "3",
+          "unit_price": "576615",
+          "discount": "0",
+          "total": "1729845",
+          "diff": "0",
+          "tolerance": "8649.2250",
+          "ok": true
+        },
+        {
+          "row": 9,
+          "qty": "2",
+          "unit_price": "613600",
+          "discount": "0",
+          "total": "1227200",
+          "diff": "0",
+          "tolerance": "6136.0000",
+          "ok": true
+        },
+        {
+          "row": 10,
+          "qty": "2",
+          "unit_price": "156455",
+          "discount": "0",
+          "total": "312910",
+          "diff": "0",
+          "tolerance": "1564.5500",
+          "ok": true
+        },
+        {
+          "row": 11,
+          "qty": "2",
+          "unit_price": "182975",
+          "discount": "0",
+          "total": "365950",
+          "diff": "0",
+          "tolerance": "1829.7500",
+          "ok": true
+        },
+        {
+          "row": 12,
+          "qty": "2",
+          "unit_price": "589615",
+          "discount": "0",
+          "total": "1179230",
+          "diff": "0",
+          "tolerance": "5896.1500",
+          "ok": true
+        },
+        {
+          "row": 13,
+          "qty": "2",
+          "unit_price": "304655",
+          "discount": "0",
+          "total": "609310",
+          "diff": "0",
+          "tolerance": "3046.5500",
+          "ok": true
+        },
+        {
+          "row": 14,
+          "qty": "2",
+          "unit_price": "230685",
+          "discount": "0",
+          "total": "461370",
+          "diff": "0",
+          "tolerance": "2306.8500",
+          "ok": true
+        },
+        {
+          "row": 15,
+          "qty": "2",
+          "unit_price": "1033500",
+          "discount": "0",
+          "total": "2067000",
+          "diff": "0",
+          "tolerance": "10335.0000",
+          "ok": true
+        },
+        {
+          "row": 16,
+          "qty": "2",
+          "unit_price": "576615",
+          "discount": "0",
+          "total": "1153230",
+          "diff": "0",
+          "tolerance": "5766.1500",
+          "ok": true
+        },
+        {
+          "row": 17,
+          "qty": "1",
+          "unit_price": "156455",
+          "discount": "0",
+          "total": "156455",
+          "diff": "0",
+          "tolerance": "782.2750",
+          "ok": true
+        },
+        {
+          "row": 18,
+          "qty": "1",
+          "unit_price": "182975",
+          "discount": "0",
+          "total": "182975",
+          "diff": "0",
+          "tolerance": "914.8750",
+          "ok": true
+        },
+        {
+          "row": 19,
+          "qty": "2",
+          "unit_price": "17035525",
+          "discount": "0",
+          "total": "34071050",
+          "diff": "0",
+          "tolerance": "170355.2500",
+          "ok": true
+        },
+        {
+          "row": 20,
+          "qty": "2",
+          "unit_price": "2830555",
+          "discount": "0",
+          "total": "5661110",
+          "diff": "0",
+          "tolerance": "28305.5500",
+          "ok": true
+        },
+        {
+          "row": 21,
+          "qty": "3",
+          "unit_price": "589615",
+          "discount": "0",
+          "total": "1768845",
+          "diff": "0",
+          "tolerance": "8844.2250",
+          "ok": true
+        },
+        {
+          "row": 22,
+          "qty": "3",
+          "unit_price": "576615",
+          "discount": "0",
+          "total": "1729845",
+          "diff": "0",
+          "tolerance": "8649.2250",
+          "ok": true
+        },
+        {
+          "row": 23,
+          "qty": "2",
+          "unit_price": "613600",
+          "discount": "0",
+          "total": "1227200",
+          "diff": "0",
+          "tolerance": "6136.0000",
+          "ok": true
+        },
+        {
+          "row": 24,
+          "qty": "2",
+          "unit_price": "156455",
+          "discount": "0",
+          "total": "312910",
+          "diff": "0",
+          "tolerance": "1564.5500",
+          "ok": true
+        }
+      ],
+      "sum_line_totals": "197147600"
+    },
+    "subtotal": {
+      "status": "mismatch",
+      "printed": "373536866",
+      "sum": "197147600",
+      "diff": "176389266",
+      "tolerance": "1120610.598"
+    }
+  },
+  {
+    "page": 2,
+    "header_fingerprint": "article|item|qty|col4|unitprice|discount|col7|totalprice",
+    "arithmetic": {
+      "rows": [
+        {
+          "row": 0,
+          "qty": "2",
+          "unit_price": "182975",
+          "discount": "0",
+          "total": "365950",
+          "diff": "0",
+          "tolerance": "1829.7500",
+          "ok": true
+        },
+        {
+          "row": 1,
+          "qty": "2",
+          "unit_price": "589615",
+          "discount": "0",
+          "total": "1179230",
+          "diff": "0",
+          "tolerance": "5896.1500",
+          "ok": true
+        },
+        {
+          "row": 2,
+          "qty": "2",
+          "unit_price": "1033500",
+          "discount": "0",
+          "total": "2067000",
+          "diff": "0",
+          "tolerance": "10335.0000",
+          "ok": true
+        },
+        {
+          "row": 3,
+          "qty": "2",
+          "unit_price": "576615",
+          "discount": "0",
+          "total": "1153230",
+          "diff": "0",
+          "tolerance": "5766.1500",
+          "ok": true
+        },
+        {
+          "row": 4,
+          "qty": "1",
+          "unit_price": "156455",
+          "discount": "0",
+          "total": "156455",
+          "diff": "0",
+          "tolerance": "782.2750",
+          "ok": true
+        },
+        {
+          "row": 5,
+          "qty": "1",
+          "unit_price": "182976",
+          "discount": "0",
+          "total": "182976",
+          "diff": "0",
+          "tolerance": "914.8800",
+          "ok": true
+        },
+        {
+          "row": 6,
+          "qty": "3",
+          "unit_price": "3874910",
+          "discount": "0",
+          "total": "11624730",
+          "diff": "0",
+          "tolerance": "58123.6500",
+          "ok": true
+        },
+        {
+          "row": 7,
+          "qty": "3",
+          "unit_price": "150800",
+          "discount": "0",
+          "total": "452400",
+          "diff": "0",
+          "tolerance": "2262.0000",
+          "ok": true
+        },
+        {
+          "row": 8,
+          "qty": "3",
+          "unit_price": "1940705",
+          "discount": "0",
+          "total": "5822115",
+          "diff": "0",
+          "tolerance": "29110.5750",
+          "ok": true
+        },
+        {
+          "row": 9,
+          "qty": "1",
+          "unit_price": "548275",
+          "discount": "0",
+          "total": "548275",
+          "diff": "0",
+          "tolerance": "2741.3750",
+          "ok": true
+        },
+        {
+          "row": 10,
+          "qty": "1",
+          "unit_price": "548275",
+          "discount": "0",
+          "total": "548275",
+          "diff": "0",
+          "tolerance": "2741.3750",
+          "ok": true
+        },
+        {
+          "row": 11,
+          "qty": "2",
+          "unit_price": "3874910",
+          "discount": "0",
+          "total": "7749820",
+          "diff": "0",
+          "tolerance": "38749.1000",
+          "ok": true
+        },
+        {
+          "row": 12,
+          "qty": "2",
+          "unit_price": "5210790",
+          "discount": "0",
+          "total": "10421580",
+          "diff": "0",
+          "tolerance": "52107.9000",
+          "ok": true
+        },
+        {
+          "row": 13,
+          "qty": "2",
+          "unit_price": "150800",
+          "discount": "0",
+          "total": "301600",
+          "diff": "0",
+          "tolerance": "1508.0000",
+          "ok": true
+        },
+        {
+          "row": 14,
+          "qty": "2",
+          "unit_price": "1940705",
+          "discount": "0",
+          "total": "3881410",
+          "diff": "0",
+          "tolerance": "19407.0500",
+          "ok": true
+        },
+        {
+          "row": 15,
+          "qty": "3",
+          "unit_price": "1912430",
+          "discount": "0",
+          "total": "5737290",
+          "diff": "0",
+          "tolerance": "28686.4500",
+          "ok": true
+        },
+        {
+          "row": 16,
+          "qty": "3",
+          "unit_price": "150800",
+          "discount": "0",
+          "total": "452400",
+          "diff": "0",
+          "tolerance": "2262.0000",
+          "ok": true
+        },
+        {
+          "row": 17,
+          "qty": "3",
+          "unit_price": "1940705",
+          "discount": "0",
+          "total": "5822115",
+          "diff": "0",
+          "tolerance": "29110.5750",
+          "ok": true
+        },
+        {
+          "row": 18,
+          "qty": "2",
+          "unit_price": "548275",
+          "discount": "0",
+          "total": "1096550",
+          "diff": "0",
+          "tolerance": "5482.7500",
+          "ok": true
+        },
+        {
+          "row": 19,
+          "qty": "5",
+          "unit_price": "1912430",
+          "discount": "0",
+          "total": "9562150",
+          "diff": "0",
+          "tolerance": "47810.7500",
+          "ok": true
+        },
+        {
+          "row": 20,
+          "qty": "2",
+          "unit_price": "150800",
+          "discount": "0",
+          "total": "301600",
+          "diff": "0",
+          "tolerance": "1508.0000",
+          "ok": true
+        }
+      ],
+      "sum_line_totals": "69427151"
+    },
+    "subtotal": {
+      "status": "mismatch",
+      "printed": "373536866",
+      "sum": "69427151",
+      "diff": "304109715",
+      "tolerance": "1120610.598"
+    }
+  },
+  {
+    "page": 3,
+    "header_fingerprint": "article|item|qty|col4|unitprice|discount|col7|totalprice",
+    "arithmetic": {
+      "rows": [
+        {
+          "row": 0,
+          "qty": "2",
+          "unit_price": "1940705",
+          "discount": "0",
+          "total": "3881410",
+          "diff": "0",
+          "tolerance": "19407.0500",
+          "ok": true
+        },
+        {
+          "row": 1,
+          "qty": "2",
+          "unit_price": "1940705",
+          "discount": "0",
+          "total": "3881410",
+          "diff": "0",
+          "tolerance": "19407.0500",
+          "ok": true
+        },
+        {
+          "row": 2,
+          "qty": "3",
+          "unit_price": "517790",
+          "discount": "0",
+          "total": "1553370",
+          "diff": "0",
+          "tolerance": "7766.8500",
+          "ok": true
+        },
+        {
+          "row": 3,
+          "qty": "3",
+          "unit_price": "173225",
+          "discount": "0",
+          "total": "519675",
+          "diff": "0",
+          "tolerance": "2598.3750",
+          "ok": true
+        },
+        {
+          "row": 4,
+          "qty": "3",
+          "unit_price": "173225",
+          "discount": "0",
+          "total": "519675",
+          "diff": "0",
+          "tolerance": "2598.3750",
+          "ok": true
+        },
+        {
+          "row": 5,
+          "qty": "3",
+          "unit_price": "1940705",
+          "discount": "0",
+          "total": "5822115",
+          "diff": "0",
+          "tolerance": "29110.5750",
+          "ok": true
+        },
+        {
+          "row": 6,
+          "qty": "3",
+          "unit_price": "417755",
+          "discount": "0",
+          "total": "1253265",
+          "diff": "0",
+          "tolerance": "6266.3250",
+          "ok": true
+        },
+        {
+          "row": 7,
+          "qty": "2",
+          "unit_price": "517790",
+          "discount": "0",
+          "total": "1035580",
+          "diff": "0",
+          "tolerance": "5177.9000",
+          "ok": true
+        },
+        {
+          "row": 8,
+          "qty": "2",
+          "unit_price": "1479465",
+          "discount": "0",
+          "total": "2958930",
+          "diff": "0",
+          "tolerance": "14794.6500",
+          "ok": true
+        },
+        {
+          "row": 9,
+          "qty": "2",
+          "unit_price": "465595",
+          "discount": "0",
+          "total": "931190",
+          "diff": "0",
+          "tolerance": "4655.9500",
+          "ok": true
+        },
+        {
+          "row": 10,
+          "qty": "2",
+          "unit_price": "173225",
+          "discount": "0",
+          "total": "346450",
+          "diff": "0",
+          "tolerance": "1732.2500",
+          "ok": true
+        },
+        {
+          "row": 11,
+          "qty": "2",
+          "unit_price": "173225",
+          "discount": "0",
+          "total": "346450",
+          "diff": "0",
+          "tolerance": "1732.2500",
+          "ok": true
+        },
+        {
+          "row": 12,
+          "qty": "2",
+          "unit_price": "1912430",
+          "discount": "0",
+          "total": "3824860",
+          "diff": "0",
+          "tolerance": "19124.3000",
+          "ok": true
+        },
+        {
+          "row": 13,
+          "qty": "2",
+          "unit_price": "1940705",
+          "discount": "0",
+          "total": "3881410",
+          "diff": "0",
+          "tolerance": "19407.0500",
+          "ok": true
+        },
+        {
+          "row": 14,
+          "qty": "2",
+          "unit_price": "417755",
+          "discount": "0",
+          "total": "835510",
+          "diff": "0",
+          "tolerance": "4177.5500",
+          "ok": true
+        },
+        {
+          "row": 15,
+          "qty": "3",
+          "unit_price": "517790",
+          "discount": "0",
+          "total": "1553370",
+          "diff": "0",
+          "tolerance": "7766.8500",
+          "ok": true
+        },
+        {
+          "row": 16,
+          "qty": "3",
+          "unit_price": "173225",
+          "discount": "0",
+          "total": "519675",
+          "diff": "0",
+          "tolerance": "2598.3750",
+          "ok": true
+        },
+        {
+          "row": 17,
+          "qty": "3",
+          "unit_price": "173225",
+          "discount": "0",
+          "total": "519675",
+          "diff": "0",
+          "tolerance": "2598.3750",
+          "ok": true
+        },
+        {
+          "row": 18,
+          "qty": "3",
+          "unit_price": "1940705",
+          "discount": "0",
+          "total": "5822115",
+          "diff": "0",
+          "tolerance": "29110.5750",
+          "ok": true
+        },
+        {
+          "row": 19,
+          "qty": "3",
+          "unit_price": "417755",
+          "discount": "0",
+          "total": "1253265",
+          "diff": "0",
+          "tolerance": "6266.3250",
+          "ok": true
+        },
+        {
+          "row": 20,
+          "qty": "2",
+          "unit_price": "12792975",
+          "discount": "0",
+          "total": "25585950",
+          "diff": "0",
+          "tolerance": "127929.7500",
+          "ok": true
+        }
+      ],
+      "sum_line_totals": "66845350"
+    },
+    "subtotal": {
+      "status": "mismatch",
+      "printed": "373536866",
+      "sum": "66845350",
+      "diff": "306691516",
+      "tolerance": "1120610.598"
+    }
+  },
+  {
+    "page": 4,
+    "header_fingerprint": "article|item|qty|col4|unitprice|discount|col7|totalprice",
+    "arithmetic": {
+      "rows": [
+        {
+          "row": 0,
+          "qty": "2",
+          "unit_price": "517790",
+          "discount": "0",
+          "total": "1035580",
+          "diff": "0",
+          "tolerance": "5177.9000",
+          "ok": true
+        },
+        {
+          "row": 1,
+          "qty": "2",
+          "unit_price": "5430490",
+          "discount": "0",
+          "total": "10860980",
+          "diff": "0",
+          "tolerance": "54304.9000",
+          "ok": true
+        },
+        {
+          "row": 2,
+          "qty": "2",
+          "unit_price": "1479465",
+          "discount": "0",
+          "total": "2958930",
+          "diff": "0",
+          "tolerance": "14794.6500",
+          "ok": true
+        },
+        {
+          "row": 3,
+          "qty": "2",
+          "unit_price": "465595",
+          "discount": "0",
+          "total": "931190",
+          "diff": "0",
+          "tolerance": "4655.9500",
+          "ok": true
+        },
+        {
+          "row": 4,
+          "qty": "2",
+          "unit_price": "173225",
+          "discount": "0",
+          "total": "346450",
+          "diff": "0",
+          "tolerance": "1732.2500",
+          "ok": true
+        },
+        {
+          "row": 5,
+          "qty": "2",
+          "unit_price": "173225",
+          "discount": "0",
+          "total": "346450",
+          "diff": "0",
+          "tolerance": "1732.2500",
+          "ok": true
+        },
+        {
+          "row": 6,
+          "qty": "2",
+          "unit_price": "417755",
+          "discount": "0",
+          "total": "835510",
+          "diff": "0",
+          "tolerance": "4177.5500",
+          "ok": true
+        },
+        {
+          "row": 7,
+          "qty": "1",
+          "unit_price": "17035525",
+          "discount": "0",
+          "total": "17035525",
+          "diff": "0",
+          "tolerance": "85177.6250",
+          "ok": true
+        },
+        {
+          "row": 8,
+          "qty": "10",
+          "unit_price": "576615",
+          "discount": "0",
+          "total": "5766150",
+          "diff": "0",
+          "tolerance": "28830.7500",
+          "ok": true
+        }
+      ],
+      "sum_line_totals": "40116765"
+    },
+    "subtotal": {
+      "status": "mismatch",
+      "printed": "373536866",
+      "sum": "40116765",
+      "diff": "333420101",
+      "tolerance": "1120610.598"
+    }
+  }
+]

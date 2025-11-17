@@ -1,0 +1,87 @@
+{
+  "client": "kemas",
+  "variant": 9,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE TO : PT PERTAMINA TRAINING AND CONSULTING Invoice Invoice Date Number 19-Mar-25 07/INV-3/2025"
+        },
+        {
+          "key": "table",
+          "value": "NO DESCRIPTION QTY Harga (Rp.) AMOUNT 1 Rapat Koordinasi2024 di Sentul, Bogor tgl 27-28 Des 2024 1 UNT 682.566.560 682.566.560"
+        },
+        {
+          "key": "total",
+          "value": "TOTAL 682.566.560 ASF 10% 68.256.656 SUB TOTAL 750.823.216 PPn 82.590.554 SUB TOTAL 833.413.770"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice Number 07/INV-3/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Date 19-Mar-25"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT PERTAMINA TRAINING AND CONSULTING"
+        },
+        {
+          "key": "subtotal",
+          "value": "SUB TOTAL 750.823.216"
+        },
+        {
+          "key": "vat",
+          "value": "PPn 82.590.554"
+        },
+        {
+          "key": "grand_total",
+          "value": "SUB TOTAL 833.413.770"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE TO : PT PERTAMINA TRAINING AND CONSULTING Invoice Invoice Date Number 19-Mar-25 07/INV-3/2025"
+        },
+        {
+          "key": "table",
+          "value": "NO DESCRIPTION QTY Harga (Rp.) AMOUNT 1 Rapat Koordinasi2024 di Sentul, Bogor tgl 27-28 Des 2024 1 UNT 682.566.560 682.566.560"
+        },
+        {
+          "key": "total",
+          "value": "TOTAL 682.566.560 ASF 10% 68.256.656 SUB TOTAL 750.823.216 PPn 82.590.554 SUB TOTAL 833.413.770"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice Number 07/INV-3/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Date 19-Mar-25"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT PERTAMINA TRAINING AND CONSULTING"
+        },
+        {
+          "key": "subtotal",
+          "value": "SUB TOTAL 750.823.216"
+        },
+        {
+          "key": "vat",
+          "value": "PPn 82.590.554"
+        },
+        {
+          "key": "grand_total",
+          "value": "SUB TOTAL 833.413.770"
+        }
+      ]
+    }
+  }
+}

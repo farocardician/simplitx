@@ -1,0 +1,45 @@
+{
+  "query_synonyms": {
+    "buyer_name": [
+      "buyer name",
+      "bill to",
+      "ship to",
+      "sold to",
+      "to :",
+      "attn"
+    ],
+    "invoice_number": [
+      "invoice no",
+      "invoice number",
+      "inv no",
+      "no. faktur"
+    ],
+    "invoice_date": [
+      "invoice date",
+      "date :",
+      "tanggal invoice",
+      "issued on"
+    ]
+  },
+  "fields": {
+    "buyer_name": {
+      "label_regex": "\\\\b(buyer\\\\s*name|bill\\\\s*to|ship\\\\s*to|sold\\\\s*to|to|attn)\\\\b[:\\\\-]*",
+      "candidate_regex": "(?:buyer\\\\s*name|bill\\\\s*to|ship\\\\s*to|sold\\\\s*to|to|attn)[^A-Za-z0-9]*([A-Za-z0-9 .,/&-]+)",
+      "trailing_label_regex": "(?:\\\\b(buyer\\\\s*name|bill\\\\s*to|ship\\\\s*to|sold\\\\s*to|to|attn)\\\\b[:\\\\-]?\\\\s*)+$",
+      "require_digit": false
+    },
+    "invoice_number": {
+      "label_regex": "\\\\b(invoice\\\\s*(?:no\\\\.?|number)|inv\\\\s*no|no\\\\.\\\\s*faktur)\\\\b[:\\\\-]*",
+      "candidate_regex": "(?:invoice\\\\s*(?:no\\\\.?|number)|inv\\\\s*no|no\\\\.\\\\s*faktur)[^A-Za-z0-9]*((?=[A-Za-z0-9./-]*\\\\d)[A-Za-z0-9./-]+)",
+      "fallback_regex": "((?=[A-Za-z0-9./-]*\\\\d)[A-Za-z0-9./-]+)",
+      "require_digit": true,
+      "prefer_fallback": true
+    },
+    "invoice_date": {
+      "label_regex": "\\\\b(invoice\\\\s*date|date|tanggal\\\\s*invoice|issued\\\\s*on)\\\\b[:\\\\-]*",
+      "candidate_regex": "(?:invoice\\\\s*date|date|tanggal\\\\s*invoice|issued\\\\s*on)[^0-9A-Za-z]*([0-9]{1,2}\\\\s+[A-Za-z]+\\\\s+[0-9]{4})",
+      "fallback_regex": "([0-9]{1,2}\\\\s+[A-Za-z]+\\\\s+[0-9]{4})",
+      "require_digit": false
+    }
+  }
+}

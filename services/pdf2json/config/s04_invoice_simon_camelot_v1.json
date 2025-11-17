@@ -1,0 +1,30 @@
+{
+  "name": "Invoice PT Simon Camelot Grid",
+  "version": "1.0",
+  "header_aliases": {
+    "NO": ["NO", "NO."],
+    "HS": ["HS", "HS CODE", "HSCODE"],
+    "SKU": ["SKU"],
+    "CODE": ["CODE"],
+    "DESC": ["DESC", "DESCRIPTION", "DESCRIPTION OF GOODS", "GOODS"],
+    "QTY": ["QTY", "QUANTITY"],
+    "UOM": ["UOM", "UNIT", "PCS"],
+    "PRICE": ["PRICE", "UNIT COST", "UNIT PRICE"],
+    "AMOUNT": ["AMOUNT", "AMOUNT IDR", "LINE TOTAL", "TOTAL"]
+  },
+  "totals_keywords": [
+    "DPP",
+    "PPN",
+    "VAT",
+    "GRAND TOTAL",
+    "SUB TOTAL",
+    "TOTAL TAX BASED",
+    "BASIS PAJAK"
+  ],
+  "camelot": {
+    "flavor_order": ["lattice", "stream"],
+    "line_scale": 40,
+    "line_scale_stream": 15
+  },
+  "stop_after_totals": true
+}

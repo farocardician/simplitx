@@ -1,0 +1,163 @@
+{
+  "profile": {
+    "name": "Fel Invoice Extractor V1",
+    "fail_mode": "hard",
+    "required_fields": [
+      "buyer_name",
+      "invoice_number",
+      "invoice_date",
+      "subtotal",
+      "grand_total"
+    ],
+    "expected_fields": [
+      "tax",
+      "tax_amount",
+      "tax_base"
+    ],
+    "optional_fields": [
+      "income_tax",
+      "income_tax_amount"
+    ]
+  },
+  "strict_segments": true,
+  "use_stage2_normalized": true,
+  "totals": {
+    "mode": "segments_only"
+  },
+  "confidence": {
+    "thresholds": {
+      "high": {
+        "max_lines": 1,
+        "max_tokens": 15
+      },
+      "medium": {
+        "max_lines": 3,
+        "max_tokens": 60
+      }
+    }
+  },
+  "fields": {
+    "buyer_name": {
+      "strategy": "regex_capture",
+      "segment": "buyer",
+      "post": {
+        "regex_pattern": ["Bill To:\\s*(Mr\\.?\\s+[A-Z][a-z]+\\s+[A-Z][a-z]+)"]
+      }
+    },
+    "invoice_number": {
+      "strategy": "regex_capture",
+      "segment": "invoice",
+      "post": {
+        "regex_pattern": ["Invoice\\s+#:\\s+([A-Z]{2,4}\\/[A-Z-]+\\/\\d{4}\\/\\d+)"]
+      }
+    },
+    "invoice_date": {
+      "strategy": "regex_capture",
+      "segment": "invoice",
+      "post": {
+        "regex_pattern": ["Date:\\s+(\\d{2}\\/\\d{2}\\/\\d{4})"]
+      }
+    },
+    "subtotal": {
+      "strategy": "regex_capture",
+      "segment": "total",
+      "post": {
+        "regex_pattern": ["SUBTOTAL[^\\n]*USD\\s+([\\d,]+\\.\\d+)"]
+      }
+    },
+    "tax_base": {
+      "strategy": "regex_capture",
+      "segment": "total",
+      "post": {
+        "regex_pattern": ["SUBTOTAL[^\\n]*USD\\s+([\\d,]+\\.\\d+)"]
+      }
+    },
+    "tax": {
+      "strategy": "regex_capture",
+      "segment": "total",
+      "post": {
+        "regex_pattern": ["TAX\\s+RATE\\s+USD\\s+([\\d,]+\\.?\\d*)"]
+      }
+    },
+    "tax_amount": {
+      "strategy": "regex_capture",
+      "segment": "total",
+      "post": {
+        "regex_pattern": ["SALES\\s+TAX\\s+USD\\s+([\\d,]+\\.?\\d*)"]
+      }
+    },
+    "income_tax": {
+      "strategy": "constant",
+      "segment": "total",
+      "post": {
+        "value": "0%"
+      }
+    },
+    "income_tax_amount": {
+      "strategy": "regex_capture",
+      "segment": "total",
+      "post": {
+        "regex_pattern": ["OTHER\\s+USD\\s+([\\d,]+\\.?\\d*)"]
+      }
+    },
+    "grand_total": {
+      "strategy": "regex_capture",
+      "segment": "total",
+      "post": {
+        "regex_pattern": ["TOTAL[^\\n]*USD\\s+([\\d,]+\\.\\d+)"]
+      }
+    }
+  },
+  "guards": {
+    "buyer_name": {
+      "min_len": 3,
+      "max_len": 100,
+      "allowed_chars": "A-Za-z\\s\\.\\-\\',"
+    },
+    "invoice_number": {
+      "min_len": 5,
+      "max_len": 50,
+      "allowed_chars": "A-Za-z0-9\\/\\-"
+    },
+    "invoice_date": {
+      "min_len": 8,
+      "max_len": 12,
+      "allowed_chars": "0-9\\/"
+    },
+    "subtotal": {
+      "min_len": 1,
+      "max_len": 20,
+      "allowed_chars": "0-9.,"
+    },
+    "tax_base": {
+      "min_len": 1,
+      "max_len": 20,
+      "allowed_chars": "0-9.,"
+    },
+    "tax": {
+      "min_len": 1,
+      "max_len": 10,
+      "allowed_chars": "0-9.%"
+    },
+    "tax_amount": {
+      "min_len": 1,
+      "max_len": 20,
+      "allowed_chars": "0-9.,"
+    },
+    "income_tax": {
+      "min_len": 1,
+      "max_len": 10,
+      "allowed_chars": "0-9.%"
+    },
+    "income_tax_amount": {
+      "min_len": 1,
+      "max_len": 20,
+      "allowed_chars": "0-9.,"
+    },
+    "grand_total": {
+      "min_len": 1,
+      "max_len": 20,
+      "allowed_chars": "0-9.,"
+    }
+  }
+}

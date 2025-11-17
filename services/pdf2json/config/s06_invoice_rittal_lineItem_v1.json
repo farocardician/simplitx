@@ -1,0 +1,69 @@
+{
+  "fields": {
+    "sku": {
+      "header_synonyms": ["ARTICLE", "ARTICLE\\s*NO"],
+      "position_hint": {"x0": 0.05, "x1": 0.22},
+      "parsers": ["strip_nonprint"],
+      "required": false,
+      "merge": false
+    },
+    "description": {
+      "header_synonyms": ["ITEM", "ITEM\\s*NAME", "DESCRIPTION"],
+      "position_hint": {"x0": 0.20, "x1": 0.52},
+      "parsers": ["strip_nonprint"],
+      "required": true,
+      "merge": false
+    },
+    "qty": {
+      "header_synonyms": ["QTY", "QUANTITY"],
+      "position_hint": {"x0": 0.44, "x1": 0.60},
+      "parsers": ["parse_first_number"],
+      "required": false,
+      "merge": false
+    },
+    "unit_price": {
+      "header_synonyms": ["UNIT\\s*PRICE", "@PRICE"],
+      "position_hint": {"x0": 0.57, "x1": 0.70},
+      "parsers": ["parse_first_money"],
+      "required": false,
+      "merge": false
+    },
+    "discount_amount": {
+      "header_synonyms": ["DISCOUNT"],
+      "position_hint": {"x0": 0.69, "x1": 0.80},
+      "parsers": ["parse_money"],
+      "required": false,
+      "merge": false
+    },
+    "amount": {
+      "header_synonyms": ["TOTAL\\s*PRICE", "LINE\\s*TOTAL", "AMOUNT"],
+      "position_hint": {"x0": 0.78, "x1": 0.95},
+      "parsers": ["parse_first_money"],
+      "required": false,
+      "merge": false
+    }
+  },
+  "defaults": {
+    "uom": "PCS",
+    "discount_amount": 0,
+    "discount_percent": 0
+  },
+  "currency_hints": ["IDR", "Rp", "RP"],
+  "number_format": {
+    "decimal": ",",
+    "thousands": ".",
+    "allow_parens": true
+  },
+  "currency_decimals": 2,
+  "tolerances": {
+    "amount_from_qty_price": {"abs": 0, "rel": 0}
+  },
+  "row_filters": [
+    "(?i)^(description|article|item|qty|total|subtotal|tax)",
+    "(?i)^pt\\.",
+    "(?i)^:",
+    "(?i)^mitraida",
+    "(?i)terms of payment",
+    "(?i)^shipment"
+  ]
+}

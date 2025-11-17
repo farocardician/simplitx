@@ -1,0 +1,218 @@
+{
+  "name": "PDP Invoice Segmenter Config V1",
+  "version": "1.0",
+  "coords": { "normalized": true, "y_origin": "top", "precision": 6 },
+  "defaults": { "min_height": 0.02 },
+  "regions": [
+    {
+      "id": "header",
+      "label": "Header",
+      "on_pages": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["\\bINVOICE\\b"],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "around",
+          "dx": 0.5,
+          "dy": 0.12
+        },
+        "margin": { "top": 0.010, "right": 0.1, "bottom": 0.010, "left": 0.020 }
+      },
+      "fallbacks": [
+        {
+          "by": "y_cutoff",
+          "edge": "top",
+          "y": 0.31
+        }
+      ],
+      "keep": "first"
+    },
+    {
+      "id": "invoice_number",
+      "label": "invoice_number",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^No.$"],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,           
+          "row_tol": 0.0,
+          "dx_max": 0.15,       
+          "gap_x": 0
+        },
+        "margin": { "top": 0.007, "right": 0, "bottom": 0, "left": 0 }
+      }
+    },
+    {
+      "id": "invoice_date",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Date\\.?$"],
+          "flags": {
+            "ignore_case": false,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,           
+          "row_tol": 0.0,
+          "dx_max": 0.15,       
+          "gap_x": 0
+        },
+        "margin": { "top": 0.004, "right": 0, "bottom": 0, "left": 0.05 }
+      }
+    },
+    {
+      "id": "buyer_name",
+      "label": "buyer_name",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Client\\.?$"],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "below_rows",
+          "rows": 1,
+          "row_tol": 0.006,
+          "width": "anchor",
+          "pad_right": 0.15
+        },
+        "margin": { "top": 0.007, "right": 0.15, "bottom": 0, "left": 0 }
+      }
+    },    
+    {
+      "id": "total",
+      "label": "total",
+      "on_pages": "all",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Grand$"],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "above_rows",
+          "rows": 2,
+          "row_tol": 0.006,
+          "width": "page"
+        },
+        "margin": {
+          "top": 0.005,
+          "bottom": 0.017,
+          "left": 0.01,
+          "right": 0.01
+        }
+      }
+    },
+    {
+      "id": "subtotal",
+      "label": "subtotal",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Total$"],
+          "flags": { "ignore_case": true },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "dx_max": 0.8,
+          "dy_tol": 0.008
+        }
+      }
+    },
+    {
+      "id": "vat",
+      "label": "vat",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^VAT$"],
+          "flags": { "ignore_case": true },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "dx_max": 0.8,
+          "dy_tol": 0.008
+        }
+      }
+    },
+    {
+      "id": "grand_total",
+      "label": "grand_total",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Grand$"],
+          "flags": { "ignore_case": true },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "dx_max": 0.8,
+          "dy_tol": 0.008
+        }
+      }
+    },
+    {
+      "id": "currency",
+      "on_pages": "first",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "Curr"
+          ],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "capture_window": {
+          "mode": "below_rows",
+          "rows": 2,
+          "row_tol": 0.0,
+          "width": "anchor",
+          "pad_right": 0.15
+        },
+        "margin": { "top": -0.008, "right": -0.1, "bottom": 0, "left": 0 }
+      }
+    }         
+  ]
+}

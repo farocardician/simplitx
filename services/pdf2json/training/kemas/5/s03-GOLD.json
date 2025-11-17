@@ -1,0 +1,87 @@
+{
+  "client": "kemas",
+  "variant": 5,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE TO : PT PERTAMINA TRAINING AND CONSULTING Kwitansi Invoice Date Number 16-Jun-25 09/INV-6/2025"
+        },
+        {
+          "key": "table",
+          "value": "NO DESCRIPTION QTY Harga AMOUNT (Rp.) 1 SDGI - Auditorium Soemitro Djojohadikusumo BRIN 1 UNT 33.320.000 33.320.000"
+        },
+        {
+          "key": "total",
+          "value": "TOTAL 33.320.000 ASF 10% 3.332.000 SUB TOTAL 36.652.000 PPn 4.031.720 SUB TOTAL 40.683.720"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice Number 09/INV-6/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Date 16-Jun-25"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT PERTAMINA TRAINING AND CONSULTING Kwitansi Invoice"
+        },
+        {
+          "key": "subtotal",
+          "value": "SUB TOTAL 36.652.000"
+        },
+        {
+          "key": "vat",
+          "value": "PPn 4.031.720"
+        },
+        {
+          "key": "grand_total",
+          "value": "SUB TOTAL 40.683.720"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE TO : PT PERTAMINA TRAINING AND CONSULTING Kwitansi Invoice Date Number 16-Jun-25 09/INV-6/2025"
+        },
+        {
+          "key": "table",
+          "value": "NO DESCRIPTION QTY Harga AMOUNT (Rp.) 1 SDGI - Auditorium Soemitro Djojohadikusumo BRIN 1 UNT 33.320.000 33.320.000"
+        },
+        {
+          "key": "total",
+          "value": "TOTAL 33.320.000 ASF 10% 3.332.000 SUB TOTAL 36.652.000 PPn 4.031.720 SUB TOTAL 40.683.720"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice Number 09/INV-6/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Date 16-Jun-25"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT PERTAMINA TRAINING AND CONSULTING Kwitansi Invoice"
+        },
+        {
+          "key": "subtotal",
+          "value": "SUB TOTAL 36.652.000"
+        },
+        {
+          "key": "vat",
+          "value": "PPn 4.031.720"
+        },
+        {
+          "key": "grand_total",
+          "value": "SUB TOTAL 40.683.720"
+        }
+      ]
+    }
+  }
+}

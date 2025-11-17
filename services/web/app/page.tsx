@@ -7,15 +7,16 @@ export default function Home() {
       <section className="hero-section">
         <div className="container">
           <h1 className="hero-title">
-            Transform Your PDFs with Ease
+            Make Your Documents Work for You
           </h1>
           <p className="hero-subtitle">
-            Upload, process, and convert your PDF documents with our powerful drag-and-drop interface. 
-            Fast, secure, and reliable processing in the cloud.
+            Unlock insights from your documents on your own AI machine.<br />
+            Convert them into clean and structured data.<br />
+            Fast, secure, and 100% private.<br />
+            <strong>(Your files never leave your computer)</strong>
           </p>
         </div>
       </section>
-
       {/* Main Content */}
       <main className="main-content">
         <div className="container">

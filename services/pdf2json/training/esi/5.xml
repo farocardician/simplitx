@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TaxInvoiceBulk xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <TIN>0758900039064000</TIN>
+  <ListOfTaxInvoice>
+    <TaxInvoice>
+      <TaxInvoiceDate>2025-09-10</TaxInvoiceDate>
+      <TaxInvoiceOpt>Normal</TaxInvoiceOpt>
+      <TrxCode>04</TrxCode>
+      <AddInfo/>
+      <CustomDoc/>
+      <CustomDocMonthYear/>
+      <RefDesc>INV/078/0925</RefDesc>
+      <FacilityStamp/>
+      <SellerIDTKU>0758900039064000000000</SellerIDTKU>
+      <BuyerTin>0713011237012000</BuyerTin>
+      <BuyerDocument>TIN</BuyerDocument>
+      <BuyerCountry>IDN</BuyerCountry>
+      <BuyerDocumentNumber>-</BuyerDocumentNumber>
+      <BuyerName>PT PRG</BuyerName>
+      <BuyerAdress>JAKARTA</BuyerAdress>
+      <BuyerEmail>-</BuyerEmail>
+      <BuyerIDTKU>0713011237012000000000</BuyerIDTKU>
+      <ListOfGoodService>
+        <GoodService>
+          <Opt>B</Opt>
+          <Code>240900</Code>
+          <Name>Teaching Factory BCA Cash Management Academy: Period September 2025</Name>
+          <Unit>UM.0030</Unit>
+          <Price>3500000</Price>
+          <Qty>7</Qty>
+          <TotalDiscount>0</TotalDiscount>
+          <TaxBase>24500000</TaxBase>
+          <OtherTaxBase>22458333.33</OtherTaxBase>
+          <VATRate>12</VATRate>
+          <VAT>2695000</VAT>
+          <STLGRate>0</STLGRate>
+          <STLG>0</STLG>
+        </GoodService>
+      </ListOfGoodService>
+    </TaxInvoice>
+  </ListOfTaxInvoice>
+</TaxInvoiceBulk>

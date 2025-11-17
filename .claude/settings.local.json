@@ -1,7 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(docker-compose up:*)"
+      "Bash(docker-compose up:*)",
+      "Bash(docker-compose:*)",
+      "Bash(awk:*)",
+      "Bash(docker exec:*)",
+      "Bash(for:*)",
+      "Bash(do echo \"=== Folder $i ===\")",
+      "Bash(ls:*)",
+      "Bash(done)",
+      "Bash(CLIENT=sil VARIANT=1 SUBFOLDER=training:*)",
+      "Bash(python3:*)",
+      "Bash(CLIENT=sil VARIANT=6 SUBFOLDER=training:*)",
+      "Bash(CLIENT=sil VARIANT=8 SUBFOLDER=training:*)",
+      "Bash(CLIENT=sil VARIANT=9 SUBFOLDER=training:*)",
+      "Bash(CLIENT=sil VARIANT=10 SUBFOLDER=training:*)"
     ],
     "deny": [],
     "ask": []

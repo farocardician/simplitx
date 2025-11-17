@@ -1,0 +1,248 @@
+[
+  {
+    "page": 1,
+    "header_fingerprint": "article|item|qty|col4|unitprice|discount|col7|totalprice",
+    "arithmetic": {
+      "rows": [
+        {
+          "row": 0,
+          "qty": "1",
+          "unit_price": "16372500",
+          "discount": "0",
+          "total": "16372500",
+          "diff": "0",
+          "tolerance": "81862.5000",
+          "ok": true
+        },
+        {
+          "row": 1,
+          "qty": "1",
+          "unit_price": "7492500",
+          "discount": "0",
+          "total": "7492500",
+          "diff": "0",
+          "tolerance": "37462.5000",
+          "ok": true
+        },
+        {
+          "row": 2,
+          "qty": "1",
+          "unit_price": "15493000",
+          "discount": "0",
+          "total": "15493000",
+          "diff": "0",
+          "tolerance": "77465.0000",
+          "ok": true
+        },
+        {
+          "row": 3,
+          "qty": "1",
+          "unit_price": "365500",
+          "discount": "0",
+          "total": "365500",
+          "diff": "0",
+          "tolerance": "1827.5000",
+          "ok": true
+        },
+        {
+          "row": 4,
+          "qty": "2",
+          "unit_price": "114000",
+          "discount": "0",
+          "total": "228000",
+          "diff": "0",
+          "tolerance": "1140.0000",
+          "ok": true
+        },
+        {
+          "row": 5,
+          "qty": "2",
+          "unit_price": "83000",
+          "discount": "0",
+          "total": "166000",
+          "diff": "0",
+          "tolerance": "830.0000",
+          "ok": true
+        },
+        {
+          "row": 6,
+          "qty": "1",
+          "unit_price": "75000",
+          "discount": "0",
+          "total": "75000",
+          "diff": "0",
+          "tolerance": "375.0000",
+          "ok": true
+        },
+        {
+          "row": 7,
+          "qty": "1",
+          "unit_price": "152000",
+          "discount": "0",
+          "total": "152000",
+          "diff": "0",
+          "tolerance": "760.0000",
+          "ok": true
+        },
+        {
+          "row": 8,
+          "qty": "1",
+          "unit_price": "338000",
+          "discount": "0",
+          "total": "338000",
+          "diff": "0",
+          "tolerance": "1690.0000",
+          "ok": true
+        },
+        {
+          "row": 9,
+          "qty": "2",
+          "unit_price": "1663500",
+          "discount": "0",
+          "total": "3327000",
+          "diff": "0",
+          "tolerance": "16635.0000",
+          "ok": true
+        },
+        {
+          "row": 10,
+          "qty": "2",
+          "unit_price": "1754000",
+          "discount": "0",
+          "total": "3508000",
+          "diff": "0",
+          "tolerance": "17540.0000",
+          "ok": true
+        },
+        {
+          "row": 11,
+          "qty": "2",
+          "unit_price": "1858500",
+          "discount": "0",
+          "total": "3717000",
+          "diff": "0",
+          "tolerance": "18585.0000",
+          "ok": true
+        },
+        {
+          "row": 12,
+          "qty": "8",
+          "unit_price": "140000",
+          "discount": "0",
+          "total": "1120000",
+          "diff": "0",
+          "tolerance": "5600.0000",
+          "ok": true
+        },
+        {
+          "row": 13,
+          "qty": "8",
+          "unit_price": "150000",
+          "discount": "0",
+          "total": "1200000",
+          "diff": "0",
+          "tolerance": "6000.0000",
+          "ok": true
+        },
+        {
+          "row": 14,
+          "qty": "32",
+          "unit_price": "379500",
+          "discount": "0",
+          "total": "12144000",
+          "diff": "0",
+          "tolerance": "60720.0000",
+          "ok": true
+        },
+        {
+          "row": 15,
+          "qty": "4",
+          "unit_price": "573000",
+          "discount": "0",
+          "total": "2292000",
+          "diff": "0",
+          "tolerance": "11460.0000",
+          "ok": true
+        },
+        {
+          "row": 16,
+          "qty": "3",
+          "unit_price": "946000",
+          "discount": "0",
+          "total": "2838000",
+          "diff": "0",
+          "tolerance": "14190.0000",
+          "ok": true
+        },
+        {
+          "row": 17,
+          "qty": "1",
+          "unit_price": "181500",
+          "discount": "0",
+          "total": "181500",
+          "diff": "0",
+          "tolerance": "907.5000",
+          "ok": true
+        },
+        {
+          "row": 18,
+          "qty": "2",
+          "unit_price": "205000",
+          "discount": "0",
+          "total": "410000",
+          "diff": "0",
+          "tolerance": "2050.0000",
+          "ok": true
+        },
+        {
+          "row": 19,
+          "qty": "2",
+          "unit_price": "235000",
+          "discount": "0",
+          "total": "470000",
+          "diff": "0",
+          "tolerance": "2350.0000",
+          "ok": true
+        },
+        {
+          "row": 20,
+          "qty": "4",
+          "unit_price": "568500",
+          "discount": "0",
+          "total": "2274000",
+          "diff": "0",
+          "tolerance": "11370.0000",
+          "ok": true
+        }
+      ],
+      "sum_line_totals": "74164000"
+    },
+    "subtotal": {
+      "status": "ok",
+      "printed": "74164000",
+      "sum": "74164000",
+      "diff": "0",
+      "tolerance": "222492.000"
+    }
+  },
+  {
+    "page": 2,
+    "header_fingerprint": "item|totalprice|col3",
+    "arithmetic": {
+      "rows": [
+        {
+          "row": 0,
+          "status": "skipped"
+        }
+      ],
+      "sum_line_totals": "0"
+    },
+    "subtotal": {
+      "status": "mismatch",
+      "printed": "74164000",
+      "sum": "0",
+      "diff": "74164000",
+      "tolerance": "222492.000"
+    }
+  }
+]

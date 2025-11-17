@@ -1,0 +1,150 @@
+{
+  "name": "Stahl Invoice Segmenter Config V1",
+  "version": "1.0",
+  "coords": { "normalized": true, "y_origin": "top", "precision": 6 },
+  "defaults": { "min_height": 0.02 },
+  "regions": [
+    {
+      "id": "header",
+      "on_pages": "first",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["FAKTUR"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "end_anchor": {
+          "patterns": ["Pengiriman:"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "margin": { "top": 0.025, "right": 0.35, "bottom": 0.05, "left": 0.005 }
+      },
+      "fallbacks": [
+        { "by": "by_table", "position": "above", "margin": 0.008 },
+        { "by": "y_cutoff", "edge": "top", "y": 0.45 }
+      ]
+    },
+    {
+      "id": "footer",
+      "on_pages": "last",
+      "keep": "last",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["YourContact:", "Your Contact:"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "end_anchor": {
+          "patterns": ["CITIIDJX"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "last_in_reading_order"
+        },
+        "margin": { "top": 0.004, "right": 0.08, "bottom": 0.01, "left": 0.31 }
+      },
+      "fallbacks": [
+        { "by": "by_table", "position": "below", "margin": 0.010 },
+        { "by": "y_cutoff", "edge": "bottom", "y": 0.90 }
+      ]
+    },
+    {
+      "id": "seller",
+      "on_pages": "first",
+      "inside": "@header",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["PTStahlChemicalsIndonesia", "PT Stahl Chemicals Indonesia", "Stahl"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "margin": { "top": 0.005, "right": 0.01, "bottom": 0.005, "left": 0.005 }
+      },
+      "fallbacks": [
+        { "by": "y_cutoff", "edge": "top", "y": 0.25 }
+      ]
+    },
+    {
+      "id": "customer_id",
+      "on_pages": "first",
+      "inside": "@header",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["NoPelanggan.", "No Pelanggan"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "capture_window": {
+          "mode": "right_then_down",
+          "start_edge": "right",
+          "gap_x": 0,
+          "dx_max": 0.25,
+          "dy_max": 0.015,
+          "dy_tol": 0.005
+        },        
+        "margin": { "top": 0.005, "right": 0.01, "bottom": 0.005, "left": 0.005 }
+      },
+      "fallbacks": [
+        { "by": "y_cutoff", "edge": "top", "y": 0.25 }
+      ]
+    },
+    {
+      "id": "invoice_number",
+      "on_pages": "first",
+      "inside": "@header",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["NoFaktur.", "No Faktur"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "capture_window": {
+          "mode": "right_then_down",
+          "start_edge": "right",
+          "gap_x": 0,
+          "dx_max": 0.15,
+          "dy_max": 0.001,
+          "dy_tol": 0.005
+        },        
+        "margin": { "top": 0.005, "right": 0.01, "bottom": 0.005, "left": 0.005 }
+      },
+      "fallbacks": [
+        { "by": "y_cutoff", "edge": "top", "y": 0.25 }
+      ]
+    },
+    {
+      "id": "invoice_date",
+      "on_pages": "first",
+      "inside": "@header",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["Tanggal:"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first_in_reading_order"
+        },
+        "capture_window": {
+          "mode": "right_then_down",
+          "start_edge": "left",
+          "gap_x": 0,
+          "dx_max": 0.15,
+          "dy_max": 0.015,
+          "dy_tol": 0.005
+        },        
+        "margin": { "top": 0.005, "right": 0.01, "bottom": 0.005, "left": 0.005 }
+      },
+      "fallbacks": [
+        { "by": "y_cutoff", "edge": "top", "y": 0.25 }
+      ]
+    }        
+  ]
+}

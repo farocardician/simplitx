@@ -1,0 +1,119 @@
+{
+  "client": "kass",
+  "variant": 19,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PAID Commercial Invoice TI No.# TI00367 PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, Balance Due JL. JENDERAL SUDIRMAN KAV. 1, IDR0 JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000 Invoice Date : 23 Sep 2025 Bill To Terms : Due on Receipt PT Saprotan Utama Nusantara JL BRIGJEND SUDIARTO, 79, PANDEAN LAMPER, GAYAMSARI Due Date : 23 Sep 2025 KOTA SEMARANG, JAWA TENGAH SEMARANG 50167 Indonesia Our Ref : T4671ID Subject : Trademark Search for TM \"BANGKOK 21\" in Class 31"
+        },
+        {
+          "key": "table",
+          "value": "# Item & Description Qty Rate Amount 1 Availability - Similarity Search on Word Mark 1 400,000 400,000 Professional fees in receiving your instructions; conducting the relevant similarity trademark search for above mentioned word mark in Class 31; reporting and forwarding the search report to you; docketing your file for future action and general care rendered on these matters."
+        },
+        {
+          "key": "total",
+          "value": "Sub Total (IDR) 400,000 Tax Base VAT (IDR) 366,667 VAT (12%) 44,000 PPH 23 (2%) (-) 8,000 Total Net Amount (IDR) IDR436,000 Payment Made (-) 436,000 Balance Due IDR0"
+        },
+        {
+          "key": "seller",
+          "value": "PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, JL. JENDERAL SUDIRMAN KAV. 1, JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Bill To PT Saprotan Utama Nusantara"
+        },
+        {
+          "key": "invoice_number",
+          "value": "TI No.# TI00367"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Invoice Date : 23 Sep 2025"
+        },
+        {
+          "key": "currency",
+          "value": "Balance Due IDR0"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total (IDR) 400,000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base VAT (IDR) 366,667"
+        },
+        {
+          "key": "tax",
+          "value": "VAT (12%) 44,000"
+        },
+        {
+          "key": "income_tax",
+          "value": "PPH 23 (2%) (-) 8,000"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total Net Amount (IDR) IDR436,000"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PAID Commercial Invoice TI No.# TI00367 PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, Balance Due JL. JENDERAL SUDIRMAN KAV. 1, IDR0 JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000 Invoice Date : 23 Sep 2025 Bill To Terms : Due on Receipt PT Saprotan Utama Nusantara JL BRIGJEND SUDIARTO, 79, PANDEAN LAMPER, GAYAMSARI Due Date : 23 Sep 2025 KOTA SEMARANG, JAWA TENGAH SEMARANG 50167 Indonesia Our Ref : T4671ID Subject : Trademark Search for TM \"BANGKOK 21\" in Class 31"
+        },
+        {
+          "key": "table",
+          "value": "# Item & Description Qty Rate Amount 1 Availability - Similarity Search on Word Mark 1 400,000 400,000 Professional fees in receiving your instructions; conducting the relevant similarity trademark search for above mentioned word mark in Class 31; reporting and forwarding the search report to you; docketing your file for future action and general care rendered on these matters."
+        },
+        {
+          "key": "total",
+          "value": "Sub Total (IDR) 400,000 Tax Base VAT (IDR) 366,667 VAT (12%) 44,000 PPH 23 (2%) (-) 8,000 Total Net Amount (IDR) IDR436,000 Payment Made (-) 436,000 Balance Due IDR0"
+        },
+        {
+          "key": "seller",
+          "value": "PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, JL. JENDERAL SUDIRMAN KAV. 1, JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Bill To PT Saprotan Utama Nusantara"
+        },
+        {
+          "key": "invoice_number",
+          "value": "TI No.# TI00367"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Invoice Date : 23 Sep 2025"
+        },
+        {
+          "key": "currency",
+          "value": "Balance Due IDR0"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total (IDR) 400,000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base VAT (IDR) 366,667"
+        },
+        {
+          "key": "tax",
+          "value": "VAT (12%) 44,000"
+        },
+        {
+          "key": "income_tax",
+          "value": "PPH 23 (2%) (-) 8,000"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total Net Amount (IDR) IDR436,000"
+        }
+      ]
+    }
+  }
+}

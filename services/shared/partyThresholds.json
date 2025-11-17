@@ -1,0 +1,6 @@
+{
+  "confidenceAutoSelect": 0.92,
+  "confidenceRequireConfirm": 0.86,
+  "maxCandidates": 10,
+  "tieProximityThreshold": 0.02
+}

@@ -1,0 +1,457 @@
+{
+  "name": "KASS Invoice Segmenter Config V1",
+  "version": "1.0",
+  "coords": {
+    "normalized": true,
+    "y_origin": "top",
+    "precision": 6
+  },
+  "defaults": {
+    "min_height": 0.02
+  },
+  "regions": [
+    {
+      "id": "header",
+      "label": "Header",
+      "on_pages": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^Commercial$",
+            "^Invoice$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "end_anchor": {
+          "patterns": [
+            "^Qty$",
+            "^Rate$",
+            "^Amount$",
+            "^#$",
+            "^Item$",
+            "^Description$"
+          ],
+          "flags": {
+            "ignore_case": true
+          }
+        },
+        "margin": {
+          "top": -0.006,
+          "bottom": -0.02,
+          "right": 0.03,
+          "left": 0.045
+        }
+      },
+      "fallbacks": [
+        {
+          "by": "y_cutoff",
+          "edge": "bottom",
+          "y": 0.4
+        }
+      ],
+      "keep": "all"
+    },
+    {
+      "id": "seller",
+      "label": "seller",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^Bill$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "above_rows",
+          "rows": 8,
+          "row_tol": 0.006,
+          "width": "anchor",
+          "pad_left": 0.04,
+          "pad_right": 0.2
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "buyer_name",
+      "label": "buyer_name",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^Bill$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "below_rows",
+          "rows": 1,
+          "row_tol": 0.006,
+          "width": "anchor",
+          "pad_left": 0.04,
+          "pad_right": 0.2
+        },
+        "margin": {
+          "top": 0.005,
+          "bottom": 0,
+          "right": 0.05,
+          "left": 0
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "invoice_number",
+      "label": "invoice_number",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^TI$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "row_tol": 0.006,
+          "dx_max": 0.22,
+          "gap_x": 0.002
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "invoice_date",
+      "label": "invoice_date",
+      "inside": "@header",
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["\\d{1,2}\\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*"],
+          "flags": {
+            "ignore_case": true,
+            "normalize_space": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_down",
+          "start_edge": "left",
+          "dx_max": 0.12,
+          "dy_max": 0.02,
+          "gap_x": 0.001,
+          "refine_with_tokens": true
+        }
+      },
+      "fallbacks": [
+        {
+          "by": "anchors",
+          "start_anchor": {
+            "patterns": ["\\d{1,2}\\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*"],
+            "flags": {
+              "ignore_case": true,
+              "normalize_space": true
+            },
+            "select": "first"
+          },
+          "capture_window": {
+            "mode": "right_then_down",
+            "dx_max": 0.12,
+            "dy_max": 0.03,
+            "pad_right": 0.02,
+            "refine_with_tokens": true
+          }
+        }
+      ],
+      "keep": "all"
+    },
+    {
+      "id": "currency",
+      "label": "currency",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^Due$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "left_then_rows",
+          "rows": 2,
+          "row_tol": 0.006,
+          "dx_max": 0.08,
+          "gap_x": 0.002
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "table",
+      "label": "Table",
+      "on_pages": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^#$",
+            "^Item$",
+            "^Description$",
+            "^Qty$",
+            "^Rate$",
+            "^Amount$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "end_anchor": {
+          "patterns": [
+            "^Sub$",
+            "^Sub Total$",
+            "^Tax$",
+            "^Total$"
+          ],
+          "flags": {
+            "ignore_case": true
+          }
+        },
+        "margin": {
+          "top": -0.01,
+          "bottom": -0.01,
+          "right": 1,
+          "left": 1
+        }
+      },
+      "fallbacks": [
+        {
+          "by": "y_cutoff",
+          "edge": "top",
+          "y": 0.42
+        },
+        {
+          "by": "y_cutoff",
+          "edge": "bottom",
+          "y": 0.58
+        }
+      ],
+      "keep": "all"
+    },
+    {
+      "id": "total",
+      "label": "total",
+      "on_pages": "all",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^Sub$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 8,
+          "row_tol": 0.006,
+          "dx_max": 0.5,
+          "gap_x": 0.001
+        },
+        "margin": {
+          "left": 0.1,
+          "right": 0.02
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "subtotal",
+      "label": "subtotal",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^Sub$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "row_tol": 0.006,
+          "dx_max": 0.6,
+          "gap_x": 0.001
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "tax_base",
+      "label": "tax_base",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^Tax$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "row_tol": 0.006,
+          "dx_max": 0.6,
+          "gap_x": 0.001
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "tax",
+      "label": "tax",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^\\(\\d{1,2}(?:\\.\\d{1,2})?%\\)$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "row_tol": 0.006,
+          "dx_max": 0.6,
+          "gap_x": 0.001
+        },
+        "margin": {
+          "left": 0.04
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "zero_tax",
+      "label": "ZeroTax",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^Zero$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "row_tol": 0.006,
+          "dx_max": 0.6,
+          "gap_x": 0.001
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "income_tax",
+      "label": "income_tax",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^PPH$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "row_tol": 0.006,
+          "dx_max": 0.6,
+          "gap_x": 0.001
+        }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "grand_total",
+      "label": "grand_total",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^Amount$"
+          ],
+          "flags": {
+            "ignore_case": true
+          },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "left_then_rows",
+          "start_edge": "right",
+          "rows": 0,
+          "row_tol": 0.006,
+          "dx_max": 0.6,
+          "gap_x": 0.001
+        },
+        "margin": {
+          "right": 0.22
+        }
+      },
+      "keep": "all"
+    }
+  ]
+}

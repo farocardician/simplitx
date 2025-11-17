@@ -11,14 +11,19 @@ interface Job {
   completedAt: string | null;
   error: { code: string; message: string } | null;
   canDownload: boolean;
+  hasArtifacts: boolean;
 }
 
 export function JobList({ 
   jobs, 
-  onDownload 
+  onDownload,
+  onDownloadArtifact,
+  onDelete
 }: { 
   jobs: Job[]; 
   onDownload: (id: string) => void;
+  onDownloadArtifact: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -51,14 +56,7 @@ export function JobList({
               <StatusBadge status={job.status} />
               
               {/* Actions */}
-              <div className="flex gap-2">
-                <button
-                  disabled={true}
-                  className="px-3 py-1 text-sm border rounded opacity-50 cursor-not-allowed"
-                >
-                  Review
-                </button>
-                
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => onDownload(job.id)}
                   disabled={!job.canDownload}
@@ -69,7 +67,27 @@ export function JobList({
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
                   `}
                 >
-                  Download
+                  Download XML
+                </button>
+                
+                <button
+                  onClick={() => onDownloadArtifact(job.id)}
+                  disabled={!job.hasArtifacts}
+                  className={`
+                    px-3 py-1 text-sm rounded
+                    ${job.hasArtifacts 
+                      ? 'bg-green-500 text-white hover:bg-green-600' 
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
+                  `}
+                >
+                  Download Artifact
+                </button>
+                
+                <button
+                  onClick={() => onDelete(job.id)}
+                  className="px-3 py-1 text-sm rounded bg-red-500 text-white hover:bg-red-600"
+                >
+                  Delete
                 </button>
               </div>
             </div>

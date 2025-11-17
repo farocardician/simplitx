@@ -1,0 +1,127 @@
+{
+  "client": "kass",
+  "variant": 3,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PAID Commercial Invoice TI No.# TI00346 PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, Balance Due JL. JENDERAL SUDIRMAN KAV. 1, IDR0 JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000 Invoice Date : 04 Sep 2025 Bill To Terms : Due on Receipt PT PRIMA KARYA BERJAYA Rukan Taman Meruya Blok M No.63, RT.4/RW.2, Meruya Utara, Kec. Due Date : 04 Sep 2025 Kembangan, Jakarta 11620 Indonesia Our Ref : T4598ID & T4599ID Subject : TM Filing - \"NOBULE\" & \"OMNI-BAT\" in Class 5"
+        },
+        {
+          "key": "table",
+          "value": "# Item & Description Qty Rate Amount 1 Filing of Trademark Application 2 1,350,000 2,700,000 Professional fees in reviewing your instructions in preparing and filing the trademark application; reviewing, reporting and forwarding the filing particulars to you; docketing your file for future action and general care rendered on this matter. 2 Reimbursement - Official Fees 2 1,800,000 3,600,000 3 Photocopies, postage, facsimile, transportations & etc. 2 150,000 300,000"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total (IDR) 6,600,000 Tax Base VAT (IDR) 2,750,000 VAT (12%) 330,000 Zero TAX (0%) 0 PPH 23 (2%) (-) 60,000 Total Net Amount (IDR) IDR6,870,000 Payment Made (-) 6,870,000 Balance Due IDR0"
+        },
+        {
+          "key": "seller",
+          "value": "PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, JL. JENDERAL SUDIRMAN KAV. 1, JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Bill To PT PRIMA KARYA BERJAYA"
+        },
+        {
+          "key": "invoice_number",
+          "value": "TI No.# TI00346"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Invoice Date : 04 Sep 2025"
+        },
+        {
+          "key": "currency",
+          "value": "Balance Due IDR0"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total (IDR) 6,600,000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base VAT (IDR) 2,750,000"
+        },
+        {
+          "key": "tax",
+          "value": "VAT (12%) 330,000"
+        },
+        {
+          "key": "zero_tax",
+          "value": "Zero TAX (0%) 0"
+        },
+        {
+          "key": "income_tax",
+          "value": "PPH 23 (2%) (-) 60,000"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total Net Amount (IDR) IDR6,870,000"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PAID Commercial Invoice TI No.# TI00346 PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, Balance Due JL. JENDERAL SUDIRMAN KAV. 1, IDR0 JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000 Invoice Date : 04 Sep 2025 Bill To Terms : Due on Receipt PT PRIMA KARYA BERJAYA Rukan Taman Meruya Blok M No.63, RT.4/RW.2, Meruya Utara, Kec. Due Date : 04 Sep 2025 Kembangan, Jakarta 11620 Indonesia Our Ref : T4598ID & T4599ID Subject : TM Filing - \"NOBULE\" & \"OMNI-BAT\" in Class 5"
+        },
+        {
+          "key": "table",
+          "value": "# Item & Description Qty Rate Amount 1 Filing of Trademark Application 2 1,350,000 2,700,000 Professional fees in reviewing your instructions in preparing and filing the trademark application; reviewing, reporting and forwarding the filing particulars to you; docketing your file for future action and general care rendered on this matter. 2 Reimbursement - Official Fees 2 1,800,000 3,600,000 3 Photocopies, postage, facsimile, transportations & etc. 2 150,000 300,000"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total (IDR) 6,600,000 Tax Base VAT (IDR) 2,750,000 VAT (12%) 330,000 Zero TAX (0%) 0 PPH 23 (2%) (-) 60,000 Total Net Amount (IDR) IDR6,870,000 Payment Made (-) 6,870,000 Balance Due IDR0"
+        },
+        {
+          "key": "seller",
+          "value": "PT KASS INDONESIA IP SERVICES 24TH FL. WISMA 46, JL. JENDERAL SUDIRMAN KAV. 1, JAKARTA 10220 INDONESIA COMPANY ID: 9120006120582 NPWP: 31.183.836.1-021.000"
+        },
+        {
+          "key": "buyer_name",
+          "value": "Bill To PT PRIMA KARYA BERJAYA"
+        },
+        {
+          "key": "invoice_number",
+          "value": "TI No.# TI00346"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Invoice Date : 04 Sep 2025"
+        },
+        {
+          "key": "currency",
+          "value": "Balance Due IDR0"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total (IDR) 6,600,000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base VAT (IDR) 2,750,000"
+        },
+        {
+          "key": "tax",
+          "value": "VAT (12%) 330,000"
+        },
+        {
+          "key": "zero_tax",
+          "value": "Zero TAX (0%) 0"
+        },
+        {
+          "key": "income_tax",
+          "value": "PPH 23 (2%) (-) 60,000"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total Net Amount (IDR) IDR6,870,000"
+        }
+      ]
+    }
+  }
+}

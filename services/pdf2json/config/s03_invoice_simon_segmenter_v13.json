@@ -1,0 +1,48 @@
+{
+  "name": "Simon Invoice Segmenter Config V13a (Total tuned)",
+  "version": "3.3",
+  "coords": { "normalized": true, "y_origin": "top", "precision": 6 },
+  "defaults": { "min_height": 0.02 },
+  "regions": [
+    {
+      "id": "total",
+      "on_pages": "all",
+      "keep": "first",
+      "only_if_contains": ["TOTAL", "VAT", "GRAND"],
+      "detect": {
+        "by": "anchors",
+        "anchor_scope": "document",
+        "max_page_gap": 1,
+        "value_part_policy": "end",
+        "canonical_bbox": "union",
+        "x_policy": "full",
+        "start_rows_above": 1,
+        "start_rows_below": 2,
+        "end_rows_above": 0,
+        "end_rows_below": 0,
+        "row_tol": 0.008,
+        "row_safety": 0.003,
+        "margin": { "top": 0.060, "right": 0.000, "bottom": 0.010, "left": 0.000 },
+        "start_anchor": {
+          "patterns": [
+            "^TOTAL$",
+            "Total\\s*tax\\s*based",
+            "amount/12\\*11\\):"
+          ],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "bottommost"
+        },
+        "end_anchor": {
+          "patterns": [
+            "^GRAND$"
+          ],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        }
+      },
+      "fallbacks": [
+        { "by": "y_cutoff", "edge": "bottom", "y": 0.70 }
+      ]
+    }
+  ]
+}

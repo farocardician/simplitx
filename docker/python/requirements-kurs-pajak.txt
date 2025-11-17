@@ -1,0 +1,12 @@
+# Runtime dependencies for the Kurs Pajak service
+beautifulsoup4>=4.12
+lxml>=4.9
+sqlalchemy>=2.0
+psycopg[binary]>=3.1
+cryptography>=41.0
+dateparser>=1.2
+typer[all]>=0.9
+structlog>=23.2
+tzdata>=2023.3
+boto3>=1.28
+google-cloud-storage>=2.14

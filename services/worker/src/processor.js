@@ -22,18 +22,33 @@ async function processJob(job) {
     }
     
     // Call gateway
-    const xmlContent = await callGateway(pdfPath, job.mapping);
+    // job.mapping stores the selected PDF template (frontend passes it as 'template')
+    const xmlContent = await callGateway(pdfPath, job.mapping, job.id);
     
     // Save XML result
     const resultPath = `results/${job.id}.xml`;
     await saveResult(resultPath, xmlContent);
     
+    // Fetch and save artifacts
+    let artifactPath = null;
+    try {
+      const artifactZip = await fetchArtifacts(pdfPath, job.mapping, job.id);
+      artifactPath = `results/${job.id}-artifacts.zip`;
+      await saveResult(artifactPath, artifactZip);
+      logger.info(`Job ${job.id} artifacts saved to ${artifactPath}`);
+    } catch (artifactError) {
+      logger.warn(`Failed to fetch artifacts for job ${job.id}:`, artifactError);
+    }
+    
     // Update job as complete
-    await prisma.job.update({
+    // NOTE: artifactPath is intentionally not persisted from worker.
+// Persist via web API or update worker Prisma schema when ready.
+await prisma.job.update({
       where: { id: job.id },
       data: {
         status: 'complete',
         resultPath,
+        artifactPath,
         completedAt: new Date(),
         leasedBy: null,
         leaseExpiresAt: null
@@ -47,13 +62,19 @@ async function processJob(job) {
   }
 }
 
-async function callGateway(pdfPath, mapping) {
+async function callGateway(pdfPath, template, jobId) {
   const form = new FormData();
+  // Use job ID as filename so it propagates through the pipeline as doc_id
   form.append('file', createReadStream(pdfPath), {
-    filename: 'document.pdf',
+    filename: `${jobId}.pdf`,
     contentType: 'application/pdf'
   });
-  form.append('mapping', `${mapping}.json`);
+  // PDF → JSON should use the selected template (forwarded as 'template')
+  if (template) {
+    form.append('template', template);
+  }
+  // JSON → XML uses fixed mapping (do not change XML flow)
+  form.append('mapping', `pt_simon_invoice_v1.json`);
   form.append('pretty', '1');
   
   const response = await axios.post(`${GATEWAY_URL}/process`, form, {
@@ -87,9 +108,58 @@ async function callGateway(pdfPath, mapping) {
   throw new GatewayError(error.code, error.message, response.status);
 }
 
+async function fetchArtifacts(pdfPath, template, jobId) {
+  const form = new FormData();
+  // Use job ID as filename so it propagates through the pipeline as doc_id
+  form.append('file', createReadStream(pdfPath), {
+    filename: `${jobId}.pdf`,
+    contentType: 'application/pdf'
+  });
+  if (template) {
+    form.append('template', template);
+  }
+  
+  const response = await axios.post(`${GATEWAY_URL}/process-artifacts`, form, {
+    headers: {
+      ...form.getHeaders()
+    },
+    timeout: GATEWAY_TIMEOUT,
+    maxContentLength: 100 * 1024 * 1024, // 100MB
+    responseType: 'arraybuffer', // Get binary data
+    validateStatus: null // Handle all status codes
+  });
+  
+  if (response.status === 200) {
+    return Buffer.from(response.data);
+  }
+  
+  // Map gateway errors to our error codes
+  const errorMap = {
+    400: { code: 'GW_4XX', message: 'Invalid request to gateway artifacts' },
+    413: { code: 'TOO_LARGE', message: 'File exceeds gateway limit' },
+    415: { code: 'GW_4XX', message: 'Unsupported media type for artifacts' },
+    502: { code: 'GW_5XX', message: 'Gateway artifacts processing error' }
+  };
+  
+  const error = errorMap[response.status] || {
+    code: 'GW_5XX',
+    message: `Gateway artifacts returned status ${response.status}`
+  };
+  
+  throw new GatewayError(error.code, error.message, response.status);
+}
+
 async function saveResult(path, content) {
   const tempPath = `${path}.tmp`;
-  await fs.writeFile(tempPath, content, 'utf-8');
+  
+  if (Buffer.isBuffer(content)) {
+    // Binary content (ZIP files)
+    await fs.writeFile(tempPath, content);
+  } else {
+    // Text content (XML files)
+    await fs.writeFile(tempPath, content, 'utf-8');
+  }
+  
   await fs.rename(tempPath, path); // Atomic write
 }
 

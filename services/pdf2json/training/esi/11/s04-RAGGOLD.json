@@ -1,0 +1,43 @@
+{
+  "profile": "esi",
+  "source": {
+    "s02": "services/pdf2json/results/esi/11/s02.json",
+    "s03": "services/pdf2json/results/esi/11/s03.json",
+    "vendor_config": "services/pdf2json/config/s04_invoice_esi_rag_v1.json"
+  },
+  "page": 1,
+
+  "header_fields": {
+    "invoice_number": "INV/001/0125",
+    "invoice_date": "2025-01-08",
+    "buyer_name": "PT Andalan Arthalestari"
+  },
+
+  "rag_table_rows": [
+    {
+      "cells": {
+        "no": 1,
+        "article_no": "BCA-CMA",
+        "description": "Teaching Factory BCA Cash Management Academy",
+        "qty": 5,
+        "uom": "PAX",
+        "unit_price": 3500000.00,
+        "total_price": 17500000.00
+      },
+      "currency": "IDR"
+    }
+  ],
+
+  "rag_total_fields": {
+    "currency": "IDR",
+    "subtotal": 17500000.00,
+    "vat_base": 16041667.00,
+    "vat": 1925000.00,
+    "grand_total": 19425000.00
+  },
+
+  "stats": {
+    "table_rows": 1,
+    "totals_found": 4
+  }
+}

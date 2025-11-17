@@ -1,0 +1,284 @@
+{
+  "name": "Rittal Invoice Segmenter Config V1",
+  "version": "3.0",
+  "coords": { "normalized": true, "y_origin": "top", "precision": 6 },
+  "defaults": {
+    "min_height": 0.02,
+    "header_detection": {
+      "sentinels": [
+        "INVOICE",
+        "Number.*Date",
+        "To\\s*:",
+        "PT\\.?\\s*Rittal"
+      ],
+      "ratio_top_fallback": 0.15,
+      "margin_px": 0.01
+    },
+    "table_header_detection": {
+      "patterns": [
+        "Article\\s+Number",
+        "Item\\s+Name.*Price"
+      ],
+      "search_band_ratio": 0.15
+    },
+    "row_patterns": [
+      "\\d{7}",
+      "\\d+.*\\d+[.,]\\d+"
+    ],
+    "numeric_locale": {
+      "thousands": ",",
+      "decimal": "."
+    },
+    "drop_page_markers": true,
+    "page_marker_patterns": [
+      "halaman\\s+\\d+\\s+(dari|of)\\s+\\d+"
+    ],
+    "page_marker_y_band": [0.85, 1.0]
+  },
+  "regions": [
+    {
+      "id": "header",
+      "on_pages": "first",
+      "keep": "first",
+      "only_if_contains": ["INVOICE", "RITTAL"],
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["^PT\\.?\\s*Rittal"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first"
+        },
+        "end_anchor": {
+          "patterns": ["Indonesian Rupiah"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first"
+        },
+        "margin": { "top": 0, "right": 1, "bottom": 0.01, "left": 1.0 }
+      },
+      "fallbacks": [
+        { "by": "y_cutoff", "edge": "top", "y": 0.305 },
+        { "by": "fixed_box", "bbox": [0.03, 0.04, 0.90, 0.31] }
+      ]
+    },
+    {
+      "id": "seller",
+      "inside": "@header",
+      "on_pages": "first",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^PT\\.?\\s*RITTAL$", "^PT\\.$"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "below_rows",
+          "rows": 5,
+          "pad_left": 0.05,
+          "pad_right": 0.26
+        }
+      },
+      "fallbacks": [
+        { "by": "fixed_box", "bbox": [0.33, 0.045, 0.66, 0.128] }
+      ]
+    },
+    {
+      "id": "buyer_name",
+      "inside": "@header",
+      "on_pages": "first",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^To$"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "leftmost"
+        },
+        "capture_window": {
+          "mode": "below_rows",
+          "rows": 1,
+          "pad_left": 0.02,
+          "pad_right": 0.36
+        }
+      },
+      "fallbacks": [
+        { "by": "fixed_box", "bbox": [0.05, 0.17, 0.40, 0.235] }
+      ]
+    },
+    {
+      "id": "invoice_date",
+      "inside": "@header",
+      "on_pages": "first",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Date$"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "below_rows",
+          "rows": 1,
+          "pad_left": 0.02,
+          "pad_right": 0.14
+        }
+      },
+      "fallbacks": [
+        { "by": "fixed_box", "bbox": [0.45, 0.168, 0.63, 0.300] }
+      ]
+    },
+    {
+      "id": "invoice_number",
+      "inside": "@header",
+      "on_pages": "first",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Number$"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "below_rows",
+          "rows": 1,
+          "pad_left": 0.04,
+          "pad_right": 0.09
+        }
+      },
+      "fallbacks": [
+        { "by": "fixed_box", "bbox": [0.70, 0.168, 0.84, 0.300] }
+      ]
+    },
+    {
+      "id": "currency",
+      "inside": "@header",
+      "on_pages": "first",
+      "keep": "first",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Currency$"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "below_rows",
+          "rows": 1,
+          "pad_left": 0.04,
+          "pad_right": 0.09
+        }
+      },
+      "fallbacks": [
+        { "by": "fixed_box", "bbox": [0.70, 0.168, 0.84, 0.300] }
+      ]
+    },
+    {
+      "id": "table",
+      "on_pages": "all",
+      "detect": {
+        "by": "line_anchors",
+        "anchor_scope": "document",
+        "skip_page_headers": true,
+        "use_per_page_header_floors": true,
+        "max_page_gap": null,
+        "value_part_policy": "last_numeric",
+        "canonical_bbox": "value",
+        "drop_empty_parts": true,
+        "start_anchor": {
+          "patterns": ["Article Number"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first"
+        },
+        "end_anchor": {
+          "patterns": ["Says :"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first"
+        },
+        "margin": { "top": 0.02, "right": 0.1, "bottom": -0.03, "left": 0.1}
+      }
+    },    
+    {
+      "id": "total",
+      "on_pages": "last",
+      "keep": "first",
+      "only_if_contains": ["Sub", "VAT", "Total"],
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["^Sub\\s+Total"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first"
+        },
+        "end_anchor": {
+          "patterns": ["^Total\\b"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "last"
+        },
+        "margin": { "top": 0, "right": 0.1, "bottom": 0.01, "left": -0.55 }
+      }
+    },
+    {
+      "id": "subtotal",
+      "inside": "@total",
+      "on_pages": "last",
+      "keep": "first",
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["^Sub\\s+Total"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first"
+        },
+        "margin": { "top": 0.01, "right": 0.1, "bottom": -0.01, "left": 0.05 }
+      }
+    },
+    {
+      "id": "tax_based",
+      "inside": "@total",
+      "on_pages": "last",
+      "keep": "first",
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["^Tax\\s+Based"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first"
+        },
+        "margin": { "top": 0, "right": 0.1, "bottom": 0, "left": 0.05 }
+      }
+    },
+    {
+      "id": "vat",
+      "inside": "@total",
+      "on_pages": "last",
+      "keep": "first",
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["^VAT"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first"
+        },
+        "margin": { "top": 0, "right": 0.1, "bottom": 0, "left": 0.05 }
+      }
+    },
+    {
+      "id": "grand_total",
+      "inside": "@total",
+      "on_pages": "last",
+      "keep": "first",
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["^Total\\b"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "last"
+        },
+        "margin": { "top": 0, "right": 0.1, "bottom": 0, "left": 0.05 }
+      }
+    }
+  ]
+}

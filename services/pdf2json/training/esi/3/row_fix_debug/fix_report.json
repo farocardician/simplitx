@@ -1,0 +1,26 @@
+[
+  {
+    "page": 1,
+    "header_fingerprint": "col1|no|no|desc|col5|col6|unitprice|col8|col9",
+    "arithmetic": {
+      "rows": [
+        {
+          "row": 0,
+          "status": "skipped"
+        },
+        {
+          "row": 1,
+          "status": "skipped"
+        }
+      ],
+      "sum_line_totals": "0"
+    },
+    "subtotal": {
+      "status": "mismatch",
+      "printed": "25770081",
+      "sum": "0",
+      "diff": "25770081",
+      "tolerance": "77310.243"
+    }
+  }
+]

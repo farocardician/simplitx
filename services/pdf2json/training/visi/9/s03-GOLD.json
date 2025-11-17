@@ -1,0 +1,103 @@
+{
+  "client": "visi",
+  "variant": 9,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE PT.CaterpillarFinanceIndonesia Invoiceno. :9058006524 BeltwayOfficeParkBuildingCLevel3 BillingDate :August25,2025 , 12540,JakartaSelatan,DKIJakarta Indonesia Attention:Tel:"
+        },
+        {
+          "key": "total",
+          "value": "SubTotal 60.000.000 TaxBase 55.000.000 PPN-VAT12% 6.600.000 TotalAmount 66.600.000"
+        },
+        {
+          "key": "seller",
+          "value": "Pleasekindlymakethepaymenttoourbankaccountasbelow: BankAccountName : PT.VISIGLOBALINDODATAUTAMA BankName : PT.BankPermataTbk BankAddress : ArionBuilding,JalanPemudaKav.17 JakartaTimur–13220 AccountNo.701275586 SWIFTCode-BBBAIDJA"
+        },
+        {
+          "key": "currency",
+          "value": "Amount(IDR)"
+        },
+        {
+          "key": "invoice_number",
+          "value": ":9058006524 :August25,2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": ":August25,2025"
+        },
+        {
+          "key": "buyer",
+          "value": "PT.CaterpillarFinanceIndonesia BeltwayOfficeParkBuildingCLevel3 , 12540,JakartaSelatan,DKIJakarta Indonesia Attention:Tel:"
+        },
+        {
+          "key": "subtotal",
+          "value": "SubTotal 60.000.000"
+        },
+        {
+          "key": "tax_base",
+          "value": "TaxBase 55.000.000"
+        },
+        {
+          "key": "vat",
+          "value": "PPN-VAT12% 6.600.000"
+        },
+        {
+          "key": "total_amount",
+          "value": "TotalAmount 66.600.000"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE PT. Caterpillar Finance Indonesia Invoice no. :9058006524 Beltway Office Park Building C Level 3 Billing Date :August 25 , 2025 , 12540,Jakarta Selatan, DKI Jakarta Indonesia Attention : Tel:"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total 60.000.000 Tax Base 55.000.000 PPN - VAT 12% 6.600.000 Total Amount 66.600.000"
+        },
+        {
+          "key": "seller",
+          "value": "Please kindly make the payment to our bank account as below: Bank Account Name : PT. VISI GLOBALINDO DATA UTAMA Bank Name : PT. Bank Permata Tbk Bank Address : Arion Building,Jalan Pemuda Kav.17 Jakarta Timur – 13220 Account No. 701275586 SWIFT Code - BBBAIDJA"
+        },
+        {
+          "key": "currency",
+          "value": "Amount(IDR)"
+        },
+        {
+          "key": "invoice_number",
+          "value": ":9058006524 :August 25 , 2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": ":August 25 , 2025"
+        },
+        {
+          "key": "buyer",
+          "value": "PT. Caterpillar Finance Indonesia Beltway Office Park Building C Level 3 , 12540,Jakarta Selatan, DKI Jakarta Indonesia Attention : Tel:"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total 60.000.000"
+        },
+        {
+          "key": "tax_base",
+          "value": "Tax Base 55.000.000"
+        },
+        {
+          "key": "vat",
+          "value": "PPN - VAT 12% 6.600.000"
+        },
+        {
+          "key": "total_amount",
+          "value": "Total Amount 66.600.000"
+        }
+      ]
+    }
+  }
+}

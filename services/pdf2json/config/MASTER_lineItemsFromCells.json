@@ -1,0 +1,96 @@
+{
+  "name": "MASTER_LineItemsFromCells_v3",
+
+  "fields": {
+    "<logical_name>": {
+      "header_synonyms": [
+        "regex",
+        "regex"
+      ],
+      "position_hint": {
+        "x0": "number",
+        "x1": "number"
+      },
+      "parsers": [
+        "parse_int",
+        "parse_number",
+        "parse_money",
+        "parse_percent",
+        "split_qty_uom",
+        "strip_nonprint",
+        "normalize_sku"
+      ],
+      "required": "boolean",
+      "merge": "boolean"
+    }
+  },
+
+  "uom": {
+    "precedence": [
+      "row",
+      "header_unit_suffix",
+      "doc",
+      "default"
+    ],
+    "header_suffix_patterns": [
+      "regex-with-named-group-(?<uom>[A-Z]+)"
+    ],
+    "doc_patterns": [
+      "regex-with-named-group-(?<uom>[A-Z]+)"
+    ]
+  },
+
+  "discount": {
+    "precedence": [
+      "row",
+      "doc_percent",
+      "doc_amount"
+    ],
+    "doc_percent_patterns": [
+      "regex-with-named-group-(?<pct>number)%"
+    ],
+    "doc_amount_patterns": [
+      "regex-with-named-group-(?<amt>money)"
+    ],
+    "price_already_discounted": "boolean",
+    "applies_before_tax": "boolean",
+    "prorate": {
+      "base": [
+        "pre_discount_amount",
+        "qty"
+      ]
+    },
+    "rounding": [
+      "per_line"
+    ],
+    "reconcile": [
+      "largest_line",
+      "first_line",
+      "last_line"
+    ]
+  },
+
+  "currency_decimals": "number",
+
+  "tolerances": {
+    "amount_from_qty_price": {
+      "abs": "number",
+      "rel": "number"
+    }
+  },
+
+  "defaults": {
+    "discount_percent": "number",
+    "discount_amount": "number",
+    "uom": [
+      "string",
+      null
+    ]
+  },
+
+  "row_filters": [
+    "regex",
+    "regex"
+  ]
+}
+

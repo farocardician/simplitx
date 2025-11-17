@@ -1,0 +1,55 @@
+{
+  "profile": "esi",
+  "source": {
+    "s02": "services/pdf2json/results/esi/1/s02.json",
+    "s03": "services/pdf2json/results/esi/1/s03.json",
+    "vendor_config": "services/pdf2json/config/s04_invoice_esi_rag_v1.json"
+  },
+  "page": 1,
+
+  "header_fields": {
+    "invoice_number": "INV/076/0825",
+    "invoice_date": "2025-08-29",
+    "buyer_name": "Seax Malaysia"
+  },
+
+  "rag_table_rows": [
+    {
+      "cells": {
+        "no": 1,
+        "article_no": "NDCA-DCDA",
+        "description": "DISCOUNT PRICE [Public Training] Data Center Design Awareness from DCD Academy",
+        "qty": 1,
+        "uom": "PAX",
+        "unit_price": 19573311.00,
+        "total_price": 19573311.00
+      },
+      "currency": "IDR"
+    },
+    {
+      "cells": {
+        "no": 2,
+        "article_no": "NDCA-ES",
+        "description": "DISCOUNT PRICE [Public Training] Energy & Sustainability from DCD Academy",
+        "qty": 1,
+        "uom": "PAX",
+        "unit_price": 19573311.00,
+        "total_price": 19573311.00
+      },
+      "currency": "IDR"
+    }
+  ],
+
+  "rag_total_fields": {
+    "currency": "IDR",
+    "subtotal": 39146622.00,
+    "vat_base": 35884404.00,
+    "vat": 4306128.00,
+    "grand_total": 43452750.00
+  },
+
+  "stats": {
+    "table_rows": 2,
+    "totals_found": 4
+  }
+}

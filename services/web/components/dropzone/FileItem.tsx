@@ -10,7 +10,8 @@ export function FileItem({ file, onRemove, onCancel }: FileItemProps) {
   const getStatusColor = () => {
     switch (file.status) {
       case 'completed': return '#22c55e'
-      case 'error': return '#ef4444'  
+      case 'deduplicated': return '#3b82f6'
+      case 'error': return '#ef4444'
       case 'cancelled': return '#6b7280'
       case 'uploading': return '#3b82f6'
       default: return '#6b7280'
@@ -20,6 +21,10 @@ export function FileItem({ file, onRemove, onCancel }: FileItemProps) {
   const getStatusText = () => {
     switch (file.status) {
       case 'completed': return 'Completed'
+      case 'deduplicated':
+        return file.duplicateOf
+          ? `Identical to ${file.duplicateOf.filename}`
+          : 'Duplicate (using existing job)'
       case 'error': return file.error || 'Upload failed'
       case 'cancelled': return 'Cancelled'
       case 'uploading': return `Uploading... ${Math.round(file.progress)}%`
@@ -28,8 +33,33 @@ export function FileItem({ file, onRemove, onCancel }: FileItemProps) {
     }
   }
 
+  const getStatusIcon = () => {
+    switch (file.status) {
+      case 'completed':
+        return (
+          <svg className="status-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+        )
+      case 'deduplicated':
+        return (
+          <svg className="status-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+          </svg>
+        )
+      case 'error':
+        return (
+          <svg className="status-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+        )
+      default:
+        return null
+    }
+  }
+
   const canCancel = file.status === 'uploading' || file.status === 'pending'
-  const canRemove = file.status === 'completed' || file.status === 'error' || file.status === 'cancelled'
+  const canRemove = file.status === 'completed' || file.status === 'error' || file.status === 'cancelled' || file.status === 'deduplicated'
 
   return (
     <div className="file-item" role="listitem">
@@ -39,11 +69,12 @@ export function FileItem({ file, onRemove, onCancel }: FileItemProps) {
         </div>
         <div className="file-details">
           <span className="file-size">{file.sizeFormatted}</span>
-          <span 
-            className="file-status" 
+          <span
+            className="file-status"
             style={{ color: getStatusColor() }}
             aria-live="polite"
           >
+            {getStatusIcon()}
             {getStatusText()}
           </span>
         </div>
@@ -130,6 +161,15 @@ export function FileItem({ file, onRemove, onCancel }: FileItemProps) {
 
         .file-status {
           font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .status-icon {
+          width: 16px;
+          height: 16px;
+          flex-shrink: 0;
         }
 
         .progress-container {

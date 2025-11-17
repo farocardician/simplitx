@@ -1,0 +1,109 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      target: development
+    volumes:
+      - ./services/web:/app
+      - web_node_modules:/app/node_modules
+      - web_next:/app/.next
+      - ./services/shared:/shared
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - KURS_PAJAK_API_BASE=http://kurs_pajak:8000
+    command: npm run dev
+
+  worker:
+    build:
+      context: ./services/worker
+      target: development
+    volumes:
+      - ./services/worker:/app
+      - worker_node_modules:/app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
+  pdf2json:
+    build:
+      context: .
+      dockerfile: docker/worker.Dockerfile
+      target: development
+    volumes:
+      - ./services/pdf2json:/app
+      - ./services/config:/config
+      - ./scripts:/scripts
+      - ./pdf:/pdf
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - CONFIG_DIR=/config
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  json2xml:
+    build:
+      context: .
+      dockerfile: docker/json2xml.Dockerfile
+      target: development
+    volumes:
+      - ./services/json2xml:/app
+      - ./services/config:/config
+      - ./services/json2xml/mappings:/app/mappings
+      - ./services/shared:/shared
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - CONFIG_DIR=/config
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/gateway.Dockerfile
+      target: development
+    volumes:
+      - ./services/gateway:/app
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  reranker:
+    build:
+      context: .
+      dockerfile: docker/reranker.Dockerfile
+      target: development
+    volumes:
+      - ./services/reranker:/app
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - RERANKER_MODEL=bge-reranker-v2-m3
+      - RERANKER_DEVICE=cpu
+    ports:
+      - "9000:8000"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  kurs_pajak:
+    build:
+      context: .
+      dockerfile: docker/kurs_pajak.Dockerfile
+      target: development
+    volumes:
+      - ./services/kurs_pajak:/workspace
+    environment:
+      - PYTHONPATH=/workspace
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
+      - BACKUP_ENABLED=false
+    ports:
+      - "8010:8000"
+    command: python -m kurs_pajak.cli service --host 0.0.0.0 --port 8000
+
+volumes:
+  web_node_modules:
+  web_next:
+  worker_node_modules:

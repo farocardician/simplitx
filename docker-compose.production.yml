@@ -1,0 +1,77 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      target: production
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./services/worker
+      target: production
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+
+  pdf2json:
+    build:
+      context: .
+      dockerfile: docker/worker.Dockerfile
+      target: production
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
+    restart: unless-stopped
+
+  json2xml:
+    build:
+      context: .
+      dockerfile: docker/json2xml.Dockerfile
+      target: production
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/gateway.Dockerfile
+      target: production
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  reranker:
+    build:
+      context: .
+      dockerfile: docker/reranker.Dockerfile
+      target: production
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - RERANKER_MODEL=bge-reranker-v2-m3
+      - RERANKER_DEVICE=cpu
+    ports:
+      - "9000:8000"
+    restart: unless-stopped
+
+  kurs_pajak:
+    build:
+      context: .
+      dockerfile: docker/kurs_pajak.Dockerfile
+      target: production
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
+      - BACKUP_TARGET_URL=${BACKUP_TARGET_URL}
+      - BACKUP_ENCRYPTION_KEY=${BACKUP_ENCRYPTION_KEY}
+      - SERVICE_POLL_INTERVAL_SECONDS=86400
+      - SERVICE_LOOKBACK_WEEKS=12
+    restart: unless-stopped
+    ports:
+      - "8010:8000"

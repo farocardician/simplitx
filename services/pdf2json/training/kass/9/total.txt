@@ -1,0 +1,8 @@
+Sub Total (IDR) 5,050,000
+Tax Base VAT (IDR) 3,208,333
+VAT (12%) 385,000
+Zero TAX (0%) 0
+PPH 23 (2%) (-) 70,000
+Total Net Amount (IDR) IDR5,365,000
+Payment Made (-) 5,365,000
+Balance Due IDR0

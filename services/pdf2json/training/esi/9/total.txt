@@ -1,0 +1,8 @@
+Sub total
+Rp 5.000.000,00
+Tax Based VAT
+Rp 4,583,333.00
+VAT
+Rp 550.000,00
+Grand Total
+Rp 5.550.000,00

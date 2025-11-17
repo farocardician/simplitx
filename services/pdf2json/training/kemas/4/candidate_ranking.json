@@ -1,0 +1,80 @@
+[
+  {
+    "page": 1,
+    "items_region": {
+      "x0": 0.0,
+      "x1": 1.0,
+      "y0": 0.19081111903064854,
+      "y1": 0.25081111903064857,
+      "start_anchor": {
+        "text": "Harga QTY NO DESCRIPTION AMOUNT",
+        "y0": 0.19081111903064854,
+        "y1": 0.202928011404134,
+        "hits": 3
+      },
+      "end_anchor": {
+        "text": "TOTAL 1.621.621.622",
+        "y0": 0.248740199572345,
+        "y1": 0.2588376098835828,
+        "hits": 1
+      }
+    },
+    "candidates": [
+      {
+        "index": 0,
+        "source": "roi",
+        "flavor": "lattice",
+        "bbox": {
+          "x0": 0.0,
+          "y0": 0.1907613344739093,
+          "x1": 1.0,
+          "y1": 0.2506415739948674
+        },
+        "features": {
+          "header_hits": 3.0,
+          "overlap": 0.9991685979024548,
+          "numeric_right": 0.0,
+          "rows": 1.0,
+          "totals_below": 1.0
+        },
+        "score": 13.197921494756137,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 1,
+        "header_hits": 3,
+        "selected": false,
+        "stop_rule": "end_anchor",
+        "stop_at": 2,
+        "clip_y": 0.24683944680641776
+      },
+      {
+        "index": 1,
+        "source": "roi",
+        "flavor": "stream",
+        "bbox": {
+          "x0": 0.08938172043010753,
+          "y0": 0.1908111190306485,
+          "x1": 0.9031854838709678,
+          "y1": 0.23864278926110716
+        },
+        "features": {
+          "header_hits": 3.0,
+          "overlap": 0.9999999999999994,
+          "numeric_right": 1.0,
+          "rows": 4.0,
+          "totals_below": 1.0
+        },
+        "score": 17.599999999999998,
+        "eligible": true,
+        "header_row_index": 1,
+        "body_rows": 4,
+        "header_hits": 3,
+        "selected": true,
+        "stop_rule": "end_anchor",
+        "stop_at": 6,
+        "clip_y": 0.24369149441672608
+      }
+    ],
+    "selected_index": 1
+  }
+]

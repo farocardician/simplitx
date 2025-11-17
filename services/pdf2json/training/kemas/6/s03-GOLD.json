@@ -1,0 +1,87 @@
+{
+  "client": "kemas",
+  "variant": 6,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE TO : PT PERTAMINA TRAINING AND CONSULTING Invoice Invoice Date Number 11-Jul-25 10/INV-7/2025"
+        },
+        {
+          "key": "table",
+          "value": "Harga NO DESCRIPTION QTY AMOUNT (Rp.) 1 Pertamina Hulu Energi tgl 14 - 17 Desember 2024 1 UNT 159.523.076 159.523.076"
+        },
+        {
+          "key": "total",
+          "value": "TOTAL 159.523.076 ASF 10% 15.952.308 SUB TOTAL 175.475.384 PPn 19.302.292 SUB TOTAL 194.777.676"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice Number 10/INV-7/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Invoice Date 11-Jul-25"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT PERTAMINA TRAINING AND CONSULTING Invoice Invoice"
+        },
+        {
+          "key": "subtotal",
+          "value": "SUB TOTAL 175.475.384"
+        },
+        {
+          "key": "vat",
+          "value": "PPn 19.302.292"
+        },
+        {
+          "key": "grand_total",
+          "value": "SUB TOTAL 194.777.676"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE TO : PT PERTAMINA TRAINING AND CONSULTING Invoice Invoice Date Number 11-Jul-25 10/INV-7/2025"
+        },
+        {
+          "key": "table",
+          "value": "Harga NO DESCRIPTION QTY AMOUNT (Rp.) 1 Pertamina Hulu Energi tgl 14 - 17 Desember 2024 1 UNT 159.523.076 159.523.076"
+        },
+        {
+          "key": "total",
+          "value": "TOTAL 159.523.076 ASF 10% 15.952.308 SUB TOTAL 175.475.384 PPn 19.302.292 SUB TOTAL 194.777.676"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice Number 10/INV-7/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Invoice Date 11-Jul-25"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT PERTAMINA TRAINING AND CONSULTING Invoice Invoice"
+        },
+        {
+          "key": "subtotal",
+          "value": "SUB TOTAL 175.475.384"
+        },
+        {
+          "key": "vat",
+          "value": "PPn 19.302.292"
+        },
+        {
+          "key": "grand_total",
+          "value": "SUB TOTAL 194.777.676"
+        }
+      ]
+    }
+  }
+}

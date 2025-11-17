@@ -1,0 +1,52 @@
+{
+  "name": "Invoice KASS Camelot Grid",
+  "version": "1.0",
+  "header_aliases": {
+    "DESC": [
+      "DESCRIPTION",
+      "DESCRIPTIONOFGOODS",
+      "DESCRIPTIONOFSERVICES",
+      "PARTICULARS"
+    ],
+    "QTY": [
+      "QTY",
+      "QUANTITY",
+      "NO"
+    ],
+    "UNIT_PRICE": [
+      "UNITPRICE",
+      "PRICE",
+      "UNITPRICEIDR",
+      "PRICEIDR"
+    ],
+    "AMOUNT": [
+      "AMOUNT",
+      "LINETOTAL",
+      "TOTALAMOUNT",
+      "AMOUNTIDR",
+      "TOTAL"
+    ]
+  },
+  "totals_keywords": [
+    "SUB TOTAL",
+    "VAT",
+    "PPN",
+    "GRAND TOTAL",
+    "TOTAL"
+  ],
+  "camelot": {
+    "flavor_order": [
+      "lattice",
+      "stream"
+    ],
+    "line_scale": 40,
+    "line_scale_stream": 15,
+    "row_tol_stream": 10
+  },
+  "stop_after_totals": true,
+  "page_stop_keywords": {},
+  "page_row_limit": {},
+  "row_fix": {
+    "enabled": false
+  }
+}

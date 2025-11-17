@@ -1,0 +1,8 @@
+Sub total Rp
+39.146.622,00
+Tax Based VAT Rp
+35,884,404.00
+VAT Rp
+4.306.128,00
+Grand Total Rp
+43.452.750,00

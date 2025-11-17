@@ -1,113 +1,86 @@
-# PDF → Structured JSON Pipeline
+# PDF to JSON Processing Pipeline — Context
 
-### 1. Ingest
+## Recent Change
+- Refactor s05 to config-driven normalization; add stage5 config + common-words.json; wire CLI/processor.
 
-* Hash file, assign `doc_id`, store PDF.
+## Project Overview
+Converts PDF invoices into structured JSON using a deterministic 10‑stage pipeline. All stages produce intermediate JSON files for debugging and reproducibility. The service can run via FastAPI or a CLI.
 
-### 2. Tokenize
+## Main Entry Points
+- FastAPI service: `services/pdf2json/main.py` (endpoints: `/health`, `/process`, `/batch`)
+- Python orchestrator: `services/pdf2json/processor.py` (used by FastAPI)
+- CLI orchestrator: `services/pdf2json/cli/pdf2json.py`
 
-* Extract raw tokens (xywh, page, font flags).
-* No heavy cleanup yet.
+## Pipeline Stages
+1) `s01_tokenizer.py` — Tokenization
+- Input: PDF. Output: `tokens.json`
+- Extracts tokens with normalized [0..1] bbox; deterministic ordering (page, y, x).
 
-### 3. Light per-token normalization
+2) `s02_normalizer.py` — Token text normalization
+- Input: `tokens.json`. Output: `normalized.json`
+- Safe fixes: Unicode normalization (NFC/NFKC), NBSP→space, ligatures; preserves geometry.
 
-* Safe fixes only: NFC/NFKC, NBSP→space, ligatures, numeric decimals.
+3) `s03_segmenter.py` — Page band segmentation
+- Input: `normalized.json` (+ optional PDF).
+- Output: `segmentized.json`
+- Detects header/content/footer bands; optionally probes Camelot to refine content bbox.
 
-### 4. Anchor detection (region hints)
+4) `s04_camelot_grid_configV12.py` — Table grid detection (STRICT, config‑driven)
+- Input: PDF + `normalized.json` + `config/invoice_simon_v15.json`
+- Output: `cells.json`
+- Uses Camelot (lattice→stream) for geometry only; maps columns to families via `header_aliases`; stops at totals. Emits `header_cells[]` with `name` and body `rows[].cells[]` with `col`, `name`, `bbox`, `text`.
 
-* Detect header anchors: `NO`, `HS CODE`, `DESCRIPTION`, `QTY`, `UNIT PRICE`, `AMOUNT`.
-* Use these anchors to define **candidate bounding boxes** (per page).
-* Store region coordinates for Camelot.
+5) `s05_normalize_cells.py` — Cell text normalization (CONFIG‑DRIVEN)
+- Input: `cells.json` + `--config invoice_simon_v15.json` + `--common-words common-words.json`
+- Output: `cells_normalized.json`
+- Behavior:
+  - Text reconstruction: case‑preserving de‑spacing for words in `common/common-words.json` (e.g., "d engan" → "dengan" while keeping original casing).
+  - Column types: `stage5.column_types.by_family` (+ optional `by_position`) drive number vs integer vs text vs date handling.
+  - Number format: `stage5.number_format` (decimal, thousands, allow_parens).
+  - Dates: `stage5.date_formats` with token patterns like `YYYY-MM-DD`, `DD-MM-YYYY`, `MM/DD/YYYY`; output normalized to `YYYY-MM-DD`.
 
-### 5. Camelot (bounded to anchor regions)
+6) `s06_line_items_from_cellsV2.py` — Line item extraction (CONFIG‑ONLY)
+- Input: `cells_normalized.json` + `--config invoice_simon_v15.json`
+- Output: `items.json`
+- Maps families from header to build items: `no, hs_code, sku, code, description, qty, uom, unit_price, amount`. Derives missing economics per config.
 
-* Try **lattice** first.
-* If lattice fails, run **stream**.
-* Reject raw Camelot text → **use only grid geometry (rows, columns, bounding boxes).**
-* Score each region: numeric column purity, row/col alignment, empty-cell rate.
-* Choose highest-scoring region per page.
+7) Field extraction
+- Processor uses: `s07_extractorV2.py` (config‑driven)
+- CLI uses: `s07_extractor.py`
+- Input: `cells_normalized.json` + `items.json` (+ `--config` for V2)
+- Output: `fields.json` with header fields: invoice number/date, buyer_id, seller, buyer, currency.
 
-### 6. Fuse grid with tokens
+8) `s08_validator.py` — Arithmetic validation
+- Validates row math and computes totals. Tolerances: rows max(0.5% or 1 unit), subtotal max(0.3% or 2 units).
 
-* Snap Camelot’s column dividers to token x-clusters.
-* Snap Camelot’s row lines to token y-gaps.
-* Adjust if tokens contradict Camelot (continuation rows, merged cells).
+9) `s09_confidence.py` — Confidence scoring
+- Combines anchors/grid alignment, row pass rate, numeric purity, totals reconciliation into a 0–1 score.
 
-### 7. Refill cells from tokens
+10) `s10_parser.py` — Final assembly
+- Assembles `final.json` + `manifest.json`, keeps provenance backrefs, rounds money to 2 decimals.
 
-* Collect token centers inside each grid cell.
-* Join tokens in reading order.
-* Rebuilt cell text = **tokens only** (Camelot text ignored).
+## Data Flow & Paths
+Per run outputs:
+- CLI: `--out <dir>` creates subfolders: `tokenizer/`, `normalize/`, `segment/`, `cells/`, `items/`, `fields/`, `validate/`, `manifest/`, `final/`.
+- Processor: uses a temp directory with the same substructure, then returns the final JSON (optionally strips `_refs`).
 
-### 8. Heavy cell normalization
+## Configuration
+- Location: `services/pdf2json/config/invoice_simon_v15.json`
+- Stage 4:
+  - `header_aliases`, `totals_keywords`, `camelot` (flavor_order, line scales), `stop_after_totals`.
+- Stage 5:
+  - `stage5.column_types` (`by_family`, optional `by_position`, `date_columns`, `currency_columns`).
+  - `stage5.number_format` and `stage5.date_formats`.
+  - External: `services/pdf2json/common/common-words.json` for case‑preserving de‑spacing.
+- Stage 6:
+  - `stage6.required_families`, `index_fallback`, `row_filters`, `number_format`, `derivation`, `rounding`.
 
-* Merge wrapped lines.
-* Fix hyphen breaks.
-* Normalize numbers and dates.
-* Keep backrefs to token IDs.
+## Environment Requirements
+- Python libs: pdfplumber, camelot‑py, opencv‑python‑headless, ghostscript
+- System deps: ghostscript, poppler‑utils, tesseract‑ocr
+- Service: FastAPI via uvicorn (port 8000); Docker images provided.
 
-### 9. Field build
-
-* From normalized cells, build:
-
-  * **Header fields** (buyer\_id, invoice number, date).
-  * **Items**: `no, hs_code, sku, code, description, qty, uom, unit_price, amount`.
-
-### 10. Reconcile with soft arithmetic
-
-* Validate each row: `qty × unit_price ≈ amount`.
-* Total Quantity = sum of row Quantity.
-* Subtotal = sum of row amounts.
-* Tax base = Subtotal/12*11
-* Tax Amount = Tax Rate * Tax base
-* Grand Total = Subtotal + Tax Amount
-* Tolerances:
-  * Row: max(0.5% or 1 unit).
-  * Subtotal: max(0.3% or 2 units).
-  * Totals: within same subtotal tolerance.
-* Flag if >3× tolerance.
-
-### 11. Confidence scoring
-
-* Header anchors matched and aligned (30%).
-* Row arithmetic pass rate (30%).
-* Numeric type purity in QTY/PRICE/AMOUNT (20%).
-* Camelot grid alignment score (10%).
-* Totals reconciliation (10%).
-* Emit per-field confidence + overall (0–1).
-
-### 13. Export + lineage
-
-* Output JSON with `issues[]`, `confidence{}`, token backrefs.
-* Persist artifacts:
-  * pdf, tokens.json, camelot\_raw\.json, fused\_grid.json, cells.json, final.json, manifest.json.
-* Manifest includes `schema_version`, `pipeline_version`, and per-stage hashes.
-
-**Template-specific constants (this template only):**
-
-* **UOM default = `PCS`** if header shows `QTY` with `(PCS)` nearby.
-  Source patterns (line-break tolerant):
-
-  * `"11)QTY.\n(PCS)"` or any `QTY` header cell containing `(` `PCS` `)`.
-    Action: if an item row’s UOM is blank, set `uom = "PCS"` and add backrefs to the header tokens that yielded `(PCS)`.
-* **Currency = `IDR`** if header shows either `UNIT PRICE … IDR` or `AMOUNT … IDR`.
-  Source patterns (line-break tolerant):
-
-  * `"12)UNIT PRI\nCE \nIDR"` or `"13)AMOUNT \nIDR"` (any variant where `UNIT PRICE` or `AMOUNT` cell also contains `IDR`).
-    Action: set **parsing currency context** to `IDR` for all monetary fields; if your schema includes it, emit `invoice.currency = "IDR"`. Keep backrefs to the header tokens that yielded `IDR`.
-
-## Guardrails
-
-* **Geometry first**: Camelot grid is mandatory, guided by anchors.
-* **Text truth = tokens**. Camelot is geometry only.
-* Locale-aware numeric parsing: thousands separators, decimals, negative parentheses.
-* Continuation rows: if NO/HS empty but DESC filled → append to previous row.
-* Determinism: fixed seeds, tie-breakers, centralized rounding (2 decimals at export).
-* Failure handling:
-
-  * If subtotal missing → export items, add `ISSUE: TOTALS_MISSING`.
-  * If QTY missing but amount ÷ unit\_price exact → derive QTY, mark `DERIVED_QTY`.
-  * If all numeric fields disagree beyond tolerance → send to review.
-
-
-
+## Debugging Tips
+- If Stage 4 finds 0 rows: verify table exists, check Camelot deps, and header aliases coverage.
+- If fields missing (e.g., buyer_id): confirm extractor regex/config and parser wiring.
+- If totals flagged: inspect `validation.json` computed vs extracted; tolerances above.

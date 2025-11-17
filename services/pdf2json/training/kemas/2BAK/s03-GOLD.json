@@ -1,0 +1,87 @@
+{
+  "client": "kemas",
+  "variant": 2,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE TO : PT. Aviasi Pariwisata Indonesia Invoice Invoice Date Number 21-Apr-25 07/INV-4/2025"
+        },
+        {
+          "key": "table",
+          "value": "NO DESCRIPTION QTY Harga (Rp.) AMOUNT Pekerjaan Pembuatan Materi Promosi 1 1 UNT 1.621.621.622 Rp 1.621.621.622 Komersial, Partnership dan Marketing"
+        },
+        {
+          "key": "total",
+          "value": "TOTAL 1.621.621.622 PPn 178.378.378 SUB TOTAL 1.800.000.000 Pembayaran Termin 1 30% 540.000.000"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice Number 07/INV-4/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Date 21-Apr-25"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. Aviasi Pariwisata Indonesia Invoice Invoice"
+        },
+        {
+          "key": "subtotal",
+          "value": "TOTAL 1.621.621.622"
+        },
+        {
+          "key": "vat",
+          "value": "PPn 178.378.378"
+        },
+        {
+          "key": "grand_total",
+          "value": "SUB TOTAL 1.800.000.000"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "INVOICE TO : PT. Aviasi Pariwisata Indonesia Invoice Number 07/INV-4/2025 Invoice Date 21-Apr-25"
+        },
+        {
+          "key": "table",
+          "value": "NO DESCRIPTION QTY Harga (Rp.) AMOUNT Pekerjaan Pembuatan Materi Promosi 1 1 UNT 1.621.621.622 Rp 1.621.621.622 Komersial, Partnership dan Marketing"
+        },
+        {
+          "key": "total",
+          "value": "TOTAL 1.621.621.622 PPn 178.378.378 SUB TOTAL 1.800.000.000 Pembayaran Termin 1 30% 540.000.000"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice Number 07/INV-4/2025"
+        },
+        {
+          "key": "invoice_date",
+          "value": "Date 21-Apr-25"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. Aviasi Pariwisata Indonesia Invoice Invoice"
+        },
+        {
+          "key": "subtotal",
+          "value": "TOTAL 1.621.621.622"
+        },
+        {
+          "key": "vat",
+          "value": "PPn 178.378.378"
+        },
+        {
+          "key": "grand_total",
+          "value": "SUB TOTAL 1.800.000.000"
+        }
+      ]
+    }
+  }
+}

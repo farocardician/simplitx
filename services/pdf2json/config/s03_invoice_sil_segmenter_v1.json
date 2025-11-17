@@ -1,0 +1,272 @@
+{
+  "name": "RCS Invoice Segmenter Config V1",
+  "version": "1.0",
+  "coords": { "normalized": true, "y_origin": "top", "precision": 6 },
+  "defaults": { "min_height": 0.008 },
+  "regions": [
+    {
+      "id": "header",
+      "label": "header",
+      "detect": {
+        "by": "line_anchors",
+        "anchor_scope": "page",
+        "start_anchor": {
+          "patterns": ["^Invoice"],
+          "flags": { "normalize_space": true },
+          "select": "first"
+        },
+        "end_anchor": {
+          "patterns": ["^Your order was executed"],
+          "flags": { "normalize_space": true },
+          "select": "first"
+        },
+        "margin": { "top": 0, "right": 0.15, "bottom": -0.02, "left": 0.1 },
+        "min_height": 0.08
+      },
+      "keep": "all"
+    },
+    {
+      "id": "buyer_name",
+      "label": "buyer_name",
+      "inside": "@header",
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["^Invoice\\b"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0,
+          "row_tol": 0.006,
+          "dx_max": 0.4,
+          "gap_x": 0.0
+        },
+        "margin": { "top": 0, "right": 0, "bottom": 0, "left": 0 },
+        "min_height": 0.008
+      },
+      "fallbacks": [
+        {
+          "by": "anchors",
+          "start_anchor": {
+            "patterns": ["^Invoice$"],
+            "flags": { "ignore_case": true, "normalize_space": true },
+            "select": "first"
+          },
+          "capture_window": {
+            "mode": "right_then_rows",
+            "start_edge": "left",
+            "rows": 0,
+            "row_tol": 0.006,
+            "dx_max": 0.42,
+            "gap_x": 0.0
+          },
+          "margin": { "top": 0, "right": 0, "bottom": 0, "left": 0 },
+          "min_height": 0.008
+        }
+      ],
+      "keep": "all"
+    },
+    {
+      "id": "seller",
+      "label": "seller",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": [
+            "^From\\b\\s*:?"
+          ],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 7,
+          "row_tol": 0.006,
+          "gap_x": 0.002      
+        },
+        "margin": { "top": 0.01, "right": 0.05, "bottom": -0.015, "left": -0.01 }
+      }
+    },
+    {
+      "id": "total",
+      "label": "total",
+      "detect": {
+        "by": "line_anchors",
+        "anchor_scope": "page",
+        "start_anchor": {
+          "patterns": ["Items total:"],
+          "flags": { "normalize_space": true },
+          "select": "first"
+        },
+        "end_anchor": {
+          "patterns": ["^Terms of payment:"],
+          "flags": { "normalize_space": true },
+          "select": "first"
+        },
+        "margin": { "top": 0, "right": 0.15, "bottom": -0.02, "left": 0.1 },
+        "min_height": 0.04
+      },
+      "keep": "all"
+    },    
+    {
+      "id": "seller",
+      "label": "seller",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^PT\\.?\\s*Silesia\\s*Flavours\\s*Indonesia$"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "below_only",
+          "dy_max": 0.11,
+          "width": "page"
+        },
+        "margin": { "right": -0.45 },
+        "min_height": 0.04
+      },
+      "keep": "all"
+    },
+
+    {
+      "id": "buyer",
+      "label": "buyer",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Shipped\\s*to\\s*address:$", "^Shippedtoaddress:$"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "below_only",
+          "dy_max": 0.045,
+          "width": "page"
+        },
+        "margin": { "right": -0.45, "bottom": 0.06 },
+        "min_height": 0.035
+      },
+      "keep": "all"
+    },
+    {
+      "id": "invoice",
+      "label": "invoice",
+      "inside": "@header",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["Invoice"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 25,           
+          "row_tol": 0.004,
+          "dx_max": 0.55,       
+          "gap_x": 0
+        },
+        "margin": { "top": 0, "right": 0.03, "bottom": 0.008, "left": 0.01 },
+        "min_height": 0.010
+      },
+      "keep": "all"
+    },
+    {
+      "id": "client_no",
+      "label": "client_no",
+      "inside": "@invoice",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Client\\s*no\\.:$", "^Client$"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "start_edge": "left",
+          "rows": 0 
+        },
+        "margin": { "top": 0, "right": 0.05, "bottom": 0, "left": 0 }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "invoice_number",
+      "label": "invoice_number",
+      "inside": "@invoice",
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["Invoice.*?no\\.?\\s*:?"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "rows": 0,
+          "row_tol": 0.006,
+          "dx_max": 0.25,
+          "gap_x": 0.005,
+          "refine_with_tokens": true
+        },
+        "margin": { "top": -0.004, "right": 0.05, "bottom": -0.004, "left": 0.08 },
+        "min_height": 0.01
+      },
+      "keep": "all"
+    },  
+    {
+      "id": "invoice_date",
+      "label": "invoice_date",
+      "inside": "@invoice",
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["Dated\\s*:?"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "first"
+        },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "rows": 0,
+          "row_tol": 0.006,
+          "dx_max": 0.25,
+          "gap_x": 0.005,
+          "refine_with_tokens": true
+        },
+        "margin": { "top": -0.004, "right": 0.05, "bottom": -0.004, "left": 0.08 },
+        "min_height": 0.01
+      },
+      "keep": "all"
+    },          
+    {
+      "id": "currency",
+      "label": "currency",
+      "inside": "@total",
+      "detect": {
+        "by": "anchors",
+        "start_anchor": {
+          "patterns": ["^Final\\s*invoice\\s*amount:$", "^Finalinvoiceamount:$"],
+          "flags": { "ignore_case": true, "normalize_space": true },
+          "select": "topmost"
+        },
+        "capture_window": {
+          "mode": "right_only",
+          "dx_max": 0.2,
+          "height": "anchor"
+        },
+        "min_height": 0.008
+      },
+      "keep": "all"
+    }
+  ]
+}

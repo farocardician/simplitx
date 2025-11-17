@@ -28,11 +28,37 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "gateway"}
 
+@app.get("/pdf2json/templates")
+async def proxy_templates():
+    """Proxy templates endpoint to PDF2JSON service"""
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(f"{PDF2JSON_URL}/templates")
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"PDF2JSON service error: {response.text}"
+                )
+            
+            return Response(
+                content=response.content,
+                media_type="application/json",
+                headers={"Content-Type": "application/json"}
+            )
+            
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Backend service connection error: {str(e)}"
+        )
+
 @app.post("/process")
 async def unified_process(
     request: Request,
     file: UploadFile = File(...),
     mapping: Optional[str] = Form(None),
+    template: Optional[str] = Form(None),
     pretty: str = Form("0")
 ):
     """Unified endpoint for PDF→JSON, JSON→XML, and PDF→XML conversions"""
@@ -94,7 +120,10 @@ async def unified_process(
             if is_pdf and accept_header == "application/json":
                 # Route 1: PDF + Accept: application/json → Forward to pdf2json service
                 files = {"file": (file.filename, content, file.content_type)}
-                response = await client.post(f"{PDF2JSON_URL}/process", files=files)
+                data = {}
+                if template:
+                    data["template"] = template
+                response = await client.post(f"{PDF2JSON_URL}/process", files=files, data=data)
                 
                 if response.status_code != 200:
                     raise HTTPException(
@@ -113,7 +142,10 @@ async def unified_process(
                 
                 # Step 1: Call PDF2JSON
                 files = {"file": (file.filename, content, file.content_type)}
-                pdf_response = await client.post(f"{PDF2JSON_URL}/process", files=files)
+                data = {}
+                if template:
+                    data["template"] = template
+                pdf_response = await client.post(f"{PDF2JSON_URL}/process", files=files, data=data)
                 
                 if pdf_response.status_code != 200:
                     raise HTTPException(
@@ -186,6 +218,71 @@ async def unified_process(
                     status_code=400,
                     detail="Invalid combination of file type and Accept header."
                 )
+                
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Backend service connection error: {str(e)}"
+        )
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Backend service HTTP error: {e.response.status_code} - {e.response.text}"
+        )
+
+@app.post("/process-artifacts")
+async def process_artifacts(
+    request: Request,
+    file: UploadFile = File(...),
+    mapping: Optional[str] = Form(None),
+    template: Optional[str] = Form(None)
+):
+    """Process PDF and return artifacts as ZIP file"""
+    
+    # Check file size limit
+    content = await file.read()
+    file_size = len(content)
+    await file.seek(0)  # Reset file pointer
+    
+    if file_size > MAX_UPLOAD_MB * 1024 * 1024:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is {MAX_UPLOAD_MB}MB"
+        )
+    
+    # Get file content type
+    content_type = file.content_type or ""
+    
+    # Only support PDF files for artifacts
+    if content_type != "application/pdf":
+        raise HTTPException(
+            status_code=415,
+            detail="Only PDF files are supported for artifact generation."
+        )
+    
+    try:
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            # Call PDF2JSON artifacts endpoint
+            files = {"file": (file.filename, content, file.content_type)}
+            data = {}
+            if template:
+                data["template"] = template
+            response = await client.post(f"{PDF2JSON_URL}/process-with-artifacts", files=files, data=data)
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"PDF2JSON artifacts service error: {response.text}"
+                )
+            
+            return Response(
+                content=response.content,
+                media_type="application/zip",
+                headers={
+                    "Content-Type": "application/zip",
+                    "Content-Disposition": response.headers.get("Content-Disposition", "attachment; filename=\"artifacts.zip\"")
+                }
+            )
                 
     except httpx.RequestError as e:
         raise HTTPException(

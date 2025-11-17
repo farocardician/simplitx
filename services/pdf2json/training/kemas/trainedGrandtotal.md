@@ -1,0 +1,28 @@
+Expected grand_total block text (no extras)
+
+Variant 1
+SUB TOTAL 833.413.770
+
+Variant 2
+SUB TOTAL 1.800.000.000
+
+Variant 3
+SUB TOTAL 1.800.000.000
+
+Variant 4
+SUB TOTAL 1.800.000.000
+
+Variant 5
+SUB TOTAL 40.683.720
+
+Variant 6
+SUB TOTAL 194.777.676
+
+Variant 7
+GRAND TOTAL 863.358.111
+
+Variant 8
+SUB TOTAL 1.800.000.000
+
+Variant 9
+SUB TOTAL 833.413.770

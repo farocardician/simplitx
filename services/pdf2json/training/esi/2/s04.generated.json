@@ -1,0 +1,61 @@
+{
+  "buyer_name": "PT Schneider Electric Indonesia Office",
+  "invoice_number": "INV/074/0825",
+  "invoice_date": "27 August 2025",
+  "subtotal": "51020408.00",
+  "tax_based": "46768707.00",
+  "vat": "5612245.00",
+  "grand_total": "56632653.00",
+  "line_items": [
+    {
+      "no": "1",
+      "description": "NUSANTARA PRODUCTION EXCLUSIVE 1 SPONSORSHIP] Membangun Kedaulatan Digital Indonesia dengan hadirnya Kawasan Ekonomi Khusus: 9 September 2025 Consisting of:",
+      "qty": null,
+      "uom": "Episode",
+      "unit_price": "Rp 51.020.408",
+      "unit_price_norm": "51.020",
+      "total_price": "51.020.408",
+      "total_price_norm": "51.020"
+    },
+    {
+      "no": null,
+      "description": "3 times (Beginning, Middle Title) for 10 second each",
+      "qty": null,
+      "uom": null,
+      "unit_price": null,
+      "unit_price_norm": null,
+      "total_price": null,
+      "total_price_norm": null
+    },
+    {
+      "no": null,
+      "description": "corner every 10 minutes for 10 second each",
+      "qty": null,
+      "uom": null,
+      "unit_price": null,
+      "unit_price_norm": null,
+      "total_price": null,
+      "total_price_norm": null
+    },
+    {
+      "no": "2",
+      "description": "Advertisement placement 10 seconds each in an L-shape format 1 x host Distribution Channels: Website, Social Media Accounts, Community",
+      "qty": null,
+      "uom": null,
+      "unit_price": null,
+      "unit_price_norm": null,
+      "total_price": null,
+      "total_price_norm": null
+    },
+    {
+      "no": null,
+      "description": "And Thirty Two Thousand Six Hundred And",
+      "qty": null,
+      "uom": "Fifty",
+      "unit_price": "Three Rupiah Sub",
+      "unit_price_norm": null,
+      "total_price": "51.020.408,00",
+      "total_price_norm": "51020408.00"
+    }
+  ]
+}

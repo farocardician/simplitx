@@ -1,0 +1,111 @@
+{
+  "client": "rittal",
+  "variant": 2,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "table",
+          "value": "9660997 / TS84 TS MCC Enclosure 800 x 2200 x 1 16.372.500 0 16.372.500 800 Special Net Price 9660997/TS84 TS MCC Enclosure 300 x 2200 x 1 7.492.500 0 7.492.500 800 Special Net Price 9660997/TS84 TS TS MCC Enclosure 600 x 2200 x 1 15.493.000 0 15.493.000 MCC 800 Special Net Price 4540000 PS4540 LIFTING LUG FOR PS / TS 1 365.500 0 365.500 8800430 TS BAYING BRACKET TS-TS 2 114.000 0 228.000 (1PU=4EA) 8800490 TS Baying Connector External 2 83.000 0 166.000 (1PU=6EA) 8800500 TS/TS BAYING BRACKET,(1 1 75.000 0 75.000 PU=6EA) 9788625 SPRAY CAN-SR100(NEW SHADE) 1 152.000 0 152.000 3456505 SV Conductor connection clamp 1 338.000 0 338.000 (Push-in) 3456505 9660205 SV Holder Set (Stabilisation) 2 1.663.500 0 3.327.000 9674182 SV SYSTEM ATTACHMENT F. 2 1.754.000 0 3.508.000 BUSBAR 4x 60x10 9674192 SV SYSTEM ATTACHMENT F. 2 1.858.500 0 3.717.000 BUSBAR 4x 60x10 9676007 SV DISTANCE KEEPER FOR 8 140.000 0 1.120.000 BUSBAR SUPPORT 9676008 SV FILLER FOR BUSBAR 8 150.000 0 1.200.000 SUPPORT 9676008 9676020 SV BUSBAR SUPPORT FLAT 32 379.500 0 12.144.000 COPPER 4x 60x10MM 9676503 SV SPACER ROLL OF COPPER 4 573.000 0 2.292.000 WITH HOLE 13MM 9676503 9676546 SV CONTACT MAKER FOR FLAT 3 946.000 0 2.838.000 COPPER BUSBAR 9676810 screw connection M10x100 1 181.500 0 181.500 9676810 9676811 SV SCREW SET FOR FLAT-PLS 2 205.000 0 410.000 9676811 9676814 SV SCREW SET FOR FLAT-PLS 2 235.000 0 470.000 9676832 SV CLAW WITH NUT M10 FOR 4 568.500 0 2.274.000 FLAT-PLS Halaman 1 dari 2 To : 07 Mei 2025 SI.2025.05.00006 PT Mitraida Nusantara Elektrik Jl. KH. Nawawi No.163, Cirimekar, Kec. Cibinong, Terms of Payment FOB Kabupaten Bogor, Jawa Barat 16917 net 30 Shipment Shipment Date SEA 07 Mei 2025 PO No Currency 14.02/MNE/PO/XI/2024/R1 Indonesian Rupiah"
+        },
+        {
+          "key": "header",
+          "value": "PT. Rittal JL,. MH. THAMRIN MENARA BCA LT.5O MENTENG. : Kota Administrasi Jakarta Pusat DKI Jakarta Indonesia INVOICE To : Date Number 07 Mei 2025 SI.2025.05.00006 PT Mitraida Nusantara Elektrik Jl. KH. Nawawi No.163, Cirimekar, Kec. Cibinong, Terms of Payment FOB Kabupaten Bogor, Jawa Barat 16917 net 30 Shipment Shipment Date SEA 07 Mei 2025 PO No Currency 14.02/MNE/PO/XI/2024/R1 Indonesian Rupiah"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total 74.164.000 Tax Based 67.983.667 VAT 12% 8.158.040 Total 82.322.040 Prepared By :"
+        },
+        {
+          "key": "seller",
+          "value": "JL,. MH. THAMRIN MENARA BCA LT.5O MENTENG. Kota Administrasi Jakarta Pusat DKI Jakarta Indonesia INVOICE"
+        },
+        {
+          "key": "buyer_name",
+          "value": "To : PT Mitraida Nusantara Elektrik"
+        },
+        {
+          "key": "invoice_date",
+          "value": "07 Mei 2025"
+        },
+        {
+          "key": "invoice_number",
+          "value": "SI.2025.05.00006"
+        },
+        {
+          "key": "currency",
+          "value": "Indonesian Rupiah"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total 74.164.000"
+        },
+        {
+          "key": "tax_based",
+          "value": "Tax Based 67.983.667"
+        },
+        {
+          "key": "vat",
+          "value": "VAT 12% 8.158.040"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total 82.322.040"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "table",
+          "value": "9660997 / TS84 TS MCC Enclosure 800 x 2200 x 1 16.372.500 0 16.372.500 800 Special Net Price 9660997/TS84 TS MCC Enclosure 300 x 2200 x 1 7.492.500 0 7.492.500 800 Special Net Price 9660997/TS84 TS TS MCC Enclosure 600 x 2200 x 1 15.493.000 0 15.493.000 MCC 800 Special Net Price 4540000 PS4540 LIFTING LUG FOR PS / TS 1 365.500 0 365.500 8800430 TS BAYING BRACKET TS-TS 2 114.000 0 228.000 (1PU=4EA) 8800490 TS Baying Connector External 2 83.000 0 166.000 (1PU=6EA) 8800500 TS/TS BAYING BRACKET,(1 1 75.000 0 75.000 PU=6EA) 9788625 SPRAY CAN-SR100(NEW SHADE) 1 152.000 0 152.000 3456505 SV Conductor connection clamp 1 338.000 0 338.000 (Push-in) 3456505 9660205 SV Holder Set (Stabilisation) 2 1.663.500 0 3.327.000 9674182 SV SYSTEM ATTACHMENT F. 2 1.754.000 0 3.508.000 BUSBAR 4x 60x10 9674192 SV SYSTEM ATTACHMENT F. 2 1.858.500 0 3.717.000 BUSBAR 4x 60x10 9676007 SV DISTANCE KEEPER FOR 8 140.000 0 1.120.000 BUSBAR SUPPORT 9676008 SV FILLER FOR BUSBAR 8 150.000 0 1.200.000 SUPPORT 9676008 9676020 SV BUSBAR SUPPORT FLAT 32 379.500 0 12.144.000 COPPER 4x 60x10MM 9676503 SV SPACER ROLL OF COPPER 4 573.000 0 2.292.000 WITH HOLE 13MM 9676503 9676546 SV CONTACT MAKER FOR FLAT 3 946.000 0 2.838.000 COPPER BUSBAR 9676810 screw connection M10x100 1 181.500 0 181.500 9676810 9676811 SV SCREW SET FOR FLAT-PLS 2 205.000 0 410.000 9676811 9676814 SV SCREW SET FOR FLAT-PLS 2 235.000 0 470.000 9676832 SV CLAW WITH NUT M10 FOR 4 568.500 0 2.274.000 FLAT-PLS Halaman 1 dari 2 To : 07 Mei 2025 SI.2025.05.00006 PT Mitraida Nusantara Elektrik Jl. KH. Nawawi No.163, Cirimekar, Kec. Cibinong, Terms of Payment FOB Kabupaten Bogor, Jawa Barat 16917 net 30 Shipment Shipment Date SEA 07 Mei 2025 PO No Currency 14.02/MNE/PO/XI/2024/R1 Indonesian Rupiah"
+        },
+        {
+          "key": "header",
+          "value": "PT. Rittal JL,. MH. THAMRIN MENARA BCA LT.5O MENTENG. : Kota Administrasi Jakarta Pusat DKI Jakarta Indonesia INVOICE To : Date Number 07 Mei 2025 SI.2025.05.00006 PT Mitraida Nusantara Elektrik Jl. KH. Nawawi No.163, Cirimekar, Kec. Cibinong, Terms of Payment FOB Kabupaten Bogor, Jawa Barat 16917 net 30 Shipment Shipment Date SEA 07 Mei 2025 PO No Currency 14.02/MNE/PO/XI/2024/R1 Indonesian Rupiah"
+        },
+        {
+          "key": "total",
+          "value": "Sub Total 74.164.000 Tax Based 67.983.667 VAT 12% 8.158.040 Total 82.322.040 Prepared By :"
+        },
+        {
+          "key": "seller",
+          "value": "JL,. MH. THAMRIN MENARA BCA LT.5O MENTENG. Kota Administrasi Jakarta Pusat DKI Jakarta Indonesia INVOICE"
+        },
+        {
+          "key": "buyer_name",
+          "value": "To : PT Mitraida Nusantara Elektrik"
+        },
+        {
+          "key": "invoice_date",
+          "value": "07 Mei 2025"
+        },
+        {
+          "key": "invoice_number",
+          "value": "SI.2025.05.00006"
+        },
+        {
+          "key": "currency",
+          "value": "Indonesian Rupiah"
+        },
+        {
+          "key": "subtotal",
+          "value": "Sub Total 74.164.000"
+        },
+        {
+          "key": "tax_based",
+          "value": "Tax Based 67.983.667"
+        },
+        {
+          "key": "vat",
+          "value": "VAT 12% 8.158.040"
+        },
+        {
+          "key": "grand_total",
+          "value": "Total 82.322.040"
+        }
+      ]
+    }
+  }
+}

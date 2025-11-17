@@ -1,0 +1,106 @@
+[
+  {
+    "page": 1,
+    "items_region": {
+      "x0": 0.0,
+      "x1": 1.0,
+      "y0": 0.3240736342042755,
+      "y1": 0.5740736342042755,
+      "start_anchor": {
+        "text": "Article Number Item Name Qty @Price Discount Total Price",
+        "y0": 0.3190736342042755,
+        "y1": 0.3297624703087886,
+        "hits": 4
+      },
+      "end_anchor": {
+        "text": "Says : Empat puluh satu juta delapan ratus empat puluh delapan ribu lima ratus empat puluh tiga",
+        "y0": 0.5003919239904988,
+        "y1": 0.5122684085510688,
+        "hits": 1
+      }
+    },
+    "candidates": [
+      {
+        "index": 0,
+        "source": "default",
+        "flavor": "stream",
+        "bbox": {
+          "x0": 0.03865546218487395,
+          "y0": 0.2823349639001905,
+          "x1": 0.9596705882352942,
+          "y1": 0.4790142517814726
+        },
+        "features": {
+          "header_hits": 6.0,
+          "overlap": 0.7877830921917975,
+          "numeric_right": 1.0,
+          "rows": 5.0,
+          "totals_below": 1.0
+        },
+        "score": 26.075566184383597,
+        "eligible": true,
+        "header_row_index": 1,
+        "body_rows": 5,
+        "header_hits": 6,
+        "selected": true,
+        "stop_rule": "end_anchor",
+        "stop_at": 7,
+        "clip_y": 0.48991092636579575
+      },
+      {
+        "index": 1,
+        "source": "default",
+        "flavor": "lattice",
+        "bbox": {
+          "x0": 0.051230334812424366,
+          "y0": 0.31385404789053584,
+          "x1": 0.9471561113352159,
+          "y1": 0.4797605473204105
+        },
+        "features": {
+          "header_hits": 6.0,
+          "overlap": 0.9384015312910676,
+          "numeric_right": 1.0,
+          "rows": 1.0,
+          "totals_below": 1.0
+        },
+        "score": 22.376803062582134,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 1,
+        "header_hits": 6,
+        "selected": false,
+        "stop_rule": "end_anchor",
+        "stop_at": 2,
+        "clip_y": 0.48986243862010687
+      },
+      {
+        "index": 2,
+        "source": "default",
+        "flavor": "lattice",
+        "bbox": {
+          "x0": 0.6478418717224688,
+          "y0": 0.524230330672748,
+          "x1": 0.9491730536506655,
+          "y1": 0.5635689851767389
+        },
+        "features": {
+          "header_hits": 1.0,
+          "overlap": 1.0,
+          "numeric_right": 1.0,
+          "rows": 1.0,
+          "totals_below": 1.0
+        },
+        "score": 7.5,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 1,
+        "header_hits": 1,
+        "selected": false,
+        "stop_rule": "numeric_fallback",
+        "stop_at": 2
+      }
+    ],
+    "selected_index": 0
+  }
+]

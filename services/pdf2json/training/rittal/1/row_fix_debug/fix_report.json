@@ -1,0 +1,88 @@
+[
+  {
+    "page": 1,
+    "header_fingerprint": "article|item|qty|col4|unitprice|discount|col7|totalprice",
+    "arithmetic": {
+      "rows": [
+        {
+          "row": 0,
+          "qty": "1",
+          "unit_price": "5037460",
+          "discount": "0",
+          "total": "5037460",
+          "diff": "0",
+          "tolerance": "25187.3000",
+          "ok": true
+        },
+        {
+          "row": 1,
+          "qty": "1",
+          "unit_price": "317816",
+          "discount": "0",
+          "total": "317816",
+          "diff": "0",
+          "tolerance": "1589.0800",
+          "ok": true
+        },
+        {
+          "row": 2,
+          "qty": "2",
+          "unit_price": "5502378",
+          "discount": "0",
+          "total": "11004756",
+          "diff": "0",
+          "tolerance": "55023.7800",
+          "ok": true
+        },
+        {
+          "row": 3,
+          "qty": "2",
+          "unit_price": "317816",
+          "discount": "0",
+          "total": "635632",
+          "diff": "0",
+          "tolerance": "3178.1600",
+          "ok": true
+        },
+        {
+          "row": 4,
+          "qty": "2",
+          "unit_price": "4556669",
+          "discount": "0",
+          "total": "9113338",
+          "diff": "0",
+          "tolerance": "45566.6900",
+          "ok": true
+        },
+        {
+          "row": 5,
+          "qty": "2",
+          "unit_price": "5173722",
+          "discount": "0",
+          "total": "10347444",
+          "diff": "0",
+          "tolerance": "51737.2200",
+          "ok": true
+        },
+        {
+          "row": 6,
+          "qty": "2",
+          "unit_price": "622472",
+          "discount": "0",
+          "total": "1244944",
+          "diff": "0",
+          "tolerance": "6224.7200",
+          "ok": true
+        }
+      ],
+      "sum_line_totals": "37701390"
+    },
+    "subtotal": {
+      "status": "ok",
+      "printed": "37701390",
+      "sum": "37701390",
+      "diff": "0",
+      "tolerance": "113104.170"
+    }
+  }
+]

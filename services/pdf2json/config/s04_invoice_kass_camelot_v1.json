@@ -1,0 +1,105 @@
+{
+  "name": "Invoice KASS Camelot Grid",
+  "version": "1.0",
+  "header_aliases": {
+    "NO": [
+      "#"
+    ],
+    "DESC": [
+      "Item & Description",
+      "DESCRIPTION"
+    ],
+    "QTY": [
+      "Qty",
+      "QTY"
+    ],
+    "UNIT_PRICE": [
+      "Rate",
+      "UNIT PRICE",
+      "PRICE"
+    ],
+    "AMOUNT": [
+      "Amount",
+      "AMOUNT"
+    ]
+  },
+  "totals_keywords": [
+    "SUB TOTAL",
+    "TOTAL NET AMOUNT",
+    "VAT",
+    "GRAND TOTAL",
+    "TOTAL",
+    "Balance Due",
+    "NPWP",
+    "PPH"
+  ],
+  "camelot": {
+    "flavor_order": [
+      "lattice",
+      "stream"
+    ],
+    "line_scale": 40,
+    "row_tol_stream": 10
+  },
+  "items_region": {
+    "detect": {
+      "by": "anchors"
+    },
+    "start_anchor": {
+      "patterns": [
+        "(?i)#\\s*item",
+        "(?i)item\\s*&\\s*description",
+        "(?i)\\bqty\\b",
+        "(?i)\\brate\\b"
+      ]
+    },
+    "end_anchor": {
+      "patterns": [
+        "(?i)sub\\s*total",
+        "(?i)total\\s+net\\s+amount",
+        "(?i)tax\\s+base",
+        "(?i)thank\\s+you",
+        "(?i)payment\\s+details",
+        "(?i)bank\\s+account",
+        "(?i)pph"
+      ],
+      "select": "next_below"
+    },
+    "flags": {
+      "ignore_case": true
+    },
+    "select": "next_below",
+    "x_policy": "full",
+    "margin": {
+      "top": 0.005,
+      "bottom": 0.02,
+      "left": 0.0,
+      "right": 0.0
+    },
+    "min_height": 0.28
+  },
+  "ranking": {
+    "weights": {
+      "header": 3.0,
+      "overlap_items_region": 2.5,
+      "numeric_right": 1.0,
+      "rows": 1.0,
+      "totals_below": 0.6
+    },
+    "overlap_threshold": 0.15,
+    "max_candidates": 6,
+    "use_items_roi": true
+  },
+  "stop_after_totals": true,
+  "page_stop_keywords": {
+    "2": [
+      "Bank Account",
+      "Payment Details",
+      "Thank you"
+    ]
+  },
+  "page_row_limit": {},
+  "row_fix": {
+    "enabled": false
+  }
+}

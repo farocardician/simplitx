@@ -1,0 +1,54 @@
+{
+  "metadata": {
+    "template": "SIS Invoice (IDR, PPN 11%)",
+    "money_rounding": 0
+  },
+  "defaults": {
+    "currency": "IDR",
+    "tax_label": "PPN 11%"
+  },
+  "header": {
+    "pages": [1],
+    "search_row_limit": 30,
+    "fields": {
+      "invoice_number": { "match": "contains" },
+      "invoice_date": { "match": "contains" }
+    }
+  },
+  "items": {
+    "min_columns": 4,
+    "header_rows_can_hold_items": true,
+    "key_field": "description",
+    "fields": [
+      { "name": "no", "column": 0, "transform": "int" },
+      { "name": "description", "column": 2, "transform": "string" },
+      { "name": "qty", "column": 1, "transform": "int" },
+      { "name": "unit_price", "column": 3, "transform": "money" },
+      { "name": "amount", "column": 4, "transform": "money" }
+    ]
+  },
+  "totals": {
+    "tax_label": "PPN 11%",
+    "fields": {
+      "subtotal": [
+        "printed.subtotal",
+        "checks.subtotal.computed"
+      ],
+      "tax_base": [
+        "printed.tax_base",
+        "computed.tax_base"
+      ],
+      "tax_amount": [
+        "printed.tax_amount",
+        "computed.tax_amount"
+      ],
+      "grand_total": [
+        "printed.grand_total",
+        "computed.grand_total"
+      ]
+    }
+  },
+  "manifest": {
+    "schema_template": "SIS Invoice (IDR, PPN 11%)"
+  }
+}

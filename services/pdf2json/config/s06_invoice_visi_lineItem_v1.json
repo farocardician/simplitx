@@ -1,0 +1,82 @@
+{
+  "fields": {
+    "qty": {
+      "header_synonyms": [
+        "\\bQTY\\b",
+        "Quantity",
+        "\\bQUANTITY\\b"
+      ],
+      "parsers": [
+        "parse_int"
+      ],
+      "required": true,
+      "merge": false
+    },
+    "description": {
+      "header_synonyms": [
+        "\\bDESCRIPTION\\b",
+        "Description"
+      ],
+      "position_hint": {
+        "x0": 0.1,
+        "x1": 0.85
+      },
+      "parsers": [
+        "strip_nonprint"
+      ],
+      "required": true,
+      "merge": true,
+      "merge_wrapped": true
+    },
+    "amount": {
+      "header_synonyms": [
+        "\\bAMOUNT\\b",
+        "Amount",
+        "Amount\\(IDR\\)"
+      ],
+      "position_hint": {
+        "x0": 0.8,
+        "x1": 0.98
+      },
+      "parsers": [
+        "parse_money"
+      ],
+      "required": true,
+      "merge": false
+    }
+  },
+  "currency_hints": [
+    "IDR",
+    "Rp",
+    "RP"
+  ],
+  "number_format": {
+    "decimal": ".",
+    "thousands": ".",
+    "allow_parens": true
+  },
+  "currency_decimals": 0,
+  "tolerances": {
+    "amount_from_qty_price": {
+      "abs": 0,
+      "rel": 0
+    }
+  },
+  "defaults": {
+    "discount_percent": 0,
+    "discount_amount": 0,
+    "qty": 1
+  },
+  "row_filters": [
+    "^\\s*(TOTAL|SUB\\s*TOTAL|GRAND\\s*TOTAL|VAT|PPN|Tax Base|Total Amount)\\b",
+    "\\bDESCRIPTION\\b",
+    "\\bAmount\\(IDR\\)\\b",
+    "^No\\.$",
+    "ELEVEN MILLION",
+    "Please kindly",
+    "Bank Account",
+    "Bank Name",
+    "Bank Address",
+    "SWIFT Code"
+  ]
+}

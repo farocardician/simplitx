@@ -1,0 +1,163 @@
+{
+  "profile": {
+    "name": "Sil Invoice Extractor V1",
+    "fail_mode": "hard",
+    "required_fields": [
+      "buyer_name",
+      "invoice_number",
+      "invoice_date",
+      "grand_total"
+    ],
+    "expected_fields": [
+      "subtotal",
+      "tax_base",
+      "tax",
+      "tax_amount"
+    ],
+    "optional_fields": [
+      "income_tax",
+      "income_tax_amount"
+    ]
+  },
+  "strict_segments": true,
+  "use_stage2_normalized": true,
+  "totals": {
+    "mode": "segments_only"
+  },
+  "confidence": {
+    "thresholds": {
+      "high": {
+        "max_lines": 1,
+        "max_tokens": 15
+      },
+      "medium": {
+        "max_lines": 3,
+        "max_tokens": 60
+      }
+    }
+  },
+  "fields": {
+    "buyer_name": {
+      "strategy": "regex_capture",
+      "segment": "buyer",
+      "post": {
+        "regex_pattern": ["(PT\\.[A-Za-z]+)"]
+      }
+    },
+    "invoice_number": {
+      "strategy": "regex_capture",
+      "segment": "invoice_number",
+      "post": {
+        "regex_pattern": ["Invoiceno\\.:\\s+(\\d+)"]
+      }
+    },
+    "invoice_date": {
+      "strategy": "regex_capture",
+      "segment": "invoice_date",
+      "post": {
+        "regex_pattern": ["Dated:\\s+(\\d{2}\\.\\d{2}\\.\\d{4})"]
+      }
+    },
+    "subtotal": {
+      "strategy": "regex_capture",
+      "segment": "total",
+      "post": {
+        "regex_pattern": ["SGD\\s+([\\d,]+\\.\\d+)"]
+      }
+    },
+    "tax_base": {
+      "strategy": "regex_capture",
+      "segment": "total",
+      "post": {
+        "regex_pattern": ["SGD\\s+([\\d,]+\\.\\d+)"]
+      }
+    },
+    "tax": {
+      "strategy": "constant",
+      "segment": "total",
+      "post": {
+        "value": ""
+      }
+    },
+    "tax_amount": {
+      "strategy": "constant",
+      "segment": "total",
+      "post": {
+        "value": ""
+      }
+    },
+    "income_tax": {
+      "strategy": "constant",
+      "segment": "total",
+      "post": {
+        "value": ""
+      }
+    },
+    "income_tax_amount": {
+      "strategy": "constant",
+      "segment": "total",
+      "post": {
+        "value": ""
+      }
+    },
+    "grand_total": {
+      "strategy": "regex_capture",
+      "segment": "total",
+      "post": {
+        "regex_pattern": ["SGD\\s+([\\d,]+\\.\\d+)"]
+      }
+    }
+  },
+  "guards": {
+    "buyer_name": {
+      "min_len": 3,
+      "max_len": 100,
+      "allowed_chars": "A-Za-z\\s\\.\\-\\'/\\&"
+    },
+    "invoice_number": {
+      "min_len": 3,
+      "max_len": 50,
+      "allowed_chars": "0-9"
+    },
+    "invoice_date": {
+      "min_len": 8,
+      "max_len": 12,
+      "allowed_chars": "0-9."
+    },
+    "subtotal": {
+      "min_len": 0,
+      "max_len": 20,
+      "allowed_chars": "0-9.,"
+    },
+    "tax_base": {
+      "min_len": 0,
+      "max_len": 20,
+      "allowed_chars": "0-9.,"
+    },
+    "tax": {
+      "min_len": 0,
+      "max_len": 10,
+      "allowed_chars": "0-9.%"
+    },
+    "tax_amount": {
+      "min_len": 0,
+      "max_len": 20,
+      "allowed_chars": "0-9.,"
+    },
+    "income_tax": {
+      "min_len": 0,
+      "max_len": 10,
+      "allowed_chars": "0-9.%"
+    },
+    "income_tax_amount": {
+      "min_len": 0,
+      "max_len": 20,
+      "allowed_chars": "0-9.,"
+    },
+    "grand_total": {
+      "min_len": 1,
+      "max_len": 20,
+      "allowed_chars": "0-9.,"
+    }
+  }
+}
