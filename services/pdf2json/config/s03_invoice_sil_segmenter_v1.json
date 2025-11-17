@@ -267,6 +267,90 @@
         "min_height": 0.008
       },
       "keep": "all"
+    },
+    {
+      "id": "subtotal",
+      "label": "subtotal",
+      "inside": "@total",
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["^Items\\s+total:"],
+          "flags": { "normalize_space": true },
+          "select": "first"
+        },
+        "end_anchor": {
+          "patterns": ["Tax\\s+Based:"],
+          "flags": { "normalize_space": true },
+          "select": "first"
+        },
+        "margin": { "top": 0, "right": 0, "bottom": -0.005, "left": 0 },
+        "min_height": 0.01
+      },
+      "keep": "all"
+    },
+    {
+      "id": "tax_based",
+      "label": "tax_based",
+      "inside": "@total",
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["Tax\\s+Based:"],
+          "flags": { "normalize_space": true },
+          "select": "first"
+        },
+        "end_anchor": {
+          "patterns": ["VAT:"],
+          "flags": { "normalize_space": true },
+          "select": "first"
+        },
+        "margin": { "top": 0, "right": 0, "bottom": -0.005, "left": 0 },
+        "min_height": 0.01
+      },
+      "keep": "all"
+    },
+    {
+      "id": "vat",
+      "label": "vat",
+      "inside": "@total",
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["VAT:"],
+          "flags": { "normalize_space": true },
+          "select": "first"
+        },
+        "end_anchor": {
+          "patterns": ["^Final\\s+invoice\\s+amount:"],
+          "flags": { "normalize_space": true },
+          "select": "first"
+        },
+        "margin": { "top": 0, "right": 0, "bottom": -0.005, "left": 0 },
+        "min_height": 0.01
+      },
+      "keep": "all"
+    },
+    {
+      "id": "grand_total",
+      "label": "grand_total",
+      "inside": "@total",
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["^Final\\s+invoice\\s+amount:"],
+          "flags": { "normalize_space": true },
+          "select": "first"
+        },
+        "end_anchor": {
+          "patterns": ["^Terms\\s+of\\s+payment:"],
+          "flags": { "normalize_space": true },
+          "select": "first"
+        },
+        "margin": { "top": 0, "right": 0, "bottom": -0.005, "left": 0 },
+        "min_height": 0.01
+      },
+      "keep": "all"
     }
   ]
 }
