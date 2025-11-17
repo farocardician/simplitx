@@ -423,7 +423,7 @@ export const GET = withSession(async (
         const normalized = normalizePartyName(buyerName);
 
         const allParties = await prisma.party.findMany({
-          where: { deletedAt: null },
+          where: { deletedAt: null, partyType: 'buyer' },
           select: {
             id: true,
             displayName: true,
@@ -464,7 +464,7 @@ export const GET = withSession(async (
           const normalized = normalizePartyName(buyerName);
 
           const allParties = await prisma.party.findMany({
-            where: { deletedAt: null },
+            where: { deletedAt: null, partyType: 'buyer' },
             select: {
               id: true,
               displayName: true,
@@ -623,7 +623,7 @@ export const GET = withSession(async (
       const normalized = normalizePartyName(buyerName);
 
       const allParties = await prisma.party.findMany({
-        where: { deletedAt: null },
+        where: { deletedAt: null, partyType: 'buyer' },
         select: {
           id: true,
           displayName: true,
@@ -664,7 +664,7 @@ export const GET = withSession(async (
         const normalized = normalizePartyName(buyerName);
 
         const allParties = await prisma.party.findMany({
-          where: { deletedAt: null },
+          where: { deletedAt: null, partyType: 'buyer' },
           select: {
             id: true,
             displayName: true,

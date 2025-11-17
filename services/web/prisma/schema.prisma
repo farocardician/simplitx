@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PartyType {
+  seller
+  buyer
+}
+
 model Job {
   id                        String    @id @default(uuid())
   ownerSessionId            String?   @map("owner_session_id")
@@ -85,6 +90,7 @@ model Party {
   nameNormalized      String    @map("name_normalized")
   tinDisplay          String    @map("tin_display")
   tinNormalized       String    @map("tin_normalized")
+  partyType           PartyType @default(buyer) @map("party_type")
   countryCode         String?   @map("country_code") @db.Char(3)
   transactionCode     String?   @map("transaction_code") @db.VarChar(10)
   addressFull         String?   @map("address_full")
@@ -92,6 +98,9 @@ model Party {
   buyerDocument       String?   @default("TIN") @map("buyer_document") @db.VarChar(50)
   buyerDocumentNumber String?   @map("buyer_document_number") @db.VarChar(100)
   buyerIdtku          String?   @map("buyer_idtku") @db.VarChar(100)
+  sellerId            String?   @map("seller_id") @db.Uuid
+  seller              Party?    @relation("PartySellerLink", fields: [sellerId], references: [id], onDelete: SetNull)
+  buyers              Party[]   @relation("PartySellerLink")
   deletedAt           DateTime? @map("deleted_at")
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
@@ -99,6 +108,8 @@ model Party {
   updatedBy           String?   @map("updated_by")
 
   @@index([deletedAt], map: "idx_parties_deleted_at")
+  @@index([partyType], map: "idx_parties_party_type")
+  @@index([sellerId], map: "idx_parties_seller_id")
   @@map("parties")
 }
 

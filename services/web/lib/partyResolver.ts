@@ -1,3 +1,4 @@
+import { PartyType } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getPartyThresholds } from '@/lib/partyThresholds';
 import { compareTwoStrings } from 'string-similarity';
@@ -75,7 +76,8 @@ export async function resolvePartyByName(
   const party = await prisma.party.findFirst({
     where: {
       nameNormalized: normalized,
-      deletedAt: null
+      deletedAt: null,
+      partyType: 'buyer'
     },
     select: {
       tinNormalized: true,
@@ -110,7 +112,8 @@ export async function resolvePartyByTin(
 
   const where: any = {
     tinNormalized: normalized,
-    deletedAt: null
+    deletedAt: null,
+    partyType: 'buyer'
   };
 
   if (countryCode !== undefined) {
@@ -193,7 +196,8 @@ export async function searchPartiesByName(
       nameNormalized: {
         contains: normalized
       },
-      deletedAt: null
+      deletedAt: null,
+      partyType: 'buyer'
     },
     select: {
       id: true,
@@ -214,7 +218,8 @@ export async function searchPartiesByName(
  * Get all active parties
  */
 export async function getAllActiveParties(
-  countryCode?: string | null
+  countryCode?: string | null,
+  partyType: PartyType = 'buyer'
 ): Promise<Array<{
   id: string;
   displayName: string;
@@ -225,7 +230,8 @@ export async function getAllActiveParties(
   createdAt: Date;
 }>> {
   const where: any = {
-    deletedAt: null
+    deletedAt: null,
+    partyType
   };
 
   if (countryCode !== undefined) {
@@ -406,7 +412,8 @@ export async function resolveBuyerParty(
   const exactMatches = await prisma.party.findMany({
     where: {
       nameNormalized: normalized,
-      deletedAt: null
+      deletedAt: null,
+      partyType: 'buyer'
     },
     select: {
       id: true,
@@ -445,7 +452,8 @@ export async function resolveBuyerParty(
   // STAGE 2: Fuzzy matching - query all active parties
   const allParties = await prisma.party.findMany({
     where: {
-      deletedAt: null
+      deletedAt: null,
+      partyType: 'buyer'
     },
     select: {
       id: true,
@@ -577,14 +585,15 @@ export async function validateBuyerPartyId(
       buyerDocumentNumber: true,
       buyerIdtku: true,
       transactionCode: true,
-      deletedAt: true
+      deletedAt: true,
+      partyType: true
     }
   });
 
-  if (!party || party.deletedAt) {
+  if (!party || party.deletedAt || party.partyType !== 'buyer') {
     return null;
   }
 
-  const { deletedAt, ...validParty } = party;
+  const { deletedAt, partyType: _partyType, ...validParty } = party;
   return validParty;
 }

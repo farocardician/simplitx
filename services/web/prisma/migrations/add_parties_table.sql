@@ -1,6 +1,11 @@
--- ============================================================================
--- PARTIES TABLE MIGRATION: Production-Safe Name → TIN Resolution
--- ============================================================================
+
+-- Create enums
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'party_type') THEN
+    CREATE TYPE party_type AS ENUM ('seller', 'buyer');
+  END IF;
+END$$;
 
 -- Create parties table
 CREATE TABLE IF NOT EXISTS parties (
@@ -9,9 +14,11 @@ CREATE TABLE IF NOT EXISTS parties (
   name_normalized   TEXT NOT NULL,
   tin_display       TEXT NOT NULL,
   tin_normalized    TEXT NOT NULL,
+  party_type        party_type NOT NULL DEFAULT 'buyer',
   country_code      CHAR(3) NULL,
   address_full      TEXT NULL,
   email             TEXT NULL,
+  seller_id         UUID NULL,
   deleted_at        TIMESTAMPTZ NULL,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -26,7 +33,16 @@ CREATE TABLE IF NOT EXISTS parties (
       country_code IS NULL
       OR (length(country_code) = 3 AND country_code = upper(country_code))
     )
+,
+  CONSTRAINT chk_seller_link_when_buyer
+    CHECK (party_type = 'buyer' OR seller_id IS NULL)
 );
+
+ALTER TABLE parties
+  ADD CONSTRAINT fk_parties_seller
+  FOREIGN KEY (seller_id)
+  REFERENCES parties (id)
+  ON DELETE SET NULL;
 
 -- ============================================================================
 -- NORMALIZATION FUNCTIONS (Single Source of Truth)
@@ -185,6 +201,16 @@ DROP INDEX IF EXISTS idx_parties_deleted_at;
 CREATE INDEX idx_parties_deleted_at
 ON parties (deleted_at)
 WHERE deleted_at IS NOT NULL;
+
+DROP INDEX IF EXISTS idx_parties_party_type;
+CREATE INDEX idx_parties_party_type
+ON parties (party_type)
+WHERE deleted_at IS NULL;
+
+DROP INDEX IF EXISTS idx_parties_seller_id;
+CREATE INDEX idx_parties_seller_id
+ON parties (seller_id)
+WHERE deleted_at IS NULL;
 
 -- ============================================================================
 -- TABLE COMMENTS (Documentation)

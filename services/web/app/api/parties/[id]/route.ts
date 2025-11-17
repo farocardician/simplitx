@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { PartyType } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { normalizePartyName, normalizeTin } from '@/lib/partyResolver';
+import { parsePartyRoleParam } from '@/lib/server/partyAdmin';
 
 interface RouteContext {
   params: {
@@ -26,7 +28,9 @@ export async function PUT(
       buyerIdtku,
       updatedBy,
       transactionCode,
-      updatedAt: clientUpdatedAt // For optimistic concurrency
+      updatedAt: clientUpdatedAt, // For optimistic concurrency
+      partyType: rawPartyType,
+      sellerId: rawSellerId
     } = body;
 
     // Validate required fields
@@ -96,7 +100,9 @@ export async function PUT(
         tinNormalized: true,
         countryCode: true,
         updatedAt: true,
-        deletedAt: true
+        deletedAt: true,
+        partyType: true,
+        sellerId: true
       }
     });
 
@@ -205,6 +211,62 @@ export async function PUT(
       }
     }
 
+    // Handle seller link for partyType and sellerId changes
+    let resolvedPartyType: PartyType = existingParty.partyType;
+    if (typeof rawPartyType === 'string') {
+      const parsed = parsePartyRoleParam(rawPartyType);
+      if (parsed) {
+        resolvedPartyType = parsed as PartyType;
+      }
+    }
+
+    let sellerLink: string | null = resolvedPartyType === 'buyer' ? existingParty.sellerId : null;
+    const normalizedSellerId = typeof rawSellerId === 'string' ? rawSellerId.trim() : '';
+
+    if (resolvedPartyType === 'buyer') {
+      if (rawSellerId === null || normalizedSellerId === '') {
+        sellerLink = null;
+      }
+
+      if (normalizedSellerId) {
+        if (normalizedSellerId === partyId) {
+          return NextResponse.json(
+            { error: { code: 'INVALID_SELLER_LINK', message: 'Buyer cannot be linked to itself' } },
+            { status: 400 }
+          );
+        }
+
+        const seller = await prisma.party.findFirst({
+          where: {
+            id: normalizedSellerId,
+            deletedAt: null,
+            partyType: 'seller'
+          },
+          select: {
+            id: true
+          }
+        });
+
+        if (!seller) {
+          return NextResponse.json(
+            { error: { code: 'INVALID_SELLER', message: 'Linked seller not found or inactive' } },
+            { status: 400 }
+          );
+        }
+
+        sellerLink = seller.id;
+      }
+    } else if (normalizedSellerId || rawSellerId === null) {
+      // Sellers cannot keep seller references
+      sellerLink = null;
+      if (normalizedSellerId) {
+        return NextResponse.json(
+          { error: { code: 'INVALID_REQUEST', message: 'Sellers cannot reference another seller' } },
+          { status: 400 }
+        );
+      }
+    }
+
     // Update party (database triggers will auto-normalize)
     const updatedParty = await prisma.party.update({
       where: { id: partyId },
@@ -218,6 +280,8 @@ export async function PUT(
         buyerDocument: buyerDocument !== undefined ? buyerDocument : undefined,
         buyerDocumentNumber: buyerDocumentNumber !== undefined ? buyerDocumentNumber : undefined,
         buyerIdtku: buyerIdtku !== undefined ? buyerIdtku : undefined,
+        sellerId: sellerLink,
+        partyType: resolvedPartyType,
         updatedBy: updatedBy || null
       }
     });
