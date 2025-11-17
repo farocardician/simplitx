@@ -30,7 +30,7 @@
   "json2xml": {
     "profiles": {
       "default": {
-        "mapping": "mappings/pt_simon_invoice_v1.json",
+        "mapping": "mappings/pt_sil_invoice_v1.json",
         "converter": {
           "module": "json2xml.converter",
           "callable": "convert_json_to_xml"

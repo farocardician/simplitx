@@ -121,7 +121,7 @@ export async function buildInvoiceXml(data: InvoiceData, buyerResolved: Resolved
 
   const trxCode = trxCodeValueRaw.trim().padStart(2, '0');
 
-  const sellerTin = data.seller?.tin || '0715420659018000';
+  const sellerTin = data.seller?.tin || '0000';
   const sellerIdtku = data.seller?.idtku || `${sellerTin}000000`;
   const invoiceDate = data.invoice?.date || '';
   const refDesc = data.invoice?.number || '';

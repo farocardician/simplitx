@@ -7,7 +7,7 @@
     }
   },
   "structure": {
-    "TIN": "0715420659018000",
+    "TIN": "0314865056071000",
     "ListOfTaxInvoice": {
       "TaxInvoice": {
         "TaxInvoiceDate": "$.data.invoice.date",
@@ -18,7 +18,7 @@
         "CustomDocMonthYear": "",
         "RefDesc": "$.data.invoice.number",
         "FacilityStamp": "",
-        "SellerIDTKU": "0715420659018000000000",
+        "SellerIDTKU": "0314865056071000000000",
         "BuyerTin": {"path": "$.data.buyer.name", "compute": "resolve_buyer_tin"},
         "BuyerDocument": {"path": "$.data.buyer.name", "compute": "resolve_buyer_document_type"},
         "BuyerCountry": {"path": "$.data.buyer.name", "compute": "resolve_buyer_country"},

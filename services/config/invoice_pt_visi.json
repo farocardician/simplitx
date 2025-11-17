@@ -1,5 +1,5 @@
 {
-  "enabled": true,
+  "enabled": false,
   "document": { "type": "invoice", "vendor": "PT Visi", "version": "1" },
   "stages": [
     { "script": "s01_tokenizer.py",
