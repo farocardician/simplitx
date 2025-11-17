@@ -155,14 +155,19 @@ async def unified_process(
                 
                 # Step 2: Call JSON2XML with the JSON result
                 json_content = pdf_response.content
+                # Use template/mapping to determine which JSON2XML pipeline config to use
+                # The template name (e.g., "invoice_pt_sil.json") corresponds to a pipeline config
+                # that contains the correct mapping for that invoice type
+                pipeline_config = template or mapping
+
                 form_data = {
-                    "mapping": mapping,
+                    "pipeline": pipeline_config,
                     "pretty": pretty
                 }
                 files = {"file": ("converted.json", json_content, "application/json")}
-                
+
                 xml_response = await client.post(
-                    f"{JSON2XML_URL}/process", 
+                    f"{JSON2XML_URL}/process",
                     files=files,
                     data=form_data
                 )
@@ -183,16 +188,17 @@ async def unified_process(
                 )
                 
             elif is_json and accept_header == "application/xml":
-                # Route 3: JSON + Accept: application/xml + mapping → Forward to json2xml service
-                
+                # Route 3: JSON + Accept: application/xml + mapping/template → Forward to json2xml service
+                pipeline_config = template or mapping
+
                 form_data = {
-                    "mapping": mapping,
+                    "pipeline": pipeline_config,
                     "pretty": pretty
                 }
                 files = {"file": (file.filename, content, file.content_type)}
-                
+
                 response = await client.post(
-                    f"{JSON2XML_URL}/process", 
+                    f"{JSON2XML_URL}/process",
                     files=files,
                     data=form_data
                 )

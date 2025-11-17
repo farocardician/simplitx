@@ -133,12 +133,43 @@ async def health_check():
 async def process_json_to_xml(
     file: UploadFile = File(...),
     profile: str = Form("default"),
+    pipeline: Optional[str] = Form(None),
     pretty: str = Form("0"),
     params: Optional[str] = Form(None)
 ):
-    """Convert JSON payload to XML using a configured profile."""
+    """Convert JSON payload to XML using a configured profile.
 
-    profile_conf = _resolve_profile(profile)
+    Parameters:
+    - profile: Which profile within the pipeline config to use (default: "default")
+    - pipeline: Which pipeline config file to load (optional, overrides default)
+    """
+
+    # If pipeline is specified, load that pipeline config instead of the default
+    if pipeline:
+        try:
+            pipeline_path = _find_pipeline_config(pipeline)
+            pipeline_data = json.loads(pipeline_path.read_text(encoding="utf-8"))
+            # Get the json2xml config from the pipeline
+            json2xml_config = pipeline_data.get("json2xml", {}) or {}
+            profiles = json2xml_config.get("profiles", {})
+            profile_conf = profiles.get(profile)
+            if profile_conf is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Profile '{profile}' not found in pipeline '{pipeline}'"
+                )
+        except FileNotFoundError:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Pipeline config not found: {pipeline}"
+            )
+        except json.JSONDecodeError as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid pipeline config JSON: {exc}"
+            )
+    else:
+        profile_conf = _resolve_profile(profile)
     mapping_rel = profile_conf["mapping"]
     converter_conf = profile_conf.get("converter", {})
     module_name = converter_conf.get("module", "json2xml.converter")

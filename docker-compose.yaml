@@ -49,6 +49,7 @@ services:
   json2xml:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
+      - WEB_SERVICE_URL=http://web:3000
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s

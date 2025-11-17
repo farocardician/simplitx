@@ -12,40 +12,110 @@ import { auditResolutionAttempt } from '@/lib/auditLogger';
 import type { HsCodeType } from '@prisma/client';
 
 const trxCodeDefaultCache = new Map<string, string | null>();
+const tinDefaultCache = new Map<string, string | null>();
 
-async function loadDefaultTrxCode(mappingName: string | null | undefined): Promise<string | null> {
-  if (!mappingName) {
+async function loadDefaultTrxCode(pdfTemplate: string | null | undefined): Promise<string | null> {
+  if (!pdfTemplate) {
     return '04';
   }
 
-  if (trxCodeDefaultCache.has(mappingName)) {
-    return trxCodeDefaultCache.get(mappingName) ?? null;
+  if (trxCodeDefaultCache.has(pdfTemplate)) {
+    return trxCodeDefaultCache.get(pdfTemplate) ?? null;
   }
 
   try {
-    const mappingPath = join(process.cwd(), '..', 'json2xml', 'mappings', `${mappingName}.json`);
+    // Map PDF template name to XML mapping file name
+    const xmlMappingName = mapPdfTemplateToXmlMapping(pdfTemplate);
+    if (!xmlMappingName) {
+      trxCodeDefaultCache.set(pdfTemplate, '04');
+      return '04';
+    }
+
+    const mappingPath = join(process.cwd(), '..', 'json2xml', 'mappings', xmlMappingName);
     const mappingContent = await readFile(mappingPath, 'utf-8');
     const mappingJson = JSON.parse(mappingContent);
     const rawValue = mappingJson?.structure?.ListOfTaxInvoice?.TaxInvoice?.TrxCode;
 
     if (rawValue === null || rawValue === undefined) {
-      trxCodeDefaultCache.set(mappingName, null);
+      trxCodeDefaultCache.set(pdfTemplate, null);
       return null;
     }
 
     if (typeof rawValue === 'string') {
       const normalized = rawValue.trim();
-      trxCodeDefaultCache.set(mappingName, normalized || null);
+      trxCodeDefaultCache.set(pdfTemplate, normalized || null);
       return normalized || null;
     }
 
-    trxCodeDefaultCache.set(mappingName, null);
+    trxCodeDefaultCache.set(pdfTemplate, null);
     return null;
   } catch (error) {
-    console.warn(`Failed to load mapping for TrxCode: ${mappingName}`, error);
+    console.warn(`Failed to load mapping for TrxCode from PDF template: ${pdfTemplate}`, error);
     // Fallback to legacy default behaviour
-    trxCodeDefaultCache.set(mappingName, '04');
+    trxCodeDefaultCache.set(pdfTemplate, '04');
     return '04';
+  }
+}
+
+function mapPdfTemplateToXmlMapping(pdfTemplate: string | null | undefined): string | null {
+  if (!pdfTemplate) return null;
+
+  // Map PDF extraction templates to XML mapping files
+  // PDF template naming: invoice_pt_XXX.json
+  // XML mapping naming: pt_XXX_invoice_v1.json
+  const templateMap: Record<string, string> = {
+    'invoice_pt_simon.json': 'pt_simon_invoice_v1.json',
+    'invoice_pt_sil.json': 'pt_sil_invoice_v1.json',
+    'invoice_pt_rittal.json': 'pt_rittal_invoice_v1.json',
+    // Legacy naming support
+    'pt_simon_invoice_v1.json': 'pt_simon_invoice_v1.json',
+    'pt_sil_invoice_v1.json': 'pt_sil_invoice_v1.json',
+    'pt_rittal_invoice_v1.json': 'pt_rittal_invoice_v1.json',
+  };
+
+  return templateMap[pdfTemplate] || null;
+}
+
+async function loadDefaultTin(pdfTemplate: string | null | undefined): Promise<string | null> {
+  if (!pdfTemplate) {
+    return null;
+  }
+
+  if (tinDefaultCache.has(pdfTemplate)) {
+    return tinDefaultCache.get(pdfTemplate) ?? null;
+  }
+
+  try {
+    // Map PDF template name to XML mapping file name
+    const xmlMappingName = mapPdfTemplateToXmlMapping(pdfTemplate);
+    if (!xmlMappingName) {
+      tinDefaultCache.set(pdfTemplate, null);
+      return null;
+    }
+
+    const mappingPath = join(process.cwd(), '..', 'json2xml', 'mappings', xmlMappingName);
+    const mappingContent = await readFile(mappingPath, 'utf-8');
+    const mappingJson = JSON.parse(mappingContent);
+    // TIN is at the root of the structure, not nested in TaxInvoice
+    const rawValue = mappingJson?.structure?.TIN;
+
+    if (rawValue === null || rawValue === undefined) {
+      tinDefaultCache.set(pdfTemplate, null);
+      return null;
+    }
+
+    if (typeof rawValue === 'string') {
+      const normalized = rawValue.trim();
+      tinDefaultCache.set(pdfTemplate, normalized || null);
+      return normalized || null;
+    }
+
+    tinDefaultCache.set(pdfTemplate, null);
+    return null;
+  } catch (error) {
+    console.warn(`Failed to load mapping for TIN from PDF template: ${pdfTemplate}`, error);
+    tinDefaultCache.set(pdfTemplate, null);
+    return null;
   }
 }
 
@@ -809,6 +879,7 @@ export const POST = withSession(async (
     }
 
     const defaultTrxCode = await loadDefaultTrxCode(job.mapping);
+    const defaultTin = await loadDefaultTin(job.mapping);
     const requestedTrxCode = normalizeTrxCode(trx_code);
 
     if (requestedTrxCode) {
@@ -943,6 +1014,11 @@ export const POST = withSession(async (
     const mergedData = {
       ...original,
       trxCode: effectiveTrxCode,
+      seller: {
+        ...original.seller,
+        // Use TIN from mapping file if available, otherwise use parsed data's TIN
+        tin: defaultTin || original.seller?.tin || '0000'
+      },
       invoice: {
         ...original.invoice,
         number: invoice_number || original.invoice?.number || original.invoice?.no,

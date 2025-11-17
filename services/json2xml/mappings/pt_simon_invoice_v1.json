@@ -33,7 +33,7 @@
             "Opt": "A",
             "Code": {"path": "$.hs_code", "compute": "hs_code_to_full"},
             "Name": "$.description",
-            "Unit": "$.uom",
+            "Unit": {"path": "$.uom", "compute": "resolve_uom"},
             "Price": {"path": "$.unit_price", "format": {"type": "decimal", "scale": 2}},
             "Qty": "$.qty",
             "TotalDiscount": "0",
@@ -120,6 +120,9 @@
       "parameters": {
         "field": "idtku"
       }
+    },
+    "resolve_uom": {
+      "builtin": "resolve_uom"
     }
   }
 }

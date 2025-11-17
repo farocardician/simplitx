@@ -9,6 +9,7 @@ from lxml import etree
 from .formatting import format_decimal
 from .mapping import resolve_mapping_placeholders
 from .party_resolver import get_buyer_field
+from .uom_resolver import resolve_uom
 
 
 class ConversionError(Exception):
@@ -204,6 +205,27 @@ def compute_field_value(
                 return result or ""
             except Exception as exc:
                 raise ConversionError(f"Buyer field resolution failed: {exc}") from exc
+        elif builtin == "resolve_uom":
+            # Special handling for UOM resolution (name/alias to canonical code)
+            # Extract UOM value from path
+            if "path" in field_config:
+                uom_input = parse_jsonpath(field_config["path"], current_data)
+            elif "value" in field_config:
+                uom_input = field_config["value"]
+            else:
+                uom_input = None
+
+            if not uom_input:
+                return ""
+
+            try:
+                resolved_code = resolve_uom(str(uom_input))
+                # Return resolved code if found, otherwise return original (fallback)
+                return resolved_code or str(uom_input)
+            except Exception as exc:
+                # Log warning but don't fail conversion
+                print(f"Warning: UOM resolution failed for '{uom_input}': {exc}")
+                return str(uom_input)
         else:
             raise ConversionError(f"Unknown builtin function '{builtin}'")
 
