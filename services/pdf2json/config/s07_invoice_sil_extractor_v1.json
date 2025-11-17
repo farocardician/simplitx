@@ -10,19 +10,20 @@
     ],
     "expected_fields": [
       "subtotal",
-      "tax_base",
-      "tax",
+      "tax_based",
       "tax_amount"
-    ],
-    "optional_fields": [
-      "income_tax",
-      "income_tax_amount"
     ]
   },
   "strict_segments": true,
   "use_stage2_normalized": true,
   "totals": {
-    "mode": "segments_only"
+    "mode": "segments_only",
+    "field_names": [
+      "subtotal",
+      "tax_based",
+      "tax_amount",
+      "grand_total"
+    ]
   },
   "confidence": {
     "thresholds": {
@@ -37,74 +38,62 @@
     }
   },
   "fields": {
-    "buyer_name": {
-      "strategy": "regex_capture",
-      "segment": "buyer",
-      "post": {
-        "regex_pattern": ["(PT\\.[A-Za-z]+)"]
-      }
-    },
+    "buyer_name": "buyer_name",
     "invoice_number": {
       "strategy": "regex_capture",
       "segment": "invoice_number",
       "post": {
-        "regex_pattern": ["Invoiceno\\.:\\s+(\\d+)"]
+        "regex_pattern": ["(\\d{10})"]
       }
     },
     "invoice_date": {
       "strategy": "regex_capture",
       "segment": "invoice_date",
       "post": {
-        "regex_pattern": ["Dated:\\s+(\\d{2}\\.\\d{2}\\.\\d{4})"]
+        "regex_pattern": ["(\\d{2}\\.\\d{2}\\.\\d{4})"]
       }
     },
     "subtotal": {
       "strategy": "regex_capture",
-      "segment": "total",
+      "segment": "subtotal",
       "post": {
-        "regex_pattern": ["SGD\\s+([\\d,]+\\.\\d+)"]
+        "regex_pattern": [
+          "Items\\s+total:?\\s*([\\d.,]+)",
+          "([\\d.,]+)\\s+Items\\s+total"
+        ]
       }
     },
-    "tax_base": {
+    "tax_based": {
       "strategy": "regex_capture",
       "segment": "total",
       "post": {
-        "regex_pattern": ["SGD\\s+([\\d,]+\\.\\d+)"]
-      }
-    },
-    "tax": {
-      "strategy": "constant",
-      "segment": "total",
-      "post": {
-        "value": ""
+        "regex_pattern": [
+          "([\\d.,]+)\\s+T\\s+ax",
+          "T\\s+([\\d.,]+)\\s+ax",
+          "ax\\s*Based:?\\s*([\\d.,]+)",
+          "Tax\\s*Based:?\\s*([\\d.,]+)"
+        ]
       }
     },
     "tax_amount": {
-      "strategy": "constant",
+      "strategy": "regex_capture",
       "segment": "total",
       "post": {
-        "value": ""
-      }
-    },
-    "income_tax": {
-      "strategy": "constant",
-      "segment": "total",
-      "post": {
-        "value": ""
-      }
-    },
-    "income_tax_amount": {
-      "strategy": "constant",
-      "segment": "total",
-      "post": {
-        "value": ""
+        "regex_pattern": [
+          "([\\d.,]+)\\s+VAT",
+          "VAT[^0-9]*(?:\\d[\\d.,]*[^0-9]+){4}([\\d.,]+)"
+        ]
       }
     },
     "grand_total": {
       "strategy": "regex_capture",
-      "segment": "total",
+      "segment": "grand_total",
       "post": {
-        "regex_pattern": ["SGD\\s+([\\d,]+\\.\\d+)"]
+        "regex_pattern": [
+          "Final\\s+invoice\\s+amount:?\\s*(?:IDR\\s*)?([\\d.,]+)",
+          "IDR\\s+([\\d.,]+)",
+          "([\\d.,]+)\\s+IDR"
+        ]
       }
     }
   },
@@ -129,27 +118,12 @@
       "max_len": 20,
       "allowed_chars": "0-9.,"
     },
-    "tax_base": {
+    "tax_based": {
       "min_len": 0,
       "max_len": 20,
       "allowed_chars": "0-9.,"
-    },
-    "tax": {
-      "min_len": 0,
-      "max_len": 10,
-      "allowed_chars": "0-9.%"
     },
     "tax_amount": {
-      "min_len": 0,
-      "max_len": 20,
-      "allowed_chars": "0-9.,"
-    },
-    "income_tax": {
-      "min_len": 0,
-      "max_len": 10,
-      "allowed_chars": "0-9.%"
-    },
-    "income_tax_amount": {
       "min_len": 0,
       "max_len": 20,
       "allowed_chars": "0-9.,"

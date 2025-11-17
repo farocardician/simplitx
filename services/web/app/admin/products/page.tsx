@@ -165,6 +165,10 @@ export default function ProductManagementPage() {
   const [draftActionLoading, setDraftActionLoading] = useState<string | null>(null);
   const [draftParentSearch, setDraftParentSearch] = useState<Record<string, { query: string; results: Product[]; loading: boolean }>>({});
 
+  // Approval confirmation modal
+  const [showApprovalConfirmation, setShowApprovalConfirmation] = useState(false);
+  const [pendingApprovalDraft, setPendingApprovalDraft] = useState<DraftProduct | null>(null);
+
   const createDraftEditorState = useCallback((draft: DraftProduct): DraftEditorState => {
     const normalizedType: '' | 'BARANG' | 'JASA' = draft.type === 'BARANG' || draft.type === 'JASA' ? draft.type : '';
 
@@ -589,6 +593,7 @@ export default function ProductManagementPage() {
       return;
     }
 
+    // Validate required fields
     if (editor.kind === 'new_product') {
       if (!editor.description.trim()) {
         showToast('Description is required before approval', 'error');
@@ -611,6 +616,72 @@ export default function ProductManagementPage() {
         showToast('Assign a parent product before approving alias', 'error');
         return;
       }
+    }
+
+    // Auto-save draft before showing confirmation
+    setDraftActionLoading(draft.id);
+    try {
+      const savePayload: Record<string, unknown> = editor.kind === 'new_product'
+        ? {
+            kind: 'new_product',
+            description: editor.description.trim(),
+            hsCode: editor.hsCode.trim() ? editor.hsCode.trim() : null,
+            type: editor.type,
+            uomCode: editor.uomCode,
+            aliasDescription: null,
+            targetProductId: null,
+          }
+        : {
+            kind: 'alias',
+            aliasDescription: editor.aliasDescription.trim(),
+            targetProductId: editor.targetProductId,
+            hsCode: null,
+            type: null,
+            uomCode: null,
+          };
+
+      const saveResponse = await fetch(`/api/products/drafts/${draft.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(savePayload),
+      });
+
+      if (!saveResponse.ok) {
+        const errorData = await saveResponse.json().catch(() => null);
+        throw new Error(errorData?.error?.message || 'Failed to save draft');
+      }
+
+      const responseData = await saveResponse.json();
+      const savedDraft = responseData.draft;
+
+      // Update editor state with saved draft data
+      const updatedEditor = createDraftEditorState(savedDraft);
+      setDraftEditors(prev => ({
+        ...prev,
+        [savedDraft.id]: updatedEditor,
+      }));
+
+      // Refresh drafts to get updated data
+      await fetchDrafts();
+
+      // Show confirmation modal
+      setPendingApprovalDraft(savedDraft);
+      setShowApprovalConfirmation(true);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to prepare draft for approval', 'error');
+    } finally {
+      setDraftActionLoading(null);
+    }
+  }, [draftEditors, createDraftEditorState, fetchDrafts, showToast]);
+
+  const handleConfirmApproval = useCallback(async () => {
+    if (!pendingApprovalDraft) {
+      return;
+    }
+
+    const editor = draftEditors[pendingApprovalDraft.id];
+    if (!editor) {
+      return;
     }
 
     const payload: Record<string, unknown> = {
@@ -636,9 +707,10 @@ export default function ProductManagementPage() {
           },
     };
 
-    setDraftActionLoading(draft.id);
+    setDraftActionLoading(pendingApprovalDraft.id);
+    setShowApprovalConfirmation(false);
     try {
-      const response = await fetch(`/api/products/drafts/${draft.id}/review`, {
+      const response = await fetch(`/api/products/drafts/${pendingApprovalDraft.id}/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -649,7 +721,8 @@ export default function ProductManagementPage() {
         throw new Error(errorData?.error?.message || 'Failed to approve draft');
       }
 
-      showToast('Draft approved');
+      showToast('Draft approved and published successfully');
+      setPendingApprovalDraft(null);
       await fetchDrafts();
       await fetchProducts();
     } catch (err) {
@@ -657,7 +730,12 @@ export default function ProductManagementPage() {
     } finally {
       setDraftActionLoading(null);
     }
-  }, [draftEditors, fetchDrafts, fetchProducts, showToast]);
+  }, [pendingApprovalDraft, draftEditors, fetchDrafts, fetchProducts, showToast]);
+
+  const handleCancelApproval = useCallback(() => {
+    setShowApprovalConfirmation(false);
+    setPendingApprovalDraft(null);
+  }, []);
 
   const handleDraftReject = useCallback(async (draft: DraftProduct) => {
     const notes = typeof window !== 'undefined'
@@ -2576,6 +2654,198 @@ export default function ProductManagementPage() {
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approval Confirmation Modal */}
+      {showApprovalConfirmation && pendingApprovalDraft && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Confirm Publication</h2>
+                <button
+                  onClick={handleCancelApproval}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Close"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">
+                Review the details below before publishing to the live catalog
+              </p>
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-6 py-4">
+              {(() => {
+                const editor = draftEditors[pendingApprovalDraft.id];
+                if (!editor) return null;
+
+                if (editor.kind === 'new_product') {
+                  return (
+                    <div className="space-y-4">
+                      {/* Product Type Badge */}
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                          <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+                          </svg>
+                          New Product
+                        </span>
+                      </div>
+
+                      {/* Product Details */}
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                            Description
+                          </label>
+                          <p className="text-base font-medium text-gray-900">{editor.description}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                              HS Code
+                            </label>
+                            <p className="text-sm text-gray-900">
+                              {editor.hsCode || <span className="text-gray-400 italic">Not specified</span>}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                              Type
+                            </label>
+                            <p className="text-sm text-gray-900">
+                              {editor.type ? formatHsTypeLabel(editor.type) : <span className="text-gray-400 italic">Not specified</span>}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                            Unit of Measure
+                          </label>
+                          <p className="text-sm text-gray-900">
+                            {editor.uomCode ? (
+                              (() => {
+                                const uom = uomList.find(u => u.code === editor.uomCode);
+                                return uom ? formatUomLabel(uom) : editor.uomCode;
+                              })()
+                            ) : (
+                              <span className="text-gray-400 italic">Not specified</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Info Alert */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex gap-3">
+                        <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+                        </svg>
+                        <div className="text-sm text-blue-800">
+                          <p className="font-medium">This product will be added to the live catalog</p>
+                          <p className="mt-1">It will be available for automatic matching and can be used in invoices.</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                } else {
+                  // Alias
+                  return (
+                    <div className="space-y-4">
+                      {/* Alias Type Badge */}
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                          <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/>
+                            <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/>
+                          </svg>
+                          Product Alias
+                        </span>
+                      </div>
+
+                      {/* Alias Details */}
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                            Alias Description
+                          </label>
+                          <p className="text-base font-medium text-gray-900">{editor.aliasDescription}</p>
+                        </div>
+
+                        <div className="border-t border-gray-200 pt-3">
+                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                            Links to Parent Product
+                          </label>
+                          <div className="bg-white rounded-lg border border-gray-200 p-3">
+                            <p className="text-sm font-medium text-gray-900 mb-2">{editor.targetProductLabel}</p>
+                            {pendingApprovalDraft.targetProduct && (
+                              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                {pendingApprovalDraft.targetProduct.hsCode && (
+                                  <div>
+                                    <span className="text-gray-500">HS Code:</span> {pendingApprovalDraft.targetProduct.hsCode}
+                                  </div>
+                                )}
+                                {pendingApprovalDraft.targetProduct.type && (
+                                  <div>
+                                    <span className="text-gray-500">Type:</span> {formatHsTypeLabel(pendingApprovalDraft.targetProduct.type)}
+                                  </div>
+                                )}
+                                {pendingApprovalDraft.targetProduct.uomCode && (
+                                  <div className="col-span-2">
+                                    <span className="text-gray-500">UOM:</span> {pendingApprovalDraft.targetProduct.uomCode}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Info Alert */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex gap-3">
+                        <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+                        </svg>
+                        <div className="text-sm text-blue-800">
+                          <p className="font-medium">This alias will be added to the live catalog</p>
+                          <p className="mt-1">Future matches for &ldquo;{editor.aliasDescription}&rdquo; will automatically link to the parent product.</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+              <button
+                onClick={handleCancelApproval}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmApproval}
+                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                  </svg>
+                  Confirm & Publish
+                </span>
               </button>
             </div>
           </div>

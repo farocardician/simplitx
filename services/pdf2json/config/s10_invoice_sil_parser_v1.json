@@ -1,0 +1,60 @@
+{
+  "metadata": {
+    "template": "Silesia Invoice (IDR)",
+    "money_rounding": 2
+  },
+  "defaults": {
+    "currency": "IDR",
+    "tax_label": "VAT"
+  },
+  "header": {
+    "pages": [1],
+    "search_row_limit": 30,
+    "fields": {
+      "invoice_number": { "match": "contains" },
+      "invoice_date": { "match": "contains", "transform": "date_iso" }
+    }
+  },
+  "items": {
+    "min_columns": 4,
+    "header_rows_can_hold_items": false,
+    "key_field": "sku",
+    "fields": [
+      { "name": "no", "transform": "int" },
+      { "name": "hs_code" },
+      { "name": "sku", "column": 0 },
+      { "name": "code" },
+      { "name": "description", "column": 1, "transform": "string" },
+      { "name": "qty", "column": 2, "transform": "int" },
+      { "name": "uom", "transform": "string" },
+      { "name": "unit_price", "column": 3, "transform": "money" },
+      { "name": "discount_amount", "transform": "money" },
+      { "name": "discount_percent", "transform": "decimal" },
+      { "name": "amount", "column": 4, "transform": "money" }
+    ]
+  },
+  "totals": {
+    "tax_label": "VAT",
+    "fields": {
+      "subtotal": [
+        "printed.subtotal",
+        "checks.subtotal.computed"
+      ],
+      "tax_base": [
+        "printed.tax_base",
+        "computed.tax_base"
+      ],
+      "tax_amount": [
+        "printed.tax_amount",
+        "computed.tax_amount"
+      ],
+      "grand_total": [
+        "printed.grand_total",
+        "computed.grand_total"
+      ]
+    }
+  },
+  "manifest": {
+    "schema_template": "Silesia Invoice (IDR)"
+  }
+}

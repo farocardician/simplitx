@@ -204,7 +204,26 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     }
 
     if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ draft });
+      // Get target product if alias even when no updates
+      let targetProduct = null;
+      if (draft.kind === 'alias' && draft.targetProductId) {
+        targetProduct = await prisma.product.findUnique({
+          where: { id: draft.targetProductId },
+          select: {
+            id: true,
+            description: true,
+            hsCode: true,
+            type: true,
+            uomCode: true,
+          },
+        });
+      }
+      return NextResponse.json({
+        draft: {
+          ...draft,
+          targetProduct,
+        },
+      });
     }
 
     const updated = await prisma.productDraft.update({
@@ -212,7 +231,27 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       data: updates,
     });
 
-    return NextResponse.json({ draft: updated });
+    // Get target product if alias
+    let targetProduct = null;
+    if (updated.kind === 'alias' && updated.targetProductId) {
+      targetProduct = await prisma.product.findUnique({
+        where: { id: updated.targetProductId },
+        select: {
+          id: true,
+          description: true,
+          hsCode: true,
+          type: true,
+          uomCode: true,
+        },
+      });
+    }
+
+    return NextResponse.json({
+      draft: {
+        ...updated,
+        targetProduct,
+      },
+    });
 
   } catch (error) {
     console.error('Error updating draft:', error);

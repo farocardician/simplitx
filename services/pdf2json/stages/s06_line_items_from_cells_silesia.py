@@ -67,6 +67,15 @@ FOOTER_STOP_PATTERNS = (
 HS_CODE = 330200
 DEFAULT_UOM = "KG"
 DEFAULT_NOTES = "defaulted discount_percent"
+PACKAGING_KEYWORDS = (
+    "country of origin",
+    "plastic",
+    "packaging",
+    "evoh",
+    "ex-protection",
+    "carton box",
+    "pe-inlined",
+)
 
 
 def _tidy_text(parts: Sequence[str]) -> str:
@@ -287,6 +296,18 @@ def _process_rows(pages: List[List[RowSlice]]) -> List[Dict[str, Any]]:
     items: List[Dict[str, Any]] = []
     current: Optional[Dict[str, Any]] = None
 
+    def _is_packaging_line(row: RowSlice) -> bool:
+        text = row.raw_text.lower()
+        if any(pat in text for pat in PACKAGING_KEYWORDS):
+            return True
+        qty_text = (row.col_text.get("qty") or "").lower()
+        if any(k in qty_text for k in ("kg", "can", "l", "carton", "box")) and any(ch.isdigit() for ch in qty_text):
+            return True
+        desc_text = (row.col_text.get("description") or "").lower()
+        if any(pat in desc_text for pat in PACKAGING_KEYWORDS):
+            return True
+        return False
+
     def new_current() -> Dict[str, Any]:
         return {
             "sku_parts": [],
@@ -337,6 +358,11 @@ def _process_rows(pages: List[List[RowSlice]]) -> List[Dict[str, Any]]:
             raw_qty = row.col_text.get("qty")
             raw_unit = row.col_text.get("unit_price")
             raw_amount = row.col_text.get("amount")
+
+            # Skip ancillary packaging/origin lines so descriptions stay concise
+            if _is_packaging_line(row):
+                continue
+
             qty_val = _parse_number(raw_qty)
             unit_val = _parse_number(raw_unit)
             amount_val = _parse_number(raw_amount)

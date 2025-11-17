@@ -267,6 +267,65 @@
         "min_height": 0.008
       },
       "keep": "all"
-    }
+    },
+    {
+      "id": "grand_total",
+      "label": "grand_total",
+      "inside": "@total",
+      "detect": {
+        "by": "line_anchors",
+        "start_anchor": {
+          "patterns": ["Final\\s+invoice\\s+amount:"],
+          "flags": { "normalize_space": true },
+          "select": "first"
+        },
+        "margin": { "top": 0, "right": 1, "bottom": 0, "left": 1 }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "subtotal",
+      "label": "subtotal",
+      "inside": "@total",
+      "detect": {
+          "by": "line_anchors",
+          "start_anchor": {
+            "patterns": ["Items\\s+total:"],
+            "flags": { "normalize_space": true },
+            "select": "first"
+          },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "rows": 0,
+          "row_tol": 0.006,
+          "refine_with_tokens": true,
+          "width": "page"
+        },
+        "margin": { "top": 0, "right": 1, "bottom": 0, "left": 1 }
+      },
+      "keep": "all"
+    },
+    {
+      "id": "tax",
+      "label": "tax",
+      "inside": "@total",
+      "detect": {
+          "by": "anchors",
+          "start_anchor": {
+            "patterns": ["^(T|Tax)$"],
+            "flags": { "normalize_space": true },
+            "select": "first"
+          },
+        "capture_window": {
+          "mode": "right_then_rows",
+          "rows": 0,
+          "row_tol": 0.006,
+          "refine_with_tokens": true,
+          "width": "page"
+        },
+        "margin": { "top": 0, "right": 1, "bottom": 0, "left": 1 }
+      },
+      "keep": "all"
+    }    
   ]
 }

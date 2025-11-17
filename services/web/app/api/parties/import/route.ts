@@ -153,6 +153,12 @@ export async function POST(req: NextRequest) {
       idMapping.set(party.id, party.id);
     }
 
+    // Fetch valid transaction codes for validation
+    const validTransactionCodes = await prisma.transactionCode.findMany({
+      select: { code: true }
+    });
+    const validCodeSet = new Set(validTransactionCodes.map(tc => tc.code));
+
     console.log('[Import] Starting to process', rows.length, 'rows...');
 
     // Process each row with comprehensive error handling
@@ -240,11 +246,25 @@ export async function POST(req: NextRequest) {
           buyerIdtku = buyerIdtkuRaw;
         }
 
+        // Validate and normalize transaction code
+        const transactionCodeRaw = data['transaction_code'].trim();
+        let transactionCode: string | null = null;
+
+        if (transactionCodeRaw) {
+          // Normalize to 2-digit format (pad with leading zero if needed)
+          const normalized = transactionCodeRaw.padStart(2, '0');
+
+          if (!validCodeSet.has(normalized)) {
+            throw new Error(`Invalid transaction code "${transactionCodeRaw}". Must be one of: ${Array.from(validCodeSet).sort().join(', ')}`);
+          }
+          transactionCode = normalized;
+        }
+
         const payload = {
           displayName,
           tinDisplay: tinNormalized, // Use normalized version (with leading zeros restored)
           countryCode,
-          transactionCode: data['transaction_code'].trim() || null,
+          transactionCode,
           email: data['email'].trim() || null,
           addressFull: data['address_full'].trim() || null,
           buyerDocument: data['buyer_document'].trim() || null,
