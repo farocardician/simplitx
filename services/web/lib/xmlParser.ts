@@ -11,11 +11,15 @@ interface ParsedInvoiceItem {
   hs_code: string;
   uom: string;
   type: 'Barang' | 'Jasa';
+  vat?: number;
+  otherTaxBase?: number;
 }
 
 interface ParsedInvoiceData {
   invoice_number: string;
   seller_name: string;
+  seller_tin?: string;
+  seller_idtku?: string;
   buyer_name: string;
   invoice_date: string;
   items: ParsedInvoiceItem[];
@@ -60,6 +64,8 @@ function extractGoodServiceItems(xml: string): ParsedInvoiceItem[] {
     const price = extractTextBetweenTags(itemXml, 'Price');
     const qty = extractTextBetweenTags(itemXml, 'Qty');
     const taxBase = extractTextBetweenTags(itemXml, 'TaxBase');
+    const vat = extractTextBetweenTags(itemXml, 'VAT');
+    const otherTaxBase = extractTextBetweenTags(itemXml, 'OtherTaxBase');
 
     items.push({
       description: name || '',
@@ -69,7 +75,9 @@ function extractGoodServiceItems(xml: string): ParsedInvoiceItem[] {
       sku: '', // SKU not stored in XML
       hs_code: code || '',
       uom: unit || '',
-      type: mapOptToType(opt)
+      type: mapOptToType(opt),
+      vat: vat ? parseFloat(vat) : undefined,
+      otherTaxBase: otherTaxBase ? parseFloat(otherTaxBase) : undefined
     });
   }
 
@@ -84,12 +92,16 @@ export function parseInvoiceXml(xmlContent: string): ParsedInvoiceData {
   const refDesc = extractTextBetweenTags(xmlContent, 'RefDesc');
   const buyerName = extractTextBetweenTags(xmlContent, 'BuyerName');
   const trxCode = extractTextBetweenTags(xmlContent, 'TrxCode');
+  const sellerTin = extractTextBetweenTags(xmlContent, 'TIN');
+  const sellerIdtku = extractTextBetweenTags(xmlContent, 'SellerIDTKU');
 
   const items = extractGoodServiceItems(xmlContent);
 
   return {
     invoice_number: refDesc,
     seller_name: 'Seller', // Not stored in XML, will be merged from parser_results
+    seller_tin: sellerTin || undefined,
+    seller_idtku: sellerIdtku || undefined,
     buyer_name: buyerName || 'Buyer',
     invoice_date: invoiceDate,
     items,

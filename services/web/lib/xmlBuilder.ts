@@ -14,6 +14,8 @@ interface InvoiceItem {
   hs_code: string;
   uom: string;
   type: 'Barang' | 'Jasa';
+  vat?: number;
+  otherTaxBase?: number;
 }
 
 const TYPE_TO_OPT_MAP: Record<'Barang' | 'Jasa', 'A' | 'B'> = {
@@ -68,10 +70,10 @@ function padHsCode(hsCode: string): string {
 }
 
 function calculateTaxFields(taxBase: number) {
-  // OtherTaxBase = TaxBase / 1.09 (removing ~9% margin/markup)
-  const otherTaxBase = taxBase / 1.09;
-  // VAT = OtherTaxBase * 0.12 (12% VAT rate)
-  const vat = otherTaxBase * 0.12;
+  // OtherTaxBase = (TaxBase / 12) * 11 (matching mapping file formula)
+  const otherTaxBase = (taxBase / 12) * 11;
+  // VAT = TaxBase * 0.11 (11% VAT rate, matching mapping file formula)
+  const vat = taxBase * 0.11;
 
   return {
     otherTaxBase: parseFloat(otherTaxBase.toFixed(2)),
@@ -134,7 +136,7 @@ export async function buildInvoiceXml(data: InvoiceData, buyerResolved: Resolved
   const buyerEmail = buyerResolved.email || '';
   const buyerIdtku = buyerResolved.buyerIdtku || `${buyerResolved.tinDisplay}000000`;
   const buyerDocument = buyerResolved.buyerDocument || 'TIN';
-  const buyerDocumentNumber = buyerResolved.buyerDocumentNumber || '-';
+  const buyerDocumentNumber = buyerResolved.buyerDocumentNumber || '';
 
   let xml = `<?xml version='1.0' encoding='utf-8'?>
 <TaxInvoiceBulk xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -163,7 +165,21 @@ export async function buildInvoiceXml(data: InvoiceData, buyerResolved: Resolved
 
   // Add each item (UOMs already validated above)
   data.items.forEach((item) => {
-    const { otherTaxBase, vat } = calculateTaxFields(item.amount);
+    // Use provided VAT/OtherTaxBase if available (from parsed XML), otherwise calculate
+    let vat: number;
+    let otherTaxBase: number;
+
+    if (item.vat !== undefined && item.otherTaxBase !== undefined) {
+      // Use values extracted from existing XML
+      vat = item.vat;
+      otherTaxBase = item.otherTaxBase;
+    } else {
+      // Calculate using mapping file formula
+      const calculated = calculateTaxFields(item.amount);
+      vat = calculated.vat;
+      otherTaxBase = calculated.otherTaxBase;
+    }
+
     const hsCode = padHsCode(item.hs_code);
     const opt = mapTypeToOpt(item.type);
 
@@ -176,13 +192,13 @@ export async function buildInvoiceXml(data: InvoiceData, buyerResolved: Resolved
           <Code>${escapeXml(hsCode)}</Code>
           <Name>${escapeXml(item.description)}</Name>
           <Unit>${escapeXml(canonicalUom)}</Unit>
-          <Price>${item.unit_price}</Price>
+          <Price>${item.unit_price.toFixed(2)}</Price>
           <Qty>${item.qty}</Qty>
           <TotalDiscount>0</TotalDiscount>
-          <TaxBase>${item.amount}</TaxBase>
-          <OtherTaxBase>${otherTaxBase}</OtherTaxBase>
+          <TaxBase>${item.amount.toFixed(2)}</TaxBase>
+          <OtherTaxBase>${otherTaxBase.toFixed(2)}</OtherTaxBase>
           <VATRate>12</VATRate>
-          <VAT>${vat}</VAT>
+          <VAT>${vat.toFixed(2)}</VAT>
           <STLGRate>0</STLGRate>
           <STLG>0</STLG>
         </GoodService>

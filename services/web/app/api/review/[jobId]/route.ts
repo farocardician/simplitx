@@ -5,7 +5,7 @@ import { buildInvoiceXml } from '@/lib/xmlBuilder';
 import { parseInvoiceXml } from '@/lib/xmlParser';
 import { writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
-import { existsSync } from 'fs';
+import { existsSync, readdirSync } from 'fs';
 import { createUomResolverSnapshot } from '@/lib/uomResolver';
 import { resolveBuyerParty, validateBuyerPartyId, type ResolvedParty, type CandidateParty } from '@/lib/partyResolver';
 import { auditResolutionAttempt } from '@/lib/auditLogger';
@@ -13,6 +13,7 @@ import type { HsCodeType } from '@prisma/client';
 
 const trxCodeDefaultCache = new Map<string, string | null>();
 const tinDefaultCache = new Map<string, string | null>();
+const sellerFieldsCache = new Map<string, { tin: string; idtku: string } | null>();
 
 async function loadDefaultTrxCode(pdfTemplate: string | null | undefined): Promise<string | null> {
   if (!pdfTemplate) {
@@ -31,7 +32,9 @@ async function loadDefaultTrxCode(pdfTemplate: string | null | undefined): Promi
       return '04';
     }
 
-    const mappingPath = join(process.cwd(), '..', 'json2xml', 'mappings', xmlMappingName);
+    // In Docker: /app/services/json2xml/mappings/
+    const mappingBaseDir = process.env.MAPPING_FILES_PATH || '/app/services/json2xml/mappings';
+    const mappingPath = join(mappingBaseDir, xmlMappingName);
     const mappingContent = await readFile(mappingPath, 'utf-8');
     const mappingJson = JSON.parse(mappingContent);
     const rawValue = mappingJson?.structure?.ListOfTaxInvoice?.TaxInvoice?.TrxCode;
@@ -60,20 +63,27 @@ async function loadDefaultTrxCode(pdfTemplate: string | null | undefined): Promi
 function mapPdfTemplateToXmlMapping(pdfTemplate: string | null | undefined): string | null {
   if (!pdfTemplate) return null;
 
-  // Map PDF extraction templates to XML mapping files
-  // PDF template naming: invoice_pt_XXX.json
-  // XML mapping naming: pt_XXX_invoice_v1.json
-  const templateMap: Record<string, string> = {
-    'invoice_pt_simon.json': 'pt_simon_invoice_v1.json',
-    'invoice_pt_sil.json': 'pt_sil_invoice_v1.json',
-    'invoice_pt_rittal.json': 'pt_rittal_invoice_v1.json',
-    // Legacy naming support
-    'pt_simon_invoice_v1.json': 'pt_simon_invoice_v1.json',
-    'pt_sil_invoice_v1.json': 'pt_sil_invoice_v1.json',
-    'pt_rittal_invoice_v1.json': 'pt_rittal_invoice_v1.json',
-  };
+  const template = pdfTemplate.trim();
 
-  return templateMap[pdfTemplate] || null;
+  // Handle old naming format (invoice_pt_SUPPLIER) → new naming (pt_SUPPLIER_invoice_v1)
+  // This works for ANY supplier without hardcoding
+  if (template.startsWith('invoice_pt_')) {
+    // Extract supplier name: invoice_pt_simon.json → simon
+    const supplier = template
+      .replace('invoice_pt_', '')
+      .replace('.json', '');
+    // Convert to new format: pt_simon_invoice_v1.json
+    return `pt_${supplier}_invoice_v1.json`;
+  }
+
+  // If already has .json extension, use as-is (modern format)
+  if (template.endsWith('.json')) {
+    return template;
+  }
+
+  // Otherwise add .json extension (modern format without extension)
+  // Handles: pt_simon_invoice_v1 → pt_simon_invoice_v1.json
+  return `${template}.json`;
 }
 
 async function loadDefaultTin(pdfTemplate: string | null | undefined): Promise<string | null> {
@@ -93,7 +103,9 @@ async function loadDefaultTin(pdfTemplate: string | null | undefined): Promise<s
       return null;
     }
 
-    const mappingPath = join(process.cwd(), '..', 'json2xml', 'mappings', xmlMappingName);
+    // In Docker: /app/services/json2xml/mappings/
+    const mappingBaseDir = process.env.MAPPING_FILES_PATH || '/app/services/json2xml/mappings';
+    const mappingPath = join(mappingBaseDir, xmlMappingName);
     const mappingContent = await readFile(mappingPath, 'utf-8');
     const mappingJson = JSON.parse(mappingContent);
     // TIN is at the root of the structure, not nested in TaxInvoice
@@ -116,6 +128,65 @@ async function loadDefaultTin(pdfTemplate: string | null | undefined): Promise<s
     console.warn(`Failed to load mapping for TIN from PDF template: ${pdfTemplate}`, error);
     tinDefaultCache.set(pdfTemplate, null);
     return null;
+  }
+}
+
+async function loadSellerFieldsFromMapping(pdfTemplate: string | null | undefined): Promise<{ tin: string; idtku: string }> {
+  if (!pdfTemplate) {
+    throw new Error('PDF template is required to load seller fields from mapping');
+  }
+
+  if (sellerFieldsCache.has(pdfTemplate)) {
+    const cached = sellerFieldsCache.get(pdfTemplate);
+    if (!cached) throw new Error(`Seller fields not found in mapping for: ${pdfTemplate}`);
+    return cached;
+  }
+
+  try {
+    // Map PDF template name to XML mapping file name
+    const xmlMappingName = mapPdfTemplateToXmlMapping(pdfTemplate);
+    if (!xmlMappingName) {
+      throw new Error(`No XML mapping found for PDF template: ${pdfTemplate}`);
+    }
+
+    // Build path to mapping file
+    // In Docker: /app/services/json2xml/mappings/
+    // In development: /services/json2xml/mappings/
+    let mappingPath: string;
+
+    // Try environment variable first
+    const mappingBaseDir = process.env.MAPPING_FILES_PATH || '/app/services/json2xml/mappings';
+    mappingPath = join(mappingBaseDir, xmlMappingName);
+
+    console.log(`[Seller Fields] Attempting to load from: ${mappingPath}`);
+
+    const mappingContent = await readFile(mappingPath, 'utf-8');
+    const mappingJson = JSON.parse(mappingContent);
+
+    // TIN is at the root of the structure
+    const tinValue = mappingJson?.structure?.TIN;
+    // SellerIDTKU is nested in TaxInvoice
+    const sellerIdtkuValue = mappingJson?.structure?.ListOfTaxInvoice?.TaxInvoice?.SellerIDTKU;
+
+    if (!tinValue || typeof tinValue !== 'string') {
+      throw new Error(`TIN not found in mapping file ${xmlMappingName}`);
+    }
+
+    if (!sellerIdtkuValue || typeof sellerIdtkuValue !== 'string') {
+      throw new Error(`SellerIDTKU not found in mapping file ${xmlMappingName}`);
+    }
+
+    const result = {
+      tin: tinValue.trim(),
+      idtku: sellerIdtkuValue.trim()
+    };
+    sellerFieldsCache.set(pdfTemplate, result);
+    console.log(`[Seller Fields] Successfully loaded: TIN=${result.tin}, IDTKU=${result.idtku}`);
+    return result;
+  } catch (error) {
+    console.error(`[Seller Fields] ERROR loading from ${pdfTemplate}:`, error);
+    sellerFieldsCache.set(pdfTemplate, null);
+    throw error;
   }
 }
 
@@ -878,8 +949,21 @@ export const POST = withSession(async (
       );
     }
 
+    console.log(`Processing review for job ${jobId}, mapping: ${job.mapping}`);
     const defaultTrxCode = await loadDefaultTrxCode(job.mapping);
-    const defaultTin = await loadDefaultTin(job.mapping);
+
+    let sellerFields: { tin: string; idtku: string };
+    try {
+      sellerFields = await loadSellerFieldsFromMapping(job.mapping);
+      console.log(`Loaded seller fields from mapping:`, sellerFields);
+    } catch (err) {
+      console.error(`Failed to load seller fields from mapping:`, err);
+      return NextResponse.json(
+        { error: { code: 'MAPPING_ERROR', message: `Failed to load seller information from mapping: ${err instanceof Error ? err.message : String(err)}` } },
+        { status: 400 }
+      );
+    }
+
     const requestedTrxCode = normalizeTrxCode(trx_code);
 
     if (requestedTrxCode) {
@@ -929,6 +1013,7 @@ export const POST = withSession(async (
     }
 
     const original = parserResult.final as any;
+    console.log(`Original parser result seller:`, JSON.stringify(original.seller, null, 2));
 
     const effectiveTrxCode = requestedTrxCode ?? defaultTrxCode ?? null;
 
@@ -1011,14 +1096,18 @@ export const POST = withSession(async (
     );
 
     // Merge edited data with original metadata
+    // Use ONLY values from mapping file - NO FALLBACK
+    const mergedSeller = {
+      ...original.seller,
+      tin: sellerFields.tin,
+      idtku: sellerFields.idtku
+    };
+    console.log(`Merged seller data (from mapping only):`, mergedSeller);
+
     const mergedData = {
       ...original,
       trxCode: effectiveTrxCode,
-      seller: {
-        ...original.seller,
-        // Use TIN from mapping file if available, otherwise use parsed data's TIN
-        tin: defaultTin || original.seller?.tin || '0000'
-      },
+      seller: mergedSeller,
       invoice: {
         ...original.invoice,
         number: invoice_number || original.invoice?.number || original.invoice?.no,
@@ -1032,7 +1121,9 @@ export const POST = withSession(async (
         sku: item.sku || '',
         hs_code: item.hs_code,
         uom: item.uom,
-        type: normalizeType(item.type)
+        type: normalizeType(item.type),
+        vat: item.vat,
+        otherTaxBase: item.otherTaxBase
       }))
     };
 

@@ -109,9 +109,11 @@ services:
     environment:
       - GATEWAY_URL=http://gateway:8000
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
+      - MAPPING_FILES_PATH=/app/mappings
     volumes:
       - ./uploads:/app/uploads
       - ./results:/app/results
+      - ./services/json2xml/mappings:/app/mappings
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/healthz"]
       interval: 30s
