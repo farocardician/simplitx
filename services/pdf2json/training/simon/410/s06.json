@@ -1,0 +1,19 @@
+{
+  "doc_id": "410.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "3926",
+      "sku": "60710-50",
+      "code": null,
+      "description": "Inbow Dus",
+      "type": null,
+      "qty": 150,
+      "uom": "PCS",
+      "unit_price": 2257.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 338595.0
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "doc_id": "67.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "66E645M",
+      "code": null,
+      "description": "Saklar ELV Lampu Latar Gan da 6 Tombol (Kontak kering)",
+      "type": null,
+      "qty": 7,
+      "uom": "PCS",
+      "unit_price": 401235.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2808645.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "66E645M",
+      "code": null,
+      "description": "Saklar ELV Lampu Latar Gan da 6 Tombol (Kontak kering)",
+      "type": null,
+      "qty": 17,
+      "uom": "PCS",
+      "unit_price": 401235.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6820995.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "66E645M",
+      "code": null,
+      "description": "Saklar ELV Lampu Latar Gan da 6 Tombol (Kontak kering)",
+      "type": null,
+      "qty": 17,
+      "uom": "PCS",
+      "unit_price": 401235.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6820995.0
+    }
+  ]
+}

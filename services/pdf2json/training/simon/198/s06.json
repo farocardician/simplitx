@@ -1,0 +1,19 @@
+{
+  "doc_id": "198.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N6600-1043",
+      "code": null,
+      "description": "MT36 corner Power connecto r BK",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 50075.68,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 100151.36
+    }
+  ]
+}

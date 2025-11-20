@@ -1,0 +1,33 @@
+{
+  "doc_id": "329.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "581111",
+      "code": "6K",
+      "description": "Sakelar 1 Tombol 1 Arah (Sp ace Grey)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 17870.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 178702.7
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "581111",
+      "code": "6J",
+      "description": "Sakelar 1 Tombol 1 Arah (Vi ntage Gold)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 17870.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 178702.7
+    }
+  ]
+}

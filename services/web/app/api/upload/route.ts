@@ -5,6 +5,10 @@ import { createHash } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { withSession } from '@/lib/session'
 
+// Configure API route to allow 100MB uploads
+export const maxDuration = 60 // 60 seconds timeout
+export const dynamic = 'force-dynamic'
+
 async function uploadHandler(req: NextRequest, { sessionId }: { sessionId: string }) {
   const formData = await req.formData();
   const file = formData.get('file') as File;
@@ -25,9 +29,9 @@ async function uploadHandler(req: NextRequest, { sessionId }: { sessionId: strin
     );
   }
   
-  if (file.size > 50 * 1024 * 1024) {
+  if (file.size > 100 * 1024 * 1024) {
     return NextResponse.json(
-      { error: { code: 'TOO_LARGE', message: 'File exceeds 50 MB limit' } },
+      { error: { code: 'TOO_LARGE', message: 'File exceeds 100 MB limit' } },
       { status: 413 }
     );
   }

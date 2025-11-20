@@ -1,0 +1,33 @@
+{
+  "doc_id": "173.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "ZD021080",
+      "code": null,
+      "description": "Floor Socket with Multi-Standard & 2-pin Socket",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 276257.66,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5525153.2
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "45DH100-60",
+      "code": null,
+      "description": "Inbowdus",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 14108.11,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 282162.2
+    }
+  ]
+}

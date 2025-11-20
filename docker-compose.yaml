@@ -110,6 +110,7 @@ services:
       - GATEWAY_URL=http://gateway:8000
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
       - MAPPING_FILES_PATH=/app/mappings
+      - BODY_SIZE_LIMIT=104857600
     volumes:
       - ./uploads:/app/uploads
       - ./results:/app/results

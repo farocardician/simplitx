@@ -1,0 +1,33 @@
+{
+  "doc_id": "312.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-0272",
+      "code": null,
+      "description": "Duro KC1 oval frame",
+      "type": null,
+      "qty": 5,
+      "uom": "PCS",
+      "unit_price": 30090.09,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 150450.45
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N0424-3091",
+      "code": null,
+      "description": "Duro LED-KC1 Module TRIAC 7W3000K 24D",
+      "type": null,
+      "qty": 5,
+      "uom": "PCS",
+      "unit_price": 112162.16,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 560810.8
+    }
+  ]
+}

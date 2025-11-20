@@ -1,0 +1,19 @@
+{
+  "doc_id": "395.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "721687",
+      "code": "61",
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 40927.93,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 245567.58
+    }
+  ]
+}

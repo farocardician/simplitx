@@ -1,0 +1,33 @@
+{
+  "doc_id": "348.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701011",
+      "code": "61",
+      "description": "Saklar 1-Tombol 1-Arah",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 18648.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 186486.5
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "661021M",
+      "code": "2B",
+      "description": "Saklar 2-Tombol 1-Arah (Metal)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 66756.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 400540.56
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "doc_id": "58.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "721041",
+      "code": "61",
+      "description": "Sakelar 4 Tombol 1 Arah (S moky Grey)",
+      "type": null,
+      "qty": 32,
+      "uom": "PCS",
+      "unit_price": 64955.82,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2078586.24
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "SMB65C-63C10",
+      "code": null,
+      "description": "SMB65C-63 MCB 6kA 1P C10",
+      "type": null,
+      "qty": 240,
+      "uom": "PCS",
+      "unit_price": 18424.14,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4421793.6
+    }
+  ]
+}

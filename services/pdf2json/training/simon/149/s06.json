@@ -1,0 +1,47 @@
+{
+  "doc_id": "149.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-3227",
+      "code": null,
+      "description": "CP36S LED Spotlight SR 12W R75 3000K24D Ra90",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 179737.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 359474.0
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N0424-3270",
+      "code": null,
+      "description": "CP36S LED Spotlight SR 24W R100 3000K24D Ra90",
+      "type": null,
+      "qty": 17,
+      "uom": "PCS",
+      "unit_price": 257050.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4369850.0
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N0424-3227",
+      "code": null,
+      "description": "CP36S LED Spotlight SR 12W R75 3000K24D Ra90",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 179737.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3594740.0
+    }
+  ]
+}

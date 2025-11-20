@@ -1,0 +1,19 @@
+{
+  "doc_id": "380.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8504",
+      "sku": "N6524-0342",
+      "code": null,
+      "description": "EV1 120W24V constant volta ge power supply",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 249243.24,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5981837.76
+    }
+  ]
+}

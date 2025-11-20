@@ -1,0 +1,19 @@
+{
+  "doc_id": "414.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7326",
+      "sku": "45DH100-60",
+      "code": null,
+      "description": "Inbowdus",
+      "type": null,
+      "qty": 14,
+      "uom": "PCS",
+      "unit_price": 14108.11,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 197513.54
+    }
+  ]
+}

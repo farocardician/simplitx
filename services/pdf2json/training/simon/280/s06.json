@@ -1,0 +1,33 @@
+{
+  "doc_id": "280.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "721032",
+      "code": "46",
+      "description": "Sakelar 3 Tombol 2 Arah (Ma tt Champagne)",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 78817.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 630538.4
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N03E0-1183",
+      "code": null,
+      "description": "Valor LED DL 17W R150 650 0K",
+      "type": null,
+      "qty": 90,
+      "uom": "PCS",
+      "unit_price": 45898.38,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4130854.2
+    }
+  ]
+}

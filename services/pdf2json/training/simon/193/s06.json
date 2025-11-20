@@ -1,0 +1,19 @@
+{
+  "doc_id": "193.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "721041",
+      "code": null,
+      "description": "Sakelar 4 Tombol 1 Arah",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 54833.51,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 438668.08
+    }
+  ]
+}

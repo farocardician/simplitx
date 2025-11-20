@@ -1,0 +1,75 @@
+{
+  "doc_id": "226.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-2067",
+      "code": null,
+      "description": "Duro LED-KC1 Module 12W3000K36D",
+      "type": null,
+      "qty": 96,
+      "uom": "PCS",
+      "unit_price": 107675.68,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 10336865.28
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N0424-3107",
+      "code": null,
+      "description": "Duro LED-KC1 Module TRIAC 12W3000 K24D",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 166216.22,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 7978378.56
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N0424-3109",
+      "code": null,
+      "description": "Duro LED-KC1 Module TRIAC 12W3000 K36D",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 166216.22,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 7978378.56
+    },
+    {
+      "no": 40,
+      "hs_code": "9405",
+      "sku": "N0424-1842",
+      "code": null,
+      "description": "Duro LED-KC1 Module 5W3000K24D",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 64013.51,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3072648.48
+    },
+    {
+      "no": 50,
+      "hs_code": "9405",
+      "sku": "N0424-1853",
+      "code": null,
+      "description": "Duro LED-KC1 Module 7W3000K15D",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 75608.11,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3629189.28
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "doc_id": "272.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "SMB65C-63C50",
+      "code": null,
+      "description": "SMB65C-63 MCB 6kA 1P C50",
+      "type": null,
+      "qty": 144,
+      "uom": "PCS",
+      "unit_price": 19369.37,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2789189.28
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "SMB65C-63C63",
+      "code": null,
+      "description": "SMB65C-63 MCB 6kA 1P C63",
+      "type": null,
+      "qty": 144,
+      "uom": "PCS",
+      "unit_price": 19369.37,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2789189.28
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N05E0-1001",
+      "code": null,
+      "description": "LED 1.2 T8 1x1.2m T8 LED tube batte n fixture without shield",
+      "type": null,
+      "qty": 450,
+      "uom": "PCS",
+      "unit_price": 11261.26,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5067567.0
+    }
+  ]
+}

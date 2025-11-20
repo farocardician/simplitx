@@ -1,0 +1,19 @@
+{
+  "doc_id": "405.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "45DH146",
+      "code": null,
+      "description": "Surface Mounting Box",
+      "type": null,
+      "qty": 132,
+      "uom": "PCS",
+      "unit_price": 4324.32,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 570810.24
+    }
+  ]
+}

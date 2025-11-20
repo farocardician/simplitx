@@ -1,0 +1,19 @@
+{
+  "doc_id": "415.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "3926",
+      "sku": "301000",
+      "code": null,
+      "description": "Plat Penutup",
+      "type": null,
+      "qty": 80,
+      "uom": "PCS",
+      "unit_price": 6792.79,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 543423.2
+    }
+  ]
+}

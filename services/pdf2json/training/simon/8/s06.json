@@ -1,0 +1,19 @@
+{
+  "doc_id": "8.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "44",
+      "description": "Stop Kontak Tipe Schuko (N atural Champagne)",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 19586.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 979338.0
+    }
+  ]
+}

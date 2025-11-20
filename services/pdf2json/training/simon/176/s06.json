@@ -1,0 +1,61 @@
+{
+  "doc_id": "176.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N03E0-1509",
+      "code": null,
+      "description": "Valor LED DL 12W R150 650 0K 4-pack",
+      "type": null,
+      "qty": 200,
+      "uom": "PCS",
+      "unit_price": 80445.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 16089082.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "721021",
+      "code": "61",
+      "description": "Sakelar 2 Tombol 1 Arah (S moky Grey)",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 38572.97,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1928648.5
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "721687",
+      "code": "46",
+      "description": "Stop Kontak tipe Schuko (Ma tt Champagne)",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 35718.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1785946.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "721011",
+      "code": null,
+      "description": "Sakelar 1 Tombol 1 Arah",
+      "type": null,
+      "qty": 200,
+      "uom": "PCS",
+      "unit_price": 16475.68,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3295136.0
+    }
+  ]
+}

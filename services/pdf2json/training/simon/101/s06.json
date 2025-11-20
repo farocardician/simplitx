@@ -1,0 +1,61 @@
+{
+  "doc_id": "101.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-2065",
+      "code": null,
+      "description": "Duro LED-KC1 Module 12W4000K24D",
+      "type": null,
+      "qty": 58,
+      "uom": "PCS",
+      "unit_price": 124903.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 7244419.24
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N0424-3108",
+      "code": null,
+      "description": "Duro LED-KC1 Module TRIAC 12W4000 K24D",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 192810.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4627459.44
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N0424-0430",
+      "code": null,
+      "description": "KC1 shining black anti-glare metal frame",
+      "type": null,
+      "qty": 80,
+      "uom": "PCS",
+      "unit_price": 54692.43,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4375394.4
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "66E8015GTY",
+      "code": "4D",
+      "description": "Sakelar 1 Tombol Peredup Pi ntar (GEM)(Diamond Grey)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 760615.14,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4563690.84
+    }
+  ]
+}

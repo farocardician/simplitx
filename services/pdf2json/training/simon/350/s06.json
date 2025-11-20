@@ -1,0 +1,61 @@
+{
+  "doc_id": "350.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "661011G",
+      "code": "4D",
+      "description": "Saklar 1-Tombol 1-Arah (GEM)(Diamond Grey)",
+      "type": null,
+      "qty": 12,
+      "uom": "PCS",
+      "unit_price": 63392.43,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 760709.16
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "661021G",
+      "code": "4D",
+      "description": "Saklar 2-Tombol 1-Arah (GEM)(Diamond Grey)",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 81921.08,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1966105.92
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "661687G",
+      "code": "4D",
+      "description": "Stop Kontak Tipe Schuko (G EM)(Diamond Grey)",
+      "type": null,
+      "qty": 200,
+      "uom": "PCS",
+      "unit_price": 62263.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 12452756.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "665302G",
+      "code": "4D",
+      "description": "Outlet TV & Data (GEM) (Dia mond Grey)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 210963.24,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1265779.44
+    }
+  ]
+}

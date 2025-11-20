@@ -1,0 +1,61 @@
+{
+  "doc_id": "21.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-0272",
+      "code": null,
+      "description": "Duro KC1 oval frame",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 28886.49,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1386551.52
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N0424-0280",
+      "code": null,
+      "description": "Duro KC1 double flat grid fra me",
+      "type": null,
+      "qty": 192,
+      "uom": "PCS",
+      "unit_price": 78356.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 15044497.92
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N0424-0281",
+      "code": null,
+      "description": "Duro KC1 triple flat grid fram e",
+      "type": null,
+      "qty": 36,
+      "uom": "PCS",
+      "unit_price": 121859.46,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4386940.56
+    },
+    {
+      "no": 40,
+      "hs_code": "9405",
+      "sku": "N0424-0430",
+      "code": null,
+      "description": "KC1 shining black anti-glare metal frame",
+      "type": null,
+      "qty": 528,
+      "uom": "PCS",
+      "unit_price": 50291.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 26554117.92
+    }
+  ]
+}

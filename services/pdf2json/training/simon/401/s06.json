@@ -1,0 +1,19 @@
+{
+  "doc_id": "401.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "66E8008MTY",
+      "code": "2B",
+      "description": "Sakelar Pintar Skenario 4 To mbol (Metal)",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 705405.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1410810.82
+    }
+  ]
+}

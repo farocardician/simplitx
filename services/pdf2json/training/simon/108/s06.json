@@ -1,0 +1,19 @@
+{
+  "doc_id": "108.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701046",
+      "code": "61",
+      "description": "Sakelar 2-Tombol Intermediate(Smoky Grey)",
+      "type": null,
+      "qty": 5,
+      "uom": "PCS",
+      "unit_price": 131780.18,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 658900.9
+    }
+  ]
+}

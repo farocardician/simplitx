@@ -1,0 +1,61 @@
+{
+  "doc_id": "421.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "L05E0-0151",
+      "code": null,
+      "description": "FL20 LED floodlight 20W650 0K",
+      "type": null,
+      "qty": 64,
+      "uom": "PCS",
+      "unit_price": 55783.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3570161.92
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "721089",
+      "code": null,
+      "description": "Stop Kontak Multi-standard dengan Sakelar",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 60497.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6049730.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8517",
+      "sku": "S00E0-S009",
+      "code": null,
+      "description": "Smart Zigbee Gateway (Wifi)",
+      "type": null,
+      "qty": 12,
+      "uom": "PCS",
+      "unit_price": 242162.16,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2905945.92
+    },
+    {
+      "no": 40,
+      "hs_code": "9405",
+      "sku": "N04E0-0530",
+      "code": null,
+      "description": "CP20 LED Spotlight 5W4000 KRa80",
+      "type": null,
+      "qty": 96,
+      "uom": "PCS",
+      "unit_price": 28021.62,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2690075.52
+    }
+  ]
+}

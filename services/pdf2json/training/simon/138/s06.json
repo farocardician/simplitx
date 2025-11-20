@@ -1,0 +1,75 @@
+{
+  "doc_id": "138.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "700494",
+      "code": "61",
+      "description": "Outlet USB-HDMI (Smoky Grey)",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 155762.16,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 623048.64
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "661687M",
+      "code": "2B",
+      "description": "Stop Kontak Tipe Schuko (M etal)(Brushed Grey)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 48605.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 486054.1
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "26",
+      "description": "Stop Kontak Tipe Schuko (Gr aphite Black)",
+      "type": null,
+      "qty": 250,
+      "uom": "PCS",
+      "unit_price": 18010.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4502702.5
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "661012M",
+      "code": "2B",
+      "description": "Saklar 1-Tombol 2-Arah (Metal)(Brushed Grey)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 55351.35,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 332108.1
+    },
+    {
+      "no": 50,
+      "hs_code": "9405",
+      "sku": "N0424-0280",
+      "code": null,
+      "description": "Duro KC1 double flat grid fra me",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 78356.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 235070.28
+    }
+  ]
+}

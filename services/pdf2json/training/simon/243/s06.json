@@ -1,0 +1,89 @@
+{
+  "doc_id": "243.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "D701022",
+      "code": null,
+      "description": "Sakelar 2 Tombol 2 Arah den gan DND & MUR",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 71621.62,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3581081.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8539",
+      "sku": "N68E0-0078",
+      "code": null,
+      "description": "SS22 COB HV Strip 14W/M-50M 288L8mm 4000K",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 898648.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1797297.3
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N6600-1038",
+      "code": null,
+      "description": "MT36 Recessed Magnetic Tr ack 2meterBK",
+      "type": null,
+      "qty": 7,
+      "uom": "PCS",
+      "unit_price": 328828.83,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2301801.81
+    },
+    {
+      "no": 40,
+      "hs_code": "9405",
+      "sku": "N6600-1037",
+      "code": null,
+      "description": "MT36 Recessed Magnetic Tr ack 1meterBK",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 164414.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 164414.41
+    },
+    {
+      "no": 50,
+      "hs_code": "9405",
+      "sku": "N6600-1039",
+      "code": null,
+      "description": "MT36 L corner acc_Horizonta l BK",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 60270.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 241081.08
+    },
+    {
+      "no": 60,
+      "hs_code": "9405",
+      "sku": "N03E0-1180",
+      "code": null,
+      "description": "Valor LED DL 12W R150 650 0K",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 31036.04,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 931081.2
+    }
+  ]
+}

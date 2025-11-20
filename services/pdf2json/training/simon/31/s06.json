@@ -1,0 +1,89 @@
+{
+  "doc_id": "31.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8538",
+      "sku": "FTS5010-BL",
+      "code": null,
+      "description": "Wall-mounted-Power track-1m-Black",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 545983.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3275902.68
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "700640",
+      "code": "46",
+      "description": "Bingkai Saklar 4-Warna Putih(Matt Champagn e)",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 42324.32,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 126972.96
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "301080",
+      "code": null,
+      "description": "Stop Kontak Saklar Internasi onal 10A",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 32918.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 658378.4
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "725229",
+      "code": "46",
+      "description": "Outlet Telepon & Data (Matt Champagne)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 118131.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1181318.9
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "725302",
+      "code": null,
+      "description": "Outlet TV & Data",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 115216.22,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1152162.2
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "725302",
+      "code": "46",
+      "description": "Outlet TV & Data (Matt Cha mpagne)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 142491.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1424918.9
+    }
+  ]
+}

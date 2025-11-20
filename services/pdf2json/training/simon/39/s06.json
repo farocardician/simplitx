@@ -1,0 +1,75 @@
+{
+  "doc_id": "39.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "66E8001GTY",
+      "code": "4D",
+      "description": "Sakelar Pintar 1 Tombol (GE M)",
+      "type": null,
+      "qty": 70,
+      "uom": "PCS",
+      "unit_price": 515286.49,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 36070054.3
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "66E8003GTY",
+      "code": "4D",
+      "description": "Sakelar Pintar 3 Tombol (GE M)",
+      "type": null,
+      "qty": 42,
+      "uom": "PCS",
+      "unit_price": 703394.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 29542572.78
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "70E8302TY",
+      "code": "61",
+      "description": "Sakelar 2 Tombol Pintar",
+      "type": null,
+      "qty": 22,
+      "uom": "PCS",
+      "unit_price": 244367.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5376086.54
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "70E8303TY",
+      "code": "61",
+      "description": "Sakelar 3 Tombol Pintar",
+      "type": null,
+      "qty": 60,
+      "uom": "PCS",
+      "unit_price": 271437.84,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 16286270.4
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "70E8316TY",
+      "code": "61",
+      "description": "Sakelar 2 Tombol Peredup Pi ntar",
+      "type": null,
+      "qty": 12,
+      "uom": "PCS",
+      "unit_price": 427632.43,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5131589.16
+    }
+  ]
+}

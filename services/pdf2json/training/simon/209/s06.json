@@ -1,0 +1,33 @@
+{
+  "doc_id": "209.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": "61",
+      "description": "Stop Kontak tipe Schuko (Sm oky Grey)",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 32504.5,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 130018.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "721687",
+      "code": null,
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 22594.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 135567.54
+    }
+  ]
+}

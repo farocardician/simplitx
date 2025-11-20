@@ -1,0 +1,33 @@
+{
+  "doc_id": "212.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701022",
+      "code": "61",
+      "description": "Saklar 2-Tombol 2-Arah (Smoky Grey)",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 43358.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4335892.0
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": "61",
+      "description": "Bingkai saklar 1-warna putih(Smoky Grey)",
+      "type": null,
+      "qty": 480,
+      "uom": "PCS",
+      "unit_price": 12415.14,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5959267.2
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "doc_id": "373.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8539",
+      "sku": "N62E0-1184",
+      "code": null,
+      "description": "LED T8 HE 18W 6500K SE",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 19067.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 28600500.0
+    }
+  ]
+}

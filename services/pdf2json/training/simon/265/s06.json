@@ -1,0 +1,33 @@
+{
+  "doc_id": "265.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701021F",
+      "code": "26",
+      "description": "Sakelar Tekan (momentary) 2 Gang(Graphite Black)",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 40361.73,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 807234.6
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "701032",
+      "code": "26",
+      "description": "Saklar 3-Tombol 2-Arah (Graphite Black)",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 68983.42,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3449171.0
+    }
+  ]
+}

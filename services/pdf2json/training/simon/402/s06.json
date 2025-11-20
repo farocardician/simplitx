@@ -1,0 +1,89 @@
+{
+  "doc_id": "402.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701013",
+      "code": "61",
+      "description": "Saklar 1-tombol 1-arah dengan indicator LED",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 33470.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1673513.5
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "700630",
+      "code": "61",
+      "description": "Bingkai saklar 3-warna putih",
+      "type": null,
+      "qty": 64,
+      "uom": "PCS",
+      "unit_price": 29751.35,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1904086.4
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "661022M",
+      "code": "2B",
+      "description": "Saklar 2-Tombol 2-Arah (Metal)",
+      "type": null,
+      "qty": 12,
+      "uom": "PCS",
+      "unit_price": 72735.14,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 872821.68
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "661041M",
+      "code": "2B",
+      "description": "Saklar 4-Tombol 1-Arah (Metal)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 108367.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 650205.42
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "661089M",
+      "code": "2B",
+      "description": "Stop Kontak Universal Denga n Sakelar (Metal)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 97037.84,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 970378.4
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "661687M",
+      "code": "2B",
+      "description": "Stop Kontak Tipe Schuko (M etal)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 48605.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1458162.3
+    }
+  ]
+}

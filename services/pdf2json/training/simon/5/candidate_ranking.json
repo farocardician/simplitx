@@ -1,0 +1,35 @@
+[
+  {
+    "page": 1,
+    "items_region": null,
+    "candidates": [
+      {
+        "index": 0,
+        "source": "default",
+        "flavor": "lattice",
+        "bbox": {
+          "x0": 0.09076240419524001,
+          "y0": 0.20838084378563282,
+          "x1": 0.90964098426785,
+          "y1": 0.6744583808437856
+        },
+        "features": {
+          "header_hits": 1.0,
+          "overlap": 0.0,
+          "numeric_right": 0.9,
+          "rows": 18.0,
+          "totals_below": 1.0
+        },
+        "score": 22.4,
+        "eligible": true,
+        "header_row_index": 0,
+        "body_rows": 18,
+        "header_hits": 1,
+        "selected": true,
+        "stop_rule": "numeric_fallback",
+        "stop_at": 19
+      }
+    ],
+    "selected_index": 0
+  }
+]

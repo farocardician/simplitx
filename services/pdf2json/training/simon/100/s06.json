@@ -1,0 +1,19 @@
+{
+  "doc_id": "100.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "30E8001TY",
+      "code": null,
+      "description": "Sakelar 1 Tombol Pintar",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 148367.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 148367.57
+    }
+  ]
+}

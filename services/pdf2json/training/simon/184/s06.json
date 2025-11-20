@@ -1,0 +1,61 @@
+{
+  "doc_id": "184.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E8303TY",
+      "code": "61",
+      "description": "Sakelar 3 Tombol Pintar (Sm oky Grey)",
+      "type": null,
+      "qty": 12,
+      "uom": "PCS",
+      "unit_price": 282747.75,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3392973.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "661687",
+      "code": "6Q",
+      "description": "Stop Kontak Tipe Schuko (Pl atinum Grey)",
+      "type": null,
+      "qty": 11,
+      "uom": "PCS",
+      "unit_price": 33963.96,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 373603.56
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "66E7253",
+      "code": "6Q",
+      "description": "Stop Kontak Multistandard D engan USB A+C(Platinum Gr ey)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 237747.75,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2377477.5
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "661031M",
+      "code": "2B",
+      "description": "Saklar 3-Tombol 1-Arah (Metal)(Brushed Grey)",
+      "type": null,
+      "qty": 18,
+      "uom": "PCS",
+      "unit_price": 101351.35,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1824324.3
+    }
+  ]
+}

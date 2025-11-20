@@ -1,0 +1,33 @@
+{
+  "doc_id": "175.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "705218",
+      "code": null,
+      "description": "Outlet Data Cat.6 RJ45",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 122882.88,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1228828.8
+    },
+    {
+      "no": 20,
+      "hs_code": "3926",
+      "sku": "60710-50",
+      "code": null,
+      "description": "Inbow Dus",
+      "type": null,
+      "qty": 75,
+      "uom": "PCS",
+      "unit_price": 2378.38,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 178378.5
+    }
+  ]
+}

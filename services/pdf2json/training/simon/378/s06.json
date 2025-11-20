@@ -1,0 +1,33 @@
+{
+  "doc_id": "378.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": null,
+      "description": "Bingkai Untuk 1-tombol",
+      "type": null,
+      "qty": 216,
+      "uom": "PCS",
+      "unit_price": 6400.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1382400.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301031",
+      "code": null,
+      "description": "Sakelar 3 Tombol 1 Arah",
+      "type": null,
+      "qty": 400,
+      "uom": "PCS",
+      "unit_price": 21405.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 8562164.0
+    }
+  ]
+}

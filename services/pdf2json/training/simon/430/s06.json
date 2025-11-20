@@ -1,0 +1,19 @@
+{
+  "doc_id": "430.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N03E0-1184",
+      "code": null,
+      "description": "Valor LED DL 20W R175 300 0K",
+      "type": null,
+      "qty": 90,
+      "uom": "PCS",
+      "unit_price": 69286.49,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6235784.1
+    }
+  ]
+}

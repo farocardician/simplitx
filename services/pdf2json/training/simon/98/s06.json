@@ -1,0 +1,19 @@
+{
+  "doc_id": "98.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301080",
+      "code": "44",
+      "description": "Stop Kontak Saklar Internasi onal 10A(Natural Champagn e)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 45459.46,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 454594.6
+    }
+  ]
+}

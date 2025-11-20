@@ -1,0 +1,89 @@
+{
+  "doc_id": "215.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301011",
+      "code": "26",
+      "description": "Sakelar 1 Tombol 1 Arah (Gr aphite Black)",
+      "type": null,
+      "qty": 150,
+      "uom": "PCS",
+      "unit_price": 18131.53,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2719729.5
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301012",
+      "code": "26",
+      "description": "Sakelar 1 Tombol 2 Arah (Gr aphite Black)",
+      "type": null,
+      "qty": 150,
+      "uom": "PCS",
+      "unit_price": 20195.5,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3029325.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "301021",
+      "code": "26",
+      "description": "Sakelar 2 Tombol 1 Arah (Gr aphite Black)",
+      "type": null,
+      "qty": 150,
+      "uom": "PCS",
+      "unit_price": 22599.1,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3389865.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "301022",
+      "code": "26",
+      "description": "Sakelar 2 Tombol 2 Arah (Gr aphite Black)",
+      "type": null,
+      "qty": 170,
+      "uom": "PCS",
+      "unit_price": 26335.14,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4476973.8
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "26",
+      "description": "Stop Kontak Tipe Schuko (Gr aphite Black)",
+      "type": null,
+      "qty": 860,
+      "uom": "PCS",
+      "unit_price": 21763.06,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 18716231.6
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "301080",
+      "code": "26",
+      "description": "Stop Kontak Saklar Internasi onal 10A(Graphite Black)",
+      "type": null,
+      "qty": 210,
+      "uom": "PCS",
+      "unit_price": 45459.46,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 9546486.6
+    }
+  ]
+}

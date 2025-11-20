@@ -1,0 +1,33 @@
+{
+  "doc_id": "443.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N03E0-1157",
+      "code": null,
+      "description": "Valor LED DL 4W R75 3000K",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 15945.95,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 63783.8
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N03E0-1169",
+      "code": null,
+      "description": "Valor LED DL 8W R100 3000 K",
+      "type": null,
+      "qty": 19,
+      "uom": "PCS",
+      "unit_price": 25810.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 490405.39
+    }
+  ]
+}

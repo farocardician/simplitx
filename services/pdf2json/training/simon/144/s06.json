@@ -1,0 +1,103 @@
+{
+  "doc_id": "144.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8526",
+      "sku": "S00E0-S016",
+      "code": null,
+      "description": "Smart Infrared Remote Cont roller (Wifi)",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 127394.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 509578.36
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N0424-1893",
+      "code": null,
+      "description": "Duro LED-KC1 Module 7W3000K36D",
+      "type": null,
+      "qty": 155,
+      "uom": "PCS",
+      "unit_price": 80648.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 12500540.75
+    },
+    {
+      "no": 30,
+      "hs_code": "7326",
+      "sku": "700620",
+      "code": "61",
+      "description": "Bingkai Saklar 2-warna Putih(Smoky Grey)",
+      "type": null,
+      "qty": 36,
+      "uom": "PCS",
+      "unit_price": 20583.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 741016.08
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "44",
+      "description": "Stop Kontak Tipe Schuko (N atural Champagne)",
+      "type": null,
+      "qty": 350,
+      "uom": "PCS",
+      "unit_price": 18010.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6303783.5
+    },
+    {
+      "no": 50,
+      "hs_code": "3926",
+      "sku": "720650",
+      "code": "61",
+      "description": "Bingkai Sakelar 5 (Smoky Gr ey)",
+      "type": null,
+      "qty": 5,
+      "uom": "PCS",
+      "unit_price": 43070.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 215351.35
+    },
+    {
+      "no": 60,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": "26",
+      "description": "Bingkai Untuk 1-tombol (Graphite Black)",
+      "type": null,
+      "qty": 350,
+      "uom": "PCS",
+      "unit_price": 11416.22,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3995677.0
+    },
+    {
+      "no": 70,
+      "hs_code": "8301",
+      "sku": "S00E0-LK33",
+      "code": null,
+      "description": "Simon Smart Lock LK33",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 1287264.86,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1287264.86
+    }
+  ]
+}

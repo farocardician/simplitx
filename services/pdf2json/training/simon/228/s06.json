@@ -1,0 +1,47 @@
+{
+  "doc_id": "228.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301022",
+      "code": "61",
+      "description": "Sakelar 2 Tombol 2 Arah (S moky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 24972.97,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 24972.97
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301011",
+      "code": null,
+      "description": "Sakelar 1 Tombol 1 Arah",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 8770.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 26310.81
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": "61",
+      "description": "Stop Kontak tipe Schuko (Sm oky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 32504.5,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 32504.5
+    }
+  ]
+}

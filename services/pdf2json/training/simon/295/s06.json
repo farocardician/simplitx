@@ -1,0 +1,19 @@
+{
+  "doc_id": "295.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8538",
+      "sku": "660850",
+      "code": "6Q",
+      "description": "Bingkai Sakelar 5 (Platinum Grey)",
+      "type": null,
+      "qty": 26,
+      "uom": "PCS",
+      "unit_price": 16000.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 416000.0
+    }
+  ]
+}

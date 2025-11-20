@@ -1,0 +1,103 @@
+{
+  "doc_id": "293.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "3926",
+      "sku": "45DH86",
+      "code": null,
+      "description": "Kotak Pemasangan Inbow",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 2257.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 225730.0
+    },
+    {
+      "no": 20,
+      "hs_code": "3926",
+      "sku": "45DH86",
+      "code": null,
+      "description": "Kotak Pemasangan Inbow",
+      "type": null,
+      "qty": 150,
+      "uom": "PCS",
+      "unit_price": 2257.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 338595.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "30E602",
+      "code": "44",
+      "description": "16A Sakelar Kartu Akses RFI D (Natural Champagne)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 163183.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 979102.68
+    },
+    {
+      "no": 40,
+      "hs_code": "3926",
+      "sku": "45DH86",
+      "code": null,
+      "description": "Kotak Pemasangan Inbow",
+      "type": null,
+      "qty": 125,
+      "uom": "PCS",
+      "unit_price": 2257.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 282162.5
+    },
+    {
+      "no": 50,
+      "hs_code": "3926",
+      "sku": "60710-50",
+      "code": null,
+      "description": "Inbow Dus",
+      "type": null,
+      "qty": 75,
+      "uom": "PCS",
+      "unit_price": 2257.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 169297.5
+    },
+    {
+      "no": 60,
+      "hs_code": "3926",
+      "sku": "60710-50",
+      "code": null,
+      "description": "Inbow Dus",
+      "type": null,
+      "qty": 75,
+      "uom": "PCS",
+      "unit_price": 2257.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 169297.5
+    },
+    {
+      "no": 70,
+      "hs_code": "8536",
+      "sku": "301021",
+      "code": null,
+      "description": "Sakelar 2 Tombol 1 Arah",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 12344.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 123445.9
+    }
+  ]
+}

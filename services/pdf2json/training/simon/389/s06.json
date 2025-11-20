@@ -1,0 +1,61 @@
+{
+  "doc_id": "389.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8539",
+      "sku": "N68E0-0094",
+      "code": null,
+      "description": "SS22 COB 24V Strip 10W/M-5M 320L 8mm 3000K",
+      "type": null,
+      "qty": 120,
+      "uom": "PCS",
+      "unit_price": 69448.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 8333838.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8539",
+      "sku": "N68E0-0095",
+      "code": null,
+      "description": "SS22 COB 24V Strip 10W/M-5M 320L 8mm 4000K",
+      "type": null,
+      "qty": 120,
+      "uom": "PCS",
+      "unit_price": 69448.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 8333838.0
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N66E0-0075",
+      "code": null,
+      "description": "8mm end connector-single wiring",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 3329.73,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 166486.5
+    },
+    {
+      "no": 40,
+      "hs_code": "9405",
+      "sku": "N66E0-0076",
+      "code": null,
+      "description": "8mm middle connector",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 1902.7,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 95135.0
+    }
+  ]
+}

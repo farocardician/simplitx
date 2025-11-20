@@ -1,0 +1,19 @@
+{
+  "doc_id": "36.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "ZD021687",
+      "code": null,
+      "description": "Floor Socket with Schuko",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 181838.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1091028.0
+    }
+  ]
+}

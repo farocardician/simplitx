@@ -1,0 +1,89 @@
+{
+  "doc_id": "469.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "L05E0-0121",
+      "code": null,
+      "description": "FL20 LED floodlight 200W65 00K",
+      "type": null,
+      "qty": 12,
+      "uom": "PCS",
+      "unit_price": 353902.7,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4246832.4
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "L01E0-0049",
+      "code": null,
+      "description": "RD20 LED streetlight 150W 4 000K",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 399221.62,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3992216.2
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "L01E0-0052",
+      "code": null,
+      "description": "RD20 LED streetlight 200W 4 000K",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 487783.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4877837.8
+    },
+    {
+      "no": 40,
+      "hs_code": "9405",
+      "sku": "L01E0-0053",
+      "code": null,
+      "description": "RD20 LED streetlight 200W 6 500K",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 487783.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 9755675.6
+    },
+    {
+      "no": 50,
+      "hs_code": "8539",
+      "sku": "N68E0-0077",
+      "code": null,
+      "description": "SS22 COB HV Strip 14W/M-50M 288L8mm 3000K",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 862702.7,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5176216.2
+    },
+    {
+      "no": 60,
+      "hs_code": "8539",
+      "sku": "N68E0-0079",
+      "code": null,
+      "description": "SS22 COB HV Strip 14W/M-50M 288L8mm 6500K",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 862702.7,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5176216.2
+    }
+  ]
+}

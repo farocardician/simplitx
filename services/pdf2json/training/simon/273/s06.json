@@ -1,0 +1,61 @@
+{
+  "doc_id": "273.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7326",
+      "sku": "SMX65ES-8A",
+      "code": null,
+      "description": "65E-Distribution box-recessed-8modules",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 65127.21,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1953816.3
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "SMX65ES-12A",
+      "code": null,
+      "description": "65E-Distribution box-recessed-12modules",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 74981.98,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2249459.4
+    },
+    {
+      "no": 30,
+      "hs_code": "7326",
+      "sku": "SMX65ES-4A",
+      "code": null,
+      "description": "65E-Distribution box-recessed-4modules",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 49273.87,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1478216.1
+    },
+    {
+      "no": 40,
+      "hs_code": "8539",
+      "sku": "N62E0-1527",
+      "code": null,
+      "description": "LED T8 18W 6500K DE INDO",
+      "type": null,
+      "qty": 500,
+      "uom": "PCS",
+      "unit_price": 20994.95,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 10497475.0
+    }
+  ]
+}

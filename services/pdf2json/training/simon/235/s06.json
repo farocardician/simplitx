@@ -1,0 +1,19 @@
+{
+  "doc_id": "235.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E840TY",
+      "code": "46",
+      "description": "Sakelar 3 Tombol Pintar (Mat t Champagne)",
+      "type": null,
+      "qty": 32,
+      "uom": "PCS",
+      "unit_price": 271438.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 8686016.0
+    }
+  ]
+}

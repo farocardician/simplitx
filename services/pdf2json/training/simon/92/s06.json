@@ -1,0 +1,33 @@
+{
+  "doc_id": "92.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "L01E0-0044",
+      "code": null,
+      "description": "RD20 LED streetlight 50W 65 00K",
+      "type": null,
+      "qty": 200,
+      "uom": "PCS",
+      "unit_price": 213016.22,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 42603244.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301382B",
+      "code": "26",
+      "description": "Stop Kontak Saklar (Graphite Black)",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 26810.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1340540.5
+    }
+  ]
+}

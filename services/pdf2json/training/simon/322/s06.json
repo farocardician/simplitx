@@ -1,0 +1,19 @@
+{
+  "doc_id": "322.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "706301",
+      "code": "26",
+      "description": "Saklar Bel 1-Tombol (Graphite Black)",
+      "type": null,
+      "qty": 26,
+      "uom": "PCS",
+      "unit_price": 86947.75,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2260641.5
+    }
+  ]
+}

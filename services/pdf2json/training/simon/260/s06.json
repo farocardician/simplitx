@@ -1,0 +1,33 @@
+{
+  "doc_id": "260.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E8303TY",
+      "code": "12",
+      "description": "Sakelar 3 Tombol Pintar (Dar k Black)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 295188.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 295188.65
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E8302TY",
+      "code": "12",
+      "description": "Sakelar 2 Tombol Pintar (Dar k Black)",
+      "type": null,
+      "qty": 12,
+      "uom": "PCS",
+      "unit_price": 265749.73,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3188996.76
+    }
+  ]
+}

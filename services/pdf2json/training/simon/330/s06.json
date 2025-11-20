@@ -1,0 +1,19 @@
+{
+  "doc_id": "330.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "661080G",
+      "code": "4D",
+      "description": "Stop Kontak Multi-standar (GEM)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 88821.62,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 888216.2
+    }
+  ]
+}

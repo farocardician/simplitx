@@ -1,0 +1,89 @@
+{
+  "doc_id": "393.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701011",
+      "code": "61",
+      "description": "Saklar 1-Tombol 1-Arah",
+      "type": null,
+      "qty": 11,
+      "uom": "PCS",
+      "unit_price": 20513.51,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 225648.61
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": "61",
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 32504.5,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 650090.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "721687",
+      "code": null,
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 22594.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 225945.9
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "721011",
+      "code": null,
+      "description": "Sakelar 1 Tombol 1 Arah",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 18878.38,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 37756.76
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "701022",
+      "code": "61",
+      "description": "Saklar 2-Tombol 2-Arah",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 45684.68,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 137054.04
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "301089",
+      "code": "61",
+      "description": "Stop Kontak Universal Denga n Sakelar",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 30695.95,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 61391.9
+    }
+  ]
+}

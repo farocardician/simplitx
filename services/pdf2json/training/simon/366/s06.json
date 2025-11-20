@@ -1,0 +1,89 @@
+{
+  "doc_id": "366.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "721021",
+      "code": "61",
+      "description": "Sakelar 2 Tombol 1 Arah",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 44198.2,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 353585.6
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "721687",
+      "code": "61",
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 40927.93,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1227837.9
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "721031",
+      "code": "61",
+      "description": "Sakelar 3 Tombol 1 Arah",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 64018.02,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 512144.16
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "721022",
+      "code": "61",
+      "description": "Sakelar 2 Tombol 2 Arah",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 52522.52,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 420180.16
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "725218",
+      "code": "61",
+      "description": "Outlet Data",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 132297.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1322973.0
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "721011",
+      "code": "61",
+      "description": "Sakelar 1 Tombol 1 Arah",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 29927.93,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 299279.3
+    }
+  ]
+}

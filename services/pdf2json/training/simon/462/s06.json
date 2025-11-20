@@ -1,0 +1,19 @@
+{
+  "doc_id": "462.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "700494",
+      "code": "61",
+      "description": "Outlet USB-HDMI",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 155762.16,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 934572.96
+    }
+  ]
+}

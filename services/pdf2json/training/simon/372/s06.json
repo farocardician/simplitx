@@ -1,0 +1,47 @@
+{
+  "doc_id": "372.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "MTS1089-BL-E",
+      "code": null,
+      "description": "Multi-standard socket-Round-BK",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 67027.03,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 268108.12
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "MTSE722-BL-E",
+      "code": null,
+      "description": "USB Outlet-Round-BK(DC5V2.1A)",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 115891.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 231783.78
+    },
+    {
+      "no": 30,
+      "hs_code": "8538",
+      "sku": "FTS5010-BL-E",
+      "code": null,
+      "description": "Wall-mounted-Power track-1m-Black",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 502054.05,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1004108.1
+    }
+  ]
+}

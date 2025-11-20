@@ -1,0 +1,61 @@
+{
+  "doc_id": "433.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "66E7256",
+      "code": null,
+      "description": "Stop Kontak Schuko Dengan Tipe A+C",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 158198.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 949193.52
+    },
+    {
+      "no": 20,
+      "hs_code": "3926",
+      "sku": "721000",
+      "code": "26",
+      "description": "blank plate(26-Graphite Black)",
+      "type": null,
+      "qty": 16,
+      "uom": "PCS",
+      "unit_price": 20456.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 327308.16
+    },
+    {
+      "no": 30,
+      "hs_code": "3926",
+      "sku": "721000",
+      "code": "61",
+      "description": "Pelat Penutup",
+      "type": null,
+      "qty": 16,
+      "uom": "PCS",
+      "unit_price": 20456.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 327308.16
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "66E7256G",
+      "code": "4F",
+      "description": "Stop Kontak Schuko Dengan Tipe A+C (GEM)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 199676.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1198060.56
+    }
+  ]
+}

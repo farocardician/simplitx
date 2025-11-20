@@ -1,0 +1,33 @@
+{
+  "doc_id": "274.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E8308TY",
+      "code": "61",
+      "description": "Sakelar 4 Tombol Skenario Pi ntar(Smoky Grey)",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 297069.73,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1188278.92
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "725111",
+      "code": "46",
+      "description": "Outlet TV (Matt Champagne)",
+      "type": null,
+      "qty": 60,
+      "uom": "PCS",
+      "unit_price": 103647.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6218854.2
+    }
+  ]
+}

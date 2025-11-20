@@ -1,0 +1,33 @@
+{
+  "doc_id": "390.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E838TY",
+      "code": "61",
+      "description": "Sakelar 1 Tombol Pintar",
+      "type": null,
+      "qty": 7,
+      "uom": "PCS",
+      "unit_price": 207264.86,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1450854.02
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E841TY",
+      "code": "61",
+      "description": "Sakelar 4 Tombol Pintar",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 320302.7,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2562421.6
+    }
+  ]
+}

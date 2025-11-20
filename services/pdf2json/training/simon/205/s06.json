@@ -1,0 +1,19 @@
+{
+  "doc_id": "205.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N03E0-1201",
+      "code": null,
+      "description": "Valor LED square DL 24W S2 00 6500K",
+      "type": null,
+      "qty": 150,
+      "uom": "PCS",
+      "unit_price": 71091.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 10663783.5
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "doc_id": "304.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "721687",
+      "code": "61",
+      "description": "Stop Kontak tipe Schuko (Sm oky Grey)",
+      "type": null,
+      "qty": 15,
+      "uom": "PCS",
+      "unit_price": 40927.93,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 613918.95
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "721021",
+      "code": "61",
+      "description": "Sakelar 2 Tombol 1 Arah (S moky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 44198.2,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 44198.2
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "701021",
+      "code": "61",
+      "description": "Saklar 2-Tombol 1-Arah (Smoky Grey)",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 36270.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 145081.08
+    },
+    {
+      "no": 40,
+      "hs_code": "7326",
+      "sku": "700620",
+      "code": "61",
+      "description": "Bingkai Saklar 2-warna Putih(Smoky Grey)",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 23585.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 47171.18
+    },
+    {
+      "no": 50,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": "61",
+      "description": "Bingkai saklar 1-warna putih(Smoky Grey)",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 13081.08,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 52324.32
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "701011",
+      "code": "61",
+      "description": "Saklar 1-Tombol 1-Arah (Smoky Grey)",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 20513.51,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 82054.04
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "doc_id": "89.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E8301TY",
+      "code": "61",
+      "description": "Sakelar 1 Tombol Pintar (Sm oky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 215900.9,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 215900.9
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E8316TY",
+      "code": "61",
+      "description": "Sakelar 2 Tombol Peredup Pi ntar(Smoky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 445450.45,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 445450.45
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "721080",
+      "code": "61",
+      "description": "Stop Kontak Multi-standard dan Stop Kontak 2 Pin(Smoky Grey)",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 83063.06,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1661261.2
+    }
+  ]
+}

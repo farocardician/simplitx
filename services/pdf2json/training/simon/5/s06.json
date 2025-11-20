@@ -1,0 +1,33 @@
+{
+  "doc_id": "5.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8517",
+      "sku": "681808TY",
+      "code": null,
+      "description": "Penghubung Perangkat Pinta r",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 438997.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 438997.3
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "701012",
+      "code": "26",
+      "description": "Saklar 1-Tombol 2-Arah",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 25394.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 253945.9
+    }
+  ]
+}

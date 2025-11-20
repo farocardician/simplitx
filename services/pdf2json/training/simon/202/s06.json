@@ -1,0 +1,33 @@
+{
+  "doc_id": "202.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "L01E0-0044",
+      "code": null,
+      "description": "RD20 LED streetlight 50W 65 00K",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 213016.22,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 21301622.0
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N67E0-0104",
+      "code": null,
+      "description": "Duro LED Panel light 36W 65 00K 300*1200",
+      "type": null,
+      "qty": 16,
+      "uom": "PCS",
+      "unit_price": 337556.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5400908.16
+    }
+  ]
+}

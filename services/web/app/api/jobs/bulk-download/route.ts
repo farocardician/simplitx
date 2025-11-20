@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withSession } from '@/lib/session';
-import { createReadStream, statSync, existsSync } from 'fs';
+import { existsSync } from 'fs';
+import { readFile } from 'fs/promises';
 import { join } from 'path';
 import archiver from 'archiver';
 import { PassThrough } from 'stream';
+import { buildMergedFilename, mergeInvoiceXmlContents } from '@/lib/xmlMerge';
 
 export const POST = withSession(async (
   req: NextRequest,
@@ -30,7 +32,8 @@ export const POST = withSession(async (
     select: {
       id: true,
       originalFilename: true,
-      resultPath: true
+      resultPath: true,
+      mapping: true
     }
   });
 
@@ -55,6 +58,33 @@ export const POST = withSession(async (
     );
   }
 
+  // Preserve user selection order for deterministic output
+  const jobOrder = new Map<string, number>(jobIds.map((id: string, index: number) => [id, index]));
+  const validJobsOrdered = [...validJobs].sort((a, b) => (jobOrder.get(a.id) ?? 0) - (jobOrder.get(b.id) ?? 0));
+
+  const mappings = new Set(validJobsOrdered.map(job => job.mapping));
+  const shouldMerge = mappings.size === 1 && validJobsOrdered.length > 1;
+
+  let mergedXmlBuffer: Buffer | null = null;
+  let mergedFileName = '';
+
+  if (shouldMerge) {
+    try {
+      const xmlContents = await Promise.all(
+        validJobsOrdered.map(job => readFile(join(process.cwd(), job.resultPath!), 'utf-8'))
+      );
+      const { mergedXml } = mergeInvoiceXmlContents(xmlContents);
+      mergedXmlBuffer = Buffer.from(mergedXml, 'utf-8');
+      mergedFileName = buildMergedFilename(validJobsOrdered[0].mapping, validJobsOrdered.length);
+    } catch (err) {
+      console.error('Failed to merge XML files:', err);
+      return NextResponse.json(
+        { error: { code: 'MERGE_FAILED', message: 'Failed to merge XML files for download' } },
+        { status: 500 }
+      );
+    }
+  }
+
   // Create ZIP stream
   const archive = archiver('zip', { zlib: { level: 9 } });
   const pass = new PassThrough();
@@ -63,7 +93,7 @@ export const POST = withSession(async (
   archive.pipe(pass);
 
   // Add files to archive
-  validJobs.forEach(job => {
+  validJobsOrdered.forEach(job => {
     const filePath = join(process.cwd(), job.resultPath!);
     const fileName = job.originalFilename 
       ? job.originalFilename.replace(/\.pdf$/i, '.xml')
@@ -72,24 +102,33 @@ export const POST = withSession(async (
     archive.file(filePath, { name: fileName });
   });
 
+  if (mergedXmlBuffer) {
+    archive.append(mergedXmlBuffer, { name: mergedFileName });
+  }
+
   // Finalize archive
   archive.finalize();
 
   // Update download counts
   await prisma.job.updateMany({
-    where: { id: { in: validJobs.map(job => job.id) } },
+    where: { id: { in: validJobsOrdered.map(job => job.id) } },
     data: {
       downloadCount: { increment: 1 },
       firstDownloadAt: new Date()
     }
   });
 
+  // Determine ZIP filename
+  const zipFilename = shouldMerge
+    ? mergedFileName.replace('.xml', '.zip')
+    : `xml-files-${Date.now()}.zip`;
+
   // Return ZIP file
   const response = new NextResponse(pass as any);
   response.headers.set('Content-Type', 'application/zip');
   response.headers.set(
     'Content-Disposition',
-    `attachment; filename="xml-files-${Date.now()}.zip"`
+    `attachment; filename="${zipFilename}"`
   );
 
   return response;

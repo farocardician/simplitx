@@ -1,0 +1,19 @@
+{
+  "doc_id": "351.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "L01E0-0044",
+      "code": null,
+      "description": "RD20 LED streetlight 50W 65 00K",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 213016.22,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 10650811.0
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "doc_id": "441.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-0277",
+      "code": null,
+      "description": "Duro KC1 round embedded frame",
+      "type": null,
+      "qty": 47,
+      "uom": "PCS",
+      "unit_price": 51762.16,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2432821.52
+    }
+  ]
+}

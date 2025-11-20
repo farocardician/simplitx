@@ -1,0 +1,33 @@
+{
+  "doc_id": "99.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E848TY",
+      "code": "61",
+      "description": "Sakelar 1 Tombol Peredup Pi ntar(Smoky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 445032.43,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 445032.43
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E849TY",
+      "code": "61",
+      "description": "Sakelar 2 Tombol Peredup Pi ntar(Smoky Grey)",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 516722.52,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1033445.04
+    }
+  ]
+}

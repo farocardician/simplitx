@@ -1,0 +1,61 @@
+{
+  "doc_id": "377.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E857TY",
+      "code": "61",
+      "description": "Saklar 2 Gang Dimming Terp isah 0-10V",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 619179.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 619179.78
+    },
+    {
+      "no": 20,
+      "hs_code": "9032",
+      "sku": "70E7031TY",
+      "code": "61",
+      "description": "Modul Pengatur Suhu AC Pin tar",
+      "type": null,
+      "qty": 17,
+      "uom": "PCS",
+      "unit_price": 497237.66,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 8453040.22
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "70E8309TY",
+      "code": "61",
+      "description": "Saklar Pintar Multifungsi 4 T ombol(2 skenario+2 saklar)",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 371653.55,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1114960.65
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "351687",
+      "code": null,
+      "description": "Stop Kontak Tipe Schuko",
+      "type": null,
+      "qty": 600,
+      "uom": "PCS",
+      "unit_price": 16281.8,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 9769080.0
+    }
+  ]
+}

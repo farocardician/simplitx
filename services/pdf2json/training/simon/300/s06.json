@@ -1,0 +1,103 @@
+{
+  "doc_id": "300.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701022",
+      "code": "26",
+      "description": "Saklar 2-Tombol 2-Arah (Graphite Black)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 48176.58,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1445297.4
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": "26",
+      "description": "Stop Kontak Tipe Schuko (Gr aphite Black)",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 34277.48,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1713874.0
+    },
+    {
+      "no": 30,
+      "hs_code": "7326",
+      "sku": "700630",
+      "code": "26",
+      "description": "Bingkai Saklar 3-warna Putih(Graphite Black)",
+      "type": null,
+      "qty": 16,
+      "uom": "PCS",
+      "unit_price": 35949.55,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 575192.8
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "701021",
+      "code": "61",
+      "description": "Saklar 2-Tombol 1-Arah (Smoky Grey)",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 38248.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1912432.5
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "701011",
+      "code": "26",
+      "description": "Saklar 1-Tombol 1-Arah (Graphite Black)",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 21632.43,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1081621.5
+    },
+    {
+      "no": 60,
+      "hs_code": "7326",
+      "sku": "45DH100-60",
+      "code": null,
+      "description": "Inbowdus",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 14108.11,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 141081.1
+    },
+    {
+      "no": 70,
+      "hs_code": "8536",
+      "sku": "701031",
+      "code": "26",
+      "description": "Saklar 3-Tombol 1-Arah (Graphite Black)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 61971.17,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1859135.1
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "doc_id": "200.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N67E0-0104",
+      "code": null,
+      "description": "Duro LED Panel light 36W 65 00K 300*1200",
+      "type": null,
+      "qty": 15,
+      "uom": "PCS",
+      "unit_price": 337556.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5063351.4
+    }
+  ]
+}

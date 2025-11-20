@@ -1,0 +1,47 @@
+{
+  "doc_id": "59.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701042",
+      "code": "61",
+      "description": "Saklar 4-Tombol 2-Arah (Smoky Grey)",
+      "type": null,
+      "qty": 70,
+      "uom": "PCS",
+      "unit_price": 80380.68,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5626647.6
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "701023",
+      "code": "61",
+      "description": "Saklar 2-tombol 1-arah Dengan Indicator LED(Smoky Grey)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 61270.99,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1838129.7
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "701021F",
+      "code": "61",
+      "description": "Sakelar Tekan (momentary) 2 Gang(Smoky Grey)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 40361.73,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 403617.3
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "doc_id": "459.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-0279",
+      "code": null,
+      "description": "Duro KC1 single flat grid fra me",
+      "type": null,
+      "qty": 25,
+      "uom": "PCS",
+      "unit_price": 47654.05,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1191351.25
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "721046",
+      "code": "61",
+      "description": "Sakelar 2-Tombol Intermediate",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 107675.68,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 646054.08
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "721026",
+      "code": null,
+      "description": "Sakelar 1 Tombol Intermedia te",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 35718.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 142875.68
+    }
+  ]
+}

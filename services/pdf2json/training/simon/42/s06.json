@@ -1,0 +1,47 @@
+{
+  "doc_id": "42.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N6424-1041",
+      "code": null,
+      "description": "Smart MT36 48V Adjust Grid Spotlight12W24D BK",
+      "type": null,
+      "qty": 80,
+      "uom": "PCS",
+      "unit_price": 372238.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 29779040.0
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N6424-1042",
+      "code": null,
+      "description": "Smart MT36 48V Spotlight 1 0W24D BK",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 343957.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3439570.0
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N6424-1043",
+      "code": null,
+      "description": "Smart MT36 48V Linear Light 12W BK",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 347503.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6950060.0
+    }
+  ]
+}

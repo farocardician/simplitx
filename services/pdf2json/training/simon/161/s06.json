@@ -1,0 +1,61 @@
+{
+  "doc_id": "161.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-3102",
+      "code": null,
+      "description": "Duro LED-KC1 Module TRIAC 9W4000K 36D",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 107391.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5154810.72
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N0424-2064",
+      "code": null,
+      "description": "Duro LED-KC1 Module 12W3000K24D",
+      "type": null,
+      "qty": 96,
+      "uom": "PCS",
+      "unit_price": 107675.68,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 10336865.28
+    },
+    {
+      "no": 30,
+      "hs_code": "8539",
+      "sku": "N62E0-1248",
+      "code": null,
+      "description": "Motion Sensor LED Bulb 6W 6500K",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 36036.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3603600.0
+    },
+    {
+      "no": 40,
+      "hs_code": "9405",
+      "sku": "N0424-3099",
+      "code": null,
+      "description": "Duro LED-KC1 Module TRIAC 9W3000K 24D",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 107391.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5154810.72
+    }
+  ]
+}

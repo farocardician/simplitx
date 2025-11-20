@@ -1,0 +1,103 @@
+{
+  "doc_id": "84.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8539",
+      "sku": "N62E0-1156",
+      "code": null,
+      "description": "Valor LED A70 15W 6500K",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 25045.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2504500.0
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N03E0-1183",
+      "code": null,
+      "description": "Valor LED DL 17W R150 650 0K",
+      "type": null,
+      "qty": 261,
+      "uom": "PCS",
+      "unit_price": 43963.96,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 11474593.56
+    },
+    {
+      "no": 30,
+      "hs_code": "8539",
+      "sku": "N62E0-1106",
+      "code": null,
+      "description": "Valor LED A60 9W 3000K",
+      "type": null,
+      "qty": 300,
+      "uom": "PCS",
+      "unit_price": 14774.77,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4432431.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8539",
+      "sku": "N62E0-1144",
+      "code": null,
+      "description": "Valor LED T100 30W 6500K",
+      "type": null,
+      "qty": 400,
+      "uom": "PCS",
+      "unit_price": 32567.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 13027028.0
+    },
+    {
+      "no": 50,
+      "hs_code": "9405",
+      "sku": "L05E0-0147",
+      "code": null,
+      "description": "FL20 LED floodlight 10W400 0K",
+      "type": null,
+      "qty": 32,
+      "uom": "PCS",
+      "unit_price": 45945.95,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1470270.4
+    },
+    {
+      "no": 60,
+      "hs_code": "9405",
+      "sku": "L05E0-0153",
+      "code": null,
+      "description": "FL20 LED floodlight 30W400 0K",
+      "type": null,
+      "qty": 12,
+      "uom": "PCS",
+      "unit_price": 73873.87,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 886486.44
+    },
+    {
+      "no": 70,
+      "hs_code": "9405",
+      "sku": "L05E0-0122",
+      "code": null,
+      "description": "FL20 LED floodlight 300W30 00K",
+      "type": null,
+      "qty": 60,
+      "uom": "PCS",
+      "unit_price": 531441.44,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 31886486.4
+    }
+  ]
+}

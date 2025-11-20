@@ -1,0 +1,19 @@
+{
+  "doc_id": "266.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7326",
+      "sku": "701000",
+      "code": "61",
+      "description": "Plat Penutup (Smoky Grey)",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 9083.53,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 908353.0
+    }
+  ]
+}

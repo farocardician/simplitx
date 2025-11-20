@@ -1,0 +1,19 @@
+{
+  "doc_id": "387.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": null,
+      "description": "Bingkai Saklar champagne",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 7801.08,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 7801.08
+    }
+  ]
+}

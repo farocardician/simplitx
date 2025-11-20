@@ -1,0 +1,19 @@
+{
+  "doc_id": "244.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "3926",
+      "sku": "G155H",
+      "code": null,
+      "description": "Socket Waterproof Cover",
+      "type": null,
+      "qty": 18,
+      "uom": "PCS",
+      "unit_price": 23873.87,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 429729.66
+    }
+  ]
+}

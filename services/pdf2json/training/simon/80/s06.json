@@ -1,0 +1,33 @@
+{
+  "doc_id": "80.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "L05E0-0119",
+      "code": null,
+      "description": "FL20 LED floodlight 200W30 00K",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 368648.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3686486.5
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N03E0-1181",
+      "code": null,
+      "description": "Valor LED DL 17W R150 300 0K",
+      "type": null,
+      "qty": 60,
+      "uom": "PCS",
+      "unit_price": 43963.96,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2637837.6
+    }
+  ]
+}

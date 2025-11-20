@@ -1,0 +1,47 @@
+{
+  "doc_id": "344.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "721031",
+      "code": "61",
+      "description": "Sakelar 3 Tombol 1 Arah",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 64018.02,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 64018.02
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "721022",
+      "code": null,
+      "description": "Sakelar 2 Tombol 2 Arah",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 38846.85,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 116540.55
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "721011",
+      "code": null,
+      "description": "Sakelar 1 Tombol 1 Arah",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 18878.38,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 18878.38
+    }
+  ]
+}

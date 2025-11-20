@@ -1,0 +1,19 @@
+{
+  "doc_id": "302.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E601",
+      "code": "61",
+      "description": "Outlet Kartu Akses Hotel (Sm oky Grey)",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 285548.11,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2284384.88
+    }
+  ]
+}

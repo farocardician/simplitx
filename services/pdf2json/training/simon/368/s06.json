@@ -1,0 +1,33 @@
+{
+  "doc_id": "368.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7326",
+      "sku": "700620",
+      "code": "61",
+      "description": "Bingkai Saklar 2-warna Putih",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 22384.86,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 24175648.8
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "700630",
+      "code": "61",
+      "description": "Bingkai saklar 3-warna putih",
+      "type": null,
+      "qty": 320,
+      "uom": "PCS",
+      "unit_price": 32354.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 10353468.8
+    }
+  ]
+}

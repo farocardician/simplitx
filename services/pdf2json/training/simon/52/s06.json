@@ -1,0 +1,89 @@
+{
+  "doc_id": "52.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "661011M",
+      "code": "2C",
+      "description": "Saklar 1-Tombol 1-Arah (Metal)(Satin Gold)",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 46541.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 186164.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "661041M",
+      "code": "2C",
+      "description": "Saklar 4-Tombol 1-Arah (Metal)(Satin Gold)",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 136297.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 272594.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "661012M",
+      "code": "2B",
+      "description": "Saklar 1-Tombol 2-Arah (Metal)(Brushed Grey)",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 51892.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 103784.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "665214M",
+      "code": "2B",
+      "description": "Outlet Telepon (Metal) (Brus hed Grey)",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 78000.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 156000.0
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "661022G",
+      "code": "4F",
+      "description": "Saklar 2-Tombol 2-Arah (GEM)(Diamond White)",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 78730.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 157460.0
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "661021G",
+      "code": "4D",
+      "description": "Saklar 2-Tombol 1-Arah (GEM)(Diamond Grey)",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 70622.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 282488.0
+    }
+  ]
+}

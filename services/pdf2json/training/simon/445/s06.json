@@ -1,0 +1,89 @@
+{
+  "doc_id": "445.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301011",
+      "code": null,
+      "description": "Sakelar 1 Tombol 1 Arah",
+      "type": null,
+      "qty": 900,
+      "uom": "PCS",
+      "unit_price": 7654.05,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6888645.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301041",
+      "code": "61",
+      "description": "Sakelar 4 Tombol 1 Arah",
+      "type": null,
+      "qty": 160,
+      "uom": "PCS",
+      "unit_price": 39783.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6365404.8
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "L05E0-0152",
+      "code": null,
+      "description": "FL20 LED floodlight 30W300 0K",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 70918.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1702054.08
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "26",
+      "description": "Stop Kontak Tipe Schuko",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 18010.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1801081.0
+    },
+    {
+      "no": 50,
+      "hs_code": "3926",
+      "sku": "300620",
+      "code": "61",
+      "description": "Bingkai Sakelar 2",
+      "type": null,
+      "qty": 66,
+      "uom": "PCS",
+      "unit_price": 8389.19,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 553686.54
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "SMB65C-63C10",
+      "code": null,
+      "description": "SMB65C-63 MCB 6kA 1P C10",
+      "type": null,
+      "qty": 288,
+      "uom": "PCS",
+      "unit_price": 18594.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5355241.92
+    }
+  ]
+}

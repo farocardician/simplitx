@@ -1,0 +1,89 @@
+{
+  "doc_id": "319.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701012",
+      "code": "61",
+      "description": "Saklar 1-Tombol 2-Arah (Smoky Grey)",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 28216.22,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2821622.0
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "45DH100-60",
+      "code": null,
+      "description": "Inbowdus",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 14108.11,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 282162.2
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": "46",
+      "description": "Stop Kontak tipe Schuko (Ma tt Champagne)",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 34277.48,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1713874.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "714504",
+      "code": null,
+      "description": "Outlet cukur",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 296792.79,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 593585.58
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "701023",
+      "code": "26",
+      "description": "Saklar 2-tombol 1-arah Dengan Indicator LED(Graphite Black)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 74720.72,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 747207.2
+    },
+    {
+      "no": 60,
+      "hs_code": "7326",
+      "sku": "701000",
+      "code": null,
+      "description": "Plat Penutup",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 6061.26,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 60612.6
+    }
+  ]
+}

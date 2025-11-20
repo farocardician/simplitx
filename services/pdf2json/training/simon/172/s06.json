@@ -1,0 +1,19 @@
+{
+  "doc_id": "172.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N05E0-0253",
+      "code": null,
+      "description": "CLL16 LED linear light 26W6 500K",
+      "type": null,
+      "qty": 33,
+      "uom": "PCS",
+      "unit_price": 99891.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3296432.37
+    }
+  ]
+}

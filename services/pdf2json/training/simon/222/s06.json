@@ -1,0 +1,19 @@
+{
+  "doc_id": "222.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-3109",
+      "code": null,
+      "description": "Duro LED-KC1 Module TRIAC 12W3000 K36D",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 177297.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 8510270.4
+    }
+  ]
+}

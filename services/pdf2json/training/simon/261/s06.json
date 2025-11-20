@@ -1,0 +1,33 @@
+{
+  "doc_id": "261.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "661687G",
+      "code": "4D",
+      "description": "Stop Kontak Tipe Schuko (G EM)(Diamond Grey)",
+      "type": null,
+      "qty": 31,
+      "uom": "PCS",
+      "unit_price": 69181.98,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2144641.38
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "661687G",
+      "code": "4D",
+      "description": "Stop Kontak Tipe Schuko (G EM)(Diamond Grey)",
+      "type": null,
+      "qty": 9,
+      "uom": "PCS",
+      "unit_price": 69181.98,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 622637.82
+    }
+  ]
+}

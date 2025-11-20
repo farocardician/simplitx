@@ -1,0 +1,19 @@
+{
+  "doc_id": "234.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "SMB65C-63C06/2",
+      "code": null,
+      "description": "SMB65C-63 MCB 6kA 2P C6",
+      "type": null,
+      "qty": 72,
+      "uom": "PCS",
+      "unit_price": 51892.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3736224.0
+    }
+  ]
+}

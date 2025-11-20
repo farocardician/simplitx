@@ -1,0 +1,61 @@
+{
+  "doc_id": "88.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9032",
+      "sku": "30E7253",
+      "code": "61",
+      "description": "Stop Kontak Multistandard D engan USB A+C(Smoky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 155495.5,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 155495.5
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "30E801TY",
+      "code": "61",
+      "description": "Sakelar Pintar 1 Tombol (Sm oky Grey)",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 154549.55,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 309099.1
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "30E802TY",
+      "code": "61",
+      "description": "Sakelar Pintar 2 Tombol (Sm oky Grey)",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 202252.25,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 404504.5
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "61",
+      "description": "Stop Kontak Tipe Schuko (S moky Grey)",
+      "type": null,
+      "qty": 9,
+      "uom": "PCS",
+      "unit_price": 18761.26,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 168851.34
+    }
+  ]
+}

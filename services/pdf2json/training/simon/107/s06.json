@@ -1,0 +1,33 @@
+{
+  "doc_id": "107.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "661021",
+      "code": "6Q",
+      "description": "Saklar 2-Tombol 1-Arah (Platinum Grey)",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 45480.36,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2274018.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "66E7253",
+      "code": null,
+      "description": "Stop Kontak Multistandard D engan USB A+C",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 222427.39,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2224273.9
+    }
+  ]
+}

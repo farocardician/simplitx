@@ -1,0 +1,33 @@
+{
+  "doc_id": "127.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "3926",
+      "sku": "60710-50",
+      "code": null,
+      "description": "Inbow Dus",
+      "type": null,
+      "qty": 75,
+      "uom": "PCS",
+      "unit_price": 2257.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 169297.5
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "44",
+      "description": "Stop Kontak Tipe Schuko (N atural Champagne)",
+      "type": null,
+      "qty": 60,
+      "uom": "PCS",
+      "unit_price": 19586.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1175205.6
+    }
+  ]
+}

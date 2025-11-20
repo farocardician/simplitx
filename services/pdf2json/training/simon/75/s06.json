@@ -1,0 +1,19 @@
+{
+  "doc_id": "75.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9032",
+      "sku": "30E7253",
+      "code": "61",
+      "description": "Stop Kontak Multistandard D engan USB A+C",
+      "type": null,
+      "qty": 5,
+      "uom": "PCS",
+      "unit_price": 155495.5,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 777477.5
+    }
+  ]
+}

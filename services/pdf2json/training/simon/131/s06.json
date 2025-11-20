@@ -1,0 +1,103 @@
+{
+  "doc_id": "131.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8301",
+      "sku": "S00E0-LK33",
+      "code": null,
+      "description": "Simon Smart Lock LK33",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 1399900.54,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1399900.54
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N04E0-0530",
+      "code": null,
+      "description": "CP20 LED Spotlight 5W4000 KRa80",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 30473.51,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1462728.48
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "721031",
+      "code": null,
+      "description": "Sakelar 3 Tombol 1 Arah",
+      "type": null,
+      "qty": 56,
+      "uom": "PCS",
+      "unit_price": 47826.49,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2678283.44
+    },
+    {
+      "no": 40,
+      "hs_code": "7326",
+      "sku": "700640",
+      "code": null,
+      "description": "Bingkai Saklar 4-warna Putih",
+      "type": null,
+      "qty": 120,
+      "uom": "PCS",
+      "unit_price": 27369.73,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3284367.6
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "721021",
+      "code": "46",
+      "description": "Sakelar 2 Tombol 1 Arah (Ma tt Champagne)",
+      "type": null,
+      "qty": 240,
+      "uom": "PCS",
+      "unit_price": 41948.11,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 10067546.4
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "721041",
+      "code": "46",
+      "description": "Sakelar 4 Tombol 1 Arah (Ma tt Champagne)",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 71292.97,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3422062.56
+    },
+    {
+      "no": 70,
+      "hs_code": "8536",
+      "sku": "721041",
+      "code": "26",
+      "description": "Sakelar 4 Tombol 1 Arah (Gr aphite Black)",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 71292.97,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3422062.56
+    }
+  ]
+}

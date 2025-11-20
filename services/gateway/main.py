@@ -5,6 +5,7 @@ Single /process endpoint that routes to appropriate backend services
 based on file type and Accept headers.
 """
 
+import json
 import os
 from typing import Optional
 
@@ -124,8 +125,23 @@ async def unified_process(
                 if template:
                     data["template"] = template
                 response = await client.post(f"{PDF2JSON_URL}/process", files=files, data=data)
-                
+
                 if response.status_code != 200:
+                    # Try to parse structured validation errors from pdf2json
+                    try:
+                        error_data = response.json()
+                        if isinstance(error_data, dict) and error_data.get("detail"):
+                            detail = error_data["detail"]
+                            # Check if it's a structured validation error
+                            if isinstance(detail, dict) and detail.get("type") == "validation_error":
+                                raise HTTPException(
+                                    status_code=response.status_code,
+                                    detail=detail  # Pass through structured error
+                                )
+                    except (json.JSONDecodeError, KeyError):
+                        pass
+
+                    # Fallback to generic error
                     raise HTTPException(
                         status_code=502,
                         detail=f"PDF2JSON service error: {response.text}"
@@ -146,8 +162,23 @@ async def unified_process(
                 if template:
                     data["template"] = template
                 pdf_response = await client.post(f"{PDF2JSON_URL}/process", files=files, data=data)
-                
+
                 if pdf_response.status_code != 200:
+                    # Try to parse structured validation errors from pdf2json
+                    try:
+                        error_data = pdf_response.json()
+                        if isinstance(error_data, dict) and error_data.get("detail"):
+                            detail = error_data["detail"]
+                            # Check if it's a structured validation error
+                            if isinstance(detail, dict) and detail.get("type") == "validation_error":
+                                raise HTTPException(
+                                    status_code=pdf_response.status_code,
+                                    detail=detail  # Pass through structured error
+                                )
+                    except (json.JSONDecodeError, KeyError):
+                        pass
+
+                    # Fallback to generic error
                     raise HTTPException(
                         status_code=502,
                         detail=f"PDF2JSON service error: {pdf_response.text}"

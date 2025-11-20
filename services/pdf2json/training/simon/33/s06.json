@@ -1,0 +1,33 @@
+{
+  "doc_id": "33.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "66E7253G",
+      "code": "4D",
+      "description": "Stop Kontak Multistandard D engan USB A+C (GEM)(Diam ond Grey)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 295121.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2951210.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "661080G",
+      "code": "4D",
+      "description": "Stop Kontak Multi-standar (GEM)(Diamond Gre y)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 107326.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1073260.0
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "doc_id": "102.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "L05E0-0085",
+      "code": null,
+      "description": "FL30 LED floodlight 100W65 00K",
+      "type": null,
+      "qty": 49,
+      "uom": "PCS",
+      "unit_price": 341502.43,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 16733619.07
+    }
+  ]
+}

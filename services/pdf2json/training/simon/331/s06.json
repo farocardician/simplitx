@@ -1,0 +1,19 @@
+{
+  "doc_id": "331.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "66E732",
+      "code": "6Q",
+      "description": "Lampu Sensor Kaki 3000k",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 201374.95,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6041248.5
+    }
+  ]
+}

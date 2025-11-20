@@ -1,0 +1,47 @@
+{
+  "doc_id": "278.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-0430",
+      "code": null,
+      "description": "KC1 shining black anti-glare metal frame",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 52387.39,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2514594.72
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "701021F",
+      "code": "61",
+      "description": "Sakelar Tekan (momentary) 2 Gang(Smoky Grey)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 42432.43,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 424324.3
+    },
+    {
+      "no": 30,
+      "hs_code": "8539",
+      "sku": "N68E0-0077",
+      "code": null,
+      "description": "SS22 COB HV Strip 14W/M-50M 288L8mm 3000K",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 898648.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1797297.3
+    }
+  ]
+}

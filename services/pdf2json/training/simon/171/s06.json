@@ -1,0 +1,47 @@
+{
+  "doc_id": "171.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301031",
+      "code": null,
+      "description": "Sakelar 3 Tombol 1 Arah",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 21405.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2140541.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "44",
+      "description": "Stop Kontak Tipe Schuko (N atural Champagne)",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 18010.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1801081.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": null,
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 15567.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1556757.0
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "doc_id": "227.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": "61",
+      "description": "Stop Kontak tipe Schuko (Sm oky Grey)",
+      "type": null,
+      "qty": 80,
+      "uom": "PCS",
+      "unit_price": 32504.5,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2600360.0
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": "61",
+      "description": "Bingkai saklar 1-warna putih(Smoky Grey)",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 13081.08,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 313945.92
+    },
+    {
+      "no": 30,
+      "hs_code": "7326",
+      "sku": "700640",
+      "code": "61",
+      "description": "Bingkai Saklar 4-warna Putih(Smoky Grey)",
+      "type": null,
+      "qty": 9,
+      "uom": "PCS",
+      "unit_price": 44594.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 401351.31
+    },
+    {
+      "no": 40,
+      "hs_code": "3926",
+      "sku": "G155H",
+      "code": null,
+      "description": "Socket Waterproof Cover",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 26261.26,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 787837.8
+    }
+  ]
+}

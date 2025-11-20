@@ -1,0 +1,19 @@
+{
+  "doc_id": "456.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8538",
+      "sku": "FTS4506-BL",
+      "code": null,
+      "description": "Surface-mounted Power track-0.6m-Black",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 301275.68,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 602551.36
+    }
+  ]
+}

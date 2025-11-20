@@ -1,0 +1,89 @@
+{
+  "doc_id": "349.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-0273",
+      "code": null,
+      "description": "Duro KC1 ivory 10D anti-glare square frame",
+      "type": null,
+      "qty": 26,
+      "uom": "PCS",
+      "unit_price": 32432.43,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 843243.18
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N0424-0272",
+      "code": null,
+      "description": "Duro KC1 oval frame",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 30090.09,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1444324.32
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "L01E0-0043",
+      "code": null,
+      "description": "RD20 LED streetlight 50W 40 00K",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 155324.32,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3106486.4
+    },
+    {
+      "no": 40,
+      "hs_code": "9405",
+      "sku": "L01E0-0046",
+      "code": null,
+      "description": "RD20 LED streetlight 100W 4 000K",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 227027.03,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4540540.6
+    },
+    {
+      "no": 50,
+      "hs_code": "9405",
+      "sku": "L01E0-0049",
+      "code": null,
+      "description": "RD20 LED streetlight 150W 4 000K",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 291099.1,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 8732973.0
+    },
+    {
+      "no": 60,
+      "hs_code": "9405",
+      "sku": "L01E0-0052",
+      "code": null,
+      "description": "RD20 LED streetlight 200W 4 000K",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 355675.68,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3556756.8
+    }
+  ]
+}

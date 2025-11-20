@@ -1,0 +1,33 @@
+{
+  "doc_id": "150.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-1840",
+      "code": null,
+      "description": "Duro LED-KC1 Module 5W4000K15D",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 74255.68,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3564272.64
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N0424-1895",
+      "code": null,
+      "description": "Duro LED-KC1 Module 7W4000K36D",
+      "type": null,
+      "qty": 96,
+      "uom": "PCS",
+      "unit_price": 87705.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 8419719.36
+    }
+  ]
+}

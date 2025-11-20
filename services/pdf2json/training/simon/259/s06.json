@@ -1,0 +1,47 @@
+{
+  "doc_id": "259.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E851TY",
+      "code": "61",
+      "description": "2 Tombol Saklar Modul Smar t Non-netral(Smoky Grey)",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 341651.35,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1366605.4
+    },
+    {
+      "no": 20,
+      "hs_code": "3926",
+      "sku": "300610",
+      "code": "26",
+      "description": "Bingkai untuk 1-tombol (Graphite Black)",
+      "type": null,
+      "qty": 84,
+      "uom": "PCS",
+      "unit_price": 6960.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 584640.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "70E852TY",
+      "code": "61",
+      "description": "3 Tombol Saklar Modul Smar t Non-netral(Smoky Grey)",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 379037.84,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1516151.36
+    }
+  ]
+}

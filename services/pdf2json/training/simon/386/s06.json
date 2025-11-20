@@ -1,0 +1,19 @@
+{
+  "doc_id": "386.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N03E0-1176",
+      "code": null,
+      "description": "Valor LED DL 12W R125 400 0K",
+      "type": null,
+      "qty": 90,
+      "uom": "PCS",
+      "unit_price": 32402.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2916180.0
+    }
+  ]
+}

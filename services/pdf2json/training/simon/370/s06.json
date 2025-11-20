@@ -1,0 +1,19 @@
+{
+  "doc_id": "370.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "721031",
+      "code": null,
+      "description": "Sakelar 3 Tombol 1 Arah",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 50391.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 403135.12
+    }
+  ]
+}

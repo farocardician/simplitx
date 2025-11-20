@@ -1,0 +1,89 @@
+{
+  "doc_id": "203.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": "46",
+      "description": "Stop Kontak tipe Schuko (Ma tt Champagne)",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 29549.55,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2954955.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E7253",
+      "code": "46",
+      "description": "Stop Kontak Multistandard D engan USB A+C(Matt Champ agne)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 221891.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2218918.9
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N04E0-0529",
+      "code": null,
+      "description": "CP20 LED Spotlight 5W3000 KRa80",
+      "type": null,
+      "qty": 144,
+      "uom": "PCS",
+      "unit_price": 29189.19,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4203243.36
+    },
+    {
+      "no": 40,
+      "hs_code": "8539",
+      "sku": "N68E0-0034",
+      "code": null,
+      "description": "SS22 Strip 24V 60L 8mm 8W 2700K IP20 5M",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 108108.11,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 648648.66
+    },
+    {
+      "no": 50,
+      "hs_code": "8539",
+      "sku": "N68E0-0077",
+      "code": null,
+      "description": "SS22 COB HV Strip 14W/M-50M 288L8mm 3000K",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 898648.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2695945.95
+    },
+    {
+      "no": 60,
+      "hs_code": "9405",
+      "sku": "N03E0-1170",
+      "code": null,
+      "description": "Valor LED DL 8W R100 4000 K",
+      "type": null,
+      "qty": 60,
+      "uom": "PCS",
+      "unit_price": 25810.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1548648.6
+    }
+  ]
+}

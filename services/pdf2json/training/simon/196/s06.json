@@ -1,0 +1,19 @@
+{
+  "doc_id": "196.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "S00E0-S072",
+      "code": null,
+      "description": "Smart breaker(simon smart, Zigbee,16A)",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 257185.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5143711.8
+    }
+  ]
+}

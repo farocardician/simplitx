@@ -1,0 +1,19 @@
+{
+  "doc_id": "187.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "665218",
+      "code": "6Q",
+      "description": "Outlet Data (Platinum Grey)",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 133459.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 533836.0
+    }
+  ]
+}

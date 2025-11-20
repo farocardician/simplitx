@@ -1,0 +1,19 @@
+{
+  "doc_id": "345.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "30E602",
+      "code": "44",
+      "description": "16A Sakelar Kartu Akses RFI D (Natural Champagne)",
+      "type": null,
+      "qty": 12,
+      "uom": "PCS",
+      "unit_price": 163183.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1958205.36
+    }
+  ]
+}

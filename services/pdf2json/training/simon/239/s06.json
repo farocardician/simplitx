@@ -1,0 +1,89 @@
+{
+  "doc_id": "239.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8539",
+      "sku": "N66E0-0038",
+      "code": null,
+      "description": "SS22 COB Strip Accessory Kit (With EU plug)",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 21621.62,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1081081.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301382B",
+      "code": "26",
+      "description": "Stop Kontak Saklar (Graphite Black)",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 26810.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1340540.5
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "721031",
+      "code": null,
+      "description": "Sakelar 3 Tombol 1 Arah",
+      "type": null,
+      "qty": 80,
+      "uom": "PCS",
+      "unit_price": 43978.38,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3518270.4
+    },
+    {
+      "no": 40,
+      "hs_code": "3926",
+      "sku": "720630",
+      "code": null,
+      "description": "Bingkai Sakelar 3",
+      "type": null,
+      "qty": 90,
+      "uom": "PCS",
+      "unit_price": 18767.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1689081.3
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "721012",
+      "code": "26",
+      "description": "Sakelar 1 Tombol 2 Arah (Gr aphite Black)",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 31135.14,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3113514.0
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "725218",
+      "code": "26",
+      "description": "Outlet Data (Graphite Black)",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 115459.46,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 11545946.0
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "doc_id": "365.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701013",
+      "code": null,
+      "description": "Saklar 1-tombol 1-arah Dengan Indicator LED",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 36270.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 36270.27
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "701021",
+      "code": "61",
+      "description": "Saklar 2-Tombol 1-Arah",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 36270.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 36270.27
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "701031",
+      "code": "61",
+      "description": "Saklar 3-Tombol 1-Arah",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 58765.77,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 58765.77
+    },
+    {
+      "no": 40,
+      "hs_code": "7326",
+      "sku": "700620",
+      "code": "61",
+      "description": "Bingkai Saklar 2-warna Putih",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 23585.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 47171.18
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "701032",
+      "code": "61",
+      "description": "Saklar 3-Tombol 2-Arah",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 79774.77,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 79774.77
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "701022",
+      "code": "61",
+      "description": "Saklar 2-Tombol 2-Arah",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 45684.68,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 45684.68
+    }
+  ]
+}

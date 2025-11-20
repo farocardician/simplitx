@@ -1,0 +1,33 @@
+{
+  "doc_id": "263.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701033",
+      "code": "46",
+      "description": "Saklar 3-tombol 1-arah dengan indicator LED(M att Champagne)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 79438.05,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2383141.5
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "701042",
+      "code": "46",
+      "description": "Saklar 4-Tombol 2-Arah (Matt Champagne)",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 80380.68,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 8038068.0
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "doc_id": "78.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N03E0-1177",
+      "code": null,
+      "description": "Valor LED DL 12W R125 650 0K",
+      "type": null,
+      "qty": 89,
+      "uom": "PCS",
+      "unit_price": 32402.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2883778.0
+    }
+  ]
+}

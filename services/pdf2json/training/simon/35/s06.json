@@ -1,0 +1,19 @@
+{
+  "doc_id": "35.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E853TY",
+      "code": "26",
+      "description": "Modul Peredup Pintar Tunabl e CCT",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 410551.35,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1642205.4
+    }
+  ]
+}

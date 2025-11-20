@@ -1,0 +1,61 @@
+{
+  "doc_id": "292.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "30E8001TY",
+      "code": "61",
+      "description": "Sakelar 1 Tombol Pintar (Sm oky Grey)",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 154550.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 309100.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "30E8002TY",
+      "code": "61",
+      "description": "Sakelar 2 Tombol Pintar (Sm oky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 202252.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 202252.0
+    },
+    {
+      "no": 30,
+      "hs_code": "9025",
+      "sku": "S00E0-S011",
+      "code": null,
+      "description": "Smart Temperature and Hu midity Sensor (Zigbee)",
+      "type": null,
+      "qty": 5,
+      "uom": "PCS",
+      "unit_price": 169144.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 845720.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8517",
+      "sku": "S00E0-S041",
+      "code": null,
+      "description": "Docking AC gateway mini (V RF)",
+      "type": null,
+      "qty": 5,
+      "uom": "PCS",
+      "unit_price": 976126.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4880630.0
+    }
+  ]
+}

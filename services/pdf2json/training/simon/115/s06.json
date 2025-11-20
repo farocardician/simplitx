@@ -1,0 +1,33 @@
+{
+  "doc_id": "115.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N03E0-1186",
+      "code": null,
+      "description": "Valor LED DL 20W R175 650 0K",
+      "type": null,
+      "qty": 428,
+      "uom": "PCS",
+      "unit_price": 62357.84,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 26689155.52
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "L01E0-0043",
+      "code": null,
+      "description": "RD20 LED streetlight 50W 40 00K",
+      "type": null,
+      "qty": 17,
+      "uom": "PCS",
+      "unit_price": 231655.14,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3938137.38
+    }
+  ]
+}

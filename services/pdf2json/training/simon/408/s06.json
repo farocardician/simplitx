@@ -1,0 +1,75 @@
+{
+  "doc_id": "408.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7326",
+      "sku": "700620",
+      "code": "61",
+      "description": "Bingkai Saklar 2-warna Putih",
+      "type": null,
+      "qty": 12,
+      "uom": "PCS",
+      "unit_price": 22384.86,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 268618.32
+    },
+    {
+      "no": 20,
+      "hs_code": "3926",
+      "sku": "45DH86",
+      "code": null,
+      "description": "Kotak Pemasangan Inbow",
+      "type": null,
+      "qty": 300,
+      "uom": "PCS",
+      "unit_price": 2257.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 677190.0
+    },
+    {
+      "no": 30,
+      "hs_code": "3926",
+      "sku": "60710-50",
+      "code": null,
+      "description": "Inbow Dus",
+      "type": null,
+      "qty": 150,
+      "uom": "PCS",
+      "unit_price": 2257.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 338595.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8517",
+      "sku": "681808TY",
+      "code": null,
+      "description": "Penghubung Perangkat Pinta r",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 438997.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 438997.3
+    },
+    {
+      "no": 50,
+      "hs_code": "8517",
+      "sku": "S00E0-S009",
+      "code": null,
+      "description": "Smart Zigbee Gateway (Wifi)",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 263351.35,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 790054.05
+    }
+  ]
+}

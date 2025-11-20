@@ -1,0 +1,61 @@
+{
+  "doc_id": "252.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": null,
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 17837.84,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 35675.68
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301022",
+      "code": null,
+      "description": "Sakelar 2 Tombol 2 Arah",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 16549.55,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 16549.55
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "721021",
+      "code": "61",
+      "description": "Sakelar 2 Tombol 1 Arah (S moky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 44198.2,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 44198.2
+    },
+    {
+      "no": 40,
+      "hs_code": "3926",
+      "sku": "720610",
+      "code": "61",
+      "description": "Bingkai Sakelar 1 (Smoky Gr ey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 12090.09,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 12090.09
+    }
+  ]
+}

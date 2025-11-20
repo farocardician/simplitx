@@ -1,0 +1,19 @@
+{
+  "doc_id": "91.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8517",
+      "sku": "S00E0-S009",
+      "code": null,
+      "description": "Smart Zigbee Gateway (Wifi)",
+      "type": null,
+      "qty": 15,
+      "uom": "PCS",
+      "unit_price": 292613.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4389195.0
+    }
+  ]
+}

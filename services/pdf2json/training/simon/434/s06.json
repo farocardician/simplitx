@@ -1,0 +1,89 @@
+{
+  "doc_id": "434.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "58E8041HL",
+      "code": "46",
+      "description": "Sakelar Kartu Akses",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 376306.31,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 376306.31
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "58E8001HL",
+      "code": "46",
+      "description": "Saklar Zigbee 1 Tombol",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 234594.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 469189.18
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "58E8015HL",
+      "code": "46",
+      "description": "Saklar Peredup Zigbee 1 To mbol (RCU nirkabel)",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 295045.05,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 885135.15
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "58E8016HL",
+      "code": "46",
+      "description": "Saklar Peredup Zigbee 2 To mbol (RCU nirkabel)",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 328378.38,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 656756.76
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "58E8008HL",
+      "code": "46",
+      "description": "4 Gang Sakelar Skenario Zig bee",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 274054.05,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 274054.05
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "58E8021HL",
+      "code": "46",
+      "description": "6 Gang Sakelar Skenario Zig bee",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 280180.18,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 280180.18
+    }
+  ]
+}

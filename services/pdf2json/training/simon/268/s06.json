@@ -1,0 +1,103 @@
+{
+  "doc_id": "268.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701011",
+      "code": "74",
+      "description": "Saklar 1-Tombol 1-Arah (Coffee Black)",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 21632.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 432640.0
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": "74",
+      "description": "Bingkai saklar 1-warna Putih(Coffee Black)",
+      "type": null,
+      "qty": 186,
+      "uom": "PCS",
+      "unit_price": 13795.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2565870.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "701021",
+      "code": "74",
+      "description": "Saklar 2-Tombol 1-Arah (Coffee Black)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 38249.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1147470.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "701031",
+      "code": "74",
+      "description": "Saklar 3-Tombol 1-Arah (Coffee Black)",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 61971.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1239420.0
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "701041",
+      "code": "74",
+      "description": "Saklar 4-Tombol 1-Arah (Coffee Black)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 74721.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 747210.0
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": "74",
+      "description": "Schuko Socket (Coffee Black)",
+      "type": null,
+      "qty": 170,
+      "uom": "PCS",
+      "unit_price": 34277.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5827090.0
+    },
+    {
+      "no": 70,
+      "hs_code": "8536",
+      "sku": "70E723",
+      "code": "74",
+      "description": "Twin USB Socket with Switch (Coffee Black)",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 221445.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5314680.0
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "doc_id": "83.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": "26",
+      "description": "Bingkai Untuk 1-tombol (Graphite Black)",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 11416.22,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 273989.28
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "700640",
+      "code": "26",
+      "description": "Bingkai Saklar 4-warna Putih(Graphite Black)",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 38918.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 116756.76
+    }
+  ]
+}

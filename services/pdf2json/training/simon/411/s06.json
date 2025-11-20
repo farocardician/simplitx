@@ -1,0 +1,75 @@
+{
+  "doc_id": "411.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-3100",
+      "code": null,
+      "description": "Duro LED-KC1 Module TRIAC 9W4000K 24D",
+      "type": null,
+      "qty": 12,
+      "uom": "PCS",
+      "unit_price": 114551.35,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1374616.2
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N0424-2052",
+      "code": null,
+      "description": "Duro LED-KC1 Module 9W4000K24D",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 84756.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4068324.48
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N0424-2065",
+      "code": null,
+      "description": "Duro LED-KC1 Module 12W4000K24D",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 114854.05,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5512994.4
+    },
+    {
+      "no": 40,
+      "hs_code": "8539",
+      "sku": "N68E0-0094",
+      "code": null,
+      "description": "SS22 COB 24V Strip 10W/M-5M 320L 8mm 3000K",
+      "type": null,
+      "qty": 40,
+      "uom": "PCS",
+      "unit_price": 69448.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2777946.0
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "721687",
+      "code": "26",
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 250,
+      "uom": "PCS",
+      "unit_price": 35718.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 8929730.0
+    }
+  ]
+}

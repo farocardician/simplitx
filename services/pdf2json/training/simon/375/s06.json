@@ -1,0 +1,61 @@
+{
+  "doc_id": "375.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301021",
+      "code": null,
+      "description": "Sakelar 2 Tombol 1 Arah",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 12344.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1234459.0
+    },
+    {
+      "no": 20,
+      "hs_code": "3926",
+      "sku": "60710-50",
+      "code": null,
+      "description": "Inbow Dus",
+      "type": null,
+      "qty": 300,
+      "uom": "PCS",
+      "unit_price": 2257.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 677190.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "26",
+      "description": "Stop Kontak Tipe Schuko",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 19586.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1958676.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "301021",
+      "code": null,
+      "description": "Sakelar 2 Tombol 1 Arah",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 12344.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 246891.8
+    }
+  ]
+}

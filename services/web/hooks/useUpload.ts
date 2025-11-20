@@ -5,7 +5,7 @@ import type { UploadedFile, UploadState, UploadProgress } from '@/types/files'
 import { formatBytes, exceedsLimit } from '@/lib/bytes'
 import { isValidPDF, getPDFValidationError } from '@/lib/mime'
 
-const MAX_FILE_SIZE_MB = 50
+const MAX_FILE_SIZE_MB = 100
 const MAX_CONCURRENT_UPLOADS = 3
 
 export function useUpload(options?: { getTemplate?: () => string }) {

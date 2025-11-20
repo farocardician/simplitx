@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TaxInvoiceBulk xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <TIN>0769479395416000</TIN>
+  <ListOfTaxInvoice>
+    <TaxInvoice>
+      <TaxInvoiceDate>2025-11-03</TaxInvoiceDate>
+      <TaxInvoiceOpt>Normal</TaxInvoiceOpt>
+      <TrxCode>04</TrxCode>
+      <AddInfo/>
+      <CustomDoc/>
+      <CustomDocMonthYear/>
+      <RefDesc>2440002957</RefDesc>
+      <FacilityStamp/>
+      <SellerIDTKU>0769479395416000000000</SellerIDTKU>
+      <BuyerTin>0017135658431000</BuyerTin>
+      <BuyerDocument>TIN</BuyerDocument>
+      <BuyerCountry>IDN</BuyerCountry>
+      <BuyerDocumentNumber>-</BuyerDocumentNumber>
+      <BuyerName>PT. FOODEX INTI INGREDIENTS</BuyerName>
+      <BuyerAdress>JL. SOKA DELTA SILICON 3 LIPPO CIKARANG Blok F 18 No.11-12 RT:000 RW:000 Kel.CICAU Kec.CIKARANG PUSAT Kota/Kab.BEKASI JAWA BARAT 00000</BuyerAdress>
+      <BuyerEmail>-</BuyerEmail>
+      <BuyerIDTKU>0017135658431000000000</BuyerIDTKU>
+      <ListOfGoodService>
+        <GoodService>
+          <Opt>A</Opt>
+          <Code>330200</Code>
+          <Name> 1101904947 Beef Flavour Flavouring</Name>
+          <Unit>UM.0003</Unit>
+          <Price>515019</Price>
+          <Qty>20</Qty>
+          <TotalDiscount>0</TotalDiscount>
+          <TaxBase>10300380</TaxBase>
+          <OtherTaxBase>9442015</OtherTaxBase>
+          <VATRate>12</VATRate>
+          <VAT>1133041.8</VAT>
+          <STLGRate>0</STLGRate>
+          <STLG>0</STLG>
+        </GoodService>
+      </ListOfGoodService>
+    </TaxInvoice>
+    <TaxInvoice>
+      <TaxInvoiceDate>2025-11-07</TaxInvoiceDate>
+      <TaxInvoiceOpt>Normal</TaxInvoiceOpt>
+      <TrxCode>04</TrxCode>
+      <AddInfo/>
+      <CustomDoc/>
+      <CustomDocMonthYear/>
+      <RefDesc>2440002974</RefDesc>
+      <FacilityStamp/>
+      <SellerIDTKU>0769479395416000000000</SellerIDTKU>
+      <BuyerTin>0017036013431000</BuyerTin>
+      <BuyerDocument>TIN</BuyerDocument>
+      <BuyerCountry>IDN</BuyerCountry>
+      <BuyerDocumentNumber>-</BuyerDocumentNumber>
+      <BuyerName>PT. YUPI INDO JELLY GUM</BuyerName>
+      <BuyerAdress>JL. PANCASILA IV Blok - No.- RT:000 RW:000 Kel.CICADAS Kec.GUNUNG PUTRI Kota/Kab.BOGOR JAWA BARAT 00000</BuyerAdress>
+      <BuyerEmail>-</BuyerEmail>
+      <BuyerIDTKU>0017036013431000000000</BuyerIDTKU>
+      <ListOfGoodService>
+        <GoodService>
+          <Opt>A</Opt>
+          <Code>330200</Code>
+          <Name>1100108112 Raspberry Flavour, Type "Blue Raspberry" Flavouring</Name>
+          <Unit>UM.0003</Unit>
+          <Price>488323</Price>
+          <Qty>125</Qty>
+          <TotalDiscount>0</TotalDiscount>
+          <TaxBase>61040375</TaxBase>
+          <OtherTaxBase>55953677.08</OtherTaxBase>
+          <VATRate>12</VATRate>
+          <VAT>6714441.25</VAT>
+          <STLGRate>0</STLGRate>
+          <STLG>0</STLG>
+        </GoodService>
+      </ListOfGoodService>
+    </TaxInvoice>
+  </ListOfTaxInvoice>
+</TaxInvoiceBulk>

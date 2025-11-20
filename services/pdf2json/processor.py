@@ -24,16 +24,23 @@ def log_cmd(cmd: list[str]) -> None:
     print("$ " + shlex.join(cmd), flush=True)
 
 
-def run(cmd: list[str]) -> subprocess.CompletedProcess:
+def run(cmd: list[str], stage_name: str = None) -> subprocess.CompletedProcess:
     """Run a command, echo it, stream outputs on error, return process."""
     log_cmd(cmd)
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.stdout:
         print(proc.stdout.strip(), flush=True)
     if proc.returncode != 0:
-        if proc.stderr:
-            print(proc.stderr.strip(), file=sys.stderr, flush=True)
-        raise RuntimeError(f"Command failed ({proc.returncode}): {cmd[0]}")
+        error_msg = proc.stderr.strip() if proc.stderr else ""
+        if error_msg:
+            print(error_msg, file=sys.stderr, flush=True)
+        # Include stage name and stderr in exception for better error propagation
+        if stage_name and error_msg:
+            raise RuntimeError(f"[{stage_name}] {error_msg}")
+        elif error_msg:
+            raise RuntimeError(f"{error_msg}")
+        else:
+            raise RuntimeError(f"Command failed ({proc.returncode}): {cmd[0]}")
     return proc
 
 
@@ -267,8 +274,11 @@ def process_pdf_from_pipeline_config(
                     with open(mp["manifest"], "w", encoding="utf-8") as mf:
                         json.dump(manifest, mf, ensure_ascii=False, indent=2)
 
+                # Extract stage name from script (e.g., "s07_extractor.py" -> "S07")
+                stage_name = script.split('_')[0].upper() if script else None
+
                 cmd = [python_exec, str(script_path)] + format_args(args_tmpl, mp)
-                run(cmd)
+                run(cmd, stage_name=stage_name)
 
             # Read and return final result
             with open(final_fp, "r", encoding="utf-8") as f:
@@ -279,6 +289,9 @@ def process_pdf_from_pipeline_config(
 
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Pipeline stage failed: {e}")
+        except RuntimeError:
+            # Re-raise RuntimeError to preserve stage info
+            raise
         except Exception as e:
             raise RuntimeError(f"Processing failed: {e}")
 
@@ -411,8 +424,11 @@ def process_pdf_from_pipeline_config_with_artifacts(
                     with open(mp["manifest"], "w", encoding="utf-8") as mf:
                         json.dump(manifest, mf, ensure_ascii=False, indent=2)
 
+                # Extract stage name from script (e.g., "s07_extractor.py" -> "S07")
+                stage_name = script.split('_')[0].upper() if script else None
+
                 cmd = [python_exec, str(script_path)] + format_args(args_tmpl, mp)
-                run(cmd)
+                run(cmd, stage_name=stage_name)
 
             with open(final_fp, "r", encoding="utf-8") as f:
                 final_doc = json.load(f)
@@ -446,5 +462,8 @@ def process_pdf_from_pipeline_config_with_artifacts(
             return final_doc, zip_bytes
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Pipeline stage failed: {e}")
+        except RuntimeError:
+            # Re-raise RuntimeError to preserve stage info
+            raise
         except Exception as e:
             raise RuntimeError(f"Processing failed: {e}")

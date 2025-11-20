@@ -1,0 +1,89 @@
+{
+  "doc_id": "307.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701021F",
+      "code": "26",
+      "description": "Sakelar Tekan (momentary) 2 Gang(Graphite Black)",
+      "type": null,
+      "qty": 65,
+      "uom": "PCS",
+      "unit_price": 41838.38,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2719494.7
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "701021F",
+      "code": null,
+      "description": "Sakelar Tekan (momentary) 2 Gang",
+      "type": null,
+      "qty": 110,
+      "uom": "PCS",
+      "unit_price": 31090.09,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3419909.9
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "70E201",
+      "code": "61",
+      "description": "Sakelar Pengatur Kipas Angi n 200W(Smoky Grey)",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 327067.75,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 15699252.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "D701022",
+      "code": "26",
+      "description": "Sakelar 2 Tombol 2 Arah De ngan DND & MUR(Graphite B lack)",
+      "type": null,
+      "qty": 70,
+      "uom": "PCS",
+      "unit_price": 88473.51,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6193145.7
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "ZD021381",
+      "code": null,
+      "description": "Floor Socket 13A BS & USB S ocket",
+      "type": null,
+      "qty": 5,
+      "uom": "PCS",
+      "unit_price": 246722.07,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1233610.35
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "ZD025228",
+      "code": null,
+      "description": "Floor Socket with 2 Data Soc ket Cat.6",
+      "type": null,
+      "qty": 5,
+      "uom": "PCS",
+      "unit_price": 193513.6,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 967568.0
+    }
+  ]
+}

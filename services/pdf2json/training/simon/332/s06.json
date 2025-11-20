@@ -1,0 +1,19 @@
+{
+  "doc_id": "332.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8504",
+      "sku": "N6524-0458",
+      "code": null,
+      "description": "LED DriverCV 24V150W on-off",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 220281.08,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 10573491.84
+    }
+  ]
+}

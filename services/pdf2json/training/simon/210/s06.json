@@ -1,0 +1,103 @@
+{
+  "doc_id": "210.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "721031",
+      "code": "46",
+      "description": "Sakelar 3 Tombol 1 Arah (Ma tt Champagne)",
+      "type": null,
+      "qty": 152,
+      "uom": "PCS",
+      "unit_price": 55870.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 8492281.04
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E839TY",
+      "code": "61",
+      "description": "Sakelar 2 Tombol Pintar (Sm oky Grey)",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 244367.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1954940.56
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "26",
+      "description": "Stop Kontak Tipe Schuko (Gr aphite Black)",
+      "type": null,
+      "qty": 400,
+      "uom": "PCS",
+      "unit_price": 18010.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 7204324.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "44",
+      "description": "Stop Kontak Tipe Schuko (N atural Champagne)",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 18010.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1801081.0
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "721021",
+      "code": "61",
+      "description": "Sakelar 2 Tombol 1 Arah (S moky Grey)",
+      "type": null,
+      "qty": 56,
+      "uom": "PCS",
+      "unit_price": 38572.97,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2160086.32
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "721022",
+      "code": "46",
+      "description": "Sakelar 2 Tombol 2 Arah (Ma tt Champagne)",
+      "type": null,
+      "qty": 56,
+      "uom": "PCS",
+      "unit_price": 45837.84,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2566919.04
+    },
+    {
+      "no": 70,
+      "hs_code": "8536",
+      "sku": "301032",
+      "code": "44",
+      "description": "Sakelar 3 Tombol 2 Arah (Na tural Champagne)",
+      "type": null,
+      "qty": 56,
+      "uom": "PCS",
+      "unit_price": 33513.51,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1876756.56
+    }
+  ]
+}

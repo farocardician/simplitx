@@ -1,0 +1,75 @@
+{
+  "doc_id": "371.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301012",
+      "code": null,
+      "description": "Sakelar 1 Tombol 2 Arah",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 10727.48,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 10727.48
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301022",
+      "code": null,
+      "description": "Sakelar 2 Tombol 2 Arah",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 16549.55,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 16549.55
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "305214S",
+      "code": "61",
+      "description": "Outlet Telepon RJ11",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 33148.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 33148.65
+    },
+    {
+      "no": 40,
+      "hs_code": "3926",
+      "sku": "60710-50",
+      "code": null,
+      "description": "Inbow Dus",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 2378.38,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2378.38
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "301031",
+      "code": null,
+      "description": "Sakelar 3 Tombol 1 Arah",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 24527.03,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 24527.03
+    }
+  ]
+}

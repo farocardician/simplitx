@@ -1,0 +1,33 @@
+{
+  "doc_id": "309.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "305218S",
+      "code": "26",
+      "description": "Outlet Data Cat.6 (Graphite Black)",
+      "type": null,
+      "qty": 90,
+      "uom": "PCS",
+      "unit_price": 50057.66,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4505189.4
+    },
+    {
+      "no": 20,
+      "hs_code": "3926",
+      "sku": "S155",
+      "code": null,
+      "description": "Penutup Stopkontak Anti Air",
+      "type": null,
+      "qty": 90,
+      "uom": "PCS",
+      "unit_price": 16511.71,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1486053.9
+    }
+  ]
+}

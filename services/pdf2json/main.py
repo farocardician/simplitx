@@ -136,6 +136,53 @@ async def process_single_pdf(file: UploadFile = File(...), template: str | None 
         
     except Exception as e:
         _log_processing_error("/process", file.filename, pipeline, e)
+
+        # Parse validation errors from "Preflight failed" messages
+        error_str = str(e)
+        if "Preflight failed:" in error_str:
+            # Extract stage name if present (format: "[S07] Preflight failed: ...")
+            stage_name = None
+            if error_str.startswith("[") and "]" in error_str:
+                stage_part = error_str.split("]", 1)[0][1:]  # Extract "S07" from "[S07]"
+                stage_name = stage_part
+                error_str = error_str.split("]", 1)[1].strip()  # Remove stage prefix
+
+            # Extract validation errors
+            # Format: "Preflight failed: field:error_type" or "Preflight failed: error1; error2"
+            prefix = "Preflight failed: "
+            validation_part = error_str.split(prefix, 1)[1] if prefix in error_str else error_str
+
+            # Parse individual validation errors
+            validation_errors = []
+            for error_item in validation_part.split("; "):
+                error_item = error_item.strip()
+                if ":" in error_item:
+                    field, error_type = error_item.split(":", 1)
+                    validation_errors.append({
+                        "field": field.strip(),
+                        "error": error_type.strip()
+                    })
+                else:
+                    validation_errors.append({
+                        "field": "unknown",
+                        "error": error_item
+                    })
+
+            # Return structured validation error with stage info
+            detail = {
+                "type": "validation_error",
+                "message": "Invoice validation failed",
+                "validationErrors": validation_errors
+            }
+            if stage_name:
+                detail["stage"] = stage_name
+
+            raise HTTPException(
+                status_code=422,  # Unprocessable Entity
+                detail=detail
+            )
+
+        # Fallback for non-validation errors
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
 @app.post("/process-with-artifacts")

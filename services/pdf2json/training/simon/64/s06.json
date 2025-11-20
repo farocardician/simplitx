@@ -1,0 +1,19 @@
+{
+  "doc_id": "64.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8504",
+      "sku": "N65E0-0036",
+      "code": null,
+      "description": "LED DriverCC 360mA30-42VDC/220-240V on-off HPF",
+      "type": null,
+      "qty": 51,
+      "uom": "PCS",
+      "unit_price": 56338.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2873238.0
+    }
+  ]
+}

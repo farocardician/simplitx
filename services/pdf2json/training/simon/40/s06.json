@@ -1,0 +1,19 @@
+{
+  "doc_id": "40.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "66E8002GTY",
+      "code": "4D",
+      "description": "Sakelar Pintar 2 Tombol (GE M)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 635762.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 19072860.0
+    }
+  ]
+}

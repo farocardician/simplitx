@@ -1,0 +1,19 @@
+{
+  "doc_id": "453.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "585218",
+      "code": "61",
+      "description": "Outlet Data",
+      "type": null,
+      "qty": 40,
+      "uom": "PCS",
+      "unit_price": 35891.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1435675.6
+    }
+  ]
+}

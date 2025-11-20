@@ -1,0 +1,33 @@
+{
+  "doc_id": "306.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E847TY",
+      "code": "26",
+      "description": "Sakelar 2 Tombol Tirai Pintar (Graphite Black)",
+      "type": null,
+      "qty": 5,
+      "uom": "PCS",
+      "unit_price": 431801.8,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2159009.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "721046",
+      "code": "61",
+      "description": "Sakelar 2-Tombol Intermediate(Smoky Grey)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 112162.16,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 672972.96
+    }
+  ]
+}

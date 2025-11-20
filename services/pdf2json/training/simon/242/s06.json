@@ -1,0 +1,33 @@
+{
+  "doc_id": "242.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "61",
+      "description": "Stop Kontak Tipe Schuko (S moky Grey)",
+      "type": null,
+      "qty": 300,
+      "uom": "PCS",
+      "unit_price": 19586.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5876028.0
+    },
+    {
+      "no": 20,
+      "hs_code": "3926",
+      "sku": "45DH87",
+      "code": null,
+      "description": "86 Type Surface Mounting B ox",
+      "type": null,
+      "qty": 300,
+      "uom": "PCS",
+      "unit_price": 2445.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 733623.0
+    }
+  ]
+}

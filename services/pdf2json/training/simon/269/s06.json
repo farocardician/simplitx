@@ -1,0 +1,33 @@
+{
+  "doc_id": "269.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "3926",
+      "sku": "S155",
+      "code": "26",
+      "description": "Penutup Stopkontak Anti Air(Graphite Black)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 19966.63,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 598998.9
+    },
+    {
+      "no": 20,
+      "hs_code": "3926",
+      "sku": "S155",
+      "code": "61",
+      "description": "Penutup Stopkontak Anti Air(Smoky Grey)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 19966.63,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 598998.9
+    }
+  ]
+}

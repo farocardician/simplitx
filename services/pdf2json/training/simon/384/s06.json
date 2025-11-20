@@ -1,0 +1,19 @@
+{
+  "doc_id": "384.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E725",
+      "code": "26",
+      "description": "Stop Kontak Multi Standar D engan USB Ganda",
+      "type": null,
+      "qty": 384,
+      "uom": "PCS",
+      "unit_price": 189330.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 72703031.04
+    }
+  ]
+}

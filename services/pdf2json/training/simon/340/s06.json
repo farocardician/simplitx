@@ -1,0 +1,19 @@
+{
+  "doc_id": "340.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": "26",
+      "description": "Bingkai Untuk 1-tombol (Graphite Black)",
+      "type": null,
+      "qty": 600,
+      "uom": "PCS",
+      "unit_price": 12415.14,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 7449084.0
+    }
+  ]
+}

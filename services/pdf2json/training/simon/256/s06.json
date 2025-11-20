@@ -1,0 +1,19 @@
+{
+  "doc_id": "256.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8539",
+      "sku": "N62E0-1527",
+      "code": null,
+      "description": "LED T8 18W 6500K DE INDO",
+      "type": null,
+      "qty": 5,
+      "uom": "PCS",
+      "unit_price": 19066.85,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 95334250.0
+    }
+  ]
+}

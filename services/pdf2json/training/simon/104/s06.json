@@ -1,0 +1,19 @@
+{
+  "doc_id": "104.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301041",
+      "code": "61",
+      "description": "Sakelar 4 Tombol 1 Arah (S moky Grey)",
+      "type": null,
+      "qty": 40,
+      "uom": "PCS",
+      "unit_price": 39783.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1591351.2
+    }
+  ]
+}

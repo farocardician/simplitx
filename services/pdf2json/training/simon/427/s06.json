@@ -1,0 +1,75 @@
+{
+  "doc_id": "427.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8539",
+      "sku": "N62E0-1527",
+      "code": null,
+      "description": "LED T8 18W 6500K DE INDO",
+      "type": null,
+      "qty": 250,
+      "uom": "PCS",
+      "unit_price": 23043.24,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5760810.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "721011",
+      "code": "46",
+      "description": "Sakelar 1 Tombol 1 Arah",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 28404.32,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 284043.2
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "721687",
+      "code": "46",
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 70,
+      "uom": "PCS",
+      "unit_price": 38844.32,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2719102.4
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "301041",
+      "code": null,
+      "description": "Sakelar 4 Tombol 1 Arah",
+      "type": null,
+      "qty": 16,
+      "uom": "PCS",
+      "unit_price": 35270.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 564324.32
+    },
+    {
+      "no": 50,
+      "hs_code": "9032",
+      "sku": "30E7253",
+      "code": null,
+      "description": "Stop Kontak Multistandard D engan USB A+C",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 154342.7,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1234741.6
+    }
+  ]
+}

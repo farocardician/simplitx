@@ -1,0 +1,33 @@
+{
+  "doc_id": "81.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8539",
+      "sku": "N62E0-1146",
+      "code": null,
+      "description": "Valor LED T140 50W 6500K",
+      "type": null,
+      "qty": 80,
+      "uom": "PCS",
+      "unit_price": 59330.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4746400.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8539",
+      "sku": "N62E0-1144",
+      "code": null,
+      "description": "Valor LED T100 30W 6500K",
+      "type": null,
+      "qty": 200,
+      "uom": "PCS",
+      "unit_price": 31265.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6253000.0
+    }
+  ]
+}

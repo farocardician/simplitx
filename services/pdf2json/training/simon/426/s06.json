@@ -1,0 +1,19 @@
+{
+  "doc_id": "426.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701041",
+      "code": "26",
+      "description": "Saklar 4-Tombol 1-Arah",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 74720.72,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 747207.2
+    }
+  ]
+}

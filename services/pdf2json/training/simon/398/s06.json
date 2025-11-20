@@ -1,0 +1,33 @@
+{
+  "doc_id": "398.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N6424-1007",
+      "code": null,
+      "description": "MT36 48V Adjust GridSpotlig ht12W4000K24D BK",
+      "type": null,
+      "qty": 25,
+      "uom": "PCS",
+      "unit_price": 307459.46,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 7686486.5
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E102",
+      "code": "26",
+      "description": "Sakelar Peredup Lampu (Dim mer) 200W",
+      "type": null,
+      "qty": 16,
+      "uom": "PCS",
+      "unit_price": 332194.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5315113.44
+    }
+  ]
+}

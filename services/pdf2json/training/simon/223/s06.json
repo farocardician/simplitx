@@ -1,0 +1,33 @@
+{
+  "doc_id": "223.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-3099",
+      "code": null,
+      "description": "Duro LED-KC1 Module TRIAC 9W3000K 24D",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 114551.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5498448.0
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N0424-3102",
+      "code": null,
+      "description": "Duro LED-KC1 Module TRIAC 9W4000K 36D",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 114551.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5498448.0
+    }
+  ]
+}

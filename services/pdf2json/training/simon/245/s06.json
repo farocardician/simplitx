@@ -1,0 +1,19 @@
+{
+  "doc_id": "245.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8301",
+      "sku": "S00E0-LK33",
+      "code": null,
+      "description": "Simon Smart Lock LK33",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 1340900.9,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2681801.8
+    }
+  ]
+}

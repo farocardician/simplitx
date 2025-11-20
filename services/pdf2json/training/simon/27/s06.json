@@ -1,0 +1,75 @@
+{
+  "doc_id": "27.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "721022",
+      "code": "61",
+      "description": "Sakelar 2 Tombol 2 Arah",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 49849.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 996980.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E8301TY",
+      "code": "61",
+      "description": "Sakelar 1 Tombol Pintar",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 225401.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4508020.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "70E8306TY",
+      "code": "61",
+      "description": "Sakelar 2 Tombol Skenario Pi ntar",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 232549.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2325490.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "S00E0-S042",
+      "code": null,
+      "description": "Simpad plus (Alexa speaker)",
+      "type": null,
+      "qty": 7,
+      "uom": "PCS",
+      "unit_price": 2511337.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 17579359.0
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "ZD021080",
+      "code": null,
+      "description": "Floor Socket with Multi-Standard & 2-pin Socket",
+      "type": null,
+      "qty": 18,
+      "uom": "PCS",
+      "unit_price": 248632.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4475376.0
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "doc_id": "133.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8517",
+      "sku": "S00E0-S040",
+      "code": null,
+      "description": "Docking AC gateway(VRF)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 3050695.5,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 91520865.0
+    }
+  ]
+}

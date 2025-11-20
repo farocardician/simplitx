@@ -1,0 +1,61 @@
+{
+  "doc_id": "136.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301012",
+      "code": "61",
+      "description": "Sakelar 1 Tombol 2 Arah (S moky Grey)",
+      "type": null,
+      "qty": 200,
+      "uom": "PCS",
+      "unit_price": 16713.51,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3342702.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "305218S",
+      "code": "26",
+      "description": "Outlet Data Cat.6 (Graphite Black)",
+      "type": null,
+      "qty": 80,
+      "uom": "PCS",
+      "unit_price": 41427.03,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3314162.4
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "301031",
+      "code": "26",
+      "description": "Sakelar 3 Tombol 1 Arah (Gr aphite Black)",
+      "type": null,
+      "qty": 80,
+      "uom": "PCS",
+      "unit_price": 28756.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2300540.8
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "301089",
+      "code": "61",
+      "description": "Stop Kontak Universal Denga n Sakelar(Smoky Grey)",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 26789.19,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 535783.8
+    }
+  ]
+}

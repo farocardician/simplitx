@@ -1,0 +1,33 @@
+{
+  "doc_id": "385.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "3926",
+      "sku": "S155",
+      "code": "61",
+      "description": "Penutup Stopkontak Anti Air",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 21914.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 657437.7
+    },
+    {
+      "no": 20,
+      "hs_code": "3926",
+      "sku": "S155",
+      "code": "26",
+      "description": "Penutup Stopkontak Anti Air",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 21914.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 657437.7
+    }
+  ]
+}

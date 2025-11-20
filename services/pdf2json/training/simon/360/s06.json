@@ -1,0 +1,19 @@
+{
+  "doc_id": "360.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "3926",
+      "sku": "45DH87",
+      "code": null,
+      "description": "86 Type Surface Mounting B ox",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 2717.12,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4075680.0
+    }
+  ]
+}

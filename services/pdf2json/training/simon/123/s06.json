@@ -1,0 +1,47 @@
+{
+  "doc_id": "123.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "30E803TY",
+      "code": null,
+      "description": "Sakelar Pintar 3 Tombol",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 209470.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1675762.16
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E838TY",
+      "code": "61",
+      "description": "Sakelar 1 Tombol Pintar (Sm oky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 207264.86,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 207264.86
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "70E846TY",
+      "code": "61",
+      "description": "1 Gang Smart Curtain Switch Module(TY cloud)(Smoky Gr ey)",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 337729.73,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2701837.84
+    }
+  ]
+}

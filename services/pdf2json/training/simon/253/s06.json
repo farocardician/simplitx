@@ -1,0 +1,103 @@
+{
+  "doc_id": "253.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701021",
+      "code": "61",
+      "description": "Saklar 2-Tombol 1-Arah (Smoky Grey)",
+      "type": null,
+      "qty": 500,
+      "uom": "PCS",
+      "unit_price": 32972.97,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 16486485.0
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "700620",
+      "code": "61",
+      "description": "Bingkai Saklar 2-warna Putih(Smoky Grey)",
+      "type": null,
+      "qty": 348,
+      "uom": "PCS",
+      "unit_price": 21441.44,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 7461621.12
+    },
+    {
+      "no": 30,
+      "hs_code": "7326",
+      "sku": "700640",
+      "code": "61",
+      "description": "Bingkai Saklar 4-warna Putih(Smoky Grey)",
+      "type": null,
+      "qty": 78,
+      "uom": "PCS",
+      "unit_price": 40540.54,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3162162.12
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "705218",
+      "code": "61",
+      "description": "Outlet Data Cat.6 RJ45 (Sm oky Grey)",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 123153.15,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 12315315.0
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "705214",
+      "code": "61",
+      "description": "Outlet Telepon RJ11 (Smoky Grey)",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 51981.98,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5198198.0
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "705111",
+      "code": "61",
+      "description": "Outlet TV (Smoky Grey)",
+      "type": null,
+      "qty": 80,
+      "uom": "PCS",
+      "unit_price": 99279.28,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 7942342.4
+    },
+    {
+      "no": 70,
+      "hs_code": "7326",
+      "sku": "700630",
+      "code": "61",
+      "description": "Bingkai saklar 3-warna putih(Smoky Grey)",
+      "type": null,
+      "qty": 352,
+      "uom": "PCS",
+      "unit_price": 30990.99,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 10908828.48
+    }
+  ]
+}

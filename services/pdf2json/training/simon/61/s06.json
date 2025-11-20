@@ -1,0 +1,33 @@
+{
+  "doc_id": "61.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "705302",
+      "code": "26",
+      "description": "Modul TV Dan Stop Kontak D ata(Graphite Black)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 151097.84,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4532935.2
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "706301",
+      "code": "61",
+      "description": "Saklar Bel 1-Tombol (Smoky Grey)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 73905.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 443433.54
+    }
+  ]
+}

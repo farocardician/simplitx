@@ -1,0 +1,33 @@
+{
+  "doc_id": "208.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701031",
+      "code": null,
+      "description": "Saklar 3-Tombol 1-Arah",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 46368.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4636865.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "701080",
+      "code": "61",
+      "description": "Stop Kontak Saklar Internasi onal 10A(Smoky Grey)",
+      "type": null,
+      "qty": 150,
+      "uom": "PCS",
+      "unit_price": 84742.7,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 12711405.0
+    }
+  ]
+}

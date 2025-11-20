@@ -1,0 +1,19 @@
+{
+  "doc_id": "336.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701022",
+      "code": "46",
+      "description": "Saklar 2-Tombol 2-Arah",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 48176.58,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 481765.8
+    }
+  ]
+}

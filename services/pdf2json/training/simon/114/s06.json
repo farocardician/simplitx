@@ -1,0 +1,19 @@
+{
+  "doc_id": "114.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "L04E0-0029",
+      "code": null,
+      "description": "Olot LED Highbay G5 100W 6500K 120D",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 1186753.15,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3560259.45
+    }
+  ]
+}

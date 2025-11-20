@@ -1,0 +1,75 @@
+{
+  "doc_id": "335.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "585218",
+      "code": null,
+      "description": "Outlet Data",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 31567.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 315675.7
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "44",
+      "description": "Stop Kontak Tipe Schuko (N atural Champagne)",
+      "type": null,
+      "qty": 550,
+      "uom": "PCS",
+      "unit_price": 18010.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 9905945.5
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": null,
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 250,
+      "uom": "PCS",
+      "unit_price": 15567.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3891892.5
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "721687",
+      "code": "61",
+      "description": "Stop Kontak tipe Schuko (Sm oky Grey)",
+      "type": null,
+      "qty": 500,
+      "uom": "PCS",
+      "unit_price": 35718.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 17859460.0
+    },
+    {
+      "no": 50,
+      "hs_code": "8539",
+      "sku": "N62E0-1153",
+      "code": null,
+      "description": "Smart RGB+Tunable CCT bul b A60 8.5W WIIFI",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 51027.03,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1020540.6
+    }
+  ]
+}

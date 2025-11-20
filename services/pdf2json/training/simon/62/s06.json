@@ -1,0 +1,19 @@
+{
+  "doc_id": "62.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "706301",
+      "code": "61",
+      "description": "Saklar Bel 1-Tombol (Smoky Grey)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 78253.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2347590.0
+    }
+  ]
+}

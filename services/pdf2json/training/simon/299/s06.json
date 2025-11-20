@@ -1,0 +1,19 @@
+{
+  "doc_id": "299.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301041",
+      "code": "44",
+      "description": "Sakelar 4 Tombol 1 Arah (Na tural Champagne)",
+      "type": null,
+      "qty": 200,
+      "uom": "PCS",
+      "unit_price": 39783.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 7956756.0
+    }
+  ]
+}

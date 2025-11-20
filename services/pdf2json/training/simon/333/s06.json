@@ -1,0 +1,89 @@
+{
+  "doc_id": "333.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "66E732",
+      "code": "6Q",
+      "description": "Lampu Sensor Kaki 3000k",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 201374.95,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6041248.5
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "66E732",
+      "code": null,
+      "description": "Lampu Sensor Kaki 3000k",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 189383.06,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3787661.2
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "MTS1189-BL",
+      "code": null,
+      "description": "Multi-standard socket-Square-BK",
+      "type": null,
+      "qty": 9,
+      "uom": "PCS",
+      "unit_price": 50321.53,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 452893.77
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "MTS1089-BL",
+      "code": null,
+      "description": "Multi-standard socket-Round-BK",
+      "type": null,
+      "qty": 55,
+      "uom": "PCS",
+      "unit_price": 68842.34,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3786328.7
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "MTS1688-BL",
+      "code": null,
+      "description": "Schuko socket-Round-GR",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 55562.43,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2778121.5
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "MTSE722-BL",
+      "code": null,
+      "description": "USB Outlet-Round-BK(DC5V2.1A)",
+      "type": null,
+      "qty": 57,
+      "uom": "PCS",
+      "unit_price": 119030.63,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6784745.91
+    }
+  ]
+}

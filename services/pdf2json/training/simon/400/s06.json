@@ -1,0 +1,33 @@
+{
+  "doc_id": "400.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "ZD021687",
+      "code": null,
+      "description": "Floor Socket with Schuko",
+      "type": null,
+      "qty": 26,
+      "uom": "PCS",
+      "unit_price": 197748.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5141464.9
+    },
+    {
+      "no": 20,
+      "hs_code": "3926",
+      "sku": "720620",
+      "code": "61",
+      "description": "Bingkai Sakelar 2",
+      "type": null,
+      "qty": 308,
+      "uom": "PCS",
+      "unit_price": 19939.46,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6141353.68
+    }
+  ]
+}

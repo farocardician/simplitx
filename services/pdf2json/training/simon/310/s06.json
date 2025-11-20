@@ -1,0 +1,47 @@
+{
+  "doc_id": "310.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701021F",
+      "code": "61",
+      "description": "Sakelar Tekan (momentary) 2 Gang(Smoky Grey)",
+      "type": null,
+      "qty": 410,
+      "uom": "PCS",
+      "unit_price": 41838.38,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 17153735.8
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "701031F",
+      "code": "26",
+      "description": "Sakelar Tekan (momentary) 3 Gang(Graphite Black)",
+      "type": null,
+      "qty": 180,
+      "uom": "PCS",
+      "unit_price": 54629.73,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 9833351.4
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "701011F",
+      "code": "61",
+      "description": "Sakelar Tekan (momentary) 1 Gang(Smoky Grey)",
+      "type": null,
+      "qty": 500,
+      "uom": "PCS",
+      "unit_price": 27270.45,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 13635225.0
+    }
+  ]
+}

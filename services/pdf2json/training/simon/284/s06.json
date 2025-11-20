@@ -1,0 +1,33 @@
+{
+  "doc_id": "284.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "3926",
+      "sku": "661000G",
+      "code": "4D",
+      "description": "Pelat Penutup (GEM)(Diamo nd Grey)",
+      "type": null,
+      "qty": 12,
+      "uom": "PCS",
+      "unit_price": 33859.46,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 406313.52
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E8302TY",
+      "code": null,
+      "description": "Sakelar 2 Tombol Pintar",
+      "type": null,
+      "qty": 23,
+      "uom": "PCS",
+      "unit_price": 251500.54,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5784512.42
+    }
+  ]
+}

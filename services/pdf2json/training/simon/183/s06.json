@@ -1,0 +1,19 @@
+{
+  "doc_id": "183.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "S00E0-S021",
+      "code": null,
+      "description": "Smart Breaker(ZigBee)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 199540.54,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1995405.4
+    }
+  ]
+}

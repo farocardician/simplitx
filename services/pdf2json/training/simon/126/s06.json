@@ -1,0 +1,61 @@
+{
+  "doc_id": "126.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301031",
+      "code": "61",
+      "description": "Sakelar 3 Tombol 1 Arah (S moky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 32950.45,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 32950.45
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301031",
+      "code": null,
+      "description": "Sakelar 3 Tombol 1 Arah",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 24527.03,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 24527.03
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "740102737",
+      "code": null,
+      "description": "13A Plug",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 13799.55,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 13799.55
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": "61",
+      "description": "Stop Kontak tipe Schuko (Sm oky Grey)",
+      "type": null,
+      "qty": 13,
+      "uom": "PCS",
+      "unit_price": 32504.5,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 422558.5
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "doc_id": "153.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N0424-1895",
+      "code": null,
+      "description": "Duro LED-KC1 Module 7W4000K36D",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 82832.88,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1987989.12
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N0424-3109",
+      "code": null,
+      "description": "Duro LED-KC1 Module TRIAC 12W3000 K36D",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 182099.1,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4370378.4
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N0424-2261",
+      "code": null,
+      "description": "CP36S LED Spotlight BK 7W R55 3000K36D Ra90",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 116632.25,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2799174.0
+    },
+    {
+      "no": 40,
+      "hs_code": "9405",
+      "sku": "N0424-2262",
+      "code": null,
+      "description": "CP36S LED Spotlight BK 7W R55 4000K36D Ra90",
+      "type": null,
+      "qty": 21,
+      "uom": "PCS",
+      "unit_price": 116632.25,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2449277.25
+    }
+  ]
+}

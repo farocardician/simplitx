@@ -1,0 +1,19 @@
+{
+  "doc_id": "419.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "L01E0-0011",
+      "code": null,
+      "description": "RD50 LED streetlight 30W 65 00K",
+      "type": null,
+      "qty": 32,
+      "uom": "PCS",
+      "unit_price": 327567.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 10482162.24
+    }
+  ]
+}

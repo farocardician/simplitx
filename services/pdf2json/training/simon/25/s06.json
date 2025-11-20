@@ -1,0 +1,33 @@
+{
+  "doc_id": "25.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701022",
+      "code": null,
+      "description": "Saklar 2-Tombol 2-Arah",
+      "type": null,
+      "qty": 110,
+      "uom": "PCS",
+      "unit_price": 32972.97,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3627026.7
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E102",
+      "code": "46",
+      "description": "Sakelar Peredup Lampu (Dim mer) 200W(Matt Champagne)",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 329149.48,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1316597.92
+    }
+  ]
+}

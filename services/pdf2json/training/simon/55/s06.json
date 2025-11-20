@@ -1,0 +1,47 @@
+{
+  "doc_id": "55.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8538",
+      "sku": "FTS4508-BL",
+      "code": null,
+      "description": "Surface-mounted-Power track-0.8m-Black",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 401729.73,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 803459.46
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "661687M",
+      "code": "2B",
+      "description": "Stop Kontak Tipe Schuko (M etal)(Brushed Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 48605.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 48605.41
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "661687M",
+      "code": "2B",
+      "description": "Stop Kontak Tipe Schuko (M etal)(Brushed Grey)",
+      "type": null,
+      "qty": 9,
+      "uom": "PCS",
+      "unit_price": 48605.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 437448.69
+    }
+  ]
+}

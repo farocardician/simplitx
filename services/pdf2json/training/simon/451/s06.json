@@ -1,0 +1,75 @@
+{
+  "doc_id": "451.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N03E0-1192",
+      "code": null,
+      "description": "Valor LED square DL 8W S10 0 6500K",
+      "type": null,
+      "qty": 720,
+      "uom": "PCS",
+      "unit_price": 26594.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 19148104.8
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N03E0-1195",
+      "code": null,
+      "description": "Valor LED square DL 12W S1 50 6500K",
+      "type": null,
+      "qty": 7,
+      "uom": "PCS",
+      "unit_price": 34940.54,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 244583.78
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "L05E0-0082",
+      "code": null,
+      "description": "FL30 LED floodlight 50W650 0K",
+      "type": null,
+      "qty": 29,
+      "uom": "PCS",
+      "unit_price": 200864.86,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5825080.94
+    },
+    {
+      "no": 40,
+      "hs_code": "9405",
+      "sku": "L01E0-0050",
+      "code": null,
+      "description": "RD20 LED streetlight 150W 6 500K",
+      "type": null,
+      "qty": 42,
+      "uom": "PCS",
+      "unit_price": 399221.62,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 16767308.04
+    },
+    {
+      "no": 50,
+      "hs_code": "9405",
+      "sku": "N03E0-1181",
+      "code": null,
+      "description": "Valor LED DL 17W R150 300 0K",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 42205.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1266162.3
+    }
+  ]
+}

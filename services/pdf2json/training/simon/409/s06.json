@@ -1,0 +1,103 @@
+{
+  "doc_id": "409.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "721687",
+      "code": "61",
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 40927.93,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 163711.72
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": "61",
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 14,
+      "uom": "PCS",
+      "unit_price": 32504.5,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 455063.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "301011",
+      "code": "61",
+      "description": "Sakelar 1 Tombol 1 Arah",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 17193.69,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 34387.38
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "301022",
+      "code": "61",
+      "description": "Sakelar 2 Tombol 2 Arah",
+      "type": null,
+      "qty": 7,
+      "uom": "PCS",
+      "unit_price": 24972.97,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 174810.79
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "301031",
+      "code": "61",
+      "description": "Sakelar 3 Tombol 1 Arah",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 32950.45,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 197702.7
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": null,
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 5,
+      "uom": "PCS",
+      "unit_price": 17837.84,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 89189.2
+    },
+    {
+      "no": 70,
+      "hs_code": "8536",
+      "sku": "721011",
+      "code": "61",
+      "description": "Sakelar 1 Tombol 1 Arah",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 29927.93,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 89783.79
+    }
+  ]
+}

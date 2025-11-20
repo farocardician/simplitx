@@ -1,0 +1,61 @@
+{
+  "doc_id": "224.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N64E0-0002",
+      "code": null,
+      "description": "RS22 LED tracklight(2 wires) 10W 3000K 24D BK",
+      "type": null,
+      "qty": 69,
+      "uom": "PCS",
+      "unit_price": 99459.46,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6862702.74
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N64E0-0003",
+      "code": null,
+      "description": "RS22 LED tracklight(2 wires) 10W 4000K 24D WH",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 99459.46,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2387027.04
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N64E0-0004",
+      "code": null,
+      "description": "RS22 LED tracklight(2 wires) 10W 4000K 24D BK",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 99459.46,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4774054.08
+    },
+    {
+      "no": 40,
+      "hs_code": "9405",
+      "sku": "N64E0-0009",
+      "code": null,
+      "description": "RS22 LED tracklight(2 wires) 20W 4000K 24D WH",
+      "type": null,
+      "qty": 15,
+      "uom": "PCS",
+      "unit_price": 118918.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1783783.8
+    }
+  ]
+}

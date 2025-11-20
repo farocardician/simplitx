@@ -1,0 +1,19 @@
+{
+  "doc_id": "314.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "740102737",
+      "code": null,
+      "description": "13A Plug",
+      "type": null,
+      "qty": 471,
+      "uom": "PCS",
+      "unit_price": 13799.55,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6499588.05
+    }
+  ]
+}

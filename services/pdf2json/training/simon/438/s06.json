@@ -1,0 +1,61 @@
+{
+  "doc_id": "438.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "3926",
+      "sku": "45DH86",
+      "code": null,
+      "description": "Kotak Pemasangan Inbow",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 2508.11,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 25206505.5
+    },
+    {
+      "no": 20,
+      "hs_code": "3926",
+      "sku": "45DH87",
+      "code": null,
+      "description": "1 Gang Mounting Box",
+      "type": null,
+      "qty": 600,
+      "uom": "PCS",
+      "unit_price": 2717.12,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1630272.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "301021",
+      "code": "44",
+      "description": "Sakelar 2 Tombol 1 Arah",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 22599.1,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 677973.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "301011",
+      "code": "44",
+      "description": "Sakelar 1 Tombol 1 Arah",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 18131.53,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 181315.3
+    }
+  ]
+}

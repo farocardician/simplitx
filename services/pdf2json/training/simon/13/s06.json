@@ -1,0 +1,61 @@
+{
+  "doc_id": "13.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "661021G",
+      "code": "4D",
+      "description": "Saklar 2-Tombol 1-Arah (GEM)(Diamond Grey)",
+      "type": null,
+      "qty": 12,
+      "uom": "PCS",
+      "unit_price": 75330.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 903960.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "661031G",
+      "code": "4D",
+      "description": "Saklar 3-Tombol 1-Arah (GEM)(Diamond Grey)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 112865.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 677190.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "661012G",
+      "code": "4D",
+      "description": "Saklar 1-Tombol 2-Arah (GEM)(Diamond Grey)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 64000.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 384000.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "661022G",
+      "code": "4D",
+      "description": "Saklar 2-Tombol 2-Arah (GEM)(Diamond Grey)",
+      "type": null,
+      "qty": 18,
+      "uom": "PCS",
+      "unit_price": 83978.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1511604.0
+    }
+  ]
+}

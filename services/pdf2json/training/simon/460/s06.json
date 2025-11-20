@@ -1,0 +1,33 @@
+{
+  "doc_id": "460.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "721011",
+      "code": "26",
+      "description": "Sakelar 1 Tombol 1 Arah",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 26118.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 522378.4
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "30E833TY",
+      "code": "44",
+      "description": "3 Gang Smart No-neutral Switch",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 300583.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 300583.78
+    }
+  ]
+}

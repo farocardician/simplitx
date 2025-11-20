@@ -1,0 +1,61 @@
+{
+  "doc_id": "156.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8539",
+      "sku": "N62E0-1248",
+      "code": null,
+      "description": "Motion Sensor LED Bulb 6W 6500K",
+      "type": null,
+      "qty": 93,
+      "uom": "PCS",
+      "unit_price": 34277.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3187761.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8539",
+      "sku": "N62E0-1178",
+      "code": null,
+      "description": "LED Emergency bulb A67 7W 6800K",
+      "type": null,
+      "qty": 491,
+      "uom": "PCS",
+      "unit_price": 33763.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 16577633.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8539",
+      "sku": "N62E0-1180",
+      "code": null,
+      "description": "LED Emergency bulb A67 12 W6800K",
+      "type": null,
+      "qty": 297,
+      "uom": "PCS",
+      "unit_price": 46746.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 13883562.0
+    },
+    {
+      "no": 40,
+      "hs_code": "8539",
+      "sku": "N62E0-1251",
+      "code": null,
+      "description": "LED Emergency HPB Bulb T1 00 18W6500K",
+      "type": null,
+      "qty": 200,
+      "uom": "PCS",
+      "unit_price": 68555.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 13711000.0
+    }
+  ]
+}

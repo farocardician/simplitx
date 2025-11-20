@@ -1,0 +1,33 @@
+{
+  "doc_id": "119.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "661032G",
+      "code": "4D",
+      "description": "Saklar 3-Tombol 2-Arah (GEM)(Diamond Grey)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 132064.86,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 792389.16
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "661687G",
+      "code": "4D",
+      "description": "Stop Kontak Tipe Schuko (G EM)(Diamond Grey)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 57254.05,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 572540.5
+    }
+  ]
+}

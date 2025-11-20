@@ -1,0 +1,19 @@
+{
+  "doc_id": "323.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301382B",
+      "code": null,
+      "description": "Stop Kontak Saklar",
+      "type": null,
+      "qty": 300,
+      "uom": "PCS",
+      "unit_price": 22297.3,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6689190.0
+    }
+  ]
+}

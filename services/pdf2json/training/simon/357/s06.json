@@ -1,0 +1,103 @@
+{
+  "doc_id": "357.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "3926",
+      "sku": "720610",
+      "code": "46",
+      "description": "Bingkai Sakelar 1 (Matt Cha mpagne)",
+      "type": null,
+      "qty": 74,
+      "uom": "PCS",
+      "unit_price": 11474.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 849119.66
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": null,
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 11592.16,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1159216.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "721089",
+      "code": "46",
+      "description": "Stop Kontak Multi-standard dengan Sakelar(Ma tt Champagne)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 96687.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2900627.1
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "721041",
+      "code": null,
+      "description": "Sakelar 4 Tombol 1 Arah",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 54833.51,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 438668.08
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "72E102",
+      "code": "46",
+      "description": "Sakelar Peredup Lampu (Dim mer) 200W(Matt Champagne)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 332810.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1996861.62
+    },
+    {
+      "no": 60,
+      "hs_code": "8536",
+      "sku": "721031",
+      "code": "46",
+      "description": "Sakelar 3 Tombol 1 Arah (Ma tt Champagne)",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 60758.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 486071.36
+    },
+    {
+      "no": 70,
+      "hs_code": "8536",
+      "sku": "721011",
+      "code": "46",
+      "description": "Sakelar 1 Tombol 1 Arah (Ma tt Champagne)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 28404.32,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 284043.2
+    }
+  ]
+}

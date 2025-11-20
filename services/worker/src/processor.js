@@ -90,21 +90,62 @@ async function callGateway(pdfPath, template, jobId) {
   if (response.status === 200) {
     return response.data;
   }
-  
+
+  // Try to extract detailed error from response body
+  let detailedError = null;
+  try {
+    if (response.data && typeof response.data === 'object') {
+      // For 422 validation errors, capture the full detail
+      if (response.status === 422 && response.data.detail) {
+        detailedError = JSON.stringify(response.data.detail);
+      }
+      // For 500/502 errors, try to extract the detail message
+      else if ((response.status === 500 || response.status === 502) && response.data.detail) {
+        // The detail might be a string like "JSON2XML service error: {...}"
+        // Try to extract and parse the inner error
+        const detailStr = response.data.detail;
+        if (typeof detailStr === 'string') {
+          // Try to extract nested JSON from error messages like:
+          // "JSON2XML service error: {\"detail\":\"...\"}"
+          const match = detailStr.match(/\{.*\}/);
+          if (match) {
+            try {
+              const innerError = JSON.parse(match[0]);
+              if (innerError.detail) {
+                detailedError = innerError.detail;
+              }
+            } catch (e) {
+              // If we can't parse it, just use the whole message
+              detailedError = detailStr;
+            }
+          } else {
+            detailedError = detailStr;
+          }
+        } else {
+          detailedError = JSON.stringify(response.data.detail);
+        }
+      }
+    }
+  } catch (e) {
+    // Ignore parsing errors
+  }
+
   // Map gateway errors to our error codes
   const errorMap = {
     400: { code: 'GW_4XX', message: 'Invalid request to gateway' },
     406: { code: 'GW_4XX', message: 'Unsupported file type or mapping' },
     413: { code: 'TOO_LARGE', message: 'File exceeds gateway limit' },
     415: { code: 'GW_4XX', message: 'Unsupported media type' },
-    502: { code: 'GW_5XX', message: 'Gateway processing error' }
+    422: { code: 'VALIDATION_ERROR', message: detailedError || 'Invoice validation failed' },
+    500: { code: 'GW_5XX', message: detailedError || 'Internal server error' },
+    502: { code: 'GW_5XX', message: detailedError || 'Gateway processing error' }
   };
-  
+
   const error = errorMap[response.status] || {
     code: 'GW_5XX',
     message: `Gateway returned status ${response.status}`
   };
-  
+
   throw new GatewayError(error.code, error.message, response.status);
 }
 

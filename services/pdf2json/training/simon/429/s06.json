@@ -1,0 +1,61 @@
+{
+  "doc_id": "429.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "725218",
+      "code": "46",
+      "description": "Outlet Data",
+      "type": null,
+      "qty": 40,
+      "uom": "PCS",
+      "unit_price": 120270.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4810810.8
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "721032",
+      "code": "46",
+      "description": "Sakelar 3 Tombol 2 Arah",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 75495.5,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1811892.0
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N03E0-1192",
+      "code": null,
+      "description": "Valor LED square DL 8W S10 0 6500K",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 27702.7,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 831081.0
+    },
+    {
+      "no": 40,
+      "hs_code": "9405",
+      "sku": "N03E0-1195",
+      "code": null,
+      "description": "Valor LED square DL 12W S1 50 6500K",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 36396.4,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1091892.0
+    }
+  ]
+}

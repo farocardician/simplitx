@@ -1,0 +1,19 @@
+{
+  "doc_id": "238.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "3926",
+      "sku": "DH01",
+      "code": null,
+      "description": "1 Gang Flush Mounting Box",
+      "type": null,
+      "qty": 180,
+      "uom": "PCS",
+      "unit_price": 1486.49,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 267568.2
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "doc_id": "85.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "30E802TY",
+      "code": "61",
+      "description": "Sakelar Pintar 2 Tombol (Sm oky Grey)",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 202252.25,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 404504.5
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "30E8003TY",
+      "code": "61",
+      "description": "Sakelar 3 Tombol Pintar (Sm oky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 229549.55,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 229549.55
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "30E804TY",
+      "code": "61",
+      "description": "Sakelar Pintar 4 Tombol (Sm oky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 256801.8,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 256801.8
+    },
+    {
+      "no": 40,
+      "hs_code": "9032",
+      "sku": "30E8005TY",
+      "code": "61",
+      "description": "Sakelar Pintar Skenario 1 To mbol(Smoky Grey)",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 154549.55,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 463648.65
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "30E8008TY",
+      "code": "61",
+      "description": "Sakelar Pintar Skenario 4 To mbol(Smoky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 256801.8,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 256801.8
+    }
+  ]
+}

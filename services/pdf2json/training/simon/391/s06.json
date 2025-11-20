@@ -1,0 +1,33 @@
+{
+  "doc_id": "391.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "661687G",
+      "code": "4D",
+      "description": "Stop Kontak Tipe Schuko (G EM)",
+      "type": null,
+      "qty": 28,
+      "uom": "PCS",
+      "unit_price": 58804.68,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1646531.04
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "721687",
+      "code": "61",
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 36686.31,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1834315.5
+    }
+  ]
+}

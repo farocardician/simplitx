@@ -1,0 +1,33 @@
+{
+  "doc_id": "118.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "705218",
+      "code": "61",
+      "description": "Outlet Data Cat.6 RJ45 (Sm oky Grey)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 128571.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1285718.9
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "705302",
+      "code": "61",
+      "description": "Modul TV dan Stop Kontak D ata(Smoky Grey)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 159985.95,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1599859.5
+    }
+  ]
+}

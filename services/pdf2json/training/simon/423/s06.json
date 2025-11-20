@@ -1,0 +1,61 @@
+{
+  "doc_id": "423.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E849TY",
+      "code": "61",
+      "description": "Sakelar 2 Tombol Peredup Pi ntar",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 516722.52,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1033445.04
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E849TY",
+      "code": "61",
+      "description": "Sakelar 2 Tombol Peredup Pi ntar",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 516722.52,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1033445.04
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "70E849TY",
+      "code": "61",
+      "description": "Sakelar 2 Tombol Peredup Pi ntar",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 516722.52,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1033445.04
+    },
+    {
+      "no": 40,
+      "hs_code": "8517",
+      "sku": "681808TY",
+      "code": null,
+      "description": "Penghubung Perangkat Pinta r",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 487774.77,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 487774.77
+    }
+  ]
+}

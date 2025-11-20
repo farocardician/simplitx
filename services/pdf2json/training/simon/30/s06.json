@@ -1,0 +1,103 @@
+{
+  "doc_id": "30.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "705228",
+      "code": "61",
+      "description": "Saklar 2 tombol Data Outlet(Smoky Grey)",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 152534.77,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4576043.1
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "705229",
+      "code": "61",
+      "description": "Telepon dan Data Outlet(Sm oky Grey)",
+      "type": null,
+      "qty": 11,
+      "uom": "PCS",
+      "unit_price": 111230.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1223534.51
+    },
+    {
+      "no": 30,
+      "hs_code": "7326",
+      "sku": "700620",
+      "code": null,
+      "description": "Bingkai Saklar 2 (Vertikal)",
+      "type": null,
+      "qty": 48,
+      "uom": "PCS",
+      "unit_price": 11311.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 542955.36
+    },
+    {
+      "no": 40,
+      "hs_code": "7326",
+      "sku": "700630",
+      "code": null,
+      "description": "Bingkai Saklar 3 (Vertikal)",
+      "type": null,
+      "qty": 40,
+      "uom": "PCS",
+      "unit_price": 29478.63,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1179145.2
+    },
+    {
+      "no": 50,
+      "hs_code": "7326",
+      "sku": "700640",
+      "code": null,
+      "description": "Bingkai Saklar 4 (Vertikal)",
+      "type": null,
+      "qty": 21,
+      "uom": "PCS",
+      "unit_price": 38562.16,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 809805.36
+    },
+    {
+      "no": 60,
+      "hs_code": "7326",
+      "sku": "700650",
+      "code": null,
+      "description": "Bingkai Saklar 5 (Vertikal)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 47645.69,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 476456.9
+    },
+    {
+      "no": 70,
+      "hs_code": "3926",
+      "sku": "60710-50",
+      "code": null,
+      "description": "Inbow Dus",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 2056.65,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 20566500.0
+    }
+  ]
+}

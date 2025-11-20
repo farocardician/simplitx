@@ -1,0 +1,47 @@
+{
+  "doc_id": "128.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N05E0-0253",
+      "code": null,
+      "description": "CLL16 LED linear light 26W6 500K",
+      "type": null,
+      "qty": 35,
+      "uom": "PCS",
+      "unit_price": 99891.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3496216.15
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N64E0-0018",
+      "code": null,
+      "description": "RS22 LED tracklight(2 wires) 30W 6500K 24D BK",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 164324.32,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 657297.28
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N66E0-0010",
+      "code": null,
+      "description": "2 Wires (L-N) Track-1 meter-BK",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 38918.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 155675.68
+    }
+  ]
+}

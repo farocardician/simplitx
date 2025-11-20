@@ -1,0 +1,61 @@
+{
+  "doc_id": "120.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": "61",
+      "description": "Bingkai saklar 1-warna putih(Smoky Grey)",
+      "type": null,
+      "qty": 72,
+      "uom": "PCS",
+      "unit_price": 12415.14,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 893890.08
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "700620",
+      "code": "61",
+      "description": "Bingkai Saklar 2-warna Putih(Smoky Grey)",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 22384.86,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 537236.64
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "701021",
+      "code": "61",
+      "description": "Saklar 2-Tombol 1-Arah (Smoky Grey)",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 34423.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 688475.6
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": "61",
+      "description": "Stop Kontak tipe Schuko (Sm oky Grey)",
+      "type": null,
+      "qty": 60,
+      "uom": "PCS",
+      "unit_price": 30849.73,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1850983.8
+    }
+  ]
+}

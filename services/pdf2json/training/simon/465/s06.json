@@ -1,0 +1,19 @@
+{
+  "doc_id": "465.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "3926",
+      "sku": "720630",
+      "code": "61",
+      "description": "Bingkai Sakelar 3",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 26594.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 797837.7
+    }
+  ]
+}

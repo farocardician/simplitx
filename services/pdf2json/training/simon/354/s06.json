@@ -1,0 +1,75 @@
+{
+  "doc_id": "354.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": null,
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 17837.84,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 178378.4
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "701021",
+      "code": "61",
+      "description": "Saklar 2-Tombol 1-Arah",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 36270.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 362702.7
+    },
+    {
+      "no": 30,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": "61",
+      "description": "Bingkai saklar 1-warna putih",
+      "type": null,
+      "qty": 8,
+      "uom": "PCS",
+      "unit_price": 13081.08,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 104648.64
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "701031",
+      "code": "61",
+      "description": "Saklar 3-Tombol 1-Arah",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 58765.77,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 117531.54
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "701012",
+      "code": "61",
+      "description": "Saklar 1-Tombol 2-Arah",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 26756.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 53513.52
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "doc_id": "275.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E602",
+      "code": "61",
+      "description": "Sakelar Kartu Akses Dengan RFID(Smoky Grey)",
+      "type": null,
+      "qty": 16,
+      "uom": "PCS",
+      "unit_price": 326407.28,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 5222516.48
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E651",
+      "code": "61",
+      "description": "Outlet Alat Cukur (Smoky Gr ey)",
+      "type": null,
+      "qty": 55,
+      "uom": "PCS",
+      "unit_price": 192982.2,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 10614021.0
+    }
+  ]
+}

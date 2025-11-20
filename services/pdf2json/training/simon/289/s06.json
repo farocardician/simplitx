@@ -1,0 +1,33 @@
+{
+  "doc_id": "289.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E8303TY",
+      "code": null,
+      "description": "Sakelar 3 Tombol Pintar",
+      "type": null,
+      "qty": 7,
+      "uom": "PCS",
+      "unit_price": 255110.13,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1785770.91
+    },
+    {
+      "no": 20,
+      "hs_code": "8471",
+      "sku": "S00E0-S049",
+      "code": null,
+      "description": "Homepad Pro 10inch with Zi gBee&BLE Gateway",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 7926666.67,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 15853333.34
+    }
+  ]
+}

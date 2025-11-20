@@ -1,0 +1,19 @@
+{
+  "doc_id": "324.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7326",
+      "sku": "SMX65ES-12A",
+      "code": null,
+      "description": "65E-Distribution box-recessed-12modules",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 78828.83,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 157657.66
+    }
+  ]
+}

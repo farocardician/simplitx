@@ -1,0 +1,19 @@
+{
+  "doc_id": "51.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "721687",
+      "code": "46",
+      "description": "Stop Kontak tipe Schuko (Ma tt Champagne)",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 35391.5,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1769575.0
+    }
+  ]
+}

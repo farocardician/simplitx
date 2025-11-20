@@ -1,0 +1,19 @@
+{
+  "doc_id": "66.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8504",
+      "sku": "N6524-0343",
+      "code": null,
+      "description": "EV1 150W24V constant volta ge power supply",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 319783.78,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1279135.12
+    }
+  ]
+}

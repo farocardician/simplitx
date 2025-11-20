@@ -1,0 +1,33 @@
+{
+  "doc_id": "288.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "661089",
+      "code": "6Q",
+      "description": "Stop Kontak Universal Denga n Sakelar(Platinum Grey)",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 88864.36,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1777287.2
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "661382G",
+      "code": "4D",
+      "description": "Stop Kontak Saklar (GEM)(Di amond Grey)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 68126.49,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 408758.94
+    }
+  ]
+}

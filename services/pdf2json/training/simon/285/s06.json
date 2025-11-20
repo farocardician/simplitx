@@ -1,0 +1,33 @@
+{
+  "doc_id": "285.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8526",
+      "sku": "S00E0-S017",
+      "code": null,
+      "description": "Smart RF Infrared Remote C ontroller",
+      "type": null,
+      "qty": 11,
+      "uom": "PCS",
+      "unit_price": 138541.62,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1523957.82
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "66E7253M",
+      "code": "2B",
+      "description": "Stop Kontak Multistandard D engan USB A+C (Metal)(Brus hed Grey)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 256203.24,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1537219.44
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "doc_id": "211.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "44",
+      "description": "Stop Kontak Tipe Schuko (N atural Champagne)",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 19586.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 391735.2
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N03E0-1180",
+      "code": null,
+      "description": "Valor LED DL 12W R150 650 0K",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 32401.62,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 972048.6
+    }
+  ]
+}

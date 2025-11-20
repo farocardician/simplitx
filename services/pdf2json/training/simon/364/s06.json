@@ -1,0 +1,47 @@
+{
+  "doc_id": "364.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": "61",
+      "description": "Bingkai saklar 1-warna putih",
+      "type": null,
+      "qty": 240,
+      "uom": "PCS",
+      "unit_price": 13794.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3310701.6
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "705228",
+      "code": "61",
+      "description": "Saklar 2 tombol Data Outlet",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 186018.02,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 9300901.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "70E7253",
+      "code": "61",
+      "description": "Stop Kontak Multistandard D engan USB A+C",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 257394.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 12869729.5
+    }
+  ]
+}

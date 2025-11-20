@@ -1,0 +1,33 @@
+{
+  "doc_id": "246.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7320",
+      "sku": "N66E0-0006",
+      "code": null,
+      "description": "Recessed with clip installatio n accessory kit",
+      "type": null,
+      "qty": 220,
+      "uom": "PCS",
+      "unit_price": 13837.84,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3044324.8
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "L01E0-0047",
+      "code": null,
+      "description": "RD20 LED streetlight 100W 6 500K",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 311351.35,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 9340540.5
+    }
+  ]
+}

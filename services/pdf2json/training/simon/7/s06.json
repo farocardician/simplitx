@@ -1,0 +1,33 @@
+{
+  "doc_id": "7.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E856TY",
+      "code": "61",
+      "description": "Saklar 1 Gang Dimming Terp isah 0-10V(Smoky Grey)",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 571566.49,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1714699.47
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E857TY",
+      "code": "61",
+      "description": "Saklar 2 Gang Dimming Terp isah 0-10V(Smoky Grey)",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 679587.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4077525.42
+    }
+  ]
+}

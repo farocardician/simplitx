@@ -1,0 +1,47 @@
+{
+  "doc_id": "216.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "L01E0-0046",
+      "code": null,
+      "description": "RD20 LED streetlight 100W 4 000K",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 338594.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 677189.18
+    },
+    {
+      "no": 20,
+      "hs_code": "8539",
+      "sku": "N68E0-0074",
+      "code": null,
+      "description": "CH16 HV Strip 9W/M-50M 2835-120L 10mm 3000K",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 467918.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 467918.92
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N68E0-0084",
+      "code": null,
+      "description": "CH16 Strip Accessory Kit(Wit h EU plug)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 9405.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 9405.41
+    }
+  ]
+}

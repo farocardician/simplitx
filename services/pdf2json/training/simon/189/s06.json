@@ -1,0 +1,47 @@
+{
+  "doc_id": "189.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "305214S",
+      "code": null,
+      "description": "Outlet Telepon RJ11",
+      "type": null,
+      "qty": 4,
+      "uom": "PCS",
+      "unit_price": 24725.23,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 98900.92
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301012",
+      "code": null,
+      "description": "Sakelar 1 Tombol 2 Arah",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 10727.48,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 64364.88
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "301021",
+      "code": null,
+      "description": "Sakelar 2 Tombol 1 Arah",
+      "type": null,
+      "qty": 2,
+      "uom": "PCS",
+      "unit_price": 13006.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 26013.52
+    }
+  ]
+}

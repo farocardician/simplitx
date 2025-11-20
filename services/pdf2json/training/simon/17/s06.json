@@ -1,0 +1,19 @@
+{
+  "doc_id": "17.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "661021G",
+      "code": "4D",
+      "description": "Saklar 2-Tombol 1-Arah (GEM)(Diamond Grey)",
+      "type": null,
+      "qty": 18,
+      "uom": "PCS",
+      "unit_price": 75330.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1355940.0
+    }
+  ]
+}

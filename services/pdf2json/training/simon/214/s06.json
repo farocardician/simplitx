@@ -1,0 +1,33 @@
+{
+  "doc_id": "214.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N03E0-1178",
+      "code": null,
+      "description": "Valor LED DL 12W R150 300 0K",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 36001.8,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 216010.8
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N03E0-1178",
+      "code": null,
+      "description": "Valor LED DL 12W R150 300 0K",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 36001.8,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 864043.2
+    }
+  ]
+}

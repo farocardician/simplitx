@@ -1,0 +1,19 @@
+{
+  "doc_id": "96.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "585218",
+      "code": "61",
+      "description": "Outlet Data (Smoky Grey)",
+      "type": null,
+      "qty": 40,
+      "uom": "PCS",
+      "unit_price": 43369.37,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1734774.8
+    }
+  ]
+}

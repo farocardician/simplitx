@@ -1,0 +1,33 @@
+{
+  "doc_id": "65.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8504",
+      "sku": "N6524-0343",
+      "code": null,
+      "description": "EV1 150W24V constant volta ge power supply",
+      "type": null,
+      "qty": 6,
+      "uom": "PCS",
+      "unit_price": 319784.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1918704.0
+    },
+    {
+      "no": 20,
+      "hs_code": "8504",
+      "sku": "N65E0-0045",
+      "code": null,
+      "description": "LED DriverCC 700mA30-42VDC/220-240V Triac HPF",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 126691.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2533820.0
+    }
+  ]
+}

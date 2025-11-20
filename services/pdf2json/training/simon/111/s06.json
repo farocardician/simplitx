@@ -1,0 +1,75 @@
+{
+  "doc_id": "111.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N66E0-0039",
+      "code": null,
+      "description": "LT30 Surface Mount Track 0. 5meter BK",
+      "type": null,
+      "qty": 25,
+      "uom": "PCS",
+      "unit_price": 49096.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1227400.0
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N66E0-0040",
+      "code": null,
+      "description": "LT30 Surface Mount Track 1. 5meter BK",
+      "type": null,
+      "qty": 50,
+      "uom": "PCS",
+      "unit_price": 147195.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 7359750.0
+    },
+    {
+      "no": 30,
+      "hs_code": "9405",
+      "sku": "N66E0-0043",
+      "code": null,
+      "description": "LT30 I shape Power connect or BK Surface",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 13544.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1354400.0
+    },
+    {
+      "no": 40,
+      "hs_code": "9405",
+      "sku": "N66E0-0044",
+      "code": null,
+      "description": "LT30 L corner acc_Horizontal BK Surface",
+      "type": null,
+      "qty": 35,
+      "uom": "PCS",
+      "unit_price": 14766.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 516810.0
+    },
+    {
+      "no": 50,
+      "hs_code": "8504",
+      "sku": "N65E0-0020",
+      "code": null,
+      "description": "LT30 24V constant voltage D river100W BK",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 343674.0,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 6873480.0
+    }
+  ]
+}

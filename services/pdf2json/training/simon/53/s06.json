@@ -1,0 +1,19 @@
+{
+  "doc_id": "53.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "705214",
+      "code": "46",
+      "description": "Outlet Telepon RJ11 (Matt C hampagne)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 51981.98,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 51981.98
+    }
+  ]
+}

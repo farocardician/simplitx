@@ -1,0 +1,33 @@
+{
+  "doc_id": "24.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E102",
+      "code": "61",
+      "description": "Sakelar Peredup Lampu (Dim mer) 200W(Smoky Grey)",
+      "type": null,
+      "qty": 56,
+      "uom": "PCS",
+      "unit_price": 329149.48,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 18432370.88
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": "61",
+      "description": "Bingkai saklar 1-warna putih(Smoky Grey)",
+      "type": null,
+      "qty": 1,
+      "uom": "PCS",
+      "unit_price": 11311.57,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 21718214.4
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "doc_id": "129.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "70E845TY",
+      "code": "61",
+      "description": "Sakelar 4 Tombol Skenario Pi ntar(Smoky Grey)",
+      "type": null,
+      "qty": 9,
+      "uom": "PCS",
+      "unit_price": 330077.48,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2970697.32
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E849TY",
+      "code": "61",
+      "description": "Sakelar 2 Tombol Peredup Pi ntar(Smoky Grey)",
+      "type": null,
+      "qty": 9,
+      "uom": "PCS",
+      "unit_price": 516722.52,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 4650502.68
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "70E850TY",
+      "code": "61",
+      "description": "1 Tombol Saklar Modul Smar t Non-netral(Smoky Grey)",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 321612.61,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 964837.83
+    }
+  ]
+}

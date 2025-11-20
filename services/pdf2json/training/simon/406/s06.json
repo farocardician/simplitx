@@ -1,0 +1,33 @@
+{
+  "doc_id": "406.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": null,
+      "description": "Stop Kontak tipe Schuko",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 18810.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 188108.1
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": null,
+      "description": "Bingkai Untuk 1-tombol",
+      "type": null,
+      "qty": 24,
+      "uom": "PCS",
+      "unit_price": 7733.33,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 185599.92
+    }
+  ]
+}

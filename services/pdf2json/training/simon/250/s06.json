@@ -1,0 +1,33 @@
+{
+  "doc_id": "250.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N03E0-1509",
+      "code": null,
+      "description": "Valor LED DL 12W R150 650 0K 4-pack",
+      "type": null,
+      "qty": 240,
+      "uom": "PCS",
+      "unit_price": 78210.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 18770594.4
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N03E0-1510",
+      "code": null,
+      "description": "Valor LED DL 17W R150 650 0K 4-pack",
+      "type": null,
+      "qty": 120,
+      "uom": "PCS",
+      "unit_price": 110789.19,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 13294702.8
+    }
+  ]
+}

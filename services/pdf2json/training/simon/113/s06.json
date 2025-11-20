@@ -1,0 +1,61 @@
+{
+  "doc_id": "113.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N03E0-1200",
+      "code": null,
+      "description": "Valor LED square DL 24W S2 00 4000K",
+      "type": null,
+      "qty": 30,
+      "uom": "PCS",
+      "unit_price": 71091.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2132756.7
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "301687",
+      "code": "26",
+      "description": "Stop Kontak Tipe Schuko (Gr aphite Black)",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 18010.81,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1801081.0
+    },
+    {
+      "no": 30,
+      "hs_code": "8517",
+      "sku": "S00E0-S009",
+      "code": null,
+      "description": "Smart Zigbee Gateway (Wifi)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 242162.16,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2421621.6
+    },
+    {
+      "no": 40,
+      "hs_code": "8536",
+      "sku": "301031",
+      "code": "44",
+      "description": "Sakelar 3 Tombol 1 Arah (Na tural Champagne)",
+      "type": null,
+      "qty": 80,
+      "uom": "PCS",
+      "unit_price": 28756.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2300540.8
+    }
+  ]
+}

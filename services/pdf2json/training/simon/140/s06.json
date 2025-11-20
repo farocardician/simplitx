@@ -1,0 +1,19 @@
+{
+  "doc_id": "140.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N03E0-1180",
+      "code": null,
+      "description": "Valor LED DL 12W R150 650 0K",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 31036.04,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 93108.12
+    }
+  ]
+}

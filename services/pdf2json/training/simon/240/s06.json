@@ -1,0 +1,33 @@
+{
+  "doc_id": "240.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "9405",
+      "sku": "N67E0-0104",
+      "code": null,
+      "description": "Duro LED Panel light 36W 65 00K 300*1200",
+      "type": null,
+      "qty": 39,
+      "uom": "PCS",
+      "unit_price": 337556.76,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 13164713.64
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N04E0-0533",
+      "code": null,
+      "description": "CP20 LED Spotlight 7W4000 KRa80",
+      "type": null,
+      "qty": 5,
+      "uom": "PCS",
+      "unit_price": 30270.27,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 151351.35
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "doc_id": "94.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701687",
+      "code": "46",
+      "description": "Stop Kontak tipe Schuko (Ma tt Champagne)",
+      "type": null,
+      "qty": 100,
+      "uom": "PCS",
+      "unit_price": 34277.48,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3427748.0
+    },
+    {
+      "no": 20,
+      "hs_code": "7326",
+      "sku": "700610",
+      "code": "46",
+      "description": "Bingkai untuk 1-tombol (Matt Champagne)",
+      "type": null,
+      "qty": 72,
+      "uom": "PCS",
+      "unit_price": 13794.59,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 993210.48
+    },
+    {
+      "no": 30,
+      "hs_code": "7326",
+      "sku": "700620",
+      "code": "46",
+      "description": "Bingkai Saklar 2-warna Putih(Matt Champagn e)",
+      "type": null,
+      "qty": 36,
+      "uom": "PCS",
+      "unit_price": 24872.07,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 895394.52
+    }
+  ]
+}

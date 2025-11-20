@@ -1,0 +1,75 @@
+{
+  "doc_id": "48.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "8536",
+      "sku": "701046",
+      "code": "61",
+      "description": "Sakelar 2-Tombol Intermediate(Smoky Grey)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 112013.15,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 1120131.5
+    },
+    {
+      "no": 20,
+      "hs_code": "8536",
+      "sku": "70E102",
+      "code": "61",
+      "description": "Sakelar Peredup Lampu (Dim mer) 200W(Smoky Grey)",
+      "type": null,
+      "qty": 10,
+      "uom": "PCS",
+      "unit_price": 341191.53,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3411915.3
+    },
+    {
+      "no": 30,
+      "hs_code": "8536",
+      "sku": "70E7253",
+      "code": "26",
+      "description": "Stop Kontak Multistandard D engan USB A+C(Graphite Bla ck)",
+      "type": null,
+      "qty": 200,
+      "uom": "PCS",
+      "unit_price": 218785.41,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 43757082.0
+    },
+    {
+      "no": 40,
+      "hs_code": "3926",
+      "sku": "S255",
+      "code": null,
+      "description": "Penutup Stopkontak Transpa ran Tahan Air",
+      "type": null,
+      "qty": 20,
+      "uom": "PCS",
+      "unit_price": 40772.43,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 815448.6
+    },
+    {
+      "no": 50,
+      "hs_code": "8536",
+      "sku": "ZD021080",
+      "code": null,
+      "description": "Floor Socket with Multi-Standard & 2-pin Socket",
+      "type": null,
+      "qty": 15,
+      "uom": "PCS",
+      "unit_price": 234819.01,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 3522285.15
+    }
+  ]
+}

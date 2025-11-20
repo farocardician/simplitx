@@ -1,0 +1,33 @@
+{
+  "doc_id": "86.pdf",
+  "items": [
+    {
+      "no": 10,
+      "hs_code": "7326",
+      "sku": "700640",
+      "code": "26",
+      "description": "Bingkai Saklar 4-warna Putih(Graphite Black)",
+      "type": null,
+      "qty": 3,
+      "uom": "PCS",
+      "unit_price": 38918.92,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 116756.76
+    },
+    {
+      "no": 20,
+      "hs_code": "9405",
+      "sku": "N05E0-0253",
+      "code": null,
+      "description": "CLL16 LED linear light 26W6 500K",
+      "type": null,
+      "qty": 22,
+      "uom": "PCS",
+      "unit_price": 99891.89,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 2197621.58
+    }
+  ]
+}
