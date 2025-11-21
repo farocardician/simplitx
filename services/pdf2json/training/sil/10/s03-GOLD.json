@@ -1,0 +1,95 @@
+{
+  "client": "sil",
+  "variant": 10,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Neopangan Selaras Indonesia Invoice Komp Sentra Niaga Surya Kadu Blok I/18 RT.001/001 Kadujaya Client no.: 700225 Curug Tangerang 15810 Invoice no.: 2440002944 Dated: 24.10.2025 Your order: PO/HL/25/IX/0079 Our order no.: 4400002366 Delivery no.: 4480004248 Dispatch date: 24.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700225 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 32.326.880,00 T 29.632.973,33 ax Based: VAT: _______________________________ 12 11,000 % 29.632.973,33 32.326.880,00 _______________________________ 3.555.956,80 _________ Final invoice amount: IDR 35.882.836,80"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. Neopangan Selaras Indonesia"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700225 Invoice no.: 2440002944 Dated: 24.10.2025 Your order: PO/HL/25/IX/0079 Our order no.: 4400002366 Delivery no.: 4480004248 Dispatch date: 24.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700225 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700225"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002944"
+        },
+        {
+          "key": "invoice_date",
+          "value": "24.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 35.882.836,80"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 32.326.880,00 T 29.632.973,33 ax Based:"
+        },
+        {
+          "key": "tax",
+          "value": "Items total: 32.326.880,00 T 29.632.973,33 ax Based: VAT: _______________________________ 12 11,000 % 29.632.973,33 32.326.880,00 _______________________________ 3.555.956,80 _________"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Neopangan Selaras Indonesia Invoice Komp Sentra Niaga Surya Kadu Blok I/18 RT.001/001 Kadujaya Client no.: 700225 Curug Tangerang 15810 Invoice no.: 2440002944 Dated: 24.10.2025 Your order: PO/HL/25/IX/0079 Our order no.: 4400002366 Delivery no.: 4480004248 Dispatch date: 24.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700225 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 32.326.880,00 Tax Based: 29.632.973,33 VAT: _______________________________ 12 11,000 % 29.632.973,33 32.326.880,00 _______________________________ 3.555.956,80 _________ Final invoice amount: IDR 35.882.836,80"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. Neopangan Selaras Indonesia"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700225 Invoice no.: 2440002944 Dated: 24.10.2025 Your order: PO/HL/25/IX/0079 Our order no.: 4400002366 Delivery no.: 4480004248 Dispatch date: 24.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700225 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700225 2440002944"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002944"
+        },
+        {
+          "key": "invoice_date",
+          "value": "24.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 35.882.836,80"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 32.326.880,00 Tax Based: 29.632.973,33"
+        },
+        {
+          "key": "tax",
+          "value": "Items total: 32.326.880,00 Tax Based: 29.632.973,33 VAT: _______________________________ 12 11,000 % 29.632.973,33 32.326.880,00 _______________________________ 3.555.956,80 _________"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "client": "sil",
+  "variant": 3,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. YOU INDONESIA Invoice Gedung Millenium Centennial Centre Lt. 38, Jl. Jend. Sudirman Kav 25 Client no.: 700470 RT.001 RW.001 Karet, Setiabudi Invoice no.: 2440002937 Jakarta Selatan Dated: 21.10.2025 Your order: PO/2025/09/00051 Our order no.: 4400002385 Delivery no.: 4480004245 Dispatch date: 21.10.2025 Shipped to address Dispatch: PT. Antaran Sukses Ex PT. OOCL Logistics Indonesia Delivery address: WE7004703 Gudang Tungya Collins Terminal 2 Export clerk: Ms. Dewi Jl Rorotan (Babek TNI). Kawasan Phone: 6221-29516345 Cakung Industri Selatan 1 No.12 Rorotan Cilincing Jakarta Utara 14140"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 67.204.150,00 T 61.603.804,17 ax Based: VAT: _______________________________ 12 11,000 % 61.603.804,17 67.204.150,00 _______________________________ 7.392.456,50 _________ Final invoice amount: IDR 74.596.606,50"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. YOU INDONESIA"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700470 Invoice no.: 2440002937 Dated: 21.10.2025 Your order: PO/2025/09/00051 Our order no.: 4400002385 Delivery no.: 4480004245 Dispatch date: 21.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: WE7004703 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700470"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002937"
+        },
+        {
+          "key": "invoice_date",
+          "value": "21.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 74.596.606,50"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 67.204.150,00"
+        },
+        {
+          "key": "tax",
+          "value": "T 61.603.804,17 ax Based: VAT: _______________________________ 12 11,000 % 61.603.804,17 67.204.150,00 _______________________________ 7.392.456,50 _________"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. YOU INDONESIA Invoice Gedung Millenium Centennial Centre Lt. 38, Jl. Jend. Sudirman Kav 25 Client no.: 700470 RT.001 RW.001 Karet, Setiabudi Invoice no.: 2440002937 Jakarta Selatan Dated: 21.10.2025 Your order: PO/2025/09/00051 Our order no.: 4400002385 Delivery no.: 4480004245 Dispatch date: 21.10.2025 Shipped to address Dispatch: PT. Antaran Sukses Ex PT. OOCL Logistics Indonesia Delivery address: WE7004703 Gudang Tungya Collins Terminal 2 Export clerk: Ms. Dewi Jl Rorotan (Babek TNI). Kawasan Phone: 6221-29516345 Cakung Industri Selatan 1 No.12 Rorotan Cilincing Jakarta Utara 14140"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 67.204.150,00 Tax Based: 61.603.804,17 VAT: _______________________________ 12 11,000 % 61.603.804,17 67.204.150,00 _______________________________ 7.392.456,50 _________ Final invoice amount: IDR 74.596.606,50"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. YOU INDONESIA"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700470 Invoice no.: 2440002937 Dated: 21.10.2025 Your order: PO/2025/09/00051 Our order no.: 4400002385 Delivery no.: 4480004245 Dispatch date: 21.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: WE7004703 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700470 2440002937"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002937"
+        },
+        {
+          "key": "invoice_date",
+          "value": "21.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 74.596.606,50"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 67.204.150,00 Tax Based: 61.603.804,17"
+        },
+        {
+          "key": "tax",
+          "value": "Tax Based: 61.603.804,17 VAT: _______________________________ 12 11,000 % 61.603.804,17 67.204.150,00 _______________________________ 7.392.456,50 _________"
+        }
+      ]
+    }
+  }
+}

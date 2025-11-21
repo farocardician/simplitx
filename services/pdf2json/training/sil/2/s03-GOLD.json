@@ -1,0 +1,95 @@
+{
+  "client": "sil",
+  "variant": 2,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Niramas Utama Invoice Jl. Raya Bekasi Tambun KM 39.5 Tambun Selatan - Bekasi 17510 Client no.: 700412 Invoice no.: 2440002936 Dated: 21.10.2025 Your order: 4100073649 Our order no.: 4400002355 Delivery no.: 4480004243 Dispatch date: 21.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700412 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 14.782.880,00 T 13.550.973,33 ax Based: VAT: 12 11,000 % 13.550.973,33 14.782.880,00 1.626.116,80 _______________________________ _______________________________ _________ Final invoice amount: IDR 16.408.996,80"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. Niramas Utama"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700412 Invoice no.: 2440002936 Dated: 21.10.2025 Your order: 4100073649 Our order no.: 4400002355 Delivery no.: 4480004243 Dispatch date: 21.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700412 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700412"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002936"
+        },
+        {
+          "key": "invoice_date",
+          "value": "21.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 16.408.996,80"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 14.782.880,00"
+        },
+        {
+          "key": "tax",
+          "value": "T 13.550.973,33 ax Based: VAT: 12 11,000 % 13.550.973,33 14.782.880,00 1.626.116,80 _______________________________ _______________________________ _________"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Niramas Utama Invoice Jl. Raya Bekasi Tambun KM 39.5 Tambun Selatan - Bekasi 17510 Client no.: 700412 Invoice no.: 2440002936 Dated: 21.10.2025 Your order: 4100073649 Our order no.: 4400002355 Delivery no.: 4480004243 Dispatch date: 21.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700412 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 14.782.880,00 Tax Based: 13.550.973,33 VAT: _______________________________ 12 11,000 % 13.550.973,33 14.782.880,00 _______________________________ 1.626.116,80 _________ Final invoice amount: IDR 16.408.996,80"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. Niramas Utama"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700412 Invoice no.: 2440002936 Dated: 21.10.2025 Your order: 4100073649 Our order no.: 4400002355 Delivery no.: 4480004243 Dispatch date: 21.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700412 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700412 2440002936"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002936"
+        },
+        {
+          "key": "invoice_date",
+          "value": "21.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 16.408.996,80"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 14.782.880,00 Tax Based: 13.550.973,33"
+        },
+        {
+          "key": "tax",
+          "value": "Tax Based: 13.550.973,33 VAT: _______________________________ 12 11,000 % 13.550.973,33 14.782.880,00 _______________________________ 1.626.116,80 _________"
+        }
+      ]
+    }
+  }
+}

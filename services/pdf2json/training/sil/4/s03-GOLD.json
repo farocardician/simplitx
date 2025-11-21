@@ -1,0 +1,95 @@
+{
+  "client": "sil",
+  "variant": 4,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT SERVEONE MRO INDONESIA Invoice DAIWA MANUNGGAL LOGISTIK CENTRE PHASE 2 UNIT C-2-2 LANTAI 2, KAWASAN INDUSTRI MM Client no.: 700626 JALAN SUMATERA BLOK G-3,Kec. Cikara Invoice no.: 2440002938 Kab. Bekasi, Provinsi Jawa Barat Dated: 21.10.2025 Your order: PO2509666 Our order no.: 4400002419 Delivery no.: 4480004255 Dispatch date: 21.10.2025 Shipped to address Dispatch: PT. Antaran Sukses Ex PT. Yupi Indo Jelly Gum Delivery address: WE7000361 Jl. Raya Grompol - Jambangan KM. 5 Export clerk: Ms. Dewi Desa Kaliwuluh Kec. Kebakkramat Phone: 6221-29516345 Karanganyar Jawa Tengah 57762"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 37.882.950,00 T 34.726.037,50 ax Based: VAT: 12 11,000 % 34.726.037,50 37.882.950,00 4.167.124,50 _______________________________ _______________________________ _________ Final invoice amount: IDR 42.050.074,50"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT SERVEONE MRO INDONESIA"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700626 Invoice no.: 2440002938 Dated: 21.10.2025 Your order: PO2509666 Our order no.: 4400002419 Delivery no.: 4480004255 Dispatch date: 21.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: WE7000361 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700626"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002938"
+        },
+        {
+          "key": "invoice_date",
+          "value": "21.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 42.050.074,50"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 37.882.950,00"
+        },
+        {
+          "key": "tax",
+          "value": "T 34.726.037,50 ax Based: VAT: 12 11,000 % 34.726.037,50 37.882.950,00 4.167.124,50 _______________________________ _______________________________ _________"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT SERVEONE MRO INDONESIA Invoice DAIWA MANUNGGAL LOGISTIK CENTRE PHASE 2 UNIT C-2-2 LANTAI 2, KAWASAN INDUSTRI MM Client no.: 700626 JALAN SUMATERA BLOK G-3,Kec. Cikara Invoice no.: 2440002938 Kab. Bekasi, Provinsi Jawa Barat Dated: 21.10.2025 Your order: PO2509666 Our order no.: 4400002419 Delivery no.: 4480004255 Dispatch date: 21.10.2025 Shipped to address Dispatch: PT. Antaran Sukses Ex PT. Yupi Indo Jelly Gum Delivery address: WE7000361 Jl. Raya Grompol - Jambangan KM. 5 Export clerk: Ms. Dewi Desa Kaliwuluh Kec. Kebakkramat Phone: 6221-29516345 Karanganyar Jawa Tengah 57762"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 37.882.950,00 Tax Based: 34.726.037,50 VAT: _______________________________ 12 11,000 % 34.726.037,50 37.882.950,00 _______________________________ 4.167.124,50 _________ Final invoice amount: IDR 42.050.074,50"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT SERVEONE MRO INDONESIA"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700626 Invoice no.: 2440002938 Dated: 21.10.2025 Your order: PO2509666 Our order no.: 4400002419 Delivery no.: 4480004255 Dispatch date: 21.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: WE7000361 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700626 2440002938"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002938"
+        },
+        {
+          "key": "invoice_date",
+          "value": "21.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 42.050.074,50"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 37.882.950,00 Tax Based: 34.726.037,50"
+        },
+        {
+          "key": "tax",
+          "value": "Tax Based: 34.726.037,50 VAT: _______________________________ 12 11,000 % 34.726.037,50 37.882.950,00 _______________________________ 4.167.124,50 _________"
+        }
+      ]
+    }
+  }
+}

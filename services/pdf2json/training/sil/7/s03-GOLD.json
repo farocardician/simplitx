@@ -1,0 +1,95 @@
+{
+  "client": "sil",
+  "variant": 7,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. SINAR SOSRO GUNUNG SLAMAT Invoice Jl. Mayjen Sutoyo No.28 Slawi Wetan, Slawi Client no.: 700324 Kab. Tegal Jawa Tengah Invoice no.: 2440002941 Dated: 22.10.2025 Your order: 4100030064 Our order no.: 4400002426 Delivery no.: 4480004259 Dispatch date: 22.10.2025 Shipped to address Dispatch: PT. Antaran Sukses Ex PT Sinar Sosro Gunung Slamat Delivery address: WE7003241 Jalan Raya Kemenuh Export clerk: Ms. Dewi Sukawati Sukawati Phone: 6221-29516345 Kab Gianyar, Bali Attn. 082339627636 Bpk Kadek Laba"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 5.097.425,00 T 4.672.639,58 ax Based: VAT: 12 11,000 % 4.672.639,58 5.097.425,00 560.716,75 _______________________________ _______________________________ _________ Final invoice amount: IDR 5.658.141,75"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. SINAR SOSRO GUNUNG SLAMAT"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700324 Invoice no.: 2440002941 Dated: 22.10.2025 Your order: 4100030064 Our order no.: 4400002426 Delivery no.: 4480004259 Dispatch date: 22.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: WE7003241 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700324"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002941"
+        },
+        {
+          "key": "invoice_date",
+          "value": "22.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 5.658.141,75"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 5.097.425,00"
+        },
+        {
+          "key": "tax",
+          "value": "T 4.672.639,58 ax Based: VAT: 12 11,000 % 4.672.639,58 5.097.425,00 560.716,75 _______________________________ _______________________________ _________"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. SINAR SOSRO GUNUNG SLAMAT Invoice Jl. Mayjen Sutoyo No.28 Slawi Wetan, Slawi Client no.: 700324 Kab. Tegal Jawa Tengah Invoice no.: 2440002941 Dated: 22.10.2025 Your order: 4100030064 Our order no.: 4400002426 Delivery no.: 4480004259 Dispatch date: 22.10.2025 Shipped to address Dispatch: PT. Antaran Sukses Ex PT Sinar Sosro Gunung Slamat Delivery address: WE7003241 Jalan Raya Kemenuh Export clerk: Ms. Dewi Sukawati Sukawati Phone: 6221-29516345 Kab Gianyar, Bali Attn. 082339627636 Bpk Kadek Laba"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 5.097.425,00 Tax Based: 4.672.639,58 VAT: _______________________________ 12 11,000 % 4.672.639,58 5.097.425,00 _______________________________ 560.716,75 _________ Final invoice amount: IDR 5.658.141,75"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. SINAR SOSRO GUNUNG SLAMAT"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700324 Invoice no.: 2440002941 Dated: 22.10.2025 Your order: 4100030064 Our order no.: 4400002426 Delivery no.: 4480004259 Dispatch date: 22.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: WE7003241 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700324 2440002941"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002941"
+        },
+        {
+          "key": "invoice_date",
+          "value": "22.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 5.658.141,75"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 5.097.425,00 Tax Based: 4.672.639,58"
+        },
+        {
+          "key": "tax",
+          "value": "Tax Based: 4.672.639,58 VAT: _______________________________ 12 11,000 % 4.672.639,58 5.097.425,00 _______________________________ 560.716,75 _________"
+        }
+      ]
+    }
+  }
+}

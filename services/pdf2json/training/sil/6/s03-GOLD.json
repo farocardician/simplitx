@@ -1,0 +1,95 @@
+{
+  "client": "sil",
+  "variant": 6,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. SINAR SOSRO GUNUNG SLAMAT Invoice Jl. Mayjen Sutoyo No.28 Slawi Wetan, Slawi Client no.: 700324 Kab. Tegal Jawa Tengah Invoice no.: 2440002940 Dated: 22.10.2025 Your order: 3356/SGS/09/25/KPB-T Our order no.: 4400002424 Delivery no.: 4480004256 Dispatch date: 22.10.2025 Shipped to address Dispatch: PT. Antaran Sukses Ex PT. Citra Daya Purnama Delivery address: WE7003248 Jl Diponegoro KM.39 Export clerk: Ms. Dewi Desa Jati Mulya Phone: 6221-29516345 Tambun, Bekasi 17510"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 10.258.200,00 T 9.403.350,00 ax Based: VAT: 12 11,000 % 9.403.350,00 10.258.200,00 1.128.402,00 _______________________________ _______________________________ _________ Final invoice amount: IDR 11.386.602,00"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. SINAR SOSRO GUNUNG SLAMAT"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700324 Invoice no.: 2440002940 Dated: 22.10.2025 Your order: 3356/SGS/09/25/KPB-T Our order no.: 4400002424 Delivery no.: 4480004256 Dispatch date: 22.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: WE7003248 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700324"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002940"
+        },
+        {
+          "key": "invoice_date",
+          "value": "22.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 11.386.602,00"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 10.258.200,00"
+        },
+        {
+          "key": "tax",
+          "value": "T 9.403.350,00 ax Based: VAT: 12 11,000 % 9.403.350,00 10.258.200,00 1.128.402,00 _______________________________ _______________________________ _________"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. SINAR SOSRO GUNUNG SLAMAT Invoice Jl. Mayjen Sutoyo No.28 Slawi Wetan, Slawi Client no.: 700324 Kab. Tegal Jawa Tengah Invoice no.: 2440002940 Dated: 22.10.2025 Your order: 3356/SGS/09/25/KPB-T Our order no.: 4400002424 Delivery no.: 4480004256 Dispatch date: 22.10.2025 Shipped to address Dispatch: PT. Antaran Sukses Ex PT. Citra Daya Purnama Delivery address: WE7003248 Jl Diponegoro KM.39 Export clerk: Ms. Dewi Desa Jati Mulya Phone: 6221-29516345 Tambun, Bekasi 17510"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 10.258.200,00 Tax Based: 9.403.350,00 VAT: _______________________________ 12 11,000 % 9.403.350,00 10.258.200,00 _______________________________ 1.128.402,00 _________ Final invoice amount: IDR 11.386.602,00"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. SINAR SOSRO GUNUNG SLAMAT"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700324 Invoice no.: 2440002940 Dated: 22.10.2025 Your order: 3356/SGS/09/25/KPB-T Our order no.: 4400002424 Delivery no.: 4480004256 Dispatch date: 22.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: WE7003248 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700324 2440002940"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002940"
+        },
+        {
+          "key": "invoice_date",
+          "value": "22.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 11.386.602,00"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 10.258.200,00 Tax Based: 9.403.350,00"
+        },
+        {
+          "key": "tax",
+          "value": "Tax Based: 9.403.350,00 VAT: _______________________________ 12 11,000 % 9.403.350,00 10.258.200,00 _______________________________ 1.128.402,00 _________"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "client": "sil",
+  "variant": 8,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Konimex Invoice Desa Sanggrahan Grogol Sukoharjo 57192 Solo, Jawa Tengah Client no.: 700030 Invoice no.: 2440002942 Dated: 24.10.2025 Your order: B1808/73C/0825/L1 Our order no.: 4400002292 Delivery no.: 4480004247 Dispatch date: 24.10.2025 Shipped to address Dispatch: PT. Antaran Sukses Ex PT. Konimex Delivery address: WE7000301 Gudang Bahan Candy Export clerk: Ms. Dewi Desa Sanggrahan Grogol Sukoharjo Phone: 6221-29516345 57192 Solo, Jawa Tengah"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 9.508.680,00 T 8.716.290,00 VAT: ax Based: 12 11,000 % 8.716.290,00 9.508.680,00 1.045.954,80 _______________________________ _______________________________ _________ Final invoice amount: IDR 10.554.634,80"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. Konimex"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700030 Invoice no.: 2440002942 Dated: 24.10.2025 Your order: B1808/73C/0825/L1 Our order no.: 4400002292 Delivery no.: 4480004247 Dispatch date: 24.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: WE7000301 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700030"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002942"
+        },
+        {
+          "key": "invoice_date",
+          "value": "24.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 10.554.634,80"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 9.508.680,00 8.716.290,00"
+        },
+        {
+          "key": "tax",
+          "value": "T 8.716.290,00 VAT: ax Based: 12 11,000 % 8.716.290,00 9.508.680,00 1.045.954,80 _______________________________ _______________________________ _________"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Konimex Invoice Desa Sanggrahan Grogol Sukoharjo 57192 Solo, Jawa Tengah Client no.: 700030 Invoice no.: 2440002942 Dated: 24.10.2025 Your order: B1808/73C/0825/L1 Our order no.: 4400002292 Delivery no.: 4480004247 Dispatch date: 24.10.2025 Shipped to address Dispatch: PT. Antaran Sukses Ex PT. Konimex Delivery address: WE7000301 Gudang Bahan Candy Export clerk: Ms. Dewi Desa Sanggrahan Grogol Sukoharjo Phone: 6221-29516345 57192 Solo, Jawa Tengah"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 9.508.680,00 Tax Based: 8.716.290,00 VAT: _______________________________ 12 11,000 % 8.716.290,00 9.508.680,00 _______________________________ 1.045.954,80 _________ Final invoice amount: IDR 10.554.634,80"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. Konimex"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700030 Invoice no.: 2440002942 Dated: 24.10.2025 Your order: B1808/73C/0825/L1 Our order no.: 4400002292 Delivery no.: 4480004247 Dispatch date: 24.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: WE7000301 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700030 2440002942"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002942"
+        },
+        {
+          "key": "invoice_date",
+          "value": "24.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 10.554.634,80"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 9.508.680,00 Tax Based: 8.716.290,00"
+        },
+        {
+          "key": "tax",
+          "value": "Tax Based: 8.716.290,00 VAT: _______________________________ 12 11,000 % 8.716.290,00 9.508.680,00 _______________________________ 1.045.954,80 _________"
+        }
+      ]
+    }
+  }
+}

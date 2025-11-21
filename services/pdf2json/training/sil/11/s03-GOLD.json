@@ -1,0 +1,95 @@
+{
+  "client": "sil",
+  "variant": 11,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT Multi Citra Rasa Invoice Copy Jalan Serui Kawasan Industri MM2100 Blok AE 1-3 Jatiwangi Client no.: 700224 Cikarang Barat, Kabupaten Bekasi Invoice no.: 2440002970 Jawa Barat Dated: 07.11.2025 Your order: PO102188 Our order no.: 4400002392 Delivery no.: 4480004292 Dispatch date: 07.11.2025 Shipped to address Dispatch: PT. Antaran Sukses Ex PT. Multi Citra Rasa Delivery address: WE7002245 Kawasan Industri MM2100 Export clerk: Ms. Dewi Jl Serui blok AE No 1-3, Jatiwangi Phone: 6221-29516345 Kec Cikarang Barat, Bekasi 17530"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 97.706.600,00 T 89.564.383,33 ax Based: VAT: 12 11,000 % 89.564.383,33 97.706.600,00 10.747.726,00 _______________________________ _______________________________ _________ Final invoice amount: IDR 108.454.326,00"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT Multi Citra Rasa"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Copy Client no.: 700224 Invoice no.: 2440002970 Dated: 07.11.2025 Your order: PO102188 Our order no.: 4400002392 Delivery no.: 4480004292 Dispatch date: 07.11.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: WE7002245 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700224"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002970"
+        },
+        {
+          "key": "invoice_date",
+          "value": "07.11.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 108.454.326,00"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 97.706.600,00"
+        },
+        {
+          "key": "tax",
+          "value": "T 89.564.383,33 ax Based: VAT: 12 11,000 % 89.564.383,33 97.706.600,00 10.747.726,00 _______________________________ _______________________________ _________"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT Multi Citra Rasa Invoice Copy Jalan Serui Kawasan Industri MM2100 Blok AE 1-3 Jatiwangi Client no.: 700224 Cikarang Barat, Kabupaten Bekasi Invoice no.: 2440002970 Jawa Barat Dated: 07.11.2025 Your order: PO102188 Our order no.: 4400002392 Delivery no.: 4480004292 Dispatch date: 07.11.2025 Shipped to address Dispatch: PT. Antaran Sukses Ex PT. Multi Citra Rasa Delivery address: WE7002245 Kawasan Industri MM2100 Export clerk: Ms. Dewi Jl Serui blok AE No 1-3, Jatiwangi Phone: 6221-29516345 Kec Cikarang Barat, Bekasi 17530"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 97.706.600,00 Tax Based: 89.564.383,33 VAT: _______________________________ 12 11,000 % 89.564.383,33 97.706.600,00 _______________________________ 10.747.726,00 _________ Final invoice amount: IDR 108.454.326,00"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT Multi Citra Rasa"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Copy Client no.: 700224 Invoice no.: 2440002970 Dated: 07.11.2025 Your order: PO102188 Our order no.: 4400002392 Delivery no.: 4480004292 Dispatch date: 07.11.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: WE7002245 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700224 2440002970"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002970"
+        },
+        {
+          "key": "invoice_date",
+          "value": "07.11.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "_______________________________ _______________________________ _________ Final invoice amount: IDR 108.454.326,00"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 97.706.600,00 Tax Based: 89.564.383,33"
+        },
+        {
+          "key": "tax",
+          "value": "Tax Based: 89.564.383,33 VAT: _______________________________ 12 11,000 % 89.564.383,33 97.706.600,00 _______________________________ 10.747.726,00 _________"
+        }
+      ]
+    }
+  }
+}

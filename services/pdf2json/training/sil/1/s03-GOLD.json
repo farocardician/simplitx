@@ -1,0 +1,95 @@
+{
+  "client": "sil",
+  "variant": 1,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Freyabadi Indotama Invoice Jl. Maligi III Lot J-2A Kawasan Industri KIIC Client no.: 700200 Teluk Jambe - Teluk Jambe Invoice no.: 2440002935 Karawang Jawa Barat 41361 Dated: 21.10.2025 Telp : 021 - 89109135 Your order: 4600049016 Our order no.: 4400002362 Delivery no.: 4480004244 Dispatch date: 21.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700200 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 129.508.650,00 T 118.716.262,50 ax Based: VAT: 12 11,000 % 118.716.262,50 129.508.650,00 14.245.951,50 _______________________________ _______________________________ _________ Final invoice amount: IDR 143.754.601,50"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. Freyabadi Indotama"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700200 Invoice no.: 2440002935 Dated: 21.10.2025 Your order: 4600049016 Our order no.: 4400002362 Delivery no.: 4480004244 Dispatch date: 21.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700200 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700200"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002935"
+        },
+        {
+          "key": "invoice_date",
+          "value": "21.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 143.754.601,50"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 129.508.650,00"
+        },
+        {
+          "key": "tax",
+          "value": "T 118.716.262,50 ax Based: VAT: 12 11,000 % 118.716.262,50 129.508.650,00 14.245.951,50 _______________________________ _______________________________ _________"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Freyabadi Indotama Invoice Jl. Maligi III Lot J-2A Kawasan Industri KIIC Client no.: 700200 Teluk Jambe - Teluk Jambe Invoice no.: 2440002935 Karawang Jawa Barat 41361 Dated: 21.10.2025 Telp : 021 - 89109135 Your order: 4600049016 Our order no.: 4400002362 Delivery no.: 4480004244 Dispatch date: 21.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700200 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 129.508.650,00 Tax Based: 118.716.262,50 VAT: _______________________________ 12 11,000 % 118.716.262,50 129.508.650,00 _______________________________ 14.245.951,50 _________ Final invoice amount: IDR 143.754.601,50"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. Freyabadi Indotama"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700200 Invoice no.: 2440002935 Dated: 21.10.2025 Your order: 4600049016 Our order no.: 4400002362 Delivery no.: 4480004244 Dispatch date: 21.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700200 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700200 2440002935"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002935"
+        },
+        {
+          "key": "invoice_date",
+          "value": "21.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 143.754.601,50"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 129.508.650,00 Tax Based: 118.716.262,50"
+        },
+        {
+          "key": "tax",
+          "value": "Tax Based: 118.716.262,50 VAT: _______________________________ 12 11,000 % 118.716.262,50 129.508.650,00 _______________________________ 14.245.951,50 _________"
+        }
+      ]
+    }
+  }
+}

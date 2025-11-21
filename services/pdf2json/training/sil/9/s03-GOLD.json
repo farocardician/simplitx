@@ -1,0 +1,95 @@
+{
+  "client": "sil",
+  "variant": 9,
+  "gold_version": "s03-simple.v1",
+  "tokenizer": {
+    "plumber": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Konimex Invoice Desa Sanggrahan Grogol Sukoharjo 57192 Solo, Jawa Tengah Client no.: 700030 Invoice no.: 2440002943 Dated: 24.10.2025 Your order: B1996/73C/0925/L1/R1 Our order no.: 4400002374 Delivery no.: 4480004251 Dispatch date: 24.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700030 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 50.174.700,00 T 45.993.475,00 ax Based: VAT: 12 11,000 % 45.993.475,00 50.174.700,00 5.519.217,00 _______________________________ _______________________________ _________ Final invoice amount: IDR 55.693.917,00"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. Konimex"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700030 Invoice no.: 2440002943 Dated: 24.10.2025 Your order: B1996/73C/0925/L1/R1 Our order no.: 4400002374 Delivery no.: 4480004251 Dispatch date: 24.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700030 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700030"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002943"
+        },
+        {
+          "key": "invoice_date",
+          "value": "24.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 55.693.917,00"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 50.174.700,00 45.993.475,00"
+        },
+        {
+          "key": "tax",
+          "value": "Items total: 50.174.700,00 T 45.993.475,00 ax Based: VAT: 12 11,000 % 45.993.475,00 50.174.700,00 5.519.217,00 _______________________________ _______________________________ _________"
+        }
+      ]
+    },
+    "pymupdf": {
+      "regions": [
+        {
+          "key": "header",
+          "value": "PT. Konimex Invoice Desa Sanggrahan Grogol Sukoharjo 57192 Solo, Jawa Tengah Client no.: 700030 Invoice no.: 2440002943 Dated: 24.10.2025 Your order: B1996/73C/0925/L1/R1 Our order no.: 4400002374 Delivery no.: 4480004251 Dispatch date: 24.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700030 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "total",
+          "value": "Items total: 50.174.700,00 Tax Based: 45.993.475,00 VAT: _______________________________ 12 11,000 % 45.993.475,00 50.174.700,00 _______________________________ 5.519.217,00 _________ Final invoice amount: IDR 55.693.917,00"
+        },
+        {
+          "key": "buyer_name",
+          "value": "PT. Konimex"
+        },
+        {
+          "key": "invoice",
+          "value": "Invoice Client no.: 700030 Invoice no.: 2440002943 Dated: 24.10.2025 Your order: B1996/73C/0925/L1/R1 Our order no.: 4400002374 Delivery no.: 4480004251 Dispatch date: 24.10.2025 Dispatch: PT. Antaran Sukses Ex Delivery address: 700030 Export clerk: Ms. Dewi Phone: 6221-29516345"
+        },
+        {
+          "key": "client_no",
+          "value": "Client no.: 700030 2440002943"
+        },
+        {
+          "key": "invoice_number",
+          "value": "Invoice no.: 2440002943"
+        },
+        {
+          "key": "invoice_date",
+          "value": "24.10.2025"
+        },
+        {
+          "key": "grand_total",
+          "value": "Final invoice amount: IDR 55.693.917,00"
+        },
+        {
+          "key": "subtotal",
+          "value": "Items total: 50.174.700,00 Tax Based: 45.993.475,00"
+        },
+        {
+          "key": "tax",
+          "value": "Items total: 50.174.700,00 Tax Based: 45.993.475,00 VAT: _______________________________ 12 11,000 % 45.993.475,00 50.174.700,00 _______________________________ 5.519.217,00 _________"
+        }
+      ]
+    }
+  }
+}
