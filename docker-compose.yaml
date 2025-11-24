@@ -60,6 +60,24 @@ services:
       postgres:
         condition: service_healthy
 
+  xls2sql:
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=pdf_jobs
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   kurs_pajak:
     build:
       context: .

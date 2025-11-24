@@ -61,6 +61,26 @@ services:
       - WEB_SERVICE_URL=http://web:3000
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
+  xls2sql:
+    build:
+      context: .
+      dockerfile: docker/xls2sql.Dockerfile
+      target: development
+    volumes:
+      - ./services/xls2sql:/app
+      - ./services/xls2sql/training:/training
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=pdf_jobs
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    ports:
+      - "8011:8000"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
   gateway:
     build:
       context: .

@@ -1,26 +1,21 @@
 #!/usr/bin/env python3
 """
-Import script for Sensient Excel data to PostgreSQL temporaryStaging table.
+Stage s01 - import only.
 
-This script:
-1. Reads an Excel file with multiple sheets
-2. Resolves buyer_party_id from the "Customer Group" column in each sheet
-3. Imports selected columns into temporaryStaging table
-4. Generates a unique batch_id for the import run
-
-Sheet-name agnostic: Uses "Customer Group" column from data to identify buyers.
+Responsibility:
+- Read Sensient Excel workbooks and load rows into public."temporaryStaging".
+- Do not resolve buyers; simply capture the raw buyer name from "Customer Group".
+- Stamp every inserted row with a batch_id so downstream steps (s02) can work per batch.
 """
 
 import sys
 import uuid
 import os
-from typing import Optional, Dict, List, Tuple
-from collections import Counter
+from typing import List, Tuple
 import pandas as pd
 import psycopg2
 from psycopg2 import sql
 from psycopg2.extras import execute_batch
-from fuzzywuzzy import fuzz, process
 
 
 # Database connection parameters from environment
@@ -68,9 +63,6 @@ COLUMN_MAPPING = {
 # Sheets to skip (non-data sheets)
 SKIP_SHEETS = ['Sheet1', 'Data Seller', 'Sheet4', 'Sheet1 (1)', 'Rittal', 'Simon', 'Silesia']
 
-# Fuzzy match threshold
-FUZZY_THRESHOLD = 70
-
 
 def get_db_connection():
     """Create and return a database connection."""
@@ -82,61 +74,16 @@ def get_db_connection():
         sys.exit(1)
 
 
-def get_all_parties(conn) -> Dict[str, str]:
-    """
-    Retrieve all parties from database and return as dict {name: id}.
-    Names are normalized to lowercase for matching.
-    IDs are UUIDs stored as strings.
+def ensure_temp_staging_columns(conn):
+    """Add columns needed by the pipeline if they do not exist yet."""
+    alter_sql = """
+    ALTER TABLE public."temporaryStaging"
+        ADD COLUMN IF NOT EXISTS buyer_name text,
+        ADD COLUMN IF NOT EXISTS buyer_match_confidence double precision;
     """
     with conn.cursor() as cur:
-        cur.execute("SELECT id, display_name FROM public.parties WHERE deleted_at IS NULL")
-        parties = cur.fetchall()
-        return {name.lower().strip(): str(party_id) for party_id, name in parties}
-
-
-def resolve_buyer_party_id(
-    customer_name: str,
-    parties_dict: Dict[str, str],
-    fuzzy_threshold: int = FUZZY_THRESHOLD
-) -> Optional[str]:
-    """
-    Resolve buyer_party_id from customer name.
-
-    First tries exact match (case-insensitive).
-    If not found, tries fuzzy matching.
-
-    Args:
-        customer_name: Customer name from "Customer Group" column
-        parties_dict: Dictionary of {party_name: party_id}
-        fuzzy_threshold: Minimum fuzzy match score (0-100)
-
-    Returns:
-        party_id if found, None otherwise
-    """
-    if pd.isna(customer_name) or not customer_name:
-        return None
-
-    normalized_name = str(customer_name).lower().strip()
-
-    # Try exact match first
-    if normalized_name in parties_dict:
-        return parties_dict[normalized_name]
-
-    # Try fuzzy matching
-    party_names = list(parties_dict.keys())
-    best_match = process.extractOne(
-        normalized_name,
-        party_names,
-        scorer=fuzz.ratio
-    )
-
-    if best_match and best_match[1] >= fuzzy_threshold:
-        matched_name = best_match[0]
-        match_score = best_match[1]
-        party_id = parties_dict[matched_name]
-        return party_id, matched_name, match_score
-
-    return None
+        cur.execute(alter_sql)
+    conn.commit()
 
 
 def check_required_columns(df: pd.DataFrame, sheet_name: str) -> Tuple[bool, List[str]]:
@@ -172,7 +119,7 @@ def normalize_dataframe(df: pd.DataFrame, batch_id: str) -> pd.DataFrame:
     - Rename columns to snake_case
     - Add batch_id
     - Convert data types
-    - Keep Customer Group for later buyer resolution
+    - Keep buyer_name from Customer Group for later buyer resolution
     """
     # Select only columns that exist in the dataframe
     available_columns = [col for col in ALL_IMPORT_COLUMNS if col in df.columns]
@@ -180,6 +127,9 @@ def normalize_dataframe(df: pd.DataFrame, batch_id: str) -> pd.DataFrame:
 
     # Rename import columns
     df_normalized = df_normalized.rename(columns=COLUMN_MAPPING)
+
+    # Capture raw buyer name
+    df_normalized = df_normalized.rename(columns={'Customer Group': 'buyer_name'})
 
     # Add missing optional columns as NULL
     for col in OPTIONAL_COLUMNS:
@@ -189,6 +139,10 @@ def normalize_dataframe(df: pd.DataFrame, batch_id: str) -> pd.DataFrame:
 
     # Add batch_id
     df_normalized['batch_id'] = batch_id
+
+    # Buyer fields are handled in s02; set placeholders
+    df_normalized['buyer_party_id'] = None
+    df_normalized['buyer_match_confidence'] = None
 
     # Convert ship_date to string (handle various date formats)
     if 'ship_date' in df_normalized.columns:
@@ -223,6 +177,7 @@ def insert_data(conn, df: pd.DataFrame) -> int:
     # Prepare column list (excluding Customer Group which is not in DB)
     columns = [
         'batch_id',
+        'buyer_name',
         'buyer_party_id',
         'invoice',
         'ship_date',
@@ -234,6 +189,7 @@ def insert_data(conn, df: pd.DataFrame) -> int:
         'amount',
         'currency',
         'hs_code',
+        'buyer_match_confidence',
     ]
 
     # Convert dataframe to list of tuples
@@ -261,89 +217,21 @@ def insert_data(conn, df: pd.DataFrame) -> int:
     return len(data)
 
 
-def process_sheet_by_customer(
-    df: pd.DataFrame,
-    sheet_name: str,
-    parties_dict: Dict[str, str],
-    batch_id: str,
-    conn
-) -> Tuple[int, int, int]:
-    """
-    Process a sheet by grouping rows by Customer Group and resolving each buyer.
-
-    Returns:
-        Tuple of (customers_processed, customers_skipped, total_rows_inserted)
-    """
-    customers_processed = 0
-    customers_skipped = 0
-    total_rows_inserted = 0
-
-    # Remove rows with null Customer Group first
-    df_with_customer = df[df['Customer Group'].notna()].copy()
-
-    if df_with_customer.empty:
-        print(f"  ⚠️  No rows with valid Customer Group found")
-        return 0, 0, 0
-
-    # Group by Customer Group
-    customer_groups = df_with_customer.groupby('Customer Group')
-
-    print(f"  📊 Found {len(customer_groups)} unique customer(s) in sheet")
-
-    for customer_name, group_df in customer_groups:
-        # Skip null/empty customer names
-        if pd.isna(customer_name) or not str(customer_name).strip():
-            print(f"    ⚠️  Skipping {len(group_df)} rows with empty Customer Group")
-            customers_skipped += 1
-            continue
-
-        # Resolve buyer_party_id
-        result = resolve_buyer_party_id(customer_name, parties_dict)
-
-        if result is None:
-            print(f"    ⚠️  Could not resolve buyer for '{customer_name}' - Skipping {len(group_df)} rows")
-            customers_skipped += 1
-            continue
-
-        # Handle tuple return from fuzzy match
-        if isinstance(result, tuple):
-            buyer_party_id, matched_name, match_score = result
-            print(f"    ✓ '{customer_name}' → '{matched_name}' (fuzzy: {match_score}%) - {len(group_df)} rows")
-        else:
-            buyer_party_id = result
-            print(f"    ✓ '{customer_name}' (exact match) - {len(group_df)} rows")
-
-        # Add buyer_party_id to the group
-        group_df = group_df.copy()
-        group_df['buyer_party_id'] = buyer_party_id
-
-        # Insert data for this customer
-        rows_inserted = insert_data(conn, group_df)
-        total_rows_inserted += rows_inserted
-        customers_processed += 1
-
-    return customers_processed, customers_skipped, total_rows_inserted
-
-
 def process_excel_file(file_path: str) -> Tuple[str, int, int, int, int]:
     """
     Main function to process Excel file and import to database.
 
     Returns:
-        Tuple of (batch_id, sheets_processed, sheets_skipped, total_customers, total_rows)
+        Tuple of (batch_id, sheets_processed, sheets_skipped, unique_buyers, total_rows)
     """
     # Generate unique batch_id
     batch_id = str(uuid.uuid4())
 
     # Connect to database
     conn = get_db_connection()
+    ensure_temp_staging_columns(conn)
 
     try:
-        # Get all parties from database
-        print("📊 Loading parties from database...")
-        parties_dict = get_all_parties(conn)
-        print(f"   Found {len(parties_dict)} parties in database\n")
-
         # Load Excel file
         print(f"📂 Loading Excel file: {file_path}")
         xl_file = pd.ExcelFile(file_path)
@@ -353,8 +241,8 @@ def process_excel_file(file_path: str) -> Tuple[str, int, int, int, int]:
         # Statistics
         sheets_processed = 0
         sheets_skipped = 0
-        total_customers_processed = 0
         total_rows_inserted = 0
+        buyer_names_seen = set()
 
         # Process each sheet
         for sheet_name in all_sheets:
@@ -389,21 +277,21 @@ def process_excel_file(file_path: str) -> Tuple[str, int, int, int, int]:
                 sheets_skipped += 1
                 continue
 
-            # Process by customer groups
-            customers_proc, customers_skip, rows_inserted = process_sheet_by_customer(
-                df_normalized, sheet_name, parties_dict, batch_id, conn
-            )
+            # Track buyer names for summary (non-empty only)
+            sheet_buyers = {
+                str(name).strip().lower()
+                for name in df_normalized['buyer_name'].dropna()
+                if str(name).strip()
+            }
+            buyer_names_seen.update(sheet_buyers)
 
-            if customers_proc > 0:
-                sheets_processed += 1
-                total_customers_processed += customers_proc
-                total_rows_inserted += rows_inserted
-                print(f"  ✓ Sheet completed: {customers_proc} buyer(s), {rows_inserted} rows inserted\n")
-            else:
-                sheets_skipped += 1
-                print(f"  ⚠️  No valid buyers found in sheet - Skipped\n")
+            # Insert data for this sheet
+            rows_inserted = insert_data(conn, df_normalized)
+            total_rows_inserted += rows_inserted
+            sheets_processed += 1
+            print(f"  ✓ Sheet completed: {rows_inserted} rows inserted\n")
 
-        return batch_id, sheets_processed, sheets_skipped, total_customers_processed, total_rows_inserted
+        return batch_id, sheets_processed, sheets_skipped, len(buyer_names_seen), total_rows_inserted
 
     finally:
         conn.close()
@@ -432,7 +320,7 @@ def main():
 
     # Process the file
     try:
-        batch_id, sheets_processed, sheets_skipped, total_customers, total_rows = process_excel_file(file_path)
+        batch_id, sheets_processed, sheets_skipped, unique_buyers, total_rows = process_excel_file(file_path)
 
         # Print summary
         print("=" * 70)
@@ -441,7 +329,7 @@ def main():
         print(f"✓ Batch ID:          {batch_id}")
         print(f"✓ Sheets processed:  {sheets_processed}")
         print(f"✓ Sheets skipped:    {sheets_skipped}")
-        print(f"✓ Total buyers:      {total_customers}")
+        print(f"✓ Buyer names:       {unique_buyers} (non-empty)")
         print(f"✓ Total rows:        {total_rows}")
         print("=" * 70)
         print("\n✅ Import completed successfully!")
