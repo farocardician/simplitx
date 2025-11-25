@@ -4,8 +4,12 @@ services:
       context: .
       dockerfile: docker/web.Dockerfile
       target: production
+    volumes:
+      - ./services/xls2sql:/xls2sql
     environment:
       - NODE_ENV=production
+      - DOCKER_ENV=true
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
     restart: unless-stopped
 
   worker:

@@ -1,6 +1,7 @@
 # Base stage
 FROM node:20-alpine AS base
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl python3 py3-pip
+RUN pip3 install --no-cache-dir pandas psycopg2-binary openpyxl fuzzywuzzy python-Levenshtein --break-system-packages
 WORKDIR /app
 
 # Dependencies stage

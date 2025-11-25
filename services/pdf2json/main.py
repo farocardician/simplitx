@@ -64,6 +64,19 @@ async def get_templates():
                             dtype = doc.get("type")
                             vendor = doc.get("vendor") or cfg.get("name")
                             ver = doc.get("version") or cfg.get("version")
+                            ingestion_cfg = cfg.get("ingestion", {}) if isinstance(cfg, dict) else {}
+                            upload_cfg = cfg.get("upload", {}) if isinstance(cfg, dict) else {}
+                            queue_cfg = cfg.get("queue", {}) if isinstance(cfg, dict) else {}
+                            ingestion_type = ingestion_cfg.get("type", "pdf")
+                            queue_page = queue_cfg.get("page", "/queue")
+                            queue_version = queue_cfg.get("version", "v1")
+                            mapping_path = None
+                            try:
+                                profiles = (cfg.get("json2xml", {}) or {}).get("profiles", {}) or {}
+                                default_profile = profiles.get("default") or next(iter(profiles.values()), {})
+                                mapping_path = default_profile.get("mapping")
+                            except Exception:
+                                mapping_path = None
                             if dtype and vendor and ver:
                                 label = f"{dtype} {vendor} {ver}"
                             else:
@@ -78,6 +91,12 @@ async def get_templates():
                                 "version": ver or "",
                                 "filename": config_file.name,
                                 "display_name": label,
+                                "ingestion_type": ingestion_type,
+                                "queue_page": queue_page,
+                                "queue_version": queue_version,
+                                "upload": upload_cfg,
+                                "document": doc,
+                                "json2xml_mapping": mapping_path,
                             })
                     except (json.JSONDecodeError, FileNotFoundError):
                         continue

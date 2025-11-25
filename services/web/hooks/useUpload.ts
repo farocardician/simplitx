@@ -3,12 +3,22 @@
 import { useState, useCallback, useRef } from 'react'
 import type { UploadedFile, UploadState, UploadProgress } from '@/types/files'
 import { formatBytes, exceedsLimit } from '@/lib/bytes'
-import { isValidPDF, getPDFValidationError } from '@/lib/mime'
+import { isValidPDF, getPDFValidationError, isValidExcel, getExcelValidationError } from '@/lib/mime'
 
 const MAX_FILE_SIZE_MB = 100
 const MAX_CONCURRENT_UPLOADS = 3
 
-export function useUpload(options?: { getTemplate?: () => string }) {
+type IngestionType = 'pdf' | 'xls'
+
+export interface TemplateMeta {
+  ingestionType: IngestionType
+  uploadEndpoint: string
+  queuePage: string
+  acceptExtensions: string[]
+  maxSizeMb: number
+}
+
+export function useUpload(options?: { getTemplate?: () => string; getTemplateMeta?: () => TemplateMeta | null }) {
   const [uploadState, setUploadState] = useState<UploadState>({
     files: [],
     isUploading: false,
@@ -17,6 +27,17 @@ export function useUpload(options?: { getTemplate?: () => string }) {
   const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null)
   const redirectIntervalRef = useRef<NodeJS.Timeout>()
 
+  const resolveTemplateMeta = useCallback((): TemplateMeta => {
+    const meta = options?.getTemplateMeta?.()
+    return {
+      ingestionType: meta?.ingestionType || 'pdf',
+      uploadEndpoint: meta?.uploadEndpoint || '/api/upload',
+      queuePage: meta?.queuePage || '/queue',
+      acceptExtensions: meta?.acceptExtensions || ['.pdf'],
+      maxSizeMb: meta?.maxSizeMb || MAX_FILE_SIZE_MB
+    }
+  }, [options?.getTemplateMeta])
+
   const generateFileId = useCallback(() => {
     return `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   }, [])
@@ -24,6 +45,7 @@ export function useUpload(options?: { getTemplate?: () => string }) {
   const addFiles = useCallback((newFiles: File[]) => {
     const validFiles: UploadedFile[] = []
     const errors: string[] = []
+    const meta = resolveTemplateMeta()
 
     newFiles.forEach(file => {
       // Check for duplicates by name and size
@@ -36,15 +58,20 @@ export function useUpload(options?: { getTemplate?: () => string }) {
         return
       }
 
-      // Validate PDF format
-      if (!isValidPDF(file)) {
-        errors.push(getPDFValidationError(file))
+      // Validate file type
+      const isValidType = meta.ingestionType === 'xls' ? isValidExcel(file) : isValidPDF(file)
+      if (!isValidType) {
+        const message = meta.ingestionType === 'xls'
+          ? getExcelValidationError(file)
+          : getPDFValidationError(file)
+        errors.push(message)
         return
       }
 
       // Check file size
-      if (exceedsLimit(file.size, MAX_FILE_SIZE_MB)) {
-        errors.push(`"${file.name}" is too large. Maximum size is ${MAX_FILE_SIZE_MB}MB`)
+      const maxSize = meta.maxSizeMb || MAX_FILE_SIZE_MB
+      if (exceedsLimit(file.size, maxSize)) {
+        errors.push(`"${file.name}" is too large. Maximum size is ${maxSize}MB`)
         return
       }
 
@@ -74,7 +101,7 @@ export function useUpload(options?: { getTemplate?: () => string }) {
     }
 
     return validFiles
-  }, [uploadState.files, generateFileId])
+  }, [uploadState.files, generateFileId, resolveTemplateMeta])
 
   const removeFile = useCallback((fileId: string) => {
     setUploadState(prev => {
@@ -115,6 +142,7 @@ export function useUpload(options?: { getTemplate?: () => string }) {
   }, [])
 
   const realUpload = useCallback(async (fileId: string) => {
+    const meta = resolveTemplateMeta()
     const fileData = uploadState.files.find(f => f.id === fileId)
     if (!fileData) return
 
@@ -153,47 +181,56 @@ export function useUpload(options?: { getTemplate?: () => string }) {
             // Parse response to check if job was created successfully
             try {
               const response = JSON.parse(xhr.responseText)
-              if (response.job) {
-                // Check if this is a duplicate
-                if (response.duplicate && response.original_filename) {
-                  // Update file as deduplicated
-                  setUploadState(prev => ({
-                    ...prev,
-                    files: prev.files.map(file =>
-                      file.id === fileId
-                        ? {
-                            ...file,
-                            progress: 100,
-                            status: 'deduplicated' as const,
-                            duplicateOf: {
-                              jobId: response.original_job_id,
-                              filename: response.original_filename
-                            }
-                          }
-                        : file
-                    )
-                  }))
-                } else {
-                  // Regular completion
-                  updateFileProgress({ fileId, progress: 100, status: 'completed' })
-                }
+              const isDuplicate = response.duplicate && response.original_filename
 
-                // Check if all uploads are complete after this one
-                setTimeout(() => {
-                  setUploadState(current => {
-                    const allCompleted = current.files.every(f =>
-                      f.id === fileId ? true : (f.status === 'completed' || f.status === 'deduplicated')
-                    )
-                    if (allCompleted) {
-                      startRedirectCountdown()
-                    }
-                    return current
-                  })
-                }, 100) // Small delay to ensure state updates
+              if (isDuplicate) {
+                setUploadState(prev => ({
+                  ...prev,
+                  files: prev.files.map(file =>
+                    file.id === fileId
+                      ? {
+                          ...file,
+                          progress: 100,
+                          status: 'deduplicated' as const,
+                          duplicateOf: {
+                            jobId: response.original_job_id,
+                            filename: response.original_filename
+                          }
+                        }
+                      : file
+                  )
+                }))
+              } else {
+                // Regular completion
+                updateFileProgress({ fileId, progress: 100, status: 'completed' })
               }
+
+              // Check if all uploads are complete after this one
+              setTimeout(() => {
+                setUploadState(current => {
+                  const allCompleted = current.files.every(f =>
+                    f.status === 'completed' || f.status === 'deduplicated'
+                  )
+                  if (allCompleted) {
+                    startRedirectCountdown(meta.queuePage)
+                  }
+                  return current
+                })
+              }, 100)
             } catch (e) {
               console.log('Response parsing error:', e)
               updateFileProgress({ fileId, progress: 100, status: 'completed' })
+              setTimeout(() => {
+                setUploadState(current => {
+                  const allCompleted = current.files.every(f =>
+                    f.status === 'completed' || f.status === 'deduplicated'
+                  )
+                  if (allCompleted) {
+                    startRedirectCountdown(meta.queuePage)
+                  }
+                  return current
+                })
+              }, 100)
             }
 
             resolve()
@@ -233,7 +270,7 @@ export function useUpload(options?: { getTemplate?: () => string }) {
         }
 
         // Start upload
-        xhr.open('POST', '/api/upload')
+        xhr.open('POST', meta.uploadEndpoint || '/api/upload')
         xhr.send(formData)
       })
     } catch (error) {
@@ -244,9 +281,9 @@ export function useUpload(options?: { getTemplate?: () => string }) {
         error: 'Upload failed. Please try again.' 
       })
     }
-  }, [uploadState.files, updateFileProgress, options?.getTemplate])
+  }, [uploadState.files, updateFileProgress, options?.getTemplate, resolveTemplateMeta])
 
-  const startRedirectCountdown = useCallback(() => {
+  const startRedirectCountdown = useCallback((targetPath: string = '/queue') => {
     // Clear any existing interval
     if (redirectIntervalRef.current) {
       clearInterval(redirectIntervalRef.current)
@@ -263,7 +300,7 @@ export function useUpload(options?: { getTemplate?: () => string }) {
         if (prev === 1) {
           console.log('Countdown reached 1, redirecting...')
           clearInterval(redirectIntervalRef.current!)
-          window.location.href = '/queue'
+          window.location.href = targetPath
           return null
         }
         

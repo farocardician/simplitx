@@ -107,6 +107,12 @@
   margin-bottom: 0;
 }
 
+.hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
 .fileInput {
   position: absolute;
   inset: 0;

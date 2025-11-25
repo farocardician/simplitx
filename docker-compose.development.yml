@@ -9,11 +9,14 @@ services:
       - web_node_modules:/app/node_modules
       - web_next:/app/.next
       - ./services/shared:/shared
+      - ./services/xls2sql:/xls2sql
     environment:
       - NODE_ENV=development
+      - DOCKER_ENV=true
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
       - KURS_PAJAK_API_BASE=http://kurs_pajak:8000
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
     command: npm run dev
 
   worker:

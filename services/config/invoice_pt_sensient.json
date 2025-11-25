@@ -1,0 +1,61 @@
+{
+  "enabled": true,
+  "document": { "type": "invoice", "vendor": "PT Sensient", "version": "1" },
+  "ingestion": {
+    "type": "xls",
+    "pipeline": "xls2sql",
+    "source": "services/xls2sql",
+    "stages": [
+      {
+        "script": "stages/s01_postgreimport_sensient.py",
+        "args": ["{xls}"],
+        "outputs": ["batch_id"]
+      },
+      {
+        "script": "stages/s02_validate_resolve_sensient.py",
+        "args": ["--batch-id", "{batch_id}"]
+      },
+      {
+        "script": "stages/s03_build_invoices.py",
+        "args": ["--batch-id", "{batch_id}"]
+      }
+    ]
+  },
+  "stages": [
+    {
+      "script": "stages/s01_postgreimport_sensient.py",
+      "args": ["{xls}"]
+    },
+    {
+      "script": "stages/s02_validate_resolve_sensient.py",
+      "args": ["--batch-id", "{batch_id}"]
+    },
+    {
+      "script": "stages/s03_build_invoices.py",
+      "args": ["--batch-id", "{batch_id}"]
+    }
+  ],
+  "queue": {
+    "version": "v2",
+    "page": "/queue-v2",
+    "data_source": "tax_invoices",
+    "filter": { "tin": "0021164165056000" },
+    "seller_name": "PT Sensient Colors Indonesia"
+  },
+  "upload": {
+    "accept": [".xls", ".xlsx"],
+    "endpoint": "/api/upload-xls",
+    "max_size_mb": 50
+  },
+  "json2xml": {
+    "profiles": {
+      "default": {
+        "mapping": "mappings/pt_sil_invoice_v1.json",
+        "converter": {
+          "module": "json2xml.converter",
+          "callable": "convert_json_to_xml"
+        }
+      }
+    }
+  }
+}

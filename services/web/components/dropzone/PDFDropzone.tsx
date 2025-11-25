@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { useUpload } from '@/hooks/useUpload'
 import { FileItem } from './FileItem'
 import styles from './PDFDropzone.module.css'
@@ -11,6 +11,13 @@ interface Template {
   filename: string
   display_name: string
   enabled?: boolean  // Optional - backend already filters disabled configs
+  ingestion_type?: 'pdf' | 'xls'
+  queue_page?: string
+  upload?: {
+    accept?: string[]
+    endpoint?: string
+    max_size_mb?: number
+  }
 }
 
 export function PDFDropzone() {
@@ -21,6 +28,25 @@ export function PDFDropzone() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('')
   const [templatesLoading, setTemplatesLoading] = useState(true)
   
+  const selectedTemplateMeta = useMemo(() => {
+    const tpl = templates.find(t => t.filename === selectedTemplate)
+    const ingestionType = tpl?.ingestion_type || 'pdf'
+    const acceptExtensions = (tpl?.upload?.accept && tpl.upload.accept.length > 0)
+      ? tpl.upload.accept
+      : (ingestionType === 'xls' ? ['.xls', '.xlsx'] : ['.pdf'])
+    const queuePage = tpl?.queue_page || '/queue'
+    const uploadEndpoint = tpl?.upload?.endpoint || '/api/upload'
+    const maxSizeMb = tpl?.upload?.max_size_mb || 100
+
+    return {
+      ingestionType,
+      acceptExtensions,
+      queuePage,
+      uploadEndpoint,
+      maxSizeMb
+    }
+  }, [templates, selectedTemplate])
+
   const {
     files,
     isUploading,
@@ -33,7 +59,10 @@ export function PDFDropzone() {
     clearError,
     reset,
     canUpload
-  } = useUpload({ getTemplate: () => selectedTemplate })
+  } = useUpload({ 
+    getTemplate: () => selectedTemplate,
+    getTemplateMeta: () => selectedTemplateMeta
+  })
 
   // Fetch available templates on component mount
   useEffect(() => {
@@ -45,7 +74,8 @@ export function PDFDropzone() {
           setTemplates(data.templates || [])
           // Set first template as default if available
           if (data.templates && data.templates.length > 0) {
-            setSelectedTemplate(data.templates[0].filename)
+            const defaultTemplate = data.templates.find((tpl: Template) => (tpl.ingestion_type || 'pdf') === 'pdf') || data.templates[0]
+            setSelectedTemplate(defaultTemplate.filename)
           }
         }
       } catch (error) {
@@ -81,14 +111,18 @@ export function PDFDropzone() {
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    
-    // Check if dragged items contain any non-PDF files
+    const expected = selectedTemplateMeta.ingestionType
     const hasInvalidFiles = Array.from(e.dataTransfer.items).some(item => {
-      return item.kind === 'file' && !item.type.includes('pdf')
+      if (item.kind !== 'file') return false
+      const type = item.type || ''
+      if (!type) return false
+      if (expected === 'xls') {
+        return !type.includes('sheet') && !type.includes('excel')
+      }
+      return !type.includes('pdf')
     })
-    
     setDragError(hasInvalidFiles)
-  }, [])
+  }, [selectedTemplateMeta])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -193,7 +227,7 @@ export function PDFDropzone() {
 
         <h3 className={styles.title}>
           {dragError 
-            ? 'Only PDF files allowed!' 
+            ? selectedTemplateMeta.ingestionType === 'xls' ? 'Only XLS/XLSX files allowed!' : 'Only PDF files allowed!' 
             : isDragActive 
               ? 'Drop any document(s) here ✨' 
               : 'Drop any document(s) here ✨'
@@ -202,16 +236,19 @@ export function PDFDropzone() {
         
         <p className={styles.subtitle} id="dropzone-description">
           {dragError 
-            ? 'Please drop only PDF files'
-            : 'or click to choose a file'
+            ? `Please drop only ${selectedTemplateMeta.ingestionType === 'xls' ? 'XLS/XLSX' : 'PDF'} files`
+            : `or click to choose a ${selectedTemplateMeta.ingestionType === 'xls' ? 'XLS/XLSX' : 'PDF'} file`
           }
+        </p>
+        <p className={styles.hint}>
+          Accepts: {selectedTemplateMeta.acceptExtensions.join(', ')} • Max {selectedTemplateMeta.maxSizeMb}MB
         </p>
 
         <input
           ref={fileInputRef}
           type="file"
           multiple
-          accept=".pdf,application/pdf"
+          accept={selectedTemplateMeta.acceptExtensions.join(',')}
           onChange={handleFileSelect}
           className={styles.fileInput}
           aria-hidden="true"
