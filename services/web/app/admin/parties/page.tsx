@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, type ChangeEvent, type ReactNode } from 'react';
+import { useSearchParams } from 'next/navigation';
 import TransactionCodeDropdown from '@/components/TransactionCodeDropdown';
 import { PartyFilters, PartySelectionPayload, PartyRole } from '@/types/party-admin';
 
@@ -71,11 +72,18 @@ interface PaginationInfo {
 }
 
 export default function PartiesManagementPage() {
+  const searchParams = useSearchParams();
+
+  // Initialize filters from URL params immediately
+  const initialPartyId = searchParams.get('id') || '';
+  const initialBuyerSearch = !initialPartyId ? (searchParams.get('buyer') || '') : '';
+
   const [parties, setParties] = useState<Party[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialBuyerSearch);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialBuyerSearch);
+  const [partyIdFilter, setPartyIdFilter] = useState<string>(initialPartyId);
   const [countryFilter, setCountryFilter] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<PartyRole | ''>('');
   const [sellerFilter, setSellerFilter] = useState('');
@@ -103,6 +111,9 @@ export default function PartiesManagementPage() {
 
   const currentFilters = useMemo<PartyFilters>(() => {
     const filters: PartyFilters = {};
+    if (partyIdFilter) {
+      filters.partyId = partyIdFilter;
+    }
     if (debouncedQuery.trim().length >= 2) {
       filters.search = debouncedQuery.trim();
     }
@@ -116,7 +127,7 @@ export default function PartiesManagementPage() {
       filters.sellerName = sellerFilter.trim();
     }
     return filters;
-  }, [debouncedQuery, countryFilter, typeFilter, sellerFilter]);
+  }, [partyIdFilter, debouncedQuery, countryFilter, typeFilter, sellerFilter]);
 
   // Define fetchParties early so it can be used in useEffect
   const fetchParties = useCallback(async () => {
@@ -124,18 +135,24 @@ export default function PartiesManagementPage() {
       setLoading(true);
       const params = new URLSearchParams();
 
-      if (debouncedQuery.length >= 2) {
-        params.append('search', debouncedQuery);
-      }
+      // Priority: party ID filter overrides all other filters
+      if (partyIdFilter) {
+        params.append('id', partyIdFilter);
+      } else {
+        // Apply other filters only if not filtering by ID
+        if (debouncedQuery.length >= 2) {
+          params.append('search', debouncedQuery);
+        }
 
-      if (countryFilter) {
-        params.append('country_code', countryFilter);
-      }
-      if (typeFilter) {
-        params.append('type', typeFilter);
-      }
-      if (sellerFilter.trim().length >= 1) {
-        params.append('seller_name', sellerFilter.trim());
+        if (countryFilter) {
+          params.append('country_code', countryFilter);
+        }
+        if (typeFilter) {
+          params.append('type', typeFilter);
+        }
+        if (sellerFilter.trim().length >= 1) {
+          params.append('seller_name', sellerFilter.trim());
+        }
       }
 
       params.append('page', String(pagination.page));
@@ -166,7 +183,7 @@ export default function PartiesManagementPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedQuery, countryFilter, typeFilter, sellerFilter, pagination.limit, pagination.page]);
+  }, [partyIdFilter, debouncedQuery, countryFilter, typeFilter, sellerFilter, pagination.limit, pagination.page]);
 
   // Debounce search query
   useEffect(() => {
@@ -257,7 +274,7 @@ export default function PartiesManagementPage() {
     }
     setSelectionFiltersSnapshot(null);
     setPagination(prev => ({ ...prev, page: 1 }));
-  }, [debouncedQuery, countryFilter, typeFilter, sellerFilter]);
+  }, [partyIdFilter, debouncedQuery, countryFilter, typeFilter, sellerFilter]);
 
   const isRowSelected = (partyId: string) => {
     return allSelected ? !excludedIds.has(partyId) : selectedIds.has(partyId);

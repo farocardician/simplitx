@@ -20,7 +20,9 @@ const EXCEL_EXTENSIONS = ['.xls', '.xlsx']
 
 function isExcelFile(file: File): boolean {
   const fileExt = extname(file.name || '').toLowerCase()
-  const mimeOk = !file.type || EXCEL_MIME_TYPES.includes(file.type || '')
+  const mimeOk = !file.type
+    || EXCEL_MIME_TYPES.includes(file.type || '')
+    || file.type === 'application/octet-stream'
   const extOk = EXCEL_EXTENSIONS.includes(fileExt)
   return extOk && mimeOk
 }
@@ -45,7 +47,7 @@ async function runPython(args: string[]) {
       } catch {
         // Fallback to individual env vars
         dbEnv = {
-          DB_HOST: process.env.DB_HOST || 'localhost',
+          DB_HOST: process.env.DB_HOST || 'postgres',
           DB_PORT: process.env.DB_PORT || '5432',
           DB_NAME: process.env.DB_NAME || 'pdf_jobs',
           DB_USER: process.env.DB_USER || 'postgres',
@@ -55,7 +57,7 @@ async function runPython(args: string[]) {
     } else {
       // Use individual env vars
       dbEnv = {
-        DB_HOST: process.env.DB_HOST || 'localhost',
+        DB_HOST: process.env.DB_HOST || 'postgres',
         DB_PORT: process.env.DB_PORT || '5432',
         DB_NAME: process.env.DB_NAME || 'pdf_jobs',
         DB_USER: process.env.DB_USER || 'postgres',

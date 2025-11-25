@@ -23,34 +23,77 @@ export const GET = async (req: NextRequest) => {
   const sellerName = queueCfg.seller_name || 'Seller'
   const filterTin: string | undefined = queueCfg.filter?.tin
   const { searchParams } = new URL(req.url)
-  const limit = Math.min(parseInt(searchParams.get('limit') || '100', 10), 500)
+  const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 500)
   const offset = Math.max(parseInt(searchParams.get('offset') || '0', 10), 0)
 
-  let rows: {
-    id: string
-    invoice_number: string
-    tax_invoice_date: Date | null
-    trx_code: string | null
-    buyer_name: string | null
-    tin: string | null
-    created_at: Date | null
-  }[] = []
+  // NEW: Filter and sort params
+  const buyerFilter = searchParams.get('buyer')
+  const sortField = searchParams.get('sort') || 'date'
+  const sortDir = searchParams.get('dir') || 'desc'
 
-  let totalCount = 0
-
+  // Build WHERE clause
+  let whereClause = Prisma.sql`WHERE 1=1`
   if (filterTin) {
-    const countResult = await prisma.$queryRaw<[{ count: bigint }]>`SELECT COUNT(*) as count FROM tax_invoices WHERE tin = ${filterTin}`
-    totalCount = Number(countResult[0]?.count || 0)
-    rows = await prisma.$queryRaw<
-      typeof rows
-    >`SELECT id, invoice_number, tax_invoice_date, trx_code, buyer_name, tin, created_at FROM tax_invoices WHERE tin = ${filterTin} ORDER BY created_at DESC NULLS LAST LIMIT ${limit} OFFSET ${offset}`
-  } else {
-    const countResult = await prisma.$queryRaw<[{ count: bigint }]>`SELECT COUNT(*) as count FROM tax_invoices`
-    totalCount = Number(countResult[0]?.count || 0)
-    rows = await prisma.$queryRaw<
-      typeof rows
-    >`SELECT id, invoice_number, tax_invoice_date, trx_code, buyer_name, tin, created_at FROM tax_invoices ORDER BY created_at DESC NULLS LAST LIMIT ${limit} OFFSET ${offset}`
+    whereClause = Prisma.sql`${whereClause} AND tin = ${filterTin}`
   }
+  if (buyerFilter) {
+    whereClause = Prisma.sql`${whereClause} AND buyer_party_id = ${buyerFilter}::uuid`
+  }
+
+  // Build ORDER BY clause
+  let orderClause = Prisma.sql`ORDER BY created_at DESC NULLS LAST`
+  if (sortField === 'date') {
+    orderClause = sortDir === 'asc'
+      ? Prisma.sql`ORDER BY tax_invoice_date ASC NULLS LAST, created_at ASC`
+      : Prisma.sql`ORDER BY tax_invoice_date DESC NULLS LAST, created_at DESC`
+  } else if (sortField === 'invoice_number') {
+    orderClause = sortDir === 'asc'
+      ? Prisma.sql`ORDER BY invoice_number ASC`
+      : Prisma.sql`ORDER BY invoice_number DESC`
+  } else if (sortField === 'buyer_name') {
+    orderClause = sortDir === 'asc'
+      ? Prisma.sql`ORDER BY buyer_name ASC NULLS LAST`
+      : Prisma.sql`ORDER BY buyer_name DESC NULLS LAST`
+  }
+
+  // Count query
+  const countResult = await prisma.$queryRaw<[{ count: bigint }]>`
+    SELECT COUNT(*) as count FROM tax_invoices ${whereClause}
+  `
+  const totalCount = Number(countResult[0]?.count || 0)
+
+  // Data query
+  const rows = await prisma.$queryRaw<
+    {
+      id: string
+      invoice_number: string
+      tax_invoice_date: Date | null
+      trx_code: string | null
+      buyer_name: string | null
+      buyer_party_id: string | null
+      tin: string | null
+      created_at: Date | null
+      is_complete: boolean | null
+      missing_fields: string[] | null
+    }[]
+  >`
+    SELECT
+      id,
+      invoice_number,
+      tax_invoice_date,
+      trx_code,
+      buyer_name,
+      buyer_party_id,
+      tin,
+      created_at,
+      is_complete,
+      missing_fields
+    FROM tax_invoices
+    ${whereClause}
+    ${orderClause}
+    LIMIT ${limit}
+    OFFSET ${offset}
+  `
 
   return NextResponse.json({
     invoices: rows.map((row) => ({
@@ -59,8 +102,11 @@ export const GET = async (req: NextRequest) => {
       invoiceDate: row.tax_invoice_date ? row.tax_invoice_date.toISOString().slice(0, 10) : null,
       trxCode: row.trx_code,
       buyerName: row.buyer_name,
+      buyerPartyId: row.buyer_party_id,
       sellerName,
-      status: 'complete'
+      isComplete: row.is_complete ?? true,
+      missingFields: row.missing_fields || [],
+      status: row.is_complete === false ? 'incomplete' : 'complete'
     })),
     sellerName,
     pagination: {

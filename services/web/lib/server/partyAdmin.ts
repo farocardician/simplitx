@@ -15,6 +15,14 @@ export function buildPartyWhere(filters: PartyFilters = {}): Prisma.PartyWhereIn
 
   const andClauses: Prisma.PartyWhereInput[] = [];
 
+  // If filtering by specific party ID, return early with exact match
+  if (filters.partyId) {
+    return {
+      deletedAt: null,
+      id: filters.partyId
+    };
+  }
+
   if (filters.partyType) {
     where.partyType = filters.partyType;
   }

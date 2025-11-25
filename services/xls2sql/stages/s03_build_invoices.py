@@ -25,7 +25,7 @@ from decimal import Decimal
 from typing import List, Dict, Any, Optional
 import psycopg2
 from psycopg2 import sql
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, Json
 
 # Import helper functions
 from invoice_helpers import (
@@ -67,6 +67,20 @@ def get_db_connection():
     except Exception as e:
         logger.error(f"Failed to connect to database: {e}")
         sys.exit(1)
+
+
+def ensure_tax_invoices_columns(conn):
+    """Add is_complete and missing_fields columns if they do not exist."""
+    alter_sql = """
+    ALTER TABLE tax_invoices
+        ADD COLUMN IF NOT EXISTS is_complete boolean,
+        ADD COLUMN IF NOT EXISTS missing_fields jsonb;
+    ALTER TABLE tax_invoices
+        ALTER COLUMN buyer_party_id DROP NOT NULL;
+    """
+    with conn.cursor() as cur:
+        cur.execute(alter_sql)
+    conn.commit()
 
 
 def get_invoices_to_process(
@@ -111,7 +125,7 @@ def get_invoices_to_process(
     HAVING NOT EXISTS (
         SELECT 1 FROM tax_invoices ti
         WHERE ti.invoice_number = ts.invoice
-          AND ti.buyer_party_id = ts.buyer_party_id
+          AND ti.buyer_party_id IS NOT DISTINCT FROM ts.buyer_party_id
     )
     ORDER BY ts.invoice
     """
@@ -155,7 +169,7 @@ def fetch_buyer_party(conn, buyer_party_id: str) -> Optional[Dict[str, Any]]:
 def fetch_staging_items(
     conn,
     invoice_number: str,
-    buyer_party_id: str
+    buyer_party_id: Optional[str]
 ) -> List[Dict[str, Any]]:
     """
     Fetch all staging rows for a given (invoice, buyer_party_id).
@@ -178,9 +192,10 @@ def fetch_staging_items(
         input_uom,
         unit_price,
         total_kg,
-        batch_id
+        batch_id,
+        buyer_name_raw
     FROM public."temporaryStaging"
-    WHERE invoice = %s AND buyer_party_id = %s
+    WHERE invoice = %s AND buyer_party_id IS NOT DISTINCT FROM %s
     ORDER BY id
     """
 
@@ -206,7 +221,15 @@ def upsert_tax_invoice(
     Returns:
         tax_invoice_id (UUID) or None if dry_run
     """
-    upsert_query = """
+    # Handle NULL buyer_party_id safely (IS NOT DISTINCT FROM) so re-runs update instead of duplicating.
+    select_query = """
+    SELECT id FROM tax_invoices
+    WHERE invoice_number = %(invoice_number)s
+      AND buyer_party_id IS NOT DISTINCT FROM %(buyer_party_id)s
+    LIMIT 1
+    """
+
+    insert_query = """
     INSERT INTO tax_invoices (
         batch_id,
         invoice_number,
@@ -223,7 +246,9 @@ def upsert_tax_invoice(
         buyer_name,
         buyer_address,
         buyer_email,
-        buyer_idtku
+        buyer_idtku,
+        is_complete,
+        missing_fields
     ) VALUES (
         %(batch_id)s,
         %(invoice_number)s,
@@ -240,19 +265,33 @@ def upsert_tax_invoice(
         %(buyer_name)s,
         %(buyer_address)s,
         %(buyer_email)s,
-        %(buyer_idtku)s
+        %(buyer_idtku)s,
+        %(is_complete)s,
+        %(missing_fields)s
     )
-    ON CONFLICT (invoice_number, buyer_party_id)
-    DO UPDATE SET
-        tax_invoice_date = EXCLUDED.tax_invoice_date,
-        trx_code = EXCLUDED.trx_code,
-        buyer_tin = EXCLUDED.buyer_tin,
-        buyer_country = EXCLUDED.buyer_country,
-        buyer_name = EXCLUDED.buyer_name,
-        buyer_address = EXCLUDED.buyer_address,
-        buyer_email = EXCLUDED.buyer_email,
-        buyer_idtku = EXCLUDED.buyer_idtku,
+    RETURNING id
+    """
+
+    update_query = """
+    UPDATE tax_invoices
+    SET
+        batch_id = %(batch_id)s,
+        tax_invoice_date = %(tax_invoice_date)s,
+        tax_invoice_opt = %(tax_invoice_opt)s,
+        trx_code = %(trx_code)s,
+        ref_desc = %(ref_desc)s,
+        seller_idtku = %(seller_idtku)s,
+        buyer_tin = %(buyer_tin)s,
+        buyer_document = %(buyer_document)s,
+        buyer_country = %(buyer_country)s,
+        buyer_name = %(buyer_name)s,
+        buyer_address = %(buyer_address)s,
+        buyer_email = %(buyer_email)s,
+        buyer_idtku = %(buyer_idtku)s,
+        is_complete = %(is_complete)s,
+        missing_fields = %(missing_fields)s,
         updated_at = CURRENT_TIMESTAMP
+    WHERE id = %(existing_id)s
     RETURNING id
     """
 
@@ -261,7 +300,15 @@ def upsert_tax_invoice(
         return None
 
     with conn.cursor() as cur:
-        cur.execute(upsert_query, invoice_data)
+        cur.execute(select_query, invoice_data)
+        existing = cur.fetchone()
+        if existing:
+            invoice_data["existing_id"] = existing[0]
+            cur.execute(update_query, invoice_data)
+            result = cur.fetchone()
+            return result[0] if result else existing[0]
+
+        cur.execute(insert_query, invoice_data)
         result = cur.fetchone()
         return result[0] if result else None
 
@@ -350,10 +397,40 @@ def insert_tax_invoice_items(
     return len(items_data)
 
 
+def compute_missing_fields(invoice_data: Dict[str, Any], buyer_name_raw_present: bool) -> List[str]:
+    """Identify missing critical buyer fields for completeness tracking.
+
+    If buyer_name_raw is present (from staging), we keep buyer_name populated from it
+    but still mark other buyer fields (except buyer_name) as missing. If buyer_name_raw
+    is empty, buyer_name is considered missing too.
+    """
+    base_missing = [
+        'buyer_party_id',
+        'trx_code',
+        'buyer_tin',
+        'buyer_document',
+        'buyer_country',
+        'buyer_address',
+        'buyer_idtku',
+    ]
+
+    missing = []
+    for field in base_missing:
+        val = invoice_data.get(field)
+        if val is None or (isinstance(val, str) and not val.strip()):
+            missing.append(field)
+
+    # Handle buyer_name separately based on raw presence
+    if not buyer_name_raw_present:
+        missing.append('buyer_name')
+
+    return missing
+
+
 def process_invoice_group(
     conn,
     invoice_number: str,
-    buyer_party_id: str,
+    buyer_party_id: Optional[str],
     ship_date: str,
     dry_run: bool = False
 ) -> bool:
@@ -381,11 +458,12 @@ def process_invoice_group(
     logger.info(f"Processing invoice: {invoice_number}, buyer: {buyer_party_id}")
 
     try:
-        # 1. Fetch buyer party
-        buyer = fetch_buyer_party(conn, buyer_party_id)
-        if not buyer:
-            logger.error(f"Buyer party not found: {buyer_party_id}")
-            return False
+        # 1. Fetch buyer party (optional)
+        buyer = None
+        if buyer_party_id:
+            buyer = fetch_buyer_party(conn, buyer_party_id)
+            if not buyer:
+                logger.warning(f"Buyer party not found: {buyer_party_id} (will proceed with NULL buyer fields)")
 
         # 2. Fetch staging items
         staging_items = fetch_staging_items(conn, invoice_number, buyer_party_id)
@@ -396,7 +474,12 @@ def process_invoice_group(
         logger.info(f"  Found {len(staging_items)} items")
 
         # 3. Prepare invoice header data
-        buyer_name = buyer['name_normalized'] or buyer['display_name']
+        buyer_name_raw = staging_items[0].get('buyer_name_raw')
+        buyer_name = None
+        if buyer:
+            buyer_name = buyer['name_normalized'] or buyer['display_name']
+        elif buyer_name_raw:
+            buyer_name = str(buyer_name_raw).strip() or None
         invoice_data = {
             'batch_id': staging_items[0]['batch_id'],
             'invoice_number': invoice_number,
@@ -404,17 +487,20 @@ def process_invoice_group(
             'tin': SELLER_TIN,
             'tax_invoice_date': ship_date,
             'tax_invoice_opt': TAX_INVOICE_OPT,
-            'trx_code': buyer['transaction_code'],
+            'trx_code': buyer['transaction_code'] if buyer else None,
             'ref_desc': invoice_number,  # Same as invoice_number
             'seller_idtku': SELLER_IDTKU,
-            'buyer_tin': buyer['tin_normalized'],
-            'buyer_document': 'TIN',
-            'buyer_country': buyer['country_code'],
+            'buyer_tin': buyer['tin_normalized'] if buyer else None,
+            'buyer_document': 'TIN' if buyer else None,
+            'buyer_country': buyer['country_code'] if buyer else None,
             'buyer_name': buyer_name,
-            'buyer_address': buyer['address_full'],
-            'buyer_email': buyer['email'],
-            'buyer_idtku': buyer['buyer_idtku'],
+            'buyer_address': buyer['address_full'] if buyer else None,
+            'buyer_email': buyer['email'] if buyer else None,
+            'buyer_idtku': buyer['buyer_idtku'] if buyer else None,
         }
+        missing_fields = compute_missing_fields(invoice_data, bool(buyer_name_raw))
+        invoice_data['is_complete'] = len(missing_fields) == 0
+        invoice_data['missing_fields'] = Json(missing_fields)
 
         # 4. UPSERT tax_invoice
         tax_invoice_id = upsert_tax_invoice(conn, invoice_data, dry_run)
@@ -493,6 +579,10 @@ def process_invoice_group(
         logger.error(f"Error processing invoice {invoice_number}: {e}")
         import traceback
         traceback.print_exc()
+        try:
+            conn.rollback()
+        except Exception:
+            pass
         return False
 
 
@@ -531,6 +621,7 @@ def main():
     # Connect to database
     conn = get_db_connection()
     conn.autocommit = False  # Use transactions
+    ensure_tax_invoices_columns(conn)
 
     try:
         # Get invoices to process

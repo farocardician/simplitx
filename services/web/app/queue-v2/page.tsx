@@ -1,9 +1,12 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-type InvoiceStatus = 'complete' | 'processing' | 'error';
+type InvoiceStatus = 'complete' | 'processing' | 'error' | 'incomplete';
 type SelectionMode = 'none' | 'page' | 'all';
+type SortField = 'date' | 'invoice_number' | 'buyer_name';
+type SortDirection = 'asc' | 'desc';
 
 interface Invoice {
   id: string;
@@ -12,27 +15,258 @@ interface Invoice {
   trxCode: string | null;
   sellerName: string;
   buyerName: string | null;
+  buyerPartyId: string | null;
   status: InvoiceStatus;
+  isComplete: boolean;
+  missingFields: string[];
 }
 
 interface SelectionState {
   mode: SelectionMode;
-  selectedIds: Set<string>;  // Used when mode is 'none' or 'page'
-  excludedIds: Set<string>;  // Used when mode is 'all' - these are deselected
+  selectedIds: Set<string>;
+  excludedIds: Set<string>;
+}
+
+interface FilterState {
+  buyerPartyId: string | null;
+  // Future filters (commented out for now):
+  // status: string | null;
+  // invoiceNumber: string | null;
+  // month: string | null; // YYYY-MM format
+}
+
+interface SortState {
+  field: SortField;
+  direction: SortDirection;
+}
+
+interface Buyer {
+  id: string;
+  name: string;
 }
 
 const STATUS_STYLES: Record<InvoiceStatus, { bg: string; text: string; border: string; label: string }> = {
   complete: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'Complete' },
   processing: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', label: 'Processing' },
-  error: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', label: 'Error' }
+  error: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', label: 'Error' },
+  incomplete: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', label: 'Incomplete' }
 };
 
-function StatusBadge({ status }: { status: InvoiceStatus }) {
+const SORT_OPTIONS: { value: SortField; label: string }[] = [
+  { value: 'date', label: 'Invoice Date' },
+  { value: 'invoice_number', label: 'Invoice Number' },
+  { value: 'buyer_name', label: 'Buyer Name' }
+];
+
+function StatusBadge({ status, missingFields }: { status: InvoiceStatus; missingFields?: string[] }) {
   const style = STATUS_STYLES[status];
+  const hasTooltip = status === 'incomplete' && missingFields && missingFields.length > 0;
+
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${style.bg} ${style.text} ${style.border}`}>
-      {style.label}
-    </span>
+    <div className="relative group inline-block">
+      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${style.bg} ${style.text} ${style.border}`}>
+        {style.label}
+      </span>
+      {hasTooltip && (
+        <div className="absolute z-10 invisible group-hover:visible bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg -top-2 right-full mr-2 w-max max-w-xs">
+          <div className="font-semibold mb-1">Missing fields:</div>
+          <ul className="list-disc list-inside space-y-0.5">
+            {missingFields.map((field) => (
+              <li key={field}>{field}</li>
+            ))}
+          </ul>
+          <div className="absolute top-3 left-full w-0 h-0 border-t-4 border-t-transparent border-b-4 border-b-transparent border-l-4 border-l-gray-900" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FilterBar({
+  filters,
+  sort,
+  buyers,
+  onFilterChange,
+  onSortChange,
+  onClearAll
+}: {
+  filters: FilterState;
+  sort: SortState;
+  buyers: Buyer[];
+  onFilterChange: (filters: Partial<FilterState>) => void;
+  onSortChange: (sort: SortState) => void;
+  onClearAll: () => void;
+}) {
+  const [buyerSearch, setBuyerSearch] = useState('');
+  const [buyerDropdownOpen, setBuyerDropdownOpen] = useState(false);
+
+  const filteredBuyers = useMemo(() => {
+    if (!buyerSearch) return buyers;
+    const search = buyerSearch.toLowerCase();
+    return buyers.filter(b => b.name.toLowerCase().includes(search));
+  }, [buyers, buyerSearch]);
+
+  const selectedBuyer = buyers.find(b => b.id === filters.buyerPartyId);
+  const hasActiveFilters = filters.buyerPartyId !== null;
+
+  const toggleSortDirection = () => {
+    onSortChange({
+      ...sort,
+      direction: sort.direction === 'asc' ? 'desc' : 'asc'
+    });
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg px-4 py-3 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium text-gray-700">Filters:</span>
+
+          {/* Buyer Filter */}
+          <div className="relative">
+            <button
+              onClick={() => setBuyerDropdownOpen(!buyerDropdownOpen)}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2 min-w-[160px] justify-between"
+            >
+              <span className="truncate">
+                {selectedBuyer ? selectedBuyer.name : 'All Buyers'}
+              </span>
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {buyerDropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setBuyerDropdownOpen(false)} />
+                <div className="absolute z-20 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg max-h-80 overflow-hidden">
+                  <div className="p-2 border-b border-gray-200">
+                    <input
+                      type="text"
+                      placeholder="Search buyers..."
+                      value={buyerSearch}
+                      onChange={(e) => setBuyerSearch(e.target.value)}
+                      className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="max-h-60 overflow-y-auto">
+                    <button
+                      onClick={() => {
+                        onFilterChange({ buyerPartyId: null });
+                        setBuyerDropdownOpen(false);
+                        setBuyerSearch('');
+                      }}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <span className="font-medium">All Buyers</span>
+                    </button>
+                    {filteredBuyers.map((buyer) => (
+                      <button
+                        key={buyer.id}
+                        onClick={() => {
+                          onFilterChange({ buyerPartyId: buyer.id });
+                          setBuyerDropdownOpen(false);
+                          setBuyerSearch('');
+                        }}
+                        className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${
+                          filters.buyerPartyId === buyer.id ? 'bg-blue-50 text-blue-700 font-medium' : ''
+                        }`}
+                      >
+                        {buyer.name}
+                      </button>
+                    ))}
+                    {filteredBuyers.length === 0 && (
+                      <div className="px-3 py-2 text-sm text-gray-500">No buyers found</div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              onClick={onClearAll}
+              className="text-sm text-gray-600 hover:text-gray-700 font-medium"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+
+        {/* Sort Controls */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-700">Sort:</span>
+          <select
+            value={sort.field}
+            onChange={(e) => onSortChange({ ...sort, field: e.target.value as SortField })}
+            className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={toggleSortDirection}
+            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+            title={sort.direction === 'asc' ? 'Ascending' : 'Descending'}
+          >
+            {sort.direction === 'asc' ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActiveFilters({
+  filters,
+  buyers,
+  onRemove
+}: {
+  filters: FilterState;
+  buyers: Buyer[];
+  onRemove: (key: keyof FilterState) => void;
+}) {
+  const activeFilters: { key: keyof FilterState; label: string; value: string }[] = [];
+
+  if (filters.buyerPartyId) {
+    const buyer = buyers.find(b => b.id === filters.buyerPartyId);
+    if (buyer) {
+      activeFilters.push({ key: 'buyerPartyId', label: 'Buyer', value: buyer.name });
+    }
+  }
+
+  if (activeFilters.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="text-gray-600 font-medium">Active:</span>
+      {activeFilters.map((filter) => (
+        <button
+          key={filter.key}
+          onClick={() => onRemove(filter.key)}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+        >
+          <span className="font-medium">{filter.label}:</span>
+          <span>{filter.value}</span>
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -269,6 +503,9 @@ interface Pagination {
 }
 
 export default function QueueV2Page() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -281,11 +518,113 @@ export default function QueueV2Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
 
+  // Filter & Sort State
+  const [filters, setFilters] = useState<FilterState>({
+    buyerPartyId: null
+  });
+  const [sort, setSort] = useState<SortState>({
+    field: 'date',
+    direction: 'desc'
+  });
+  const [buyers, setBuyers] = useState<Buyer[]>([]);
+
+  // Fetch unique buyers for dropdown
+  const fetchBuyers = async () => {
+    try {
+      const res = await fetch('/api/buyers');
+      const data = await res.json();
+      setBuyers(data.buyers || []);
+    } catch (err) {
+      console.error('Failed to fetch buyers:', err);
+    }
+  };
+
+  // Initialize from URL params or localStorage on mount
+  useEffect(() => {
+    const buyerParam = searchParams.get('buyer');
+    const sortParam = searchParams.get('sort') as SortField | null;
+    const dirParam = searchParams.get('dir') as SortDirection | null;
+
+    // Load from URL or localStorage
+    const savedFilters = localStorage.getItem('queue-filters');
+    const savedSort = localStorage.getItem('queue-sort');
+
+    if (buyerParam || sortParam) {
+      // URL takes precedence (shareable links)
+      setFilters({ buyerPartyId: buyerParam });
+      setSort({
+        field: sortParam || 'date',
+        direction: dirParam || 'desc'
+      });
+    } else if (savedFilters && savedSort) {
+      // Fall back to localStorage
+      try {
+        const parsedFilters = JSON.parse(savedFilters);
+        const parsedSort = JSON.parse(savedSort);
+        setFilters(parsedFilters);
+        setSort(parsedSort);
+      } catch (e) {
+        console.error('Failed to parse saved filters/sort:', e);
+      }
+    }
+
+    fetchBuyers();
+  }, []);
+
+  // Sync to URL and localStorage on filter/sort change
+  const updateFiltersAndSort = useCallback((
+    newFilters: Partial<FilterState>,
+    newSort?: SortState
+  ) => {
+    const updatedFilters = { ...filters, ...newFilters };
+    const updatedSort = newSort || sort;
+
+    setFilters(updatedFilters);
+    if (newSort) setSort(updatedSort);
+
+    // Clear selection when filters change (data set changes)
+    setSelection({
+      mode: 'none',
+      selectedIds: new Set(),
+      excludedIds: new Set()
+    });
+
+    // Update URL
+    const params = new URLSearchParams(searchParams);
+    if (updatedFilters.buyerPartyId) {
+      params.set('buyer', updatedFilters.buyerPartyId);
+    } else {
+      params.delete('buyer');
+    }
+    params.set('sort', updatedSort.field);
+    params.set('dir', updatedSort.direction);
+    params.set('page', '1'); // Reset to page 1 on filter/sort change
+
+    router.push(`/queue-v2?${params.toString()}`, { scroll: false });
+
+    // Save to localStorage
+    localStorage.setItem('queue-filters', JSON.stringify(updatedFilters));
+    localStorage.setItem('queue-sort', JSON.stringify(updatedSort));
+
+    // Note: fetchInvoices will be triggered automatically by the useEffect that depends on filters/sort
+  }, [filters, sort, perPage, searchParams, router]);
+
   const fetchInvoices = async (page: number = 1, itemsPerPage: number = perPage) => {
     setLoading(true);
     try {
       const offset = (page - 1) * itemsPerPage;
-      const res = await fetch(`/api/tax-invoices?limit=${itemsPerPage}&offset=${offset}`);
+      const params = new URLSearchParams({
+        limit: itemsPerPage.toString(),
+        offset: offset.toString(),
+        sort: sort.field,
+        dir: sort.direction
+      });
+
+      if (filters.buyerPartyId) {
+        params.set('buyer', filters.buyerPartyId);
+      }
+
+      const res = await fetch(`/api/tax-invoices?${params}`);
       if (!res.ok) {
         throw new Error('Failed to fetch invoices');
       }
@@ -306,9 +645,10 @@ export default function QueueV2Page() {
     fetchInvoices(1, newPerPage);
   };
 
+  // Fetch invoices when filters or sort change (after initialization)
   useEffect(() => {
     fetchInvoices(1, perPage);
-  }, []);
+  }, [filters, sort]);
 
   // Calculate actual selection based on mode
   const getActualSelection = useMemo(() => {
@@ -528,6 +868,27 @@ export default function QueueV2Page() {
           </button>
         </div>
 
+        {/* Filter & Sort Controls */}
+        <div className="mb-4">
+          <FilterBar
+            filters={filters}
+            sort={sort}
+            buyers={buyers}
+            onFilterChange={(newFilters) => updateFiltersAndSort(newFilters)}
+            onSortChange={(newSort) => updateFiltersAndSort({}, newSort)}
+            onClearAll={() => updateFiltersAndSort({ buyerPartyId: null })}
+          />
+        </div>
+
+        {/* Active Filters Chips */}
+        <div className="mb-4">
+          <ActiveFilters
+            filters={filters}
+            buyers={buyers}
+            onRemove={(key) => updateFiltersAndSort({ [key]: null })}
+          />
+        </div>
+
         <MassActionBar
           mode={selection.mode}
           selectedCount={selectedCount}
@@ -583,8 +944,21 @@ export default function QueueV2Page() {
                     <td className="px-4 py-3 text-sm text-gray-700">{inv.invoiceDate || '—'}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{inv.trxCode || '—'}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{inv.sellerName}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{inv.buyerName || '—'}</td>
-                    <td className="px-4 py-3"><StatusBadge status={inv.status} /></td>
+                    <td className="px-4 py-3 text-sm">
+                      {inv.buyerName && inv.buyerPartyId ? (
+                        <a
+                          href={`/admin/parties?id=${inv.buyerPartyId}`}
+                          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {inv.buyerName}
+                        </a>
+                      ) : (
+                        <span className="text-gray-700">{inv.buyerName || '—'}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3"><StatusBadge status={inv.status} missingFields={inv.missingFields} /></td>
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => handleReview(inv.id)}

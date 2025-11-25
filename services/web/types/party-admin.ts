@@ -1,6 +1,7 @@
 export type PartyRole = 'seller' | 'buyer';
 
 export interface PartyFilters {
+  partyId?: string;
   search?: string;
   countryCode?: string;
   partyType?: PartyRole;

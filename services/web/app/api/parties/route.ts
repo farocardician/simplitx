@@ -8,6 +8,7 @@ import { PartyFilters } from '@/types/party-admin';
 export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;
+    const partyId = searchParams.get('id') || undefined;
     const countryCode = searchParams.get('country_code') || undefined;
     const search = searchParams.get('search');
     const typeParam = parsePartyRoleParam(searchParams.get('type'));
@@ -25,19 +26,25 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit;
 
     const filters: PartyFilters = {};
-    if (countryCode) {
-      filters.countryCode = countryCode;
-    }
-    if (search && search.trim().length >= 2) {
-      filters.search = search.trim();
-    }
-    if (typeParam) {
-      filters.partyType = typeParam;
-    }
-    if (sellerId) {
-      filters.sellerId = sellerId;
-    } else if (sellerName && sellerName.trim().length >= 2) {
-      filters.sellerName = sellerName.trim();
+    // Priority: exact party ID match overrides all other filters
+    if (partyId) {
+      filters.partyId = partyId;
+    } else {
+      // Apply other filters only if not filtering by ID
+      if (countryCode) {
+        filters.countryCode = countryCode;
+      }
+      if (search && search.trim().length >= 2) {
+        filters.search = search.trim();
+      }
+      if (typeParam) {
+        filters.partyType = typeParam;
+      }
+      if (sellerId) {
+        filters.sellerId = sellerId;
+      } else if (sellerName && sellerName.trim().length >= 2) {
+        filters.sellerName = sellerName.trim();
+      }
     }
 
     const where = buildPartyWhere(filters);
