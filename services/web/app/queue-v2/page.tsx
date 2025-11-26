@@ -67,6 +67,7 @@ interface UndoSnapshot {
   trx_code: string | null;
   missing_fields: string[] | null;
   is_complete: boolean | null;
+  tax_invoice_date?: string | null;
 }
 
 type BannerState = {
@@ -456,6 +457,7 @@ function MassActionBar({
   onSelectAll,
   onClear,
   onDownload,
+  onUpdateDate,
   onDelete,
   onUpdateBuyer
 }: {
@@ -466,6 +468,7 @@ function MassActionBar({
   onSelectAll: () => void;
   onClear: () => void;
   onDownload: () => void;
+  onUpdateDate: () => void;
   onDelete: () => void;
   onUpdateBuyer: () => void;
 }) {
@@ -514,6 +517,13 @@ function MassActionBar({
           className={`px-3 py-2 rounded-md text-sm font-semibold border transition-colors ${selectedCount === 0 ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed' : 'text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100'}`}
         >
           Download XML
+        </button>
+        <button
+          onClick={onUpdateDate}
+          disabled={selectedCount === 0}
+          className={`px-3 py-2 rounded-md text-sm font-semibold border transition-colors ${selectedCount === 0 ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed' : 'text-indigo-800 bg-indigo-50 border-indigo-200 hover:bg-indigo-100'}`}
+        >
+          Update Date
         </button>
         <button
           onClick={onUpdateBuyer}
@@ -582,6 +592,11 @@ export default function QueueV2Page() {
   const [partyLoading, setPartyLoading] = useState(false);
   const [linkModalError, setLinkModalError] = useState<string | null>(null);
   const [linkModalLoading, setLinkModalLoading] = useState(false);
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [dateValue, setDateValue] = useState('');
+  const [dateError, setDateError] = useState<string | null>(null);
+  const [dateLoading, setDateLoading] = useState(false);
+  const [dateTargetInvoiceIds, setDateTargetInvoiceIds] = useState<string[]>([]);
 
   // Fetch unique buyers for dropdown
   const fetchBuyers = async () => {
@@ -1027,6 +1042,28 @@ export default function QueueV2Page() {
     setPartySearch('');
   };
 
+  const openDateModalForSelection = () => {
+    if (selectedCount === 0) return;
+    setDateTargetInvoiceIds([]);
+    setDateValue('');
+    setDateError(null);
+    setShowDateModal(true);
+  };
+
+  const openDateModalForSingle = (invoiceId: string, currentDate: string | null) => {
+    setDateTargetInvoiceIds([invoiceId]);
+    setDateValue(currentDate || '');
+    setDateError(null);
+    setShowDateModal(true);
+  };
+
+  const closeDateModal = () => {
+    setShowDateModal(false);
+    setDateError(null);
+    setDateLoading(false);
+    setDateTargetInvoiceIds([]);
+  };
+
   const closeAddBuyerModal = () => {
     setShowAddBuyerModal(false);
     setBuyerNameToResolve(null);
@@ -1162,6 +1199,80 @@ export default function QueueV2Page() {
     }
   };
 
+  const getDateTargetInvoiceIds = async () => {
+    if (dateTargetInvoiceIds.length > 0) {
+      return dateTargetInvoiceIds;
+    }
+    return gatherSelectedInvoiceIds();
+  };
+
+  const handleUpdateDate = async () => {
+    if (!dateValue) {
+      setDateError('Pick a date first');
+      return;
+    }
+
+    try {
+      setDateLoading(true);
+      setDateError(null);
+      const invoiceIds = await getDateTargetInvoiceIds();
+      if (invoiceIds.length === 0) {
+        setDateError('No invoices selected');
+        return;
+      }
+
+      const response = await fetch('/api/tax-invoices/update-date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoiceIds, invoiceDate: dateValue })
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.error?.message || 'Failed to update date');
+      }
+
+      const updatedCount = payload?.updated ?? invoiceIds.length;
+      const undoData: UndoSnapshot[] = payload?.undo || [];
+
+      await fetchInvoices(currentPage, perPage);
+      setShowDateModal(false);
+      setBanner({
+        type: 'success',
+        message: `Updated ${updatedCount} invoice date${updatedCount === 1 ? '' : 's'} to ${dateValue}.`,
+        onUndo: undoData.length
+          ? async () => {
+              try {
+                const undoRes = await fetch('/api/tax-invoices/update-date', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'undo', previous: undoData })
+                });
+                const undoPayload = await undoRes.json().catch(() => null);
+                if (!undoRes.ok) {
+                  throw new Error(undoPayload?.error?.message || 'Failed to undo date update');
+                }
+                await fetchInvoices(currentPage, perPage);
+                setBanner({
+                  type: 'success',
+                  message: 'Reverted invoice date update.'
+                });
+              } catch (err) {
+                setBanner({
+                  type: 'error',
+                  message: err instanceof Error ? err.message : 'Failed to undo date update'
+                });
+              }
+            }
+          : undefined
+      });
+    } catch (err) {
+      setDateError(err instanceof Error ? err.message : 'Failed to update date');
+    } finally {
+      setDateLoading(false);
+    }
+  };
+
   if (loading && !showAddBuyerModal && !showLinkModal) {
     return <div className="flex justify-center p-8 text-gray-600">Loading invoices...</div>;
   }
@@ -1246,6 +1357,7 @@ export default function QueueV2Page() {
           onSelectAll={selectAllAcrossPages}
           onClear={clearSelection}
           onDownload={handleDownload}
+          onUpdateDate={() => openDateModalForSelection()}
           onDelete={handleDelete}
           onUpdateBuyer={openLinkBuyerModal}
         />
@@ -1291,7 +1403,19 @@ export default function QueueV2Page() {
                       />
                     </td>
                     <td className="px-4 py-3 text-sm font-semibold text-gray-900">{inv.invoiceNumber}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{inv.invoiceDate || '—'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      <button
+                        type="button"
+                        onClick={() => openDateModalForSingle(inv.id, inv.invoiceDate)}
+                        className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900 font-medium underline decoration-dotted underline-offset-2"
+                        title="Edit invoice date"
+                      >
+                        {inv.invoiceDate || 'Set date'}
+                        <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h8M8 11h5m5-6h.01M5 7h.01M5 11h.01M5 15h.01M8 15h8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-700">{inv.trxCode || '—'}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{inv.sellerName}</td>
                     <td className="px-4 py-3 text-sm">
@@ -1531,6 +1655,76 @@ export default function QueueV2Page() {
                     {linkModalLoading ? 'Linking...' : 'Link invoices'}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDateModal && (
+        <div
+          className="fixed inset-0 z-30 flex items-center justify-center bg-gray-900/60 px-4 py-6"
+          onClick={closeDateModal}
+        >
+          <div
+            className="w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-6">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Update Invoice Date</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mt-1">
+                    {dateTargetInvoiceIds.length > 0 ? 'Update invoice' : 'Bulk update'} date
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Applies to {dateTargetInvoiceIds.length > 0 ? dateTargetInvoiceIds.length : selectedCount} invoice{(dateTargetInvoiceIds.length > 0 ? dateTargetInvoiceIds.length : selectedCount) === 1 ? '' : 's'}.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeDateModal}
+                  className="text-gray-500 hover:text-gray-700"
+                  aria-label="Close date modal"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {dateError && (
+                <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {dateError}
+                </div>
+              )}
+
+              <label className="block text-sm font-medium text-gray-700 mb-2">Invoice Date</label>
+              <input
+                type="date"
+                value={dateValue}
+                onChange={(e) => setDateValue(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">Use YYYY-MM-DD. This date will replace the current value.</p>
+
+              <div className="mt-5 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={closeDateModal}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  disabled={dateLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleUpdateDate}
+                  disabled={dateLoading || !dateValue}
+                  className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition-colors ${dateLoading || !dateValue ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                >
+                  {dateLoading ? 'Updating...' : 'Update date'}
+                </button>
               </div>
             </div>
           </div>
