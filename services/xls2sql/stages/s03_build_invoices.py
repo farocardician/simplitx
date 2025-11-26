@@ -537,21 +537,26 @@ def process_invoice_group(
         # 5. Process items
         items_data = []
         errors = []
+        has_invalid_hs_codes = False  # Track if any items have invalid/missing HS codes
 
         for idx, staging_item in enumerate(staging_items, start=1):
             # Parse and validate HS code
             opt, code = parse_hs_code(staging_item['hs_code'])
             if not code:
-                error_msg = f"  ⚠️  Invalid HS code: {staging_item['hs_code']} (row {staging_item['id']})"
+                error_msg = f"  ⚠️  Invalid/missing HS code: {staging_item['hs_code']} (row {staging_item['id']}) - importing with NULL, must be fixed in UI"
                 logger.warning(error_msg)
                 errors.append(error_msg)
-                continue
+                # Don't skip - import with NULL code so user can fix in UI
+                code = None
+                opt = None
+                has_invalid_hs_codes = True  # Mark invoice as incomplete
 
-            if not dry_run and not validate_hs_code(code, conn):
-                error_msg = f"  ⚠️  HS code not found in hs_codes table: {code} (row {staging_item['id']})"
+            if code and not dry_run and not validate_hs_code(code, conn):
+                error_msg = f"  ⚠️  HS code not found in hs_codes table: {code} (row {staging_item['id']}) - importing anyway, must be fixed in UI"
                 logger.warning(error_msg)
                 errors.append(error_msg)
-                # Continue anyway for now, but log the error
+                # Continue anyway - let UI handle validation
+                has_invalid_hs_codes = True  # Mark invoice as incomplete
 
             # Resolve UOM
             uom_code = resolve_uom(staging_item['input_uom'], conn)
@@ -590,6 +595,26 @@ def process_invoice_group(
             delete_existing_items(conn, tax_invoice_id)
 
         inserted_count = insert_tax_invoice_items(conn, tax_invoice_id, items_data, dry_run)
+
+        # 7. Update invoice completeness if there are HS code issues
+        if has_invalid_hs_codes and not dry_run:
+            # Add HS code issues to missing_fields
+            updated_missing_fields = list(missing_fields)  # Copy existing missing fields
+            if 'hs_codes' not in updated_missing_fields:
+                updated_missing_fields.append('hs_codes')
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE tax_invoices
+                    SET is_complete = FALSE,
+                        missing_fields = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                    """,
+                    (Json(updated_missing_fields), tax_invoice_id)
+                )
+            logger.info(f"  ⚠️  Marked invoice as incomplete due to invalid/missing HS codes")
 
         logger.info(f"  ✓ Processed {inserted_count} items")
         if errors:

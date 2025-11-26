@@ -75,6 +75,8 @@ export const GET = async (req: NextRequest) => {
       created_at: Date | null
       is_complete: boolean | null
       missing_fields: string[] | null
+      item_count: number | null
+      grand_total: number | null
     }[]
   >`
     SELECT
@@ -87,7 +89,17 @@ export const GET = async (req: NextRequest) => {
       tin,
       created_at,
       is_complete,
-      missing_fields
+      missing_fields,
+      (
+        SELECT COUNT(*)::int
+        FROM tax_invoice_items ti
+        WHERE ti.tax_invoice_id = tax_invoices.id
+      ) AS item_count,
+      (
+        SELECT COALESCE(SUM(ti.tax_base), 0)
+        FROM tax_invoice_items ti
+        WHERE ti.tax_invoice_id = tax_invoices.id
+      ) AS grand_total
     FROM tax_invoices
     ${whereClause}
     ${orderClause}
@@ -106,7 +118,9 @@ export const GET = async (req: NextRequest) => {
       sellerName,
       isComplete: row.is_complete ?? true,
       missingFields: row.missing_fields || [],
-      status: row.is_complete === false ? 'incomplete' : 'complete'
+      status: row.is_complete === false ? 'incomplete' : 'complete',
+      itemCount: row.item_count ?? 0,
+      grandTotal: row.grand_total ?? 0
     })),
     sellerName,
     pagination: {

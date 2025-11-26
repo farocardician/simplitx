@@ -20,6 +20,8 @@ interface Invoice {
   status: InvoiceStatus;
   isComplete: boolean;
   missingFields: string[];
+  itemCount: number;
+  grandTotal: number;
 }
 
 interface SelectionState {
@@ -85,13 +87,30 @@ const STATUS_STYLES: Record<InvoiceStatus, { bg: string; text: string; border: s
 
 const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: 'date', label: 'Invoice Date' },
-  { value: 'invoice_number', label: 'Invoice Number' },
+  { value: 'invoice_number', label: 'Invoice#' },
   { value: 'buyer_name', label: 'Buyer Name' }
 ];
 
 function StatusBadge({ status, missingFields }: { status: InvoiceStatus; missingFields?: string[] }) {
   const style = STATUS_STYLES[status];
   const hasTooltip = status === 'incomplete' && missingFields && missingFields.length > 0;
+
+  // Map field names to human-readable labels
+  const formatFieldName = (field: string): string => {
+    const fieldLabels: Record<string, string> = {
+      'buyer_party_id': 'Buyer company',
+      'buyer_name': 'Buyer name',
+      'buyer_tin': 'Buyer TIN',
+      'buyer_address': 'Buyer address',
+      'buyer_country': 'Buyer country',
+      'buyer_document': 'Buyer document type',
+      'buyer_email': 'Buyer email',
+      'buyer_idtku': 'Buyer IDTKU',
+      'trx_code': 'Transaction code',
+      'hs_codes': 'HS codes (some items have missing or invalid HS codes)',
+    };
+    return fieldLabels[field] || field;
+  };
 
   return (
     <div className="relative group inline-block">
@@ -103,7 +122,7 @@ function StatusBadge({ status, missingFields }: { status: InvoiceStatus; missing
           <div className="font-semibold mb-1">Missing fields:</div>
           <ul className="list-disc list-inside space-y-0.5">
             {missingFields.map((field) => (
-              <li key={field}>{field}</li>
+              <li key={field}>{formatFieldName(field)}</li>
             ))}
           </ul>
           <div className="absolute top-3 left-full w-0 h-0 border-t-4 border-t-transparent border-b-4 border-b-transparent border-l-4 border-l-gray-900" />
@@ -597,6 +616,9 @@ export default function QueueV2Page() {
   const [dateError, setDateError] = useState<string | null>(null);
   const [dateLoading, setDateLoading] = useState(false);
   const [dateTargetInvoiceIds, setDateTargetInvoiceIds] = useState<string[]>([]);
+  const [invoiceNumberDrafts, setInvoiceNumberDrafts] = useState<Record<string, string>>({});
+  const [invoiceNumberSaving, setInvoiceNumberSaving] = useState<Set<string>>(new Set());
+  const [invoiceNumberErrors, setInvoiceNumberErrors] = useState<Record<string, string>>({});
 
   // Fetch unique buyers for dropdown
   const fetchBuyers = async () => {
@@ -807,7 +829,27 @@ export default function QueueV2Page() {
         throw new Error('Failed to fetch invoices');
       }
       const data = await res.json();
-      setInvoices(data.invoices || []);
+      const nextInvoices: Invoice[] = (data.invoices || []).map((inv: any) => ({
+        id: inv.id,
+        invoiceNumber: inv.invoiceNumber,
+        invoiceDate: inv.invoiceDate,
+        trxCode: inv.trxCode,
+        sellerName: inv.sellerName,
+        buyerName: inv.buyerName,
+        buyerPartyId: inv.buyerPartyId,
+        status: inv.status,
+        isComplete: inv.isComplete,
+        missingFields: inv.missingFields || [],
+        itemCount: typeof inv.itemCount === 'number' ? inv.itemCount : Number(inv.itemCount ?? 0),
+        grandTotal: typeof inv.grandTotal === 'number' ? inv.grandTotal : Number(inv.grandTotal ?? 0)
+      }));
+      setInvoices(nextInvoices);
+      setInvoiceNumberDrafts(
+        nextInvoices.reduce<Record<string, string>>((acc, inv) => {
+          acc[inv.id] = inv.invoiceNumber || '';
+          return acc;
+        }, {})
+      );
       setPagination(data.pagination || { total: 0, limit: itemsPerPage, offset, hasMore: false });
       setCurrentPage(page);
     } catch (err) {
@@ -852,6 +894,98 @@ export default function QueueV2Page() {
     }
     return selection.selectedIds.has(id);
   };
+
+  const formatCurrency = useCallback(
+    (value: number | null) =>
+      new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0, notation: 'compact' }).format(value ?? 0),
+    []
+  );
+
+  const updateInvoiceNumber = useCallback(
+    async (invoiceId: string, nextNumber: string, previousNumberForUndo?: string | null) => {
+      const trimmed = nextNumber.trim();
+      if (!trimmed) {
+        setInvoiceNumberErrors((prev) => ({ ...prev, [invoiceId]: 'Invoice # is required' }));
+        return { ok: false };
+      }
+
+      setInvoiceNumberSaving((prev) => {
+        const next = new Set(prev);
+        next.add(invoiceId);
+        return next;
+      });
+
+      try {
+        const res = await fetch('/api/tax-invoices/update-number', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ invoiceId, invoiceNumber: trimmed })
+        });
+
+        if (!res.ok) {
+          const payload = await res.json().catch(() => null);
+          const message = payload?.error?.message || 'Failed to update invoice number';
+          setInvoiceNumberErrors((prev) => ({ ...prev, [invoiceId]: message }));
+          return { ok: false };
+        }
+
+        const payload = await res.json().catch(() => ({}));
+        const previous = payload?.previous?.invoiceNumber ?? previousNumberForUndo ?? null;
+
+        setInvoices((prev) =>
+          prev.map((inv) => (inv.id === invoiceId ? { ...inv, invoiceNumber: trimmed } : inv))
+        );
+        setInvoiceNumberDrafts((prev) => ({ ...prev, [invoiceId]: trimmed }));
+        setInvoiceNumberErrors((prev) => {
+          const next = { ...prev };
+          delete next[invoiceId];
+          return next;
+        });
+
+        return { ok: true, previousNumber: previous };
+      } catch (error) {
+        console.error('Failed to update invoice number', error);
+        setInvoiceNumberErrors((prev) => ({ ...prev, [invoiceId]: 'Failed to update invoice number' }));
+        return { ok: false };
+      } finally {
+        setInvoiceNumberSaving((prev) => {
+          const next = new Set(prev);
+          next.delete(invoiceId);
+          return next;
+        });
+      }
+    },
+    []
+  );
+
+  const handleInvoiceNumberCommit = useCallback(
+    async (invoice: Invoice) => {
+      const draft = (invoiceNumberDrafts[invoice.id] ?? invoice.invoiceNumber).trim();
+      if (draft === invoice.invoiceNumber) {
+        setInvoiceNumberErrors((prev) => {
+          const next = { ...prev };
+          delete next[invoice.id];
+          return next;
+        });
+        return;
+      }
+
+      const result = await updateInvoiceNumber(invoice.id, draft, invoice.invoiceNumber);
+      if (result.ok) {
+        setBanner({
+          type: 'success',
+          message: 'Invoice # updated',
+          onUndo: result.previousNumber
+            ? async () => {
+                await updateInvoiceNumber(invoice.id, result.previousNumber as string, draft);
+                setBanner(null);
+              }
+            : undefined
+        });
+      }
+    },
+    [invoiceNumberDrafts, updateInvoiceNumber]
+  );
 
   const toggleSelect = (id: string) => {
     setSelection((prev) => {
@@ -1385,7 +1519,7 @@ export default function QueueV2Page() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 w-12">
+                <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 w-12">
                   <input
                     type="checkbox"
                     checked={allPageSelected}
@@ -1398,13 +1532,15 @@ export default function QueueV2Page() {
                     title={allPageSelected ? "Deselect all on this page" : "Select all on this page"}
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Invoice Number</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Invoice Date</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Transaction Code</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Seller Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Buyer Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Status</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600">Actions</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 whitespace-nowrap">Invoice#</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 whitespace-nowrap">Date</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 whitespace-nowrap">Trx Code</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 whitespace-nowrap">Seller</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 whitespace-nowrap">Buyer</th>
+                <th className="px-2 py-3 text-right text-xs font-semibold text-gray-600 whitespace-nowrap">Items</th>
+                <th className="px-2 py-3 text-right text-xs font-semibold text-gray-600 whitespace-nowrap">Total</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 whitespace-nowrap">Status</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-600">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -1412,7 +1548,7 @@ export default function QueueV2Page() {
                 const rowSelected = isSelected(inv.id)
                 return (
                   <tr key={inv.id} className={`transition-colors ${rowSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <input
                         type="checkbox"
                         checked={rowSelected}
@@ -1421,8 +1557,59 @@ export default function QueueV2Page() {
                         aria-label={`Select invoice ${inv.invoiceNumber}`}
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm font-semibold text-gray-900">{inv.invoiceNumber}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
+                    <td className="px-3 py-3 text-sm">
+                      {(() => {
+                        const draft = invoiceNumberDrafts[inv.id] ?? inv.invoiceNumber;
+                        const hasError = Boolean(invoiceNumberErrors[inv.id]);
+                        const saving = invoiceNumberSaving.has(inv.id);
+                        return (
+                          <div className="flex flex-col gap-1">
+                            <input
+                              value={draft}
+                              onChange={(e) => {
+                                const next = e.target.value;
+                                setInvoiceNumberDrafts((prev) => ({ ...prev, [inv.id]: next }));
+                                if (invoiceNumberErrors[inv.id]) {
+                                  setInvoiceNumberErrors((prev) => {
+                                    const updated = { ...prev };
+                                    delete updated[inv.id];
+                                    return updated;
+                                  });
+                                }
+                              }}
+                              onBlur={() => handleInvoiceNumberCommit(inv)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleInvoiceNumberCommit(inv);
+                                }
+                                if (e.key === 'Escape') {
+                                  e.preventDefault();
+                                  setInvoiceNumberDrafts((prev) => ({ ...prev, [inv.id]: inv.invoiceNumber }));
+                                  setInvoiceNumberErrors((prev) => {
+                                    const updated = { ...prev };
+                                    delete updated[inv.id];
+                                    return updated;
+                                  });
+                                }
+                              }}
+                              className={`w-28 rounded-md border px-2 py-1 text-sm font-semibold focus:outline-none focus:ring-1 ${
+                                hasError
+                                  ? 'border-red-300 focus:border-red-400 focus:ring-red-300 bg-red-50/40'
+                                  : saving
+                                    ? 'border-gray-200 bg-gray-100 text-gray-500'
+                                    : 'border-gray-300 focus:border-blue-400 focus:ring-blue-300'
+                              }`}
+                              disabled={saving}
+                            />
+                            {invoiceNumberErrors[inv.id] && (
+                              <span className="text-[11px] text-red-600">{invoiceNumberErrors[inv.id]}</span>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-3 py-3 text-sm text-gray-700 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => openDateModalForSingle(inv.id, inv.invoiceDate)}
@@ -1435,38 +1622,57 @@ export default function QueueV2Page() {
                         </svg>
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{inv.trxCode || '—'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{inv.sellerName}</td>
-                    <td className="px-4 py-3 text-sm">
-                      {inv.buyerName && inv.buyerPartyId ? (
-                        <a
-                          href={`/admin/parties?id=${inv.buyerPartyId}`}
-                          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {inv.buyerName}
-                        </a>
-                      ) : inv.buyerName && (!inv.buyerPartyId && (inv.missingFields || []).some((field) => field.startsWith('buyer') || field === 'buyer_party_id')) ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-900 font-medium">{inv.buyerName}</span>
-                          <button
-                            type="button"
-                            onClick={() => openAddBuyerModal(inv.buyerName!)}
-                            className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            aria-label={`Create buyer party for ${inv.buyerName}`}
-                          >
-                            <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-gray-700">{inv.buyerName || '—'}</span>
-                      )}
+                    <td className="px-3 py-3 text-sm text-gray-700 whitespace-nowrap">{inv.trxCode || '—'}</td>
+                    <td className="px-3 py-3 text-sm text-gray-700 whitespace-nowrap">{inv.sellerName}</td>
+                    <td className="px-3 py-3 text-sm max-w-[160px]">
+                      {(() => {
+                        const buyerName = inv.buyerName || '—';
+                        const truncated = buyerName.length > 18;
+                        const displayName = truncated ? `${buyerName.slice(0, 15)}...` : buyerName;
+
+                        if (inv.buyerName && inv.buyerPartyId) {
+                          return (
+                            <a
+                              href={`/admin/parties?id=${inv.buyerPartyId}`}
+                              className="text-blue-600 hover:text-blue-800 hover:underline font-medium truncate block"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={truncated ? buyerName : undefined}
+                            >
+                              {displayName}
+                            </a>
+                          );
+                        }
+
+                        if (inv.buyerName && (!inv.buyerPartyId && (inv.missingFields || []).some((field) => field.startsWith('buyer') || field === 'buyer_party_id'))) {
+                          return (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-900 font-medium truncate block" title={truncated ? buyerName : undefined}>{displayName}</span>
+                              <button
+                                type="button"
+                                onClick={() => openAddBuyerModal(inv.buyerName!)}
+                                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                aria-label={`Create buyer party for ${inv.buyerName}`}
+                              >
+                                <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <span className="text-gray-700 truncate block" title={truncated ? buyerName : undefined}>
+                            {displayName}
+                          </span>
+                        );
+                      })()}
                     </td>
-                    <td className="px-4 py-3"><StatusBadge status={inv.status} missingFields={inv.missingFields} /></td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-2 py-3 text-sm text-right tabular-nums whitespace-nowrap">{inv.itemCount}</td>
+                    <td className="px-2 py-3 text-sm text-right tabular-nums whitespace-nowrap">{formatCurrency(inv.grandTotal)}</td>
+                    <td className="px-3 py-3"><StatusBadge status={inv.status} missingFields={inv.missingFields} /></td>
+                    <td className="px-3 py-3 text-right">
                       <button
                         onClick={() => handleReview(inv.id)}
                         className="px-3 py-1.5 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1"

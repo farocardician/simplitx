@@ -186,6 +186,8 @@ export default function ReviewPage() {
   const [invoiceNo, setInvoiceNo] = useState('');
   const [items, setItems] = useState<LineItem[]>([]);
   const [initialSnapshot, setInitialSnapshot] = useState<{
+    invoiceDate: string;
+    invoiceNo: string;
     items: StoredItemState[];
   } | null>(null);
   const orderKeyRef = useRef(0);
@@ -321,13 +323,27 @@ export default function ReviewPage() {
       clearTimeout(hsCodeDebounceTimers.current[index]);
     }
 
-    // If code is empty or not digits only, clear validation
-    if (!code || !/^\d+$/.test(code)) {
-      setHsCodeValidations(prev => {
-        const next = { ...prev };
-        delete next[index];
-        return next;
-      });
+    // If code is empty, show error - HS code is required
+    if (!code || code.trim() === '') {
+      setHsCodeValidations(prev => ({
+        ...prev,
+        [index]: {
+          isValid: false,
+          warning: 'HS Code is required'
+        }
+      }));
+      return;
+    }
+
+    // If code is not digits only, show error
+    if (!/^\d+$/.test(code)) {
+      setHsCodeValidations(prev => ({
+        ...prev,
+        [index]: {
+          isValid: false,
+          warning: 'HS Code must contain only digits'
+        }
+      }));
       return;
     }
 
@@ -625,9 +641,9 @@ export default function ReviewPage() {
         }
       }
 
-      // Validate the code
-      if (item.hs_code && item.type) {
-        validateHsCode(index, item.hs_code, item.type);
+      // Validate the code (always validate, even if empty)
+      if (item.type) {
+        validateHsCode(index, item.hs_code || '', item.type);
       }
     });
   }, [items, validateHsCode]);
@@ -696,6 +712,8 @@ export default function ReviewPage() {
 
         // Save initial snapshot for dirty tracking
         setInitialSnapshot({
+          invoiceDate: invoicePayload.invoice_date,
+          invoiceNo: invoicePayload.invoice_number,
           items: normalizedItems.map(createStoredState)
         });
       } catch (err) {
@@ -1303,6 +1321,10 @@ export default function ReviewPage() {
   const isDirty = useMemo(() => {
     if (!initialSnapshot) return false;
 
+    if (invoiceDate !== initialSnapshot.invoiceDate) return true;
+
+    if (invoiceNo !== initialSnapshot.invoiceNo) return true;
+
     if (items.length !== initialSnapshot.items.length) return true;
 
     for (let i = 0; i < items.length; i++) {
@@ -1324,7 +1346,7 @@ export default function ReviewPage() {
     }
 
     return false;
-  }, [items, initialSnapshot]);
+  }, [items, initialSnapshot, invoiceDate, invoiceNo]);
 
   // Check if there are any validation errors
   const hasErrors = useMemo(() => {
@@ -1355,9 +1377,13 @@ export default function ReviewPage() {
 
   const canMergeSelection = selectedCount >= 2;
 
+  // Validate invoice header fields
+  const invoiceNoError = invoiceNo.trim() === '' ? 'Invoice number is required' : null;
+  const invoiceDateError = invoiceDate.trim() === '' ? 'Invoice date is required' : null;
+
   const saveDisabled = useMemo(() => {
-    return !isDirty || hasErrors || hasHsCodeWarnings;
-  }, [isDirty, hasErrors, hasHsCodeWarnings]);
+    return !isDirty || hasErrors || hasHsCodeWarnings || !!invoiceNoError || !!invoiceDateError;
+  }, [isDirty, hasErrors, hasHsCodeWarnings, invoiceNoError, invoiceDateError]);
 
   const handleCancel = () => {
     router.push('/queue-v2');
@@ -1373,6 +1399,8 @@ export default function ReviewPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          invoice_number: invoiceNo.trim(),
+          invoice_date: invoiceDate,
           items: items.map(item => ({
             description: item.description,
             qty: item.qty,
@@ -1465,22 +1493,31 @@ export default function ReviewPage() {
               <h1 className="text-base font-semibold text-gray-900 whitespace-nowrap">
                 Review Invoice
               </h1>
-              <input
-                type="text"
-                value={invoiceNo}
-                readOnly
-                aria-readonly="true"
-                className="px-2.5 py-1.5 text-sm font-medium text-gray-700 border border-gray-200 rounded-md bg-gray-50"
-                placeholder="Invoice Number"
-              />
-              <input
-                id="invoice-date"
-                type="date"
-                value={invoiceDate}
-                readOnly
-                aria-readonly="true"
-                className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-md bg-gray-50 text-gray-700"
-              />
+              <div className="flex flex-col gap-1">
+                <input
+                  type="text"
+                  value={invoiceNo}
+                  onChange={(e) => setInvoiceNo(e.target.value)}
+                  className={`px-3 py-2 text-sm font-medium border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    invoiceNoError ? 'border-red-300 bg-red-50/40' : 'border-gray-300 bg-white text-gray-800'
+                  }`}
+                  placeholder="Invoice Number"
+                />
+                {invoiceNoError && <span className="text-[11px] text-red-600">{invoiceNoError}</span>}
+              </div>
+              <div className="flex flex-col gap-1">
+                <input
+                  id="invoice-date"
+                  type="date"
+                  value={invoiceDate}
+                  onChange={(e) => setInvoiceDate(e.target.value)}
+                  className={`px-3 py-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    invoiceDateError ? 'border-red-300 bg-red-50/40 text-red-800' : 'border-gray-300 bg-white text-gray-700'
+                  }`}
+                  placeholder="Invoice Date"
+                />
+                {invoiceDateError && <span className="text-[11px] text-red-600">{invoiceDateError}</span>}
+              </div>
             </div>
 
             <div className="flex items-center gap-2">

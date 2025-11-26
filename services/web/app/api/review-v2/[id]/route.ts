@@ -108,8 +108,8 @@ export const GET = withSession(async (_req: NextRequest, _session: { sessionId: 
   const sellerName = config?.queue?.seller_name || 'Seller';
   const rounding = ensureRounding(config);
 
-  const invoiceRows = await prisma.$queryRaw<{ id: string; invoice_number: string; tax_invoice_date: Date | null }[]>`
-    SELECT id, invoice_number, tax_invoice_date
+  const invoiceRows = await prisma.$queryRaw<{ id: string; invoice_number: string; tax_invoice_date: Date | null; buyer_party_id: string | null }[]>`
+    SELECT id, invoice_number, tax_invoice_date, buyer_party_id
     FROM tax_invoices
     WHERE id = ${invoiceId}::uuid
     LIMIT 1
@@ -172,15 +172,55 @@ export const POST = withSession(async (req: NextRequest, _session: { sessionId: 
     const invoiceId = params.id;
     const body = await req.json().catch(() => ({}));
     const items: ItemInput[] = Array.isArray(body?.items) ? body.items : [];
+    const invoiceNumberRaw: string = typeof body?.invoice_number === 'string' ? body.invoice_number.trim() : '';
+    const invoiceDateRaw: string = typeof body?.invoice_date === 'string' ? body.invoice_date.trim() : '';
 
-    const invoiceRows = await prisma.$queryRaw<{ id: string }[]>`
-      SELECT id FROM tax_invoices WHERE id = ${invoiceId}::uuid LIMIT 1
+    if (!invoiceNumberRaw) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_REQUEST', message: 'Invoice number is required' } },
+        { status: 400 }
+      );
+    }
+
+    if (!invoiceDateRaw) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_REQUEST', message: 'Invoice date is required' } },
+        { status: 400 }
+      );
+    }
+
+    const parsedDate = new Date(invoiceDateRaw);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_REQUEST', message: 'Invoice date is invalid' } },
+        { status: 400 }
+      );
+    }
+
+    const invoiceRows = await prisma.$queryRaw<{ id: string; buyer_party_id: string | null }[]>`
+      SELECT id, buyer_party_id FROM tax_invoices WHERE id = ${invoiceId}::uuid LIMIT 1
     `;
 
     if (invoiceRows.length === 0) {
       return NextResponse.json(
         { error: { code: 'NOT_FOUND', message: 'Invoice not found' } },
         { status: 404 }
+      );
+    }
+    const buyerPartyId = invoiceRows[0].buyer_party_id;
+
+    const conflictRows = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM tax_invoices
+      WHERE invoice_number = ${invoiceNumberRaw}
+        AND buyer_party_id IS NOT DISTINCT FROM ${buyerPartyId}
+        AND id <> ${invoiceId}::uuid
+      LIMIT 1
+    `;
+
+    if (conflictRows.length > 0) {
+      return NextResponse.json(
+        { error: { code: 'DUPLICATE_INVOICE', message: 'Another invoice with this number already exists for the same buyer' } },
+        { status: 400 }
       );
     }
 
@@ -328,6 +368,15 @@ export const POST = withSession(async (req: NextRequest, _session: { sessionId: 
 
     await prisma.$transaction(async (tx) => {
       await tx.$executeRaw`
+        UPDATE tax_invoices
+        SET invoice_number = ${invoiceNumberRaw},
+            ref_desc = ${invoiceNumberRaw},
+            tax_invoice_date = ${parsedDate},
+            updated_at = NOW()
+        WHERE id = ${invoiceId}::uuid
+      `;
+
+      await tx.$executeRaw`
         DELETE FROM tax_invoice_items
         WHERE tax_invoice_id = ${invoiceId}::uuid
       `;
@@ -372,11 +421,6 @@ export const POST = withSession(async (req: NextRequest, _session: { sessionId: 
         `;
       }
 
-      await tx.$executeRaw`
-        UPDATE tax_invoices
-        SET updated_at = NOW()
-        WHERE id = ${invoiceId}::uuid
-      `;
     });
 
     return NextResponse.json({ success: true });
