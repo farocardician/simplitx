@@ -42,6 +42,13 @@
     "filter": { "tin": "0021164165056000" },
     "seller_name": "PT Sensient Colors Indonesia"
   },
+  "rounding": {
+    "qty": { "scale": 3, "mode": "half_up" },
+    "unit_price": { "scale": 2, "mode": "half_up" },
+    "tax_base": { "scale": 2, "mode": "half_up" },
+    "other_tax_base": { "scale": 2, "mode": "half_up" },
+    "vat": { "scale": 2, "mode": "half_up" }
+  },
   "upload": {
     "accept": [".xls", ".xlsx"],
     "endpoint": "/api/upload-xls",

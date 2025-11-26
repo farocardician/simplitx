@@ -397,6 +397,28 @@ def insert_tax_invoice_items(
     return len(items_data)
 
 
+def cleanup_staging_batch(conn, batch_id: str, dry_run: bool = False):
+    """
+    Delete staging rows for a successfully processed batch.
+
+    Args:
+        conn: Database connection
+        batch_id: UUID of batch to clean up
+        dry_run: If True, log but don't execute
+    """
+    if dry_run:
+        logger.info(f"[DRY RUN] Would DELETE staging rows for batch_id: {batch_id}")
+        return
+
+    with conn.cursor() as cur:
+        cur.execute(
+            'DELETE FROM public."temporaryStaging" WHERE batch_id = %s',
+            (batch_id,)
+        )
+        deleted_count = cur.rowcount
+        logger.info(f"✓ Cleaned up {deleted_count} staging rows for batch {batch_id}")
+
+
 def compute_missing_fields(invoice_data: Dict[str, Any], buyer_name_raw_present: bool) -> List[str]:
     """Identify missing critical buyer fields for completeness tracking.
 
@@ -657,6 +679,11 @@ def main():
             conn.commit()
             logger.info("")
             logger.info("✓ Transaction committed")
+
+            # Clean up staging data for this batch
+            if args.batch_id:
+                cleanup_staging_batch(conn, args.batch_id, dry_run=False)
+                conn.commit()  # Commit the cleanup deletion
         else:
             conn.rollback()
             logger.info("")

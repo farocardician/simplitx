@@ -48,6 +48,99 @@ Ingest Sensient Excel workbooks into PostgreSQL and populate normalized tax invo
 - Stage 2 (validate/resolve buyers): `python services/xls2sql/stages/s02_validate_resolve_sensient.py --batch-id <uuid-from-stage1>`
 - Stage 3 (build invoices/items): `python services/xls2sql/stages/s03_build_invoices.py --batch-id <uuid>` (or `--invoice <number>`, add `--dry-run` to preview)
 
+## Testing the Full Workflow
+
+### Database Connection via Docker
+
+The PostgreSQL database runs in Docker. Use this command pattern to connect:
+```bash
+docker exec $(docker ps -q -f name=simplitx-postgres-1) psql -U postgres -d pdf_jobs -c "SQL QUERY"
+```
+
+Example queries:
+```bash
+# Check staging row count
+docker exec $(docker ps -q -f name=simplitx-postgres-1) psql -U postgres -d pdf_jobs -c "SELECT COUNT(*) FROM \"temporaryStaging\""
+
+# Check invoice count
+docker exec $(docker ps -q -f name=simplitx-postgres-1) psql -U postgres -d pdf_jobs -c "SELECT COUNT(*) FROM tax_invoices"
+
+# Check specific invoice items
+docker exec $(docker ps -q -f name=simplitx-postgres-1) psql -U postgres -d pdf_jobs -c "SELECT invoice_number, (SELECT COUNT(*) FROM tax_invoice_items WHERE tax_invoice_id = ti.id) as items FROM tax_invoices ti WHERE invoice_number = '25708584'"
+```
+
+### Running the Full Pipeline with Environment Variables
+
+**Prerequisites**: Ensure Docker containers are running (`docker ps` should show `simplitx-postgres-1`)
+
+**Database Environment Variables**:
+- Stages 1 & 2: `DB_HOST=localhost DB_PORT=5432 DB_NAME=pdf_jobs DB_USER=postgres DB_PASSWORD=postgres`
+- Stage 3: `PGHOST=localhost PGPORT=5432 PGDATABASE=pdf_jobs PGUSER=postgres PGPASSWORD=postgres`
+
+**Complete Test Workflow**:
+
+```bash
+# Navigate to xls2sql directory
+cd /path/to/simplitx/services/xls2sql
+
+# Stage 1: Import Excel file
+env DB_HOST=localhost DB_PORT=5432 DB_NAME=pdf_jobs DB_USER=postgres DB_PASSWORD=postgres \
+  python3 stages/s01_postgreimport_sensient.py training/sen/sensient.xlsx
+
+# Note the Batch ID from output (e.g., ad25c210-2c46-4648-9164-a87088509897)
+
+# Stage 2: Validate and resolve buyers
+env DB_HOST=localhost DB_PORT=5432 DB_NAME=pdf_jobs DB_USER=postgres DB_PASSWORD=postgres \
+  python3 stages/s02_validate_resolve_sensient.py --batch-id <BATCH_ID>
+
+# Stage 3: Build invoices and cleanup staging
+env PGHOST=localhost PGPORT=5432 PGDATABASE=pdf_jobs PGUSER=postgres PGPASSWORD=postgres \
+  python3 stages/s03_build_invoices.py --batch-id <BATCH_ID>
+```
+
+### Verifying Results
+
+**1. Check Staging Cleanup** (should be 0 after Stage 3):
+```bash
+docker exec $(docker ps -q -f name=simplitx-postgres-1) psql -U postgres -d pdf_jobs -c "SELECT COUNT(*) FROM \"temporaryStaging\""
+```
+
+**2. Check Invoice Creation** (should be 672 for sensient.xlsx):
+```bash
+docker exec $(docker ps -q -f name=simplitx-postgres-1) psql -U postgres -d pdf_jobs -c "SELECT COUNT(*) FROM tax_invoices"
+```
+
+**3. Verify No Item Accumulation** (test delete and re-upload):
+```bash
+# Delete all invoices
+docker exec $(docker ps -q -f name=simplitx-postgres-1) psql -U postgres -d pdf_jobs -c "DELETE FROM tax_invoices"
+
+# Re-run the full pipeline (Stages 1-3 with new batch_id)
+# Then check a specific invoice - item count should remain consistent
+docker exec $(docker ps -q -f name=simplitx-postgres-1) psql -U postgres -d pdf_jobs -c \
+  "SELECT invoice_number, (SELECT COUNT(*) FROM tax_invoice_items WHERE tax_invoice_id = ti.id) as items \
+   FROM tax_invoices ti WHERE invoice_number = '25708584'"
+```
+
+### Staging Cleanup Behavior
+
+**Important**: Stage 3 automatically cleans up `temporaryStaging` rows after successful processing:
+- Cleanup runs ONLY when `--batch-id` is provided (not with `--invoice` mode)
+- Cleanup happens AFTER successful commit
+- Cleanup is skipped in `--dry-run` mode
+- You should see: `✓ Cleaned up X staging rows for batch <batch_id>` in the output
+
+**Why Cleanup Matters**: Without cleanup, staging rows accumulate across uploads. When Stage 3 processes an invoice, it would fetch items from ALL historical batches, causing item duplication (e.g., 1 item becomes 2, then 3, then 4 with each upload).
+
+### Common Testing Pitfalls
+
+1. **Wrong Port**: PostgreSQL runs on port **5432** (not 5433)
+2. **Environment Variable Names**: Stages 1-2 use `DB_*`, Stage 3 uses `PG*`
+3. **Working Directory**: Run scripts from `services/xls2sql/` directory
+4. **Relative Paths**: XLS file path is relative to working directory: `training/sen/sensient.xlsx`
+5. **Batch ID Reuse**: Each Stage 1 run creates a NEW batch_id; don't reuse old batch_ids
+6. **Container Name**: If `simplitx-postgres-1` doesn't exist, check with `docker ps | grep postgres`
+
 ## Environment Requirements
 - Python libs: pandas, openpyxl, psycopg2-binary, fuzzywuzzy + python-Levenshtein (see `docker/python/requirements-xls2sql.txt`); FastAPI/uvicorn for the health endpoint.
 - System: network access to PostgreSQL with the tables above; no PDF/Camelot dependencies.

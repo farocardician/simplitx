@@ -991,11 +991,30 @@ export default function QueueV2Page() {
       let invoiceNumbers: string[];
 
       if (selection.mode === 'all') {
-        const res = await fetch(`/api/tax-invoices?limit=${pagination.total}`);
-        const data = await res.json();
-        invoiceNumbers = data.invoices
-          .filter((inv: Invoice) => !selection.excludedIds.has(inv.id))
-          .map((inv: Invoice) => inv.invoiceNumber);
+        // Fetch in chunks to handle more than 500 records (API limit)
+        const CHUNK_SIZE = 500;
+        const allInvoiceNumbers: string[] = [];
+        let offset = 0;
+        let hasMore = true;
+
+        while (hasMore) {
+          const res = await fetch(
+            `/api/tax-invoices?limit=${CHUNK_SIZE}&offset=${offset}`
+          );
+          const data = await res.json();
+
+          const chunk = data.invoices
+            .filter((inv: Invoice) => !selection.excludedIds.has(inv.id))
+            .map((inv: Invoice) => inv.invoiceNumber);
+
+          allInvoiceNumbers.push(...chunk);
+
+          // If we got fewer records than requested, we've reached the end
+          hasMore = data.invoices.length === CHUNK_SIZE;
+          offset += CHUNK_SIZE;
+        }
+
+        invoiceNumbers = allInvoiceNumbers;
       } else {
         invoiceNumbers = getActualSelection.map((inv) => inv.invoiceNumber);
       }
@@ -1019,7 +1038,7 @@ export default function QueueV2Page() {
   };
 
   const handleReview = (invoiceId: string) => {
-    window.open(`/review/${invoiceId}`, '_blank');
+    window.open(`/review-v2/${invoiceId}`, '_blank');
   };
 
   const openAddBuyerModal = (buyerName: string) => {
