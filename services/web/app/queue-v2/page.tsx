@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import AddPartyForm, { PartyPayloadInput, SellerOption, TransactionCode } from '@/components/party/AddPartyForm';
 
 type InvoiceStatus = 'complete' | 'processing' | 'error' | 'incomplete';
 type SelectionMode = 'none' | 'page' | 'all';
@@ -527,6 +528,13 @@ export default function QueueV2Page() {
     direction: 'desc'
   });
   const [buyers, setBuyers] = useState<Buyer[]>([]);
+  const [showAddBuyerModal, setShowAddBuyerModal] = useState(false);
+  const [buyerNameToResolve, setBuyerNameToResolve] = useState<string | null>(null);
+  const [partyFormError, setPartyFormError] = useState<string | null>(null);
+  const [transactionCodes, setTransactionCodes] = useState<TransactionCode[]>([]);
+  const [sellers, setSellers] = useState<SellerOption[]>([]);
+  const [sellersLoading, setSellersLoading] = useState(false);
+  const [banner, setBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Fetch unique buyers for dropdown
   const fetchBuyers = async () => {
@@ -538,6 +546,54 @@ export default function QueueV2Page() {
       console.error('Failed to fetch buyers:', err);
     }
   };
+
+  const fetchTransactionCodes = useCallback(async () => {
+    if (transactionCodes.length > 0) return;
+    try {
+      const response = await fetch('/api/transaction-codes');
+      if (!response.ok) {
+        throw new Error('Failed to load transaction codes');
+      }
+      const rawCodes = await response.json();
+      const normalizedCodes: TransactionCode[] = (rawCodes || []).map((code: any) => ({
+        code: code.code,
+        name: code.name,
+        description: code.description ?? ''
+      }));
+      setTransactionCodes(normalizedCodes);
+    } catch (err) {
+      console.error('Failed to load transaction codes', err);
+      setPartyFormError(err instanceof Error ? err.message : 'Failed to load transaction codes');
+    }
+  }, [transactionCodes.length]);
+
+  const fetchSellerOptions = useCallback(async () => {
+    if (sellers.length > 0) return;
+    try {
+      setSellersLoading(true);
+      const params = new URLSearchParams({
+        type: 'seller',
+        limit: '200'
+      });
+      const response = await fetch(`/api/parties?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch sellers');
+      }
+      const data = await response.json();
+      const normalized: SellerOption[] = (data.parties || [])
+        .map((party: any) => ({
+          id: party.id,
+          displayName: party.displayName,
+          tinDisplay: party.tinDisplay
+        }))
+        .sort((a: SellerOption, b: SellerOption) => a.displayName.localeCompare(b.displayName));
+      setSellers(normalized);
+    } catch (err) {
+      console.error('Failed to load sellers', err);
+    } finally {
+      setSellersLoading(false);
+    }
+  }, [sellers.length]);
 
   // Initialize from URL params or localStorage on mount
   useEffect(() => {
@@ -570,6 +626,14 @@ export default function QueueV2Page() {
 
     fetchBuyers();
   }, []);
+
+  useEffect(() => {
+    if (showAddBuyerModal) {
+      setPartyFormError(null);
+      fetchTransactionCodes();
+      fetchSellerOptions();
+    }
+  }, [showAddBuyerModal, fetchSellerOptions, fetchTransactionCodes]);
 
   // Sync to URL and localStorage on filter/sort change
   const updateFiltersAndSort = useCallback((
@@ -844,7 +908,65 @@ export default function QueueV2Page() {
     window.open(`/review/${invoiceId}`, '_blank');
   };
 
-  if (loading) {
+  const openAddBuyerModal = (buyerName: string) => {
+    setBanner(null);
+    setBuyerNameToResolve(buyerName);
+    setShowAddBuyerModal(true);
+  };
+
+  const closeAddBuyerModal = () => {
+    setShowAddBuyerModal(false);
+    setBuyerNameToResolve(null);
+    setPartyFormError(null);
+  };
+
+  const handleCreateBuyerAndResolve = async (partyData: PartyPayloadInput) => {
+    if (!buyerNameToResolve) {
+      throw new Error('No buyer name selected');
+    }
+
+    setPartyFormError(null);
+
+    const createResponse = await fetch('/api/parties', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(partyData)
+    });
+
+    const createdPayload = await createResponse.json().catch(() => null);
+    if (!createResponse.ok) {
+      throw new Error(createdPayload?.error?.message || 'Failed to create party');
+    }
+
+    const newPartyId = createdPayload?.id;
+    if (!newPartyId) {
+      throw new Error('Party created but missing ID');
+    }
+
+    const resolveResponse = await fetch('/api/tax-invoices/resolve-buyer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        buyerName: buyerNameToResolve,
+        partyId: newPartyId
+      })
+    });
+
+    const resolvePayload = await resolveResponse.json().catch(() => null);
+    if (!resolveResponse.ok) {
+      throw new Error(resolvePayload?.error?.message || 'Failed to link invoices to buyer');
+    }
+
+    await fetchInvoices(currentPage, perPage);
+    await fetchBuyers();
+    setBanner({
+      type: 'success',
+      message: `Buyer created and ${typeof resolvePayload?.updated === 'number' ? resolvePayload.updated : 'all'} invoice(s) linked.`
+    });
+    closeAddBuyerModal();
+  };
+
+  if (loading && !showAddBuyerModal) {
     return <div className="flex justify-center p-8 text-gray-600">Loading invoices...</div>;
   }
 
@@ -867,6 +989,24 @@ export default function QueueV2Page() {
             Upload More
           </button>
         </div>
+
+        {banner && (
+          <div className={`mb-4 rounded-lg border px-4 py-3 ${banner.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+            <div className="flex items-start justify-between gap-3">
+              <span>{banner.message}</span>
+              <button
+                type="button"
+                onClick={() => setBanner(null)}
+                className="text-sm font-semibold text-gray-500 hover:text-gray-700"
+                aria-label="Dismiss message"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Filter & Sort Controls */}
         <div className="mb-4">
@@ -954,6 +1094,20 @@ export default function QueueV2Page() {
                         >
                           {inv.buyerName}
                         </a>
+                      ) : inv.buyerName && (!inv.buyerPartyId && (inv.missingFields || []).some((field) => field.startsWith('buyer') || field === 'buyer_party_id')) ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900 font-medium">{inv.buyerName}</span>
+                          <button
+                            type="button"
+                            onClick={() => openAddBuyerModal(inv.buyerName!)}
+                            className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            aria-label={`Create buyer party for ${inv.buyerName}`}
+                          >
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
                       ) : (
                         <span className="text-gray-700">{inv.buyerName || '—'}</span>
                       )}
@@ -994,6 +1148,40 @@ export default function QueueV2Page() {
           />
         )}
       </div>
+
+      {showAddBuyerModal && buyerNameToResolve && (
+        <div
+          className="fixed inset-0 z-30 flex items-center justify-center bg-gray-900/60 px-4 py-6"
+          onClick={closeAddBuyerModal}
+        >
+          <div
+            className="w-full max-w-3xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 sm:p-6">
+              {partyFormError && (
+                <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {partyFormError}
+                </div>
+              )}
+              <AddPartyForm
+                heading={`Add buyer for "${buyerNameToResolve}"`}
+                description="Create the buyer and automatically link all invoices with this name."
+                submitLabel="Create & Resolve"
+                defaultValues={{ displayName: buyerNameToResolve }}
+                forceBuyerType
+                onCancel={closeAddBuyerModal}
+                onSubmit={handleCreateBuyerAndResolve}
+                onError={(msg) => setPartyFormError(msg)}
+                transactionCodes={transactionCodes}
+                sellers={sellers}
+                sellersLoading={sellersLoading}
+                className="p-0 bg-transparent"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
