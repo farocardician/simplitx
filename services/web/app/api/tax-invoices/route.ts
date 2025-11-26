@@ -28,6 +28,8 @@ export const GET = async (req: NextRequest) => {
 
   // NEW: Filter and sort params
   const buyerFilter = searchParams.get('buyer')
+  const invoiceNumbersParam = searchParams.get('invoices') || searchParams.get('invoiceNumbers')
+  const statusFilter = searchParams.get('status')
   const sortField = searchParams.get('sort') || 'date'
   const sortDir = searchParams.get('dir') || 'desc'
 
@@ -38,6 +40,21 @@ export const GET = async (req: NextRequest) => {
   }
   if (buyerFilter) {
     whereClause = Prisma.sql`${whereClause} AND buyer_party_id = ${buyerFilter}::uuid`
+  }
+  if (invoiceNumbersParam) {
+    const list = invoiceNumbersParam
+      .split(',')
+      .map((v) => v.trim())
+      .filter((v) => v.length > 0)
+    if (list.length > 0) {
+      const values = Prisma.join(list.map((inv) => Prisma.sql`${inv}`))
+      whereClause = Prisma.sql`${whereClause} AND invoice_number IN (${values})`
+    }
+  }
+  if (statusFilter === 'complete') {
+    whereClause = Prisma.sql`${whereClause} AND is_complete = true`
+  } else if (statusFilter === 'incomplete') {
+    whereClause = Prisma.sql`${whereClause} AND (is_complete = false OR is_complete IS NULL)`
   }
 
   // Build ORDER BY clause

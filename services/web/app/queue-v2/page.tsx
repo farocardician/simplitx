@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AddPartyForm, { PartyPayloadInput, SellerOption, TransactionCode } from '@/components/party/AddPartyForm';
 
@@ -8,6 +8,7 @@ type InvoiceStatus = 'complete' | 'processing' | 'error' | 'incomplete';
 type SelectionMode = 'none' | 'page' | 'all';
 type SortField = 'date' | 'invoice_number' | 'buyer_name';
 type SortDirection = 'asc' | 'desc';
+type FilterStatus = 'complete' | 'incomplete' | null;
 
 interface Invoice {
   id: string;
@@ -32,10 +33,8 @@ interface SelectionState {
 
 interface FilterState {
   buyerPartyId: string | null;
-  // Future filters (commented out for now):
-  // status: string | null;
-  // invoiceNumber: string | null;
-  // month: string | null; // YYYY-MM format
+  invoiceNumbers: string[];
+  status: FilterStatus;
 }
 
 interface SortState {
@@ -149,6 +148,15 @@ function FilterBar({
 }) {
   const [buyerSearch, setBuyerSearch] = useState('');
   const [buyerDropdownOpen, setBuyerDropdownOpen] = useState(false);
+  const [invoiceInput, setInvoiceInput] = useState('');
+  const [invoiceTokens, setInvoiceTokens] = useState<string[]>(filters.invoiceNumbers || []);
+  const [invoiceResults, setInvoiceResults] = useState<{ id?: string; invoiceNumber: string; buyerName: string | null }[]>([]);
+  const [statusValue, setStatusValue] = useState<FilterStatus>(filters.status);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showInvoiceDropdown, setShowInvoiceDropdown] = useState(false);
+  const [highlightIndex, setHighlightIndex] = useState<number>(-1);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const filteredBuyers = useMemo(() => {
     if (!buyerSearch) return buyers;
@@ -157,7 +165,75 @@ function FilterBar({
   }, [buyers, buyerSearch]);
 
   const selectedBuyer = buyers.find(b => b.id === filters.buyerPartyId);
-  const hasActiveFilters = filters.buyerPartyId !== null;
+  const hasActiveFilters = Boolean(
+    filters.buyerPartyId !== null ||
+    (filters.invoiceNumbers && filters.invoiceNumbers.length > 0) ||
+    filters.status
+  );
+
+  useEffect(() => {
+    setInvoiceTokens(filters.invoiceNumbers || []);
+  }, [filters.invoiceNumbers]);
+
+  useEffect(() => {
+    setStatusValue(filters.status);
+  }, [filters.status]);
+
+  const commitInvoiceTokens = useCallback((tokens: string[]) => {
+    const unique = Array.from(new Set(tokens.map((t) => t.trim()).filter(Boolean)));
+    setInvoiceTokens(unique);
+    onFilterChange({ invoiceNumbers: unique });
+  }, [onFilterChange]);
+
+  const runInvoiceSearch = useCallback(async (term: string) => {
+    if (searchAbortRef.current) searchAbortRef.current.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
+    setSearchLoading(true);
+    try {
+      const params = new URLSearchParams({ q: term, limit: '25' });
+      const res = await fetch(`/api/tax-invoices/search?${params.toString()}`, { signal: controller.signal });
+      if (!res.ok) throw new Error('Search failed');
+      const data = await res.json();
+      const results = (data?.results || []).slice(0, 25);
+      setInvoiceResults(results);
+      setHighlightIndex(results.length > 0 ? 0 : -1);
+    } catch (error: any) {
+      if (error?.name !== 'AbortError') {
+        console.error('Invoice search error', error);
+      }
+    } finally {
+      setSearchLoading(false);
+    }
+  }, []);
+
+  const handleInvoiceInputChange = (value: string) => {
+    setInvoiceInput(value);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.length < 2) {
+      setInvoiceResults([]);
+      setShowInvoiceDropdown(false);
+      return;
+    }
+    searchTimerRef.current = setTimeout(() => {
+      runInvoiceSearch(trimmed);
+      setShowInvoiceDropdown(true);
+    }, 300);
+  };
+
+  const addInvoiceToken = (token: string) => {
+    if (invoiceTokens.includes(token) || invoiceTokens.length >= 20) return;
+    const next = [...invoiceTokens, token];
+    commitInvoiceTokens(next);
+    setInvoiceInput('');
+    setShowInvoiceDropdown(false);
+  };
+
+  const handleStatusChange = (value: FilterStatus) => {
+    setStatusValue(value);
+    onFilterChange({ status: value });
+  };
 
   const toggleSortDirection = () => {
     onSortChange({
@@ -171,6 +247,115 @@ function FilterBar({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium text-gray-700">Filters:</span>
+
+          {/* Invoice Number Filter */}
+          <div className="relative">
+            <label className="sr-only">Invoice #</label>
+            <div
+              className="flex items-center gap-2 min-w-[220px] max-w-[320px] border border-gray-300 rounded-md bg-white px-2 py-1.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-400"
+              role="combobox"
+              aria-expanded={showInvoiceDropdown}
+              aria-haspopup="listbox"
+            >
+              <div className="flex flex-wrap items-center gap-1">
+                {invoiceTokens.map((token, idx) => (
+                  <span
+                    key={token}
+                    className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs border border-blue-200"
+                  >
+                    <span className="font-semibold">{token}</span>
+                    <button
+                      type="button"
+                      onClick={() => commitInvoiceTokens(invoiceTokens.filter((t) => t !== token))}
+                      className="text-blue-500 hover:text-blue-700"
+                      aria-label={`Remove invoice ${token}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={invoiceInput}
+                onChange={(e) => handleInvoiceInputChange(e.target.value)}
+                onFocus={() => invoiceInput.trim().length >= 2 && setShowInvoiceDropdown(true)}
+                onBlur={() => setTimeout(() => setShowInvoiceDropdown(false), 120)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (highlightIndex >= 0 && highlightIndex < invoiceResults.length) {
+                      addInvoiceToken(invoiceResults[highlightIndex].invoiceNumber);
+                    } else {
+                      const parts = invoiceInput.split(/[,\\s]+/).map((v) => v.trim()).filter(Boolean);
+                      parts.forEach((p) => addInvoiceToken(p));
+                    }
+                  } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (invoiceResults.length > 0) {
+                      setHighlightIndex((prev) => (prev + 1) % invoiceResults.length);
+                      setShowInvoiceDropdown(true);
+                    }
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (invoiceResults.length > 0) {
+                      setHighlightIndex((prev) => (prev - 1 + invoiceResults.length) % invoiceResults.length);
+                      setShowInvoiceDropdown(true);
+                    }
+                  } else if (e.key === 'Escape') {
+                    setShowInvoiceDropdown(false);
+                  } else if (e.key === 'Backspace' && invoiceInput === '' && invoiceTokens.length > 0) {
+                    commitInvoiceTokens(invoiceTokens.slice(0, -1));
+                  }
+                }}
+                placeholder="Invoice #"
+                className="flex-1 min-w-[80px] text-sm focus:outline-none"
+                aria-controls="invoice-search-list"
+              />
+              <svg className="w-4 h-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.9 14.32a8 8 0 111.414-1.414l3.387 3.387a1 1 0 01-1.414 1.414l-3.387-3.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            {showInvoiceDropdown && (
+              <div
+                id="invoice-search-list"
+                role="listbox"
+                className="absolute z-20 mt-1 w-full max-h-64 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg"
+              >
+                {searchLoading && (
+                  <div className="px-3 py-2 text-sm text-gray-500">Searching…</div>
+                )}
+                {!searchLoading && invoiceResults.length === 0 && (
+                  <div className="px-3 py-2 text-sm text-gray-500">No invoices found</div>
+                )}
+                {!searchLoading && invoiceResults.map((inv, idx) => {
+                  const selected = invoiceTokens.includes(inv.invoiceNumber);
+                  const highlighted = idx === highlightIndex;
+                  return (
+                    <button
+                      key={`${inv.invoiceNumber}-${inv.id ?? idx}`}
+                      type="button"
+                      role="option"
+                      aria-selected={selected}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => addInvoiceToken(inv.invoiceNumber)}
+                      className={`w-full px-3 py-2 text-left text-sm flex flex-col border-b last:border-b-0 ${
+                        highlighted ? 'bg-blue-50' : 'bg-white'
+                      } ${selected ? 'text-blue-700 font-semibold' : 'text-gray-800'}`}
+                    >
+                      <span>{inv.invoiceNumber}</span>
+                      <span className="text-xs text-gray-500 truncate">{inv.buyerName || '—'}</span>
+                    </button>
+                  );
+                })}
+                {invoiceTokens.length >= 20 && (
+                  <div className="px-3 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-200">
+                    Maximum of 20 invoices can be selected.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Buyer Filter */}
           <div className="relative">
@@ -235,6 +420,20 @@ function FilterBar({
             )}
           </div>
 
+          {/* Status Filter */}
+          <div>
+            <label className="sr-only">Status</label>
+            <select
+              value={statusValue || ''}
+              onChange={(e) => handleStatusChange((e.target.value || null) as FilterStatus)}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[140px]"
+            >
+              <option value="">All Statuses</option>
+              <option value="complete">Complete</option>
+              <option value="incomplete">Incomplete</option>
+            </select>
+          </div>
+
           {hasActiveFilters && (
             <button
               onClick={onClearAll}
@@ -296,6 +495,14 @@ function ActiveFilters({
     if (buyer) {
       activeFilters.push({ key: 'buyerPartyId', label: 'Buyer', value: buyer.name });
     }
+  }
+
+  if (filters.invoiceNumbers && filters.invoiceNumbers.length > 0) {
+    activeFilters.push({ key: 'invoiceNumbers', label: 'Invoice#', value: filters.invoiceNumbers.join(', ') });
+  }
+
+  if (filters.status) {
+    activeFilters.push({ key: 'status', label: 'Status', value: filters.status });
   }
 
   if (activeFilters.length === 0) return null;
@@ -588,7 +795,9 @@ export default function QueueV2Page() {
 
   // Filter & Sort State
   const [filters, setFilters] = useState<FilterState>({
-    buyerPartyId: null
+    buyerPartyId: null,
+    invoiceNumbers: [],
+    status: null
   });
   const [sort, setSort] = useState<SortState>({
     field: 'date',
@@ -725,6 +934,8 @@ export default function QueueV2Page() {
     const buyerParam = searchParams.get('buyer');
     const sortParam = searchParams.get('sort') as SortField | null;
     const dirParam = searchParams.get('dir') as SortDirection | null;
+    const invoiceParam = searchParams.get('invoices') || searchParams.get('invoiceNumbers');
+    const statusParam = searchParams.get('status') as FilterStatus | null;
 
     // Load from URL or localStorage
     const savedFilters = localStorage.getItem('queue-filters');
@@ -732,7 +943,11 @@ export default function QueueV2Page() {
 
     if (buyerParam || sortParam) {
       // URL takes precedence (shareable links)
-      setFilters({ buyerPartyId: buyerParam });
+      setFilters({
+        buyerPartyId: buyerParam,
+        invoiceNumbers: invoiceParam ? invoiceParam.split(',').filter(Boolean) : [],
+        status: statusParam || null
+      });
       setSort({
         field: sortParam || 'date',
         direction: dirParam || 'desc'
@@ -742,7 +957,11 @@ export default function QueueV2Page() {
       try {
         const parsedFilters = JSON.parse(savedFilters);
         const parsedSort = JSON.parse(savedSort);
-        setFilters(parsedFilters);
+        setFilters({
+          buyerPartyId: parsedFilters?.buyerPartyId || null,
+          invoiceNumbers: parsedFilters?.invoiceNumbers || [],
+          status: parsedFilters?.status || null
+        });
         setSort(parsedSort);
       } catch (e) {
         console.error('Failed to parse saved filters/sort:', e);
@@ -796,6 +1015,16 @@ export default function QueueV2Page() {
     } else {
       params.delete('buyer');
     }
+    if (updatedFilters.invoiceNumbers && updatedFilters.invoiceNumbers.length > 0) {
+      params.set('invoices', updatedFilters.invoiceNumbers.join(','));
+    } else {
+      params.delete('invoices');
+    }
+    if (updatedFilters.status) {
+      params.set('status', updatedFilters.status);
+    } else {
+      params.delete('status');
+    }
     params.set('sort', updatedSort.field);
     params.set('dir', updatedSort.direction);
     params.set('page', '1'); // Reset to page 1 on filter/sort change
@@ -822,6 +1051,12 @@ export default function QueueV2Page() {
 
       if (filters.buyerPartyId) {
         params.set('buyer', filters.buyerPartyId);
+      }
+      if (filters.invoiceNumbers && filters.invoiceNumbers.length > 0) {
+        params.set('invoices', filters.invoiceNumbers.join(','));
+      }
+      if (filters.status) {
+        params.set('status', filters.status);
       }
 
       const res = await fetch(`/api/tax-invoices?${params}`);
@@ -1489,7 +1724,7 @@ export default function QueueV2Page() {
             buyers={buyers}
             onFilterChange={(newFilters) => updateFiltersAndSort(newFilters)}
             onSortChange={(newSort) => updateFiltersAndSort({}, newSort)}
-            onClearAll={() => updateFiltersAndSort({ buyerPartyId: null })}
+            onClearAll={() => updateFiltersAndSort({ buyerPartyId: null, invoiceNumbers: [], status: null })}
           />
         </div>
 
@@ -1498,7 +1733,15 @@ export default function QueueV2Page() {
           <ActiveFilters
             filters={filters}
             buyers={buyers}
-            onRemove={(key) => updateFiltersAndSort({ [key]: null })}
+            onRemove={(key) => {
+              if (key === 'invoiceNumbers') {
+                updateFiltersAndSort({ invoiceNumbers: [] });
+              } else if (key === 'status') {
+                updateFiltersAndSort({ status: null });
+              } else {
+                updateFiltersAndSort({ [key]: null });
+              }
+            }}
           />
         </div>
 
