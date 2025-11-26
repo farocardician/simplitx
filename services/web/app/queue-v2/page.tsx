@@ -257,24 +257,6 @@ function FilterBar({
               aria-expanded={showInvoiceDropdown}
               aria-haspopup="listbox"
             >
-              <div className="flex flex-wrap items-center gap-1">
-                {invoiceTokens.map((token, idx) => (
-                  <span
-                    key={token}
-                    className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs border border-blue-200"
-                  >
-                    <span className="font-semibold">{token}</span>
-                    <button
-                      type="button"
-                      onClick={() => commitInvoiceTokens(invoiceTokens.filter((t) => t !== token))}
-                      className="text-blue-500 hover:text-blue-700"
-                      aria-label={`Remove invoice ${token}`}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
               <input
                 type="text"
                 value={invoiceInput}
@@ -309,7 +291,7 @@ function FilterBar({
                   }
                 }}
                 placeholder="Invoice #"
-                className="flex-1 min-w-[80px] text-sm focus:outline-none"
+                className="flex-1 min-w-[140px] text-sm focus:outline-none"
                 aria-controls="invoice-search-list"
               />
               <svg className="w-4 h-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
@@ -482,11 +464,13 @@ function FilterBar({
 function ActiveFilters({
   filters,
   buyers,
-  onRemove
+  onRemove,
+  onRemoveInvoiceNumber
 }: {
   filters: FilterState;
   buyers: Buyer[];
   onRemove: (key: keyof FilterState) => void;
+  onRemoveInvoiceNumber: (invoiceNumber: string) => void;
 }) {
   const activeFilters: { key: keyof FilterState; label: string; value: string }[] = [];
 
@@ -497,18 +481,15 @@ function ActiveFilters({
     }
   }
 
-  if (filters.invoiceNumbers && filters.invoiceNumbers.length > 0) {
-    activeFilters.push({ key: 'invoiceNumbers', label: 'Invoice#', value: filters.invoiceNumbers.join(', ') });
-  }
-
   if (filters.status) {
     activeFilters.push({ key: 'status', label: 'Status', value: filters.status });
   }
 
-  if (activeFilters.length === 0) return null;
+  const hasInvoices = filters.invoiceNumbers.length > 0;
+  if (activeFilters.length === 0 && !hasInvoices) return null;
 
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <div className="flex flex-wrap items-center gap-2 text-sm">
       <span className="text-gray-600 font-medium">Active:</span>
       {activeFilters.map((filter) => (
         <button
@@ -523,6 +504,27 @@ function ActiveFilters({
           </svg>
         </button>
       ))}
+      {hasInvoices && (
+        <div className="flex flex-wrap items-center gap-1">
+          <span className="text-gray-700 font-medium">Invoice#:</span>
+          {filters.invoiceNumbers.map((invoice) => (
+            <span
+              key={invoice}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-md"
+            >
+              <span className="font-semibold">{invoice}</span>
+              <button
+                type="button"
+                onClick={() => onRemoveInvoiceNumber(invoice)}
+                className="text-blue-500 hover:text-blue-700"
+                aria-label={`Remove invoice ${invoice}`}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -1734,13 +1736,17 @@ export default function QueueV2Page() {
             filters={filters}
             buyers={buyers}
             onRemove={(key) => {
-              if (key === 'invoiceNumbers') {
-                updateFiltersAndSort({ invoiceNumbers: [] });
-              } else if (key === 'status') {
+              if (key === 'status') {
                 updateFiltersAndSort({ status: null });
+              } else if (key === 'invoiceNumbers') {
+                updateFiltersAndSort({ invoiceNumbers: [] });
               } else {
                 updateFiltersAndSort({ [key]: null });
               }
+            }}
+            onRemoveInvoiceNumber={(invoiceNumber) => {
+              const next = (filters.invoiceNumbers || []).filter((inv) => inv !== invoiceNumber);
+              updateFiltersAndSort({ invoiceNumbers: next });
             }}
           />
         </div>
