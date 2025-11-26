@@ -682,6 +682,8 @@ function MassActionBar({
   selectedCount,
   pageSelectedCount,
   totalCount,
+  downloadDisabledReason,
+  downloadChecking,
   onSelectAll,
   onClear,
   onDownload,
@@ -693,6 +695,8 @@ function MassActionBar({
   selectedCount: number;
   pageSelectedCount: number;
   totalCount: number;
+  downloadDisabledReason?: string | null;
+  downloadChecking?: boolean;
   onSelectAll: () => void;
   onClear: () => void;
   onDownload: () => void;
@@ -700,14 +704,18 @@ function MassActionBar({
   onDelete: () => void;
   onUpdateBuyer: () => void;
 }) {
+  const downloadDisabled = selectedCount === 0 || downloadChecking || Boolean(downloadDisabledReason);
+  const downloadTitle = downloadDisabledReason || (downloadChecking ? 'Checking selection…' : undefined);
+
   return (
-    <div className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-4 py-3 shadow-sm">
-      <div className="flex items-center gap-3">
-        <div className="text-sm text-gray-900">
-          {selectedCount === 0 ? (
-            <span className="text-gray-600">Select invoices to perform bulk actions</span>
-          ) : mode === 'all' && selectedCount === totalCount ? (
-            <span className="font-semibold">All {totalCount} selected</span>
+    <div className="bg-white border border-gray-200 rounded-lg px-4 py-3 shadow-sm">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-gray-900">
+            {selectedCount === 0 ? (
+              <span className="text-gray-600">Select invoices to perform bulk actions</span>
+            ) : mode === 'all' && selectedCount === totalCount ? (
+              <span className="font-semibold">All {totalCount} selected</span>
           ) : (
             <span className="font-semibold">{selectedCount} selected</span>
           )}
@@ -738,36 +746,46 @@ function MassActionBar({
         )}
       </div>
 
-      <div className="flex items-center gap-2">
-        <button
-          onClick={onDownload}
-          disabled={selectedCount === 0}
-          className={`px-3 py-2 rounded-md text-sm font-semibold border transition-colors ${selectedCount === 0 ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed' : 'text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100'}`}
-        >
-          Download XML
-        </button>
-        <button
-          onClick={onUpdateDate}
-          disabled={selectedCount === 0}
-          className={`px-3 py-2 rounded-md text-sm font-semibold border transition-colors ${selectedCount === 0 ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed' : 'text-indigo-800 bg-indigo-50 border-indigo-200 hover:bg-indigo-100'}`}
-        >
-          Update Date
-        </button>
-        <button
-          onClick={onUpdateBuyer}
-          disabled={selectedCount === 0}
-          className={`px-3 py-2 rounded-md text-sm font-semibold border transition-colors ${selectedCount === 0 ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed' : 'text-amber-800 bg-amber-50 border-amber-200 hover:bg-amber-100'}`}
-        >
-          Update Buyer
-        </button>
-        <button
-          onClick={onDelete}
-          disabled={selectedCount === 0}
-          className={`px-3 py-2 rounded-md text-sm font-semibold border transition-colors ${selectedCount === 0 ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100'}`}
-        >
-          Delete
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onDownload}
+            disabled={downloadDisabled}
+            title={downloadTitle}
+            className={`px-3 py-2 rounded-md text-sm font-semibold border transition-colors ${downloadDisabled ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed' : 'text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100'}`}
+          >
+            {downloadChecking ? 'Checking…' : 'Download XML'}
+          </button>
+          <button
+            onClick={onUpdateDate}
+            disabled={selectedCount === 0}
+            className={`px-3 py-2 rounded-md text-sm font-semibold border transition-colors ${selectedCount === 0 ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed' : 'text-indigo-800 bg-indigo-50 border-indigo-200 hover:bg-indigo-100'}`}
+          >
+            Update Date
+          </button>
+          <button
+            onClick={onUpdateBuyer}
+            disabled={selectedCount === 0}
+            className={`px-3 py-2 rounded-md text-sm font-semibold border transition-colors ${selectedCount === 0 ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed' : 'text-amber-800 bg-amber-50 border-amber-200 hover:bg-amber-100'}`}
+          >
+            Update Buyer
+          </button>
+          <button
+            onClick={onDelete}
+            disabled={selectedCount === 0}
+            className={`px-3 py-2 rounded-md text-sm font-semibold border transition-colors ${selectedCount === 0 ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100'}`}
+          >
+            Delete
+          </button>
+        </div>
       </div>
+      {downloadDisabledReason && (
+        <div className="mt-2 text-xs text-amber-700 flex items-center gap-1">
+          <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-11.5a.75.75 0 011.5 0v4a.75.75 0 01-1.5 0v-4zm.75 7a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+          </svg>
+          <span>{downloadDisabledReason}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -830,6 +848,8 @@ export default function QueueV2Page() {
   const [invoiceNumberDrafts, setInvoiceNumberDrafts] = useState<Record<string, string>>({});
   const [invoiceNumberSaving, setInvoiceNumberSaving] = useState<Set<string>>(new Set());
   const [invoiceNumberErrors, setInvoiceNumberErrors] = useState<Record<string, string>>({});
+  const [downloadBlockReason, setDownloadBlockReason] = useState<string | null>(null);
+  const [downloadCheckLoading, setDownloadCheckLoading] = useState(false);
 
   // Fetch unique buyers for dropdown
   const fetchBuyers = async () => {
@@ -1132,6 +1152,105 @@ export default function QueueV2Page() {
     return selection.selectedIds.has(id);
   };
 
+  const checkIncompleteInSelection = useCallback(async () => {
+    const selectedOnPage = invoices.filter((inv) => isSelected(inv.id));
+    const incompleteOnPage = selectedOnPage.filter((inv) => inv.status === 'incomplete');
+    if (incompleteOnPage.length > 0) {
+      return {
+        hasIncomplete: true,
+        samples: incompleteOnPage.slice(0, 3).map((inv) => inv.invoiceNumber)
+      };
+    }
+
+    if (selection.mode !== 'all') {
+      return { hasIncomplete: false, samples: [] };
+    }
+
+    if (filters.status === 'complete') {
+      return { hasIncomplete: false, samples: [] };
+    }
+
+    const CHUNK_SIZE = 500;
+    let offset = 0;
+    let total = pagination.total;
+
+    while (offset < total) {
+      const params = new URLSearchParams({
+        limit: CHUNK_SIZE.toString(),
+        offset: offset.toString(),
+        status: 'incomplete',
+        sort: sort.field,
+        dir: sort.direction
+      });
+
+      if (filters.buyerPartyId) {
+        params.set('buyer', filters.buyerPartyId);
+      }
+      if (filters.invoiceNumbers && filters.invoiceNumbers.length > 0) {
+        params.set('invoices', filters.invoiceNumbers.join(','));
+      }
+
+      const res = await fetch(`/api/tax-invoices?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error('Failed to verify incomplete invoices');
+      }
+
+      const data = await res.json();
+      const rows: Invoice[] = data?.invoices || [];
+      const notExcluded = rows.filter((inv) => !selection.excludedIds.has(inv.id));
+      if (notExcluded.length > 0) {
+        return {
+          hasIncomplete: true,
+          samples: notExcluded.slice(0, 3).map((inv) => inv.invoiceNumber)
+        };
+      }
+
+      const nextTotal = data?.pagination?.total;
+      total = typeof nextTotal === 'number' ? nextTotal : total;
+      offset += CHUNK_SIZE;
+      if (rows.length === 0) break;
+    }
+
+    return { hasIncomplete: false, samples: [] };
+  }, [filters.buyerPartyId, filters.invoiceNumbers, filters.status, invoices, isSelected, pagination.total, selection.excludedIds, selection.mode, sort.direction, sort.field]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const runCheck = async () => {
+      if (selectedCount === 0) {
+        setDownloadBlockReason(null);
+        setDownloadCheckLoading(false);
+        return;
+      }
+
+      setDownloadCheckLoading(true);
+      try {
+        const result = await checkIncompleteInSelection();
+        if (cancelled) return;
+        if (result.hasIncomplete) {
+          const sampleText = result.samples.length > 0 ? ` (${result.samples.join(', ')}${result.samples.length >= 3 ? '…' : ''})` : '';
+          setDownloadBlockReason(`Download XML is disabled because some selected invoices are incomplete${sampleText}. Resolve or deselect incomplete invoices to continue.`);
+        } else {
+          setDownloadBlockReason(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setDownloadBlockReason('Unable to verify invoice status for download right now.');
+        }
+      } finally {
+        if (!cancelled) {
+          setDownloadCheckLoading(false);
+        }
+      }
+    };
+
+    runCheck();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCount, checkIncompleteInSelection]);
+
   const formatCurrency = useCallback(
     (value: number | null) =>
       new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0, notation: 'compact' }).format(value ?? 0),
@@ -1303,26 +1422,86 @@ export default function QueueV2Page() {
     });
   };
 
+  const gatherInvoicesForDownload = useCallback(async (): Promise<{ invoiceNumbers: string[]; incompleteInvoices: string[] }> => {
+    if (selection.mode === 'all') {
+      const invoiceNumbers: string[] = [];
+      const incompleteInvoices: string[] = [];
+      const CHUNK_SIZE = 500;
+      let offset = 0;
+      let total = pagination.total;
+
+      while (offset < total) {
+        const params = new URLSearchParams({
+          limit: CHUNK_SIZE.toString(),
+          offset: offset.toString(),
+          sort: sort.field,
+          dir: sort.direction
+        });
+
+        if (filters.buyerPartyId) {
+          params.set('buyer', filters.buyerPartyId);
+        }
+        if (filters.invoiceNumbers && filters.invoiceNumbers.length > 0) {
+          params.set('invoices', filters.invoiceNumbers.join(','));
+        }
+        if (filters.status) {
+          params.set('status', filters.status);
+        }
+
+        const res = await fetch(`/api/tax-invoices?${params.toString()}`);
+        if (!res.ok) {
+          throw new Error('Failed to gather invoices for download');
+        }
+        const data = await res.json();
+        const rows: Invoice[] = data?.invoices || [];
+
+        rows.forEach((inv) => {
+          if (selection.excludedIds.has(inv.id)) return;
+          invoiceNumbers.push(inv.invoiceNumber);
+          if (inv.status === 'incomplete') {
+            incompleteInvoices.push(inv.invoiceNumber);
+          }
+        });
+
+        const nextTotal = data?.pagination?.total;
+        total = typeof nextTotal === 'number' ? nextTotal : total;
+        offset += CHUNK_SIZE;
+        if (rows.length === 0) break;
+      }
+
+      return { invoiceNumbers, incompleteInvoices };
+    }
+
+    const selected = getActualSelection;
+    const invoiceNumbers = selected.map((inv) => inv.invoiceNumber);
+    const incompleteInvoices = selected.filter((inv) => inv.status === 'incomplete').map((inv) => inv.invoiceNumber);
+    return { invoiceNumbers, incompleteInvoices };
+  }, [filters.buyerPartyId, filters.invoiceNumbers, filters.status, getActualSelection, pagination.total, selection.excludedIds, selection.mode, sort.direction, sort.field]);
+
   const handleDownload = async () => {
     if (selectedCount === 0) return;
 
-    const confirmed = window.confirm(`Download XML for ${selectedCount} invoice${selectedCount > 1 ? 's' : ''}?`);
-    if (!confirmed) return;
-
     try {
-      // For 'all' mode, we need to fetch all invoice numbers except excluded ones
-      let invoiceNumbers: string[];
+      setDownloadCheckLoading(true);
+      const { invoiceNumbers, incompleteInvoices } = await gatherInvoicesForDownload();
 
-      if (selection.mode === 'all') {
-        // Fetch all invoice numbers from API
-        const res = await fetch(`/api/tax-invoices?limit=${pagination.total}`);
-        const data = await res.json();
-        invoiceNumbers = data.invoices
-          .filter((inv: Invoice) => !selection.excludedIds.has(inv.id))
-          .map((inv: Invoice) => inv.invoiceNumber);
-      } else {
-        invoiceNumbers = getActualSelection.map((inv) => inv.invoiceNumber);
+      if (invoiceNumbers.length === 0) {
+        setDownloadBlockReason('No invoices available for download with the current selection.');
+        return;
       }
+
+      if (incompleteInvoices.length > 0) {
+        const sample = incompleteInvoices.slice(0, 3).join(', ');
+        const message = `Download XML is blocked because ${incompleteInvoices.length} invoice${incompleteInvoices.length > 1 ? 's' : ''} are incomplete${sample ? ` (${sample}${incompleteInvoices.length > 3 ? '…' : ''})` : ''}. Resolve or deselect incomplete invoices first.`;
+        setDownloadBlockReason(message);
+        alert(message);
+        return;
+      }
+
+      setDownloadBlockReason(null);
+
+      const confirmed = window.confirm(`Download XML for ${invoiceNumbers.length} invoice${invoiceNumbers.length > 1 ? 's' : ''}?`);
+      if (!confirmed) return;
 
       const res = await fetch('/api/tax-invoices/bulk-download', {
         method: 'POST',
@@ -1345,7 +1524,11 @@ export default function QueueV2Page() {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to download');
+      const message = err instanceof Error ? err.message : 'Failed to download XML';
+      setDownloadBlockReason(message);
+      alert(message);
+    } finally {
+      setDownloadCheckLoading(false);
     }
   };
 
@@ -1762,6 +1945,8 @@ export default function QueueV2Page() {
           onUpdateDate={() => openDateModalForSelection()}
           onDelete={handleDelete}
           onUpdateBuyer={openLinkBuyerModal}
+          downloadDisabledReason={downloadBlockReason}
+          downloadChecking={downloadCheckLoading}
         />
 
         <div className="mt-6 overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">

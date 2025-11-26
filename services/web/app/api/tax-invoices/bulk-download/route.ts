@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { spawn } from 'child_process'
 import { join } from 'path'
 import { readFileSync } from 'fs'
+import { prisma } from '@/lib/prisma'
 
 const CONFIG_PATH = join(process.cwd(), 'services', 'config', 'invoice_pt_sensient.json')
 const PYTHON_BIN = process.env.PYTHON_BIN || 'python3'
@@ -56,6 +57,29 @@ export const POST = async (req: NextRequest) => {
 
   if (invoiceNumbers.length === 0) {
     return NextResponse.json({ error: { code: 'NO_INVOICES', message: 'No invoice numbers provided' } }, { status: 400 })
+  }
+
+  const invoiceStatuses = await prisma.$queryRaw<{ invoice_number: string; is_complete: boolean | null }[]>`
+    SELECT invoice_number, is_complete
+    FROM tax_invoices
+    WHERE invoice_number = ANY(${invoiceNumbers}::text[])
+  `
+
+  const incompleteInvoices = invoiceStatuses
+    .filter((row) => row.is_complete !== true)
+    .map((row) => row.invoice_number)
+
+  if (incompleteInvoices.length > 0) {
+    return NextResponse.json(
+      {
+        error: {
+          code: 'INCOMPLETE_INVOICE',
+          message: `Cannot download XML for incomplete invoices: ${incompleteInvoices.slice(0, 5).join(', ')}`
+        },
+        details: { invoices: incompleteInvoices }
+      },
+      { status: 400 }
+    )
   }
 
   const mappingPath = loadMappingPath()
