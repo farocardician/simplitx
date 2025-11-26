@@ -46,6 +46,35 @@ interface Buyer {
   name: string;
 }
 
+interface PartyOption {
+  id: string;
+  displayName: string;
+  partyType: 'buyer' | 'seller';
+  tinDisplay: string;
+}
+
+interface UndoSnapshot {
+  id: string;
+  buyer_party_id: string | null;
+  buyer_name: string | null;
+  buyer_tin: string | null;
+  buyer_document: string | null;
+  buyer_country: string | null;
+  buyer_document_number: string | null;
+  buyer_address: string | null;
+  buyer_email: string | null;
+  buyer_idtku: string | null;
+  trx_code: string | null;
+  missing_fields: string[] | null;
+  is_complete: boolean | null;
+}
+
+type BannerState = {
+  type: 'success' | 'error';
+  message: string;
+  onUndo?: () => void;
+};
+
 const STATUS_STYLES: Record<InvoiceStatus, { bg: string; text: string; border: string; label: string }> = {
   complete: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'Complete' },
   processing: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', label: 'Processing' },
@@ -427,7 +456,8 @@ function MassActionBar({
   onSelectAll,
   onClear,
   onDownload,
-  onDelete
+  onDelete,
+  onUpdateBuyer
 }: {
   mode: SelectionMode;
   selectedCount: number;
@@ -437,6 +467,7 @@ function MassActionBar({
   onClear: () => void;
   onDownload: () => void;
   onDelete: () => void;
+  onUpdateBuyer: () => void;
 }) {
   return (
     <div className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-4 py-3 shadow-sm">
@@ -483,6 +514,13 @@ function MassActionBar({
           className={`px-3 py-2 rounded-md text-sm font-semibold border transition-colors ${selectedCount === 0 ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed' : 'text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100'}`}
         >
           Download XML
+        </button>
+        <button
+          onClick={onUpdateBuyer}
+          disabled={selectedCount === 0}
+          className={`px-3 py-2 rounded-md text-sm font-semibold border transition-colors ${selectedCount === 0 ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed' : 'text-amber-800 bg-amber-50 border-amber-200 hover:bg-amber-100'}`}
+        >
+          Update Buyer
         </button>
         <button
           onClick={onDelete}
@@ -534,7 +572,16 @@ export default function QueueV2Page() {
   const [transactionCodes, setTransactionCodes] = useState<TransactionCode[]>([]);
   const [sellers, setSellers] = useState<SellerOption[]>([]);
   const [sellersLoading, setSellersLoading] = useState(false);
-  const [banner, setBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [banner, setBanner] = useState<BannerState | null>(null);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [partyOptions, setPartyOptions] = useState<PartyOption[]>([]);
+  const [partySearch, setPartySearch] = useState('');
+  const [debouncedPartySearch, setDebouncedPartySearch] = useState('');
+  const [partyTypeFilter, setPartyTypeFilter] = useState<'all' | 'buyer'>('buyer');
+  const [selectedPartyId, setSelectedPartyId] = useState('');
+  const [partyLoading, setPartyLoading] = useState(false);
+  const [linkModalError, setLinkModalError] = useState<string | null>(null);
+  const [linkModalLoading, setLinkModalLoading] = useState(false);
 
   // Fetch unique buyers for dropdown
   const fetchBuyers = async () => {
@@ -595,6 +642,47 @@ export default function QueueV2Page() {
     }
   }, [sellers.length]);
 
+  const fetchPartyOptions = useCallback(async () => {
+    try {
+      setPartyLoading(true);
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '50'
+      });
+      if (partyTypeFilter === 'buyer') {
+        params.append('type', 'buyer');
+      }
+      if (debouncedPartySearch && debouncedPartySearch.length >= 2) {
+        params.append('search', debouncedPartySearch);
+      }
+      const res = await fetch(`/api/parties?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch parties');
+      }
+      const data = await res.json();
+      const mapped: PartyOption[] = (data.parties || []).map((p: any) => ({
+        id: p.id,
+        displayName: p.displayName,
+        partyType: p.partyType,
+        tinDisplay: p.tinDisplay
+      }));
+      setPartyOptions(mapped);
+      if (mapped.length > 0) {
+        const exists = mapped.some((p) => p.id === selectedPartyId);
+        if (!exists) {
+          setSelectedPartyId(mapped[0].id);
+        }
+      } else {
+        setSelectedPartyId('');
+      }
+    } catch (err) {
+      console.error('Failed to fetch party options', err);
+      setLinkModalError(err instanceof Error ? err.message : 'Failed to load parties');
+    } finally {
+      setPartyLoading(false);
+    }
+  }, [debouncedPartySearch, partyTypeFilter, selectedPartyId]);
+
   // Initialize from URL params or localStorage on mount
   useEffect(() => {
     const buyerParam = searchParams.get('buyer');
@@ -634,6 +722,17 @@ export default function QueueV2Page() {
       fetchSellerOptions();
     }
   }, [showAddBuyerModal, fetchSellerOptions, fetchTransactionCodes]);
+
+  useEffect(() => {
+    if (showLinkModal) {
+      fetchPartyOptions();
+    }
+  }, [showLinkModal, fetchPartyOptions]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedPartySearch(partySearch.trim()), 250);
+    return () => clearTimeout(timer);
+  }, [partySearch]);
 
   // Sync to URL and localStorage on filter/sort change
   const updateFiltersAndSort = useCallback((
@@ -914,6 +1013,20 @@ export default function QueueV2Page() {
     setShowAddBuyerModal(true);
   };
 
+  const openLinkBuyerModal = () => {
+    if (selectedCount === 0) return;
+    setLinkModalError(null);
+    setSelectedPartyId('');
+    setShowLinkModal(true);
+  };
+
+  const closeLinkBuyerModal = () => {
+    setShowLinkModal(false);
+    setLinkModalError(null);
+    setPartyOptions([]);
+    setPartySearch('');
+  };
+
   const closeAddBuyerModal = () => {
     setShowAddBuyerModal(false);
     setBuyerNameToResolve(null);
@@ -966,7 +1079,90 @@ export default function QueueV2Page() {
     closeAddBuyerModal();
   };
 
-  if (loading && !showAddBuyerModal) {
+  const gatherSelectedInvoiceIds = async (): Promise<string[]> => {
+    if (selectedCount === 0) return [];
+
+    if (selection.mode === 'all') {
+      const res = await fetch(`/api/tax-invoices?limit=${pagination.total}`);
+      const data = await res.json();
+      return (data.invoices || [])
+        .filter((inv: Invoice) => !selection.excludedIds.has(inv.id))
+        .map((inv: Invoice) => inv.id);
+    }
+
+    return getActualSelection.map((inv) => inv.id);
+  };
+
+  const handleLinkBuyerToInvoices = async () => {
+    if (!selectedPartyId) {
+      setLinkModalError('Select a company first');
+      return;
+    }
+
+    try {
+      setLinkModalLoading(true);
+      setLinkModalError(null);
+      const invoiceIds = await gatherSelectedInvoiceIds();
+      if (invoiceIds.length === 0) {
+        setLinkModalError('No invoices selected');
+        return;
+      }
+
+      const response = await fetch('/api/tax-invoices/link-buyer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ partyId: selectedPartyId, invoiceIds })
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.error?.message || 'Failed to link buyer');
+      }
+
+      const updatedCount = payload?.updated ?? invoiceIds.length;
+      const partyName = payload?.partyName ?? 'selected party';
+      const undoData: UndoSnapshot[] = payload?.undo || [];
+
+      await fetchInvoices(currentPage, perPage);
+      await fetchBuyers();
+      setShowLinkModal(false);
+      setBanner({
+        type: 'success',
+        message: `Linked ${updatedCount} invoice(s) to "${partyName}".`,
+        onUndo: undoData.length
+          ? async () => {
+              try {
+                const undoRes = await fetch('/api/tax-invoices/link-buyer', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'undo', previous: undoData })
+                });
+                const undoPayload = await undoRes.json().catch(() => null);
+                if (!undoRes.ok) {
+                  throw new Error(undoPayload?.error?.message || 'Failed to undo');
+                }
+                await fetchInvoices(currentPage, perPage);
+                setBanner({
+                  type: 'success',
+                  message: 'Reverted buyer update.'
+                });
+              } catch (err) {
+                setBanner({
+                  type: 'error',
+                  message: err instanceof Error ? err.message : 'Failed to undo buyer update'
+                });
+              }
+            }
+          : undefined
+      });
+    } catch (err) {
+      setLinkModalError(err instanceof Error ? err.message : 'Failed to link buyer');
+    } finally {
+      setLinkModalLoading(false);
+    }
+  };
+
+  if (loading && !showAddBuyerModal && !showLinkModal) {
     return <div className="flex justify-center p-8 text-gray-600">Loading invoices...</div>;
   }
 
@@ -993,17 +1189,30 @@ export default function QueueV2Page() {
         {banner && (
           <div className={`mb-4 rounded-lg border px-4 py-3 ${banner.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
             <div className="flex items-start justify-between gap-3">
-              <span>{banner.message}</span>
-              <button
-                type="button"
-                onClick={() => setBanner(null)}
-                className="text-sm font-semibold text-gray-500 hover:text-gray-700"
-                aria-label="Dismiss message"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <span>{banner.message}</span>
+                {banner.onUndo && (
+                  <button
+                    type="button"
+                    onClick={banner.onUndo}
+                    className="text-sm font-semibold text-blue-700 hover:text-blue-800"
+                  >
+                    Undo
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBanner(null)}
+                  className="text-sm font-semibold text-gray-500 hover:text-gray-700"
+                  aria-label="Dismiss message"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1038,6 +1247,7 @@ export default function QueueV2Page() {
           onClear={clearSelection}
           onDownload={handleDownload}
           onDelete={handleDelete}
+          onUpdateBuyer={openLinkBuyerModal}
         />
 
         <div className="mt-6 overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -1178,6 +1388,150 @@ export default function QueueV2Page() {
                 sellersLoading={sellersLoading}
                 className="p-0 bg-transparent"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLinkModal && (
+        <div
+          className="fixed inset-0 z-30 flex items-center justify-center bg-gray-900/60 px-4 py-6"
+          onClick={closeLinkBuyerModal}
+        >
+          <div
+            className="w-full max-w-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-6">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Link Invoices</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mt-1">
+                    Link {selectedCount} invoice{selectedCount > 1 ? 's' : ''} to an existing buyer
+                  </h3>
+                  <p className="text-sm text-gray-600">Choose a registered company. Search is debounced to reduce noise.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeLinkBuyerModal}
+                  className="text-gray-500 hover:text-gray-700"
+                  aria-label="Close link modal"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {linkModalError && (
+                <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {linkModalError}
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-3 mb-3">
+                <span className="text-sm font-medium text-gray-700">Filter:</span>
+                <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="radio"
+                    name="party-filter"
+                    value="buyer"
+                    checked={partyTypeFilter === 'buyer'}
+                    onChange={() => {
+                      setLinkModalError(null);
+                      setPartyTypeFilter('buyer');
+                    }}
+                  />
+                  Buyers only
+                </label>
+                <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="radio"
+                    name="party-filter"
+                    value="all"
+                    checked={partyTypeFilter === 'all'}
+                    onChange={() => {
+                      setLinkModalError(null);
+                      setPartyTypeFilter('all');
+                    }}
+                  />
+                  All parties
+                </label>
+              </div>
+
+              <div className="mb-4">
+                <div className="relative">
+                  <input
+                    type="search"
+                    value={partySearch}
+                    onChange={(e) => {
+                      setLinkModalError(null);
+                      setPartySearch(e.target.value);
+                    }}
+                    placeholder="Search by company name or TIN..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {partyLoading && (
+                    <div className="absolute inset-y-0 right-3 flex items-center">
+                      <svg className="w-4 h-4 text-gray-400 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a10 10 0 00-10 10h4z"></path>
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Type at least 2 characters to narrow the list.</p>
+              </div>
+
+              <div className="border border-gray-200 rounded-lg max-h-72 overflow-y-auto divide-y divide-gray-100">
+                {partyOptions.map((party) => (
+                  <button
+                    key={party.id}
+                    type="button"
+                    onClick={() => setSelectedPartyId(party.id)}
+                    className={`w-full px-4 py-3 text-left transition-colors ${
+                      selectedPartyId === party.id ? 'bg-blue-50 border-l-4 border-blue-500' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{party.displayName}</p>
+                        <p className="text-xs text-gray-600">TIN: {party.tinDisplay || '—'}</p>
+                      </div>
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${party.partyType === 'buyer' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
+                        {party.partyType === 'buyer' ? 'Buyer' : 'Seller'}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+                {!partyLoading && partyOptions.length === 0 && (
+                  <div className="px-4 py-6 text-sm text-gray-500 text-center">No companies found.</div>
+                )}
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <span className="text-sm text-gray-600">
+                  Linking {selectedCount} invoice{selectedCount > 1 ? 's' : ''} to the selected company.
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={closeLinkBuyerModal}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                    disabled={linkModalLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLinkBuyerToInvoices}
+                    disabled={linkModalLoading || !selectedPartyId}
+                    className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition-colors ${linkModalLoading || !selectedPartyId ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  >
+                    {linkModalLoading ? 'Linking...' : 'Link invoices'}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
