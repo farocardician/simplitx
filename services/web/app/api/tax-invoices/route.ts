@@ -39,7 +39,7 @@ export const GET = async (req: NextRequest) => {
     whereClause = Prisma.sql`${whereClause} AND tin = ${filterTin}`
   }
   if (buyerFilter) {
-    whereClause = Prisma.sql`${whereClause} AND buyer_party_id = ${buyerFilter}::uuid`
+    whereClause = Prisma.sql`${whereClause} AND buyer_party_id::text = ${buyerFilter}`
   }
   if (invoiceNumbersParam) {
     const list = invoiceNumbersParam

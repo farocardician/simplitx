@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 type Snapshot = {
   id: string;
@@ -27,12 +28,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const current = await prisma.$queryRaw<Snapshot[]>`
-      SELECT id, invoice_number, ref_desc, buyer_party_id
-      FROM tax_invoices
-      WHERE id = ${invoiceId}::uuid
-      LIMIT 1
-    `;
+    const current = await prisma.$queryRaw<Snapshot[]>(
+      Prisma.sql`
+        SELECT id, invoice_number, ref_desc, buyer_party_id
+        FROM tax_invoices
+        WHERE id = ${invoiceId}::uuid
+        LIMIT 1
+      `
+    );
 
     if (current.length === 0) {
       return NextResponse.json(
@@ -44,14 +47,16 @@ export async function POST(req: NextRequest) {
     const row: any = current[0];
     const buyerPartyId: string | null = row.buyer_party_id ?? null;
 
-    const duplicate = await prisma.$queryRaw<{ id: string }[]>`
-      SELECT id
-      FROM tax_invoices
-      WHERE invoice_number = ${invoiceNumber}
-        AND buyer_party_id IS NOT DISTINCT FROM ${buyerPartyId}
-        AND id <> ${invoiceId}::uuid
-      LIMIT 1
-    `;
+    const duplicate = await prisma.$queryRaw<{ id: string }[]>(
+      Prisma.sql`
+        SELECT id
+        FROM tax_invoices
+        WHERE invoice_number = ${invoiceNumber}
+          AND buyer_party_id IS NOT DISTINCT FROM ${buyerPartyId}::uuid
+          AND id <> ${invoiceId}::uuid
+        LIMIT 1
+      `
+    );
 
     if (duplicate.length > 0) {
       return NextResponse.json(
@@ -60,13 +65,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await prisma.$executeRaw`
-      UPDATE tax_invoices
-      SET invoice_number = ${invoiceNumber},
-          ref_desc = ${invoiceNumber},
-          updated_at = NOW()
-      WHERE id = ${invoiceId}::uuid
-    `;
+    await prisma.$executeRaw(
+      Prisma.sql`
+        UPDATE tax_invoices
+        SET invoice_number = ${invoiceNumber},
+            ref_desc = ${invoiceNumber},
+            updated_at = NOW()
+        WHERE id = ${invoiceId}::uuid
+      `
+    );
 
     return NextResponse.json({
       updated: 1,

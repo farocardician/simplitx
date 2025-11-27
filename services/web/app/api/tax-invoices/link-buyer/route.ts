@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 type Snapshot = {
   id: string;
@@ -75,24 +76,26 @@ async function applyLink(partyId: string, invoiceIds: string[]) {
     return { error: { code: 'INVALID_REQUEST', message: 'invoiceIds must be a non-empty array' }, status: 400 };
   }
 
-  const invoices = await prisma.$queryRaw<Snapshot[]>`
-    SELECT
-      id,
-      buyer_party_id,
-      buyer_name,
-      buyer_tin,
-      buyer_document,
-      buyer_country,
-      buyer_document_number,
-      buyer_address,
-      buyer_email,
-      buyer_idtku,
-      trx_code,
-      missing_fields,
-      is_complete
-    FROM tax_invoices
-    WHERE id = ANY(${invoiceIds}::uuid[])
-  `;
+  const invoices = await prisma.$queryRaw<Snapshot[]>(
+    Prisma.sql`
+      SELECT
+        id,
+        buyer_party_id,
+        buyer_name,
+        buyer_tin,
+        buyer_document,
+        buyer_country,
+        buyer_document_number,
+        buyer_address,
+        buyer_email,
+        buyer_idtku,
+        trx_code,
+        missing_fields,
+        is_complete
+      FROM tax_invoices
+      WHERE id = ANY(${invoiceIds}::uuid[])
+    `
+  );
 
   if (invoices.length === 0) {
     return { error: { code: 'NOT_FOUND', message: 'No invoices found for provided ids' }, status: 404 };
@@ -116,24 +119,26 @@ async function applyLink(partyId: string, invoiceIds: string[]) {
       buyer_name: buyerName
     });
 
-    return prisma.$executeRaw`
-      UPDATE tax_invoices
-      SET
-        buyer_party_id = ${party.id}::uuid,
-        buyer_name = ${buyerName},
-        buyer_tin = ${party.tinNormalized},
-        buyer_document = ${buyerDocument},
-        buyer_country = ${party.countryCode},
-        buyer_document_number = ${party.buyerDocumentNumber ?? null},
-        buyer_address = ${party.addressFull},
-        buyer_email = ${party.email},
-        buyer_idtku = ${party.buyerIdtku},
-        trx_code = ${resolvedTrxCode},
-        missing_fields = ${JSON.stringify(missingFields)}::jsonb,
-        is_complete = ${missingFields.length === 0},
-        updated_at = NOW()
-      WHERE id = ${inv.id}::uuid
-    `;
+    return prisma.$executeRaw(
+      Prisma.sql`
+        UPDATE tax_invoices
+        SET
+          buyer_party_id = ${party.id}::uuid,
+          buyer_name = ${buyerName},
+          buyer_tin = ${party.tinNormalized},
+          buyer_document = ${buyerDocument},
+          buyer_country = ${party.countryCode},
+          buyer_document_number = ${party.buyerDocumentNumber ?? null},
+          buyer_address = ${party.addressFull},
+          buyer_email = ${party.email},
+          buyer_idtku = ${party.buyerIdtku},
+          trx_code = ${resolvedTrxCode},
+          missing_fields = ${JSON.stringify(missingFields)}::jsonb,
+          is_complete = ${missingFields.length === 0},
+          updated_at = NOW()
+        WHERE id = ${inv.id}::uuid
+      `
+    );
   });
 
   await prisma.$transaction(updates);
@@ -150,24 +155,26 @@ async function undoLink(previous: Snapshot[]) {
     return { error: { code: 'INVALID_REQUEST', message: 'previous snapshots required for undo' }, status: 400 };
   }
 
-  const updates = previous.map((inv) => prisma.$executeRaw`
-    UPDATE tax_invoices
-    SET
-      buyer_party_id = ${inv.buyer_party_id},
-      buyer_name = ${inv.buyer_name},
-      buyer_tin = ${inv.buyer_tin},
-      buyer_document = ${inv.buyer_document},
-      buyer_country = ${inv.buyer_country},
-      buyer_document_number = ${inv.buyer_document_number},
-      buyer_address = ${inv.buyer_address},
-      buyer_email = ${inv.buyer_email},
-      buyer_idtku = ${inv.buyer_idtku},
-      trx_code = ${inv.trx_code},
-      missing_fields = ${inv.missing_fields ? JSON.stringify(inv.missing_fields) : null}::jsonb,
-      is_complete = ${inv.is_complete},
-      updated_at = NOW()
-    WHERE id = ${inv.id}::uuid
-  `);
+  const updates = previous.map((inv) => prisma.$executeRaw(
+    Prisma.sql`
+      UPDATE tax_invoices
+      SET
+        buyer_party_id = ${inv.buyer_party_id}::uuid,
+        buyer_name = ${inv.buyer_name},
+        buyer_tin = ${inv.buyer_tin},
+        buyer_document = ${inv.buyer_document},
+        buyer_country = ${inv.buyer_country},
+        buyer_document_number = ${inv.buyer_document_number},
+        buyer_address = ${inv.buyer_address},
+        buyer_email = ${inv.buyer_email},
+        buyer_idtku = ${inv.buyer_idtku},
+        trx_code = ${inv.trx_code},
+        missing_fields = ${inv.missing_fields ? JSON.stringify(inv.missing_fields) : null}::jsonb,
+        is_complete = ${inv.is_complete},
+        updated_at = NOW()
+      WHERE id = ${inv.id}::uuid
+    `
+  ));
 
   await prisma.$transaction(updates);
 

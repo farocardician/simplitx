@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 type Snapshot = {
   id: string;
@@ -22,22 +23,26 @@ async function applyUpdate(invoiceIds: string[], invoiceDate: string) {
     return { error: { code: 'INVALID_REQUEST', message: 'invoiceIds must be a non-empty array' }, status: 400 };
   }
 
-  const snapshots = await prisma.$queryRaw<Snapshot[]>`
-    SELECT id, tax_invoice_date
-    FROM tax_invoices
-    WHERE id = ANY(${invoiceIds}::uuid[])
-  `;
+  const snapshots = await prisma.$queryRaw<Snapshot[]>(
+    Prisma.sql`
+      SELECT id, tax_invoice_date
+      FROM tax_invoices
+      WHERE id = ANY(${invoiceIds}::uuid[])
+    `
+  );
 
   if (snapshots.length === 0) {
     return { error: { code: 'NOT_FOUND', message: 'No invoices found for provided ids' }, status: 404 };
   }
 
-  await prisma.$executeRaw`
-    UPDATE tax_invoices
-    SET tax_invoice_date = ${parsedDate},
-        updated_at = NOW()
-    WHERE id = ANY(${invoiceIds}::uuid[])
-  `;
+  await prisma.$executeRaw(
+    Prisma.sql`
+      UPDATE tax_invoices
+      SET tax_invoice_date = ${parsedDate},
+          updated_at = NOW()
+      WHERE id = ANY(${invoiceIds}::uuid[])
+    `
+  );
 
   return { updated: snapshots.length, undo: snapshots, invoiceDate: invoiceDate };
 }
@@ -48,12 +53,14 @@ async function undoUpdate(previous: Snapshot[]) {
   }
 
   const updates = previous.map((snap) =>
-    prisma.$executeRaw`
-      UPDATE tax_invoices
-      SET tax_invoice_date = ${snap.tax_invoice_date ? new Date(snap.tax_invoice_date) : null},
-          updated_at = NOW()
-      WHERE id = ${snap.id}::uuid
-    `
+    prisma.$executeRaw(
+      Prisma.sql`
+        UPDATE tax_invoices
+        SET tax_invoice_date = ${snap.tax_invoice_date ? new Date(snap.tax_invoice_date) : null},
+            updated_at = NOW()
+        WHERE id = ${snap.id}::uuid
+      `
+    )
   );
 
   await prisma.$transaction(updates);

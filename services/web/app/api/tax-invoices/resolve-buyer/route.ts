@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { normalizePartyName } from '@/lib/partyResolver';
 
 type InvoiceRow = {
@@ -70,13 +71,15 @@ export async function POST(req: NextRequest) {
     }
 
     const normalizedBuyerName = normalizePartyName(buyerName);
-    const invoices = await prisma.$queryRaw<InvoiceRow[]>`
-      SELECT id, trx_code
-      FROM tax_invoices
-      WHERE buyer_party_id IS NULL
-        AND buyer_name IS NOT NULL
-        AND normalize_party_name(buyer_name) = ${normalizedBuyerName}
-    `;
+    const invoices = await prisma.$queryRaw<InvoiceRow[]>(
+      Prisma.sql`
+        SELECT id, trx_code
+        FROM tax_invoices
+        WHERE buyer_party_id IS NULL
+          AND buyer_name IS NOT NULL
+          AND normalize_party_name(buyer_name) = ${normalizedBuyerName}
+      `
+    );
 
     if (!invoices.length) {
       return NextResponse.json({
@@ -100,24 +103,26 @@ export async function POST(req: NextRequest) {
         buyer_idtku: party.buyerIdtku ?? null
       });
 
-      return prisma.$executeRaw`
-        UPDATE tax_invoices
-        SET
-          buyer_party_id = ${party.id}::uuid,
-          buyer_name = ${buyerNameForDisplay},
-          buyer_tin = ${party.tinNormalized},
-          buyer_document = ${buyerDocument},
-          buyer_country = ${party.countryCode},
-          buyer_document_number = ${party.buyerDocumentNumber ?? null},
-          buyer_address = ${party.addressFull},
-          buyer_email = ${party.email},
-          buyer_idtku = ${party.buyerIdtku},
-          trx_code = ${resolvedTrxCode},
-          missing_fields = ${JSON.stringify(missingFields)}::jsonb,
-          is_complete = ${missingFields.length === 0},
-          updated_at = NOW()
-        WHERE id = ${invoice.id}::uuid
-      `;
+      return prisma.$executeRaw(
+        Prisma.sql`
+          UPDATE tax_invoices
+          SET
+            buyer_party_id = ${party.id}::uuid,
+            buyer_name = ${buyerNameForDisplay},
+            buyer_tin = ${party.tinNormalized},
+            buyer_document = ${buyerDocument},
+            buyer_country = ${party.countryCode},
+            buyer_document_number = ${party.buyerDocumentNumber ?? null},
+            buyer_address = ${party.addressFull},
+            buyer_email = ${party.email},
+            buyer_idtku = ${party.buyerIdtku},
+            trx_code = ${resolvedTrxCode},
+            missing_fields = ${JSON.stringify(missingFields)}::jsonb,
+            is_complete = ${missingFields.length === 0},
+            updated_at = NOW()
+          WHERE id = ${invoice.id}::uuid
+        `
+      );
     });
 
     await prisma.$transaction(updates);

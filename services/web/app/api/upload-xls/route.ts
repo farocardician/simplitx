@@ -158,7 +158,9 @@ export const POST = async (req: NextRequest) => {
 
   const invoices = await prisma.$queryRaw<
     { id: string; invoice_number: string; tax_invoice_date: Date | null; trx_code: string | null; buyer_name: string | null }[]
-  >`SELECT id, invoice_number, tax_invoice_date, trx_code, buyer_name FROM tax_invoices WHERE batch_id = ${batchId}::uuid ORDER BY invoice_number`
+  >(
+    Prisma.sql`SELECT id, invoice_number, tax_invoice_date, trx_code, buyer_name FROM tax_invoices WHERE batch_id = ${batchId}::uuid ORDER BY invoice_number`
+  )
 
   return NextResponse.json({
     status: 'ok',
