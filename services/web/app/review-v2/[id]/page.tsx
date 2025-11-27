@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import {
   fetchHsCodeSuggestions,
   formatHsTypeLabel,
@@ -176,7 +176,9 @@ const buildErrors = (list: LineItem[], validator: (item: LineItem, index: number
 export default function ReviewPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const invoiceId = params?.id as string;
+  const returnUrl = searchParams.get('returnUrl') || '/queue-v2';
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1386,11 +1388,12 @@ export default function ReviewPage() {
   }, [isDirty, hasErrors, hasHsCodeWarnings, invoiceNoError, invoiceDateError]);
 
   const handleCancel = () => {
-    router.push('/queue-v2');
+    router.push(returnUrl);
   };
 
   const handleSave = async () => {
     setSaveError(null); // Clear any previous save errors
+    setErrors({}); // Clear any previous validation errors
 
     try {
       const response = await fetch(`/api/review-v2/${invoiceId}`, {
@@ -1414,12 +1417,35 @@ export default function ReviewPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
+
+        // Handle validation errors
+        if (errorData?.error?.code === 'INVALID_ITEMS' && errorData?.error?.details?.items) {
+          const validationErrors = errorData.error.details.items;
+          const newErrors: Record<number, ItemErrors> = {};
+
+          validationErrors.forEach((err: { index: number; field: string; message: string; detail?: string }) => {
+            if (!newErrors[err.index]) {
+              newErrors[err.index] = {};
+            }
+            newErrors[err.index][err.field as keyof ItemErrors] = {
+              message: err.message,
+              detail: err.detail
+            };
+          });
+
+          setErrors(newErrors);
+          throw new Error('Please fix the highlighted errors before saving');
+        }
+
         const errorMessage = errorData?.error?.message || 'Failed to save review';
         throw new Error(errorMessage);
       }
 
-      // Success - redirect to queue with success message
-      router.push('/queue-v2?saved=true');
+      // Success - redirect back to queue with filters preserved
+      // Remove any existing saved param to avoid duplicates
+      const cleanUrl = returnUrl.replace(/[&?]saved=true/g, '');
+      const separator = cleanUrl.includes('?') ? '&' : '?';
+      router.push(`${cleanUrl}${separator}saved=true`);
     } catch (err) {
       console.error('Save error:', err);
       setSaveError(err instanceof Error ? err.message : 'Failed to save review');
@@ -1465,7 +1491,7 @@ export default function ReviewPage() {
           </p>
           <div className="flex gap-3">
             <button
-              onClick={() => router.push('/queue-v2')}
+              onClick={() => router.push(returnUrl)}
               className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
             >
               Back to Queue

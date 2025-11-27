@@ -813,16 +813,70 @@ export default function QueueV2Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
 
+  // Initialize filters and sort from URL params synchronously to prevent flash
+  const initFiltersAndSort = () => {
+    const buyerParam = searchParams.get('buyer');
+    const sortParam = searchParams.get('sort') as SortField | null;
+    const dirParam = searchParams.get('dir') as SortDirection | null;
+    const invoiceParam = searchParams.get('invoices') || searchParams.get('invoiceNumbers');
+    const statusParam = searchParams.get('status') as FilterStatus | null;
+
+    const hasUrlParams = buyerParam || sortParam || invoiceParam || statusParam;
+
+    if (hasUrlParams) {
+      return {
+        filters: {
+          buyerPartyId: buyerParam,
+          invoiceNumbers: invoiceParam ? invoiceParam.split(',').filter(Boolean) : [],
+          status: statusParam || null
+        },
+        sort: {
+          field: sortParam || 'date',
+          direction: dirParam || 'desc'
+        } as SortState
+      };
+    }
+
+    // Try localStorage
+    const savedFilters = localStorage.getItem('queue-filters');
+    const savedSort = localStorage.getItem('queue-sort');
+
+    if (savedFilters && savedSort) {
+      try {
+        const parsedFilters = JSON.parse(savedFilters);
+        const parsedSort = JSON.parse(savedSort);
+        return {
+          filters: {
+            buyerPartyId: parsedFilters?.buyerPartyId || null,
+            invoiceNumbers: parsedFilters?.invoiceNumbers || [],
+            status: parsedFilters?.status || null
+          },
+          sort: parsedSort
+        };
+      } catch (e) {
+        console.error('Failed to parse saved filters/sort:', e);
+      }
+    }
+
+    // Default state
+    return {
+      filters: {
+        buyerPartyId: null,
+        invoiceNumbers: [],
+        status: null
+      },
+      sort: {
+        field: 'date',
+        direction: 'desc'
+      } as SortState
+    };
+  };
+
+  const initialState = initFiltersAndSort();
+
   // Filter & Sort State
-  const [filters, setFilters] = useState<FilterState>({
-    buyerPartyId: null,
-    invoiceNumbers: [],
-    status: null
-  });
-  const [sort, setSort] = useState<SortState>({
-    field: 'date',
-    direction: 'desc'
-  });
+  const [filters, setFilters] = useState<FilterState>(initialState.filters);
+  const [sort, setSort] = useState<SortState>(initialState.sort);
   const [buyers, setBuyers] = useState<Buyer[]>([]);
   const [showAddBuyerModal, setShowAddBuyerModal] = useState(false);
   const [buyerNameToResolve, setBuyerNameToResolve] = useState<string | null>(null);
@@ -842,6 +896,7 @@ export default function QueueV2Page() {
   const [linkModalLoading, setLinkModalLoading] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [dateValue, setDateValue] = useState('');
+  const isInitialMount = useRef(true);
   const [dateError, setDateError] = useState<string | null>(null);
   const [dateLoading, setDateLoading] = useState(false);
   const [dateTargetInvoiceIds, setDateTargetInvoiceIds] = useState<string[]>([]);
@@ -951,46 +1006,14 @@ export default function QueueV2Page() {
     }
   }, [debouncedPartySearch, partyTypeFilter, selectedPartyId]);
 
-  // Initialize from URL params or localStorage on mount
+  // Initialize on mount - fetch with current filters
   useEffect(() => {
-    const buyerParam = searchParams.get('buyer');
-    const sortParam = searchParams.get('sort') as SortField | null;
-    const dirParam = searchParams.get('dir') as SortDirection | null;
-    const invoiceParam = searchParams.get('invoices') || searchParams.get('invoiceNumbers');
-    const statusParam = searchParams.get('status') as FilterStatus | null;
-
-    // Load from URL or localStorage
-    const savedFilters = localStorage.getItem('queue-filters');
-    const savedSort = localStorage.getItem('queue-sort');
-
-    if (buyerParam || sortParam) {
-      // URL takes precedence (shareable links)
-      setFilters({
-        buyerPartyId: buyerParam,
-        invoiceNumbers: invoiceParam ? invoiceParam.split(',').filter(Boolean) : [],
-        status: statusParam || null
-      });
-      setSort({
-        field: sortParam || 'date',
-        direction: dirParam || 'desc'
-      });
-    } else if (savedFilters && savedSort) {
-      // Fall back to localStorage
-      try {
-        const parsedFilters = JSON.parse(savedFilters);
-        const parsedSort = JSON.parse(savedSort);
-        setFilters({
-          buyerPartyId: parsedFilters?.buyerPartyId || null,
-          invoiceNumbers: parsedFilters?.invoiceNumbers || [],
-          status: parsedFilters?.status || null
-        });
-        setSort(parsedSort);
-      } catch (e) {
-        console.error('Failed to parse saved filters/sort:', e);
-      }
-    }
-
+    fetchInvoices(1, perPage);
     fetchBuyers();
+
+    // Mark that initial mount is complete
+    isInitialMount.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -1124,8 +1147,14 @@ export default function QueueV2Page() {
 
   // Fetch invoices when filters or sort change (after initialization)
   useEffect(() => {
+    // Skip fetching on initial mount - let the initial useEffect handle it
+    if (isInitialMount.current) {
+      return;
+    }
+
     fetchInvoices(1, perPage);
-  }, [filters, sort]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, sort, perPage]);
 
   // Calculate actual selection based on mode
   const getActualSelection = useMemo(() => {
@@ -1592,7 +1621,10 @@ export default function QueueV2Page() {
   };
 
   const handleReview = (invoiceId: string) => {
-    window.open(`/review-v2/${invoiceId}`, '_blank');
+    // Preserve current queue filters in the review URL
+    const currentParams = new URLSearchParams(searchParams);
+    const returnUrl = `/queue-v2?${currentParams.toString()}`;
+    window.open(`/review-v2/${invoiceId}?returnUrl=${encodeURIComponent(returnUrl)}`, '_blank');
   };
 
   const openAddBuyerModal = (buyerName: string) => {

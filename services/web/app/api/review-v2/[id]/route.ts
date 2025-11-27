@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { prisma } from '@/lib/prisma';
 import { withSession } from '@/lib/session';
+import { updateInvoiceCompleteness } from '@/lib/invoiceCompleteness';
 
 type RoundingRule = {
   scale: number;
@@ -111,7 +112,7 @@ export const GET = withSession(async (_req: NextRequest, _session: { sessionId: 
   const invoiceRows = await prisma.$queryRaw<{ id: string; invoice_number: string; tax_invoice_date: Date | null; buyer_party_id: string | null }[]>`
     SELECT id, invoice_number, tax_invoice_date, buyer_party_id
     FROM tax_invoices
-    WHERE id = ${invoiceId}::uuid
+    WHERE id::text = ${invoiceId}
     LIMIT 1
   `;
 
@@ -140,7 +141,7 @@ export const GET = withSession(async (_req: NextRequest, _session: { sessionId: 
   }[]>`
     SELECT id, line_number, opt, code, name, unit, price, qty, tax_base, other_tax_base, vat_rate, vat
     FROM tax_invoice_items
-    WHERE tax_invoice_id = ${invoiceId}::uuid
+    WHERE tax_invoice_id::text = ${invoiceId}
     ORDER BY line_number ASC
   `;
 
@@ -198,7 +199,7 @@ export const POST = withSession(async (req: NextRequest, _session: { sessionId: 
     }
 
     const invoiceRows = await prisma.$queryRaw<{ id: string; buyer_party_id: string | null }[]>`
-      SELECT id, buyer_party_id FROM tax_invoices WHERE id = ${invoiceId}::uuid LIMIT 1
+      SELECT id, buyer_party_id FROM tax_invoices WHERE id::text = ${invoiceId} LIMIT 1
     `;
 
     if (invoiceRows.length === 0) {
@@ -212,8 +213,8 @@ export const POST = withSession(async (req: NextRequest, _session: { sessionId: 
     const conflictRows = await prisma.$queryRaw<{ id: string }[]>`
       SELECT id FROM tax_invoices
       WHERE invoice_number = ${invoiceNumberRaw}
-        AND buyer_party_id IS NOT DISTINCT FROM ${buyerPartyId}
-        AND id <> ${invoiceId}::uuid
+        AND buyer_party_id::text IS NOT DISTINCT FROM ${buyerPartyId}
+        AND id::text != ${invoiceId}
       LIMIT 1
     `;
 
@@ -373,12 +374,12 @@ export const POST = withSession(async (req: NextRequest, _session: { sessionId: 
             ref_desc = ${invoiceNumberRaw},
             tax_invoice_date = ${parsedDate},
             updated_at = NOW()
-        WHERE id = ${invoiceId}::uuid
+        WHERE id::text = ${invoiceId}
       `;
 
       await tx.$executeRaw`
         DELETE FROM tax_invoice_items
-        WHERE tax_invoice_id = ${invoiceId}::uuid
+        WHERE tax_invoice_id::text = ${invoiceId}
       `;
 
       for (let i = 0; i < validated.length; i++) {
@@ -402,7 +403,7 @@ export const POST = withSession(async (req: NextRequest, _session: { sessionId: 
             stlg
           )
           VALUES (
-            ${invoiceId}::uuid,
+            CAST(${invoiceId} AS uuid),
             ${i + 1},
             ${v.opt},
             ${v.hs_code},
@@ -423,9 +424,12 @@ export const POST = withSession(async (req: NextRequest, _session: { sessionId: 
 
     });
 
+    // Recalculate and update completeness status after transaction completes
+    await updateInvoiceCompleteness(invoiceId);
+
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Review V2 save error', error);
+    console.error('Review V2 save error:', error);
     return NextResponse.json(
       { error: { code: 'INTERNAL_ERROR', message: 'Failed to save review' } },
       { status: 500 }
