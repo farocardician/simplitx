@@ -9,6 +9,8 @@ services:
     environment:
       - NODE_ENV=production
       - DOCKER_ENV=true
+      - SQL2XML_URL=http://sql2xml:8000
+      - SQL2XML_PIPELINE=invoice_pt_sensient.json
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
     restart: unless-stopped
 
@@ -40,6 +42,18 @@ services:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
       - WEB_SERVICE_URL=http://web:3000
+    restart: unless-stopped
+
+  sql2xml:
+    build:
+      context: .
+      dockerfile: docker/sql2xml.Dockerfile
+      target: production
+    volumes:
+      - ./services/shared:/shared
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
+      - DEFAULT_PIPELINE=invoice_pt_sensient.json
     restart: unless-stopped
 
   gateway:

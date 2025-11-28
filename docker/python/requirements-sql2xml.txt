@@ -1,0 +1,4 @@
+# SQL → XML service dependencies (on top of requirements-base.txt)
+lxml>=4.9.3
+psycopg[binary]>=3.1.0
+python-Levenshtein>=0.21.0

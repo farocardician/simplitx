@@ -1451,9 +1451,10 @@ export default function QueueV2Page() {
     });
   };
 
-  const gatherInvoicesForDownload = useCallback(async (): Promise<{ invoiceNumbers: string[]; incompleteInvoices: string[] }> => {
+  const gatherInvoicesForDownload = useCallback(async (): Promise<{ invoiceIds: string[]; invoiceNumbers: string[]; incompleteInvoices: string[] }> => {
     if (selection.mode === 'all') {
       const invoiceNumbers: string[] = [];
+      const invoiceIds: string[] = [];
       const incompleteInvoices: string[] = [];
       const CHUNK_SIZE = 500;
       let offset = 0;
@@ -1487,6 +1488,7 @@ export default function QueueV2Page() {
         rows.forEach((inv) => {
           if (selection.excludedIds.has(inv.id)) return;
           invoiceNumbers.push(inv.invoiceNumber);
+          invoiceIds.push(inv.id);
           if (inv.status === 'incomplete') {
             incompleteInvoices.push(inv.invoiceNumber);
           }
@@ -1498,13 +1500,14 @@ export default function QueueV2Page() {
         if (rows.length === 0) break;
       }
 
-      return { invoiceNumbers, incompleteInvoices };
+      return { invoiceIds, invoiceNumbers, incompleteInvoices };
     }
 
     const selected = getActualSelection;
     const invoiceNumbers = selected.map((inv) => inv.invoiceNumber);
+    const invoiceIds = selected.map((inv) => inv.id);
     const incompleteInvoices = selected.filter((inv) => inv.status === 'incomplete').map((inv) => inv.invoiceNumber);
-    return { invoiceNumbers, incompleteInvoices };
+    return { invoiceIds, invoiceNumbers, incompleteInvoices };
   }, [filters.buyerPartyId, filters.invoiceNumbers, filters.status, getActualSelection, pagination.total, selection.excludedIds, selection.mode, sort.direction, sort.field]);
 
   const handleDownload = async () => {
@@ -1512,9 +1515,9 @@ export default function QueueV2Page() {
 
     try {
       setDownloadCheckLoading(true);
-      const { invoiceNumbers, incompleteInvoices } = await gatherInvoicesForDownload();
+      const { invoiceIds, invoiceNumbers, incompleteInvoices } = await gatherInvoicesForDownload();
 
-      if (invoiceNumbers.length === 0) {
+      if (invoiceIds.length === 0 && invoiceNumbers.length === 0) {
         setDownloadBlockReason('No invoices available for download with the current selection.');
         return;
       }
@@ -1529,13 +1532,14 @@ export default function QueueV2Page() {
 
       setDownloadBlockReason(null);
 
-      const confirmed = window.confirm(`Download XML for ${invoiceNumbers.length} invoice${invoiceNumbers.length > 1 ? 's' : ''}?`);
+      const totalCount = invoiceIds.length || invoiceNumbers.length;
+      const confirmed = window.confirm(`Download XML for ${totalCount} invoice${totalCount > 1 ? 's' : ''}?`);
       if (!confirmed) return;
 
       const res = await fetch('/api/tax-invoices/bulk-download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invoiceNumbers, pretty: true })
+        body: JSON.stringify({ invoiceIds, invoiceNumbers, pretty: true })
       });
 
       if (!res.ok) {
@@ -1547,7 +1551,9 @@ export default function QueueV2Page() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = invoiceNumbers.length === 1 ? `${invoiceNumbers[0]}.xml` : `invoices-${invoiceNumbers.length}.xml`;
+      const filenameBase = invoiceIds[0] || invoiceNumbers[0] || 'invoices';
+      const requestedCount = invoiceIds.length || invoiceNumbers.length;
+      a.download = requestedCount === 1 ? `${filenameBase}.xml` : `invoices-${requestedCount}.xml`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

@@ -16,6 +16,8 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
       - KURS_PAJAK_API_BASE=http://kurs_pajak:8000
+      - SQL2XML_URL=http://sql2xml:8000
+      - SQL2XML_PIPELINE=invoice_pt_sensient.json
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
     command: npm run dev
 
@@ -82,6 +84,27 @@ services:
       - DB_PASSWORD=postgres
     ports:
       - "8011:8000"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  sql2xml:
+    build:
+      context: .
+      dockerfile: docker/sql2xml.Dockerfile
+      target: development
+    volumes:
+      - ./services/sql2xml:/app
+      - ./services/json2xml/json2xml:/app/json2xml
+      - ./services/config:/config
+      - ./services/json2xml/mappings:/app/mappings
+      - ./services/shared:/shared
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - CONFIG_DIR=/config
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
+      - DEFAULT_PIPELINE=invoice_pt_sensient.json
+    ports:
+      - "8012:8000"
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   gateway:

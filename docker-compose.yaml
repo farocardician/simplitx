@@ -78,6 +78,25 @@ services:
       postgres:
         condition: service_healthy
 
+  sql2xml:
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=pdf_jobs
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DEFAULT_PIPELINE=invoice_pt_sensient.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   kurs_pajak:
     build:
       context: .
@@ -126,6 +145,8 @@ services:
       - "3000:3000"
     environment:
       - GATEWAY_URL=http://gateway:8000
+      - SQL2XML_URL=http://sql2xml:8000
+      - SQL2XML_PIPELINE=invoice_pt_sensient.json
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
       - MAPPING_FILES_PATH=/app/mappings
       - BODY_SIZE_LIMIT=104857600
