@@ -3,7 +3,6 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 
 const SQL2XML_URL = process.env.SQL2XML_URL || 'http://sql2xml:8000'
-const SQL2XML_PIPELINE = process.env.SQL2XML_PIPELINE || 'invoice_pt_sensient.json'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,6 +17,7 @@ export const POST = async (req: NextRequest) => {
 
   const filterClause = Prisma.sql`id::text = ANY(${invoiceIds}::text[])`
 
+  // Get invoices with their job_id to determine which config to use
   const invoiceRows = await prisma.$queryRaw<{
     id: string
     invoice_number: string
@@ -26,6 +26,7 @@ export const POST = async (req: NextRequest) => {
     buyer_tin: string | null
     buyer_name: string | null
     tin: string | null
+    job_id: string | null
   }[]>`
     SELECT
       id::text as id,
@@ -34,7 +35,8 @@ export const POST = async (req: NextRequest) => {
       buyer_party_id::text as buyer_party_id,
       buyer_tin,
       buyer_name,
-      tin
+      tin,
+      job_id::text as job_id
     FROM tax_invoices
     WHERE ${filterClause}
   `
@@ -116,6 +118,52 @@ export const POST = async (req: NextRequest) => {
     )
   }
 
+  // Get job_ids and ensure all invoices use the same config
+  const jobIds = new Set((invoiceRows || []).map((row) => row.job_id).filter(Boolean))
+  if (jobIds.size === 0) {
+    return NextResponse.json(
+      {
+        error: {
+          code: 'NO_JOB_CONFIG',
+          message: 'Invoices are not linked to any job/config. Cannot determine which pipeline config to use.',
+        },
+      },
+      { status: 400 }
+    )
+  }
+
+  if (jobIds.size > 1) {
+    return NextResponse.json(
+      {
+        error: {
+          code: 'JOB_MISMATCH',
+          message: `Cannot merge invoices from different jobs/configs. Found ${jobIds.size} different jobs.`,
+        },
+      },
+      { status: 400 }
+    )
+  }
+
+  // Get the config name from job_config
+  const jobId = Array.from(jobIds)[0]
+  const jobConfig = await prisma.$queryRaw<{ config_name: string }[]>`
+    SELECT config_name FROM job_config WHERE job_id = ${jobId}::uuid LIMIT 1
+  `
+
+  if (!jobConfig || jobConfig.length === 0) {
+    return NextResponse.json(
+      {
+        error: {
+          code: 'CONFIG_NOT_FOUND',
+          message: `Configuration not found for job ${jobId}`,
+        },
+      },
+      { status: 400 }
+    )
+  }
+
+  const pipelineConfig = jobConfig[0].config_name
+
   let sql2xmlResponse: globalThis.Response
   try {
     sql2xmlResponse = await fetch(`${SQL2XML_URL}/export`, {
@@ -123,7 +171,7 @@ export const POST = async (req: NextRequest) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         invoiceIds,
-        pipeline: SQL2XML_PIPELINE,
+        pipeline: pipelineConfig,
         pretty,
       }),
     })

@@ -1,28 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { readFileSync } from 'fs'
-import { join } from 'path'
-
-const CONFIG_PATH = join(process.cwd(), 'services', 'config', 'invoice_pt_sensient.json')
-
-function loadConfig() {
-  try {
-    const raw = readFileSync(CONFIG_PATH, 'utf-8')
-    return JSON.parse(raw)
-  } catch (e) {
-    return {}
-  }
-}
 
 export const dynamic = 'force-dynamic'
 
 export const GET = async (req: NextRequest) => {
-  const cfg = loadConfig()
-  const queueCfg = cfg.queue || {}
-  const sellerName = queueCfg.seller_name || 'Seller'
-  const filterTin: string | undefined = queueCfg.filter?.tin
+  // Get optional seller filter from query params
   const { searchParams } = new URL(req.url)
+  const sellerIdParam = searchParams.get('seller_id')
+
+  let filterTin: string | null = null
+  let sellerName = 'All Sellers'
+
+  // If seller_id provided, fetch their TIN for filtering
+  if (sellerIdParam) {
+    const sellerParty = await prisma.parties.findUnique({
+      where: { id: sellerIdParam },
+      select: { tin_normalized: true, display_name: true }
+    });
+
+    if (sellerParty && sellerParty.tin_normalized) {
+      filterTin = sellerParty.tin_normalized
+      sellerName = sellerParty.display_name || 'Unknown Seller'
+    }
+  }
+
   const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 500)
   const offset = Math.max(parseInt(searchParams.get('offset') || '0', 10), 0)
 
@@ -157,8 +159,30 @@ export const DELETE = async (req: NextRequest) => {
     return NextResponse.json({ error: { code: 'NO_INVOICES', message: 'No invoice numbers provided' } }, { status: 400 })
   }
 
+  // Get job_ids from invoices being deleted (for cleanup)
   const values = Prisma.join(invoiceNumbers.map((inv) => Prisma.sql`${inv}`))
+  const affectedJobIds = await prisma.$queryRaw<{ job_id: string }[]>(
+    Prisma.sql`SELECT DISTINCT job_id FROM tax_invoices WHERE invoice_number IN (${values}) AND job_id IS NOT NULL`
+  )
+
+  // Delete the invoices
   const deleted = await prisma.$executeRaw(Prisma.sql`DELETE FROM tax_invoices WHERE invoice_number IN (${values})`)
 
-  return NextResponse.json({ deleted })
+  // Clean up orphaned job_config records (jobs with no remaining invoices)
+  let jobsCleanedUp = 0
+  for (const { job_id } of affectedJobIds) {
+    const remainingCount = await prisma.$queryRaw<{ count: bigint }[]>(
+      Prisma.sql`SELECT COUNT(*) as count FROM tax_invoices WHERE job_id = ${job_id}::uuid`
+    )
+
+    if (remainingCount[0]?.count === BigInt(0)) {
+      // No more invoices for this job - delete job_config
+      await prisma.$executeRaw(
+        Prisma.sql`DELETE FROM job_config WHERE job_id = ${job_id}::uuid`
+      )
+      jobsCleanedUp++
+    }
+  }
+
+  return NextResponse.json({ deleted, jobsCleanedUp })
 }

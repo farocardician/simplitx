@@ -1587,9 +1587,25 @@ export default function QueueV2Page() {
         let hasMore = true;
 
         while (hasMore) {
-          const res = await fetch(
-            `/api/tax-invoices?limit=${CHUNK_SIZE}&offset=${offset}`
-          );
+          // Build params with current filters
+          const params = new URLSearchParams({
+            limit: CHUNK_SIZE.toString(),
+            offset: offset.toString(),
+            sort: sort.field,
+            dir: sort.direction
+          });
+
+          if (filters.buyerPartyId) {
+            params.set('buyer', filters.buyerPartyId);
+          }
+          if (filters.invoiceNumbers && filters.invoiceNumbers.length > 0) {
+            params.set('invoices', filters.invoiceNumbers.join(','));
+          }
+          if (filters.status) {
+            params.set('status', filters.status);
+          }
+
+          const res = await fetch(`/api/tax-invoices?${params.toString()}`);
           const data = await res.json();
 
           const chunk = data.invoices

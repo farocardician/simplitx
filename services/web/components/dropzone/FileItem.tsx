@@ -11,6 +11,7 @@ export function FileItem({ file, onRemove, onCancel }: FileItemProps) {
     switch (file.status) {
       case 'completed': return '#22c55e'
       case 'deduplicated': return '#3b82f6'
+      case 'processing': return '#f59e0b'
       case 'error': return '#ef4444'
       case 'cancelled': return '#6b7280'
       case 'uploading': return '#3b82f6'
@@ -25,6 +26,7 @@ export function FileItem({ file, onRemove, onCancel }: FileItemProps) {
         return file.duplicateOf
           ? `Identical to ${file.duplicateOf.filename}`
           : 'Duplicate (using existing job)'
+      case 'processing': return file.processingMessage || 'Processing...'
       case 'error': return file.error || 'Upload failed'
       case 'cancelled': return 'Cancelled'
       case 'uploading': return `Uploading... ${Math.round(file.progress)}%`
@@ -45,6 +47,12 @@ export function FileItem({ file, onRemove, onCancel }: FileItemProps) {
         return (
           <svg className="status-icon" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+          </svg>
+        )
+      case 'processing':
+        return (
+          <svg className="status-icon spinner" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
           </svg>
         )
       case 'error':
@@ -79,9 +87,9 @@ export function FileItem({ file, onRemove, onCancel }: FileItemProps) {
           </span>
         </div>
         
-        {(file.status === 'uploading' || file.status === 'pending') && (
+        {(file.status === 'uploading' || file.status === 'pending' || file.status === 'processing') && (
           <div className="progress-container" aria-label={`Upload progress: ${file.progress}%`}>
-            <div 
+            <div
               className="progress-bar"
               role="progressbar"
               aria-valuenow={file.progress}
@@ -89,8 +97,8 @@ export function FileItem({ file, onRemove, onCancel }: FileItemProps) {
               aria-valuemax={100}
               aria-label="Upload progress"
             >
-              <div 
-                className="progress-fill"
+              <div
+                className={`progress-fill ${file.status === 'processing' ? 'processing' : ''}`}
                 style={{ width: `${file.progress}%` }}
               />
             </div>
@@ -172,6 +180,19 @@ export function FileItem({ file, onRemove, onCancel }: FileItemProps) {
           flex-shrink: 0;
         }
 
+        .status-icon.spinner {
+          animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
         .progress-container {
           margin-top: 8px;
         }
@@ -188,6 +209,10 @@ export function FileItem({ file, onRemove, onCancel }: FileItemProps) {
           height: 100%;
           background-color: #3b82f6;
           transition: width 0.2s ease-in-out;
+        }
+
+        .progress-fill.processing {
+          background-color: #f59e0b;
         }
 
         .file-actions {

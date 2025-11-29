@@ -26,13 +26,13 @@ from sql2xml.exporter import (  # noqa: E402
     InvoiceValidationError,
     export_invoices_to_xml,
 )
-from sql2xml.pipeline import DEFAULT_PIPELINE  # noqa: E402
+from sql2xml.pipeline import get_default_pipeline  # noqa: E402
 from json2xml.converter import ConversionError  # noqa: E402
 
 
 class ExportRequest(BaseModel):
     invoice_ids: List[str] = Field(default_factory=list, alias="invoiceIds")
-    batch_id: Optional[str] = Field(None, alias="batchId")
+    job_id: Optional[str] = Field(None, alias="jobId")
     pipeline: Optional[str] = None
     profile: str = "default"
     mapping: Optional[str] = None
@@ -55,7 +55,11 @@ app = FastAPI(
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "service": "sql2xml", "pipeline": DEFAULT_PIPELINE}
+    try:
+        pipeline = get_default_pipeline()
+    except RuntimeError:
+        pipeline = "not configured (will use per-request pipeline)"
+    return {"status": "healthy", "service": "sql2xml", "pipeline": pipeline}
 
 
 def _to_http_exception(exc: Exception) -> HTTPException:
@@ -100,16 +104,16 @@ def _build_response(result: ExportResult) -> Response:
 @app.post("/export")
 async def export_xml(req: ExportRequest):
     """Generate XML for one or many invoices."""
-    if not req.invoice_ids and not req.batch_id:
+    if not req.invoice_ids and not req.job_id:
         raise HTTPException(
             status_code=400,
-            detail={"code": "INVALID_REQUEST", "message": "Provide invoiceIds or batchId"},
+            detail={"code": "INVALID_REQUEST", "message": "Provide invoiceIds or jobId"},
         )
 
     try:
         result = export_invoices_to_xml(
             invoice_ids=req.invoice_ids,
-            batch_id=req.batch_id,
+            job_id=req.job_id,
             mapping_override=req.mapping,
             pipeline=req.pipeline,
             profile=req.profile,

@@ -5,7 +5,7 @@ Stage s01 - import only.
 Responsibility:
 - Read Sensient Excel workbooks and load rows into public."temporaryStaging".
 - Do not resolve buyers; simply capture the raw buyer name from "Customer Group".
-- Stamp every inserted row with a batch_id so downstream steps (s02) can work per batch.
+- Stamp every inserted row with a job_id so downstream steps (s02) can work per job.
 """
 
 import sys
@@ -112,12 +112,12 @@ def check_required_columns(df: pd.DataFrame, sheet_name: str) -> Tuple[bool, Lis
     return True, missing_optional
 
 
-def normalize_dataframe(df: pd.DataFrame, batch_id: str) -> pd.DataFrame:
+def normalize_dataframe(df: pd.DataFrame, job_id: str) -> pd.DataFrame:
     """
     Normalize dataframe for insertion:
     - Select only required columns (including optional ones if present)
     - Rename columns to snake_case
-    - Add batch_id
+    - Add job_id
     - Convert data types
     - Keep buyer_name from Customer Group for later buyer resolution
     """
@@ -137,8 +137,8 @@ def normalize_dataframe(df: pd.DataFrame, batch_id: str) -> pd.DataFrame:
             db_col_name = COLUMN_MAPPING[col]
             df_normalized[db_col_name] = None
 
-    # Add batch_id
-    df_normalized['batch_id'] = batch_id
+    # Add job_id
+    df_normalized['job_id'] = job_id
 
     # Buyer fields are handled in s02; set placeholders
     df_normalized['buyer_party_id'] = None
@@ -176,7 +176,7 @@ def insert_data(conn, df: pd.DataFrame) -> int:
 
     # Prepare column list (excluding Customer Group which is not in DB)
     columns = [
-        'batch_id',
+        'job_id',
         'buyer_name',
         'buyer_party_id',
         'invoice',
@@ -222,10 +222,10 @@ def process_excel_file(file_path: str) -> Tuple[str, int, int, int, int]:
     Main function to process Excel file and import to database.
 
     Returns:
-        Tuple of (batch_id, sheets_processed, sheets_skipped, unique_buyers, total_rows)
+        Tuple of (job_id, sheets_processed, sheets_skipped, unique_buyers, total_rows)
     """
-    # Generate unique batch_id
-    batch_id = str(uuid.uuid4())
+    # Generate unique job_id
+    job_id = str(uuid.uuid4())
 
     # Connect to database
     conn = get_db_connection()
@@ -270,7 +270,7 @@ def process_excel_file(file_path: str) -> Tuple[str, int, int, int, int]:
                 continue
 
             # Normalize dataframe
-            df_normalized = normalize_dataframe(df, batch_id)
+            df_normalized = normalize_dataframe(df, job_id)
 
             if df_normalized.empty:
                 print(f"  ⚠️  No data rows found after normalization - Skipping\n")
@@ -291,7 +291,7 @@ def process_excel_file(file_path: str) -> Tuple[str, int, int, int, int]:
             sheets_processed += 1
             print(f"  ✓ Sheet completed: {rows_inserted} rows inserted\n")
 
-        return batch_id, sheets_processed, sheets_skipped, len(buyer_names_seen), total_rows_inserted
+        return job_id, sheets_processed, sheets_skipped, len(buyer_names_seen), total_rows_inserted
 
     finally:
         conn.close()
@@ -320,13 +320,13 @@ def main():
 
     # Process the file
     try:
-        batch_id, sheets_processed, sheets_skipped, unique_buyers, total_rows = process_excel_file(file_path)
+        job_id, sheets_processed, sheets_skipped, unique_buyers, total_rows = process_excel_file(file_path)
 
         # Print summary
         print("=" * 70)
         print("  IMPORT SUMMARY")
         print("=" * 70)
-        print(f"✓ Batch ID:          {batch_id}")
+        print(f"✓ Job ID:            {job_id}")
         print(f"✓ Sheets processed:  {sheets_processed}")
         print(f"✓ Sheets skipped:    {sheets_skipped}")
         print(f"✓ Buyer names:       {unique_buyers} (non-empty)")

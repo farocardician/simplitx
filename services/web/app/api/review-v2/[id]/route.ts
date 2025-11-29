@@ -35,14 +35,23 @@ type ItemValidationError = {
   detail?: string;
 };
 
-const CONFIG_PATH = join(process.cwd(), 'services', 'config', 'invoice_pt_sensient.json');
+function loadConfig(configName: string): any {
+  const configDir = process.env.CONFIG_DIR;
 
-function loadConfig(): any {
+  if (!configDir) {
+    throw new Error('CONFIG_DIR environment variable is not set');
+  }
+
+  if (!configName) {
+    throw new Error('Config name is required');
+  }
+
   try {
-    const raw = readFileSync(CONFIG_PATH, 'utf-8');
+    const configPath = join(configDir, configName);
+    const raw = readFileSync(configPath, 'utf-8');
     return JSON.parse(raw);
   } catch (error) {
-    return {};
+    throw new Error(`Failed to load config from ${configDir}/${configName}: ${error}`);
   }
 }
 
@@ -67,6 +76,15 @@ const normalizeType = (value: string | null | undefined): 'Barang' | 'Jasa' | nu
   if (upper === 'JASA' || upper === 'B') return 'Jasa';
   if (upper === 'BARANG' || upper === 'A') return 'Barang';
   return null;
+};
+
+const getVatRate = (config: any): number => {
+  const raw = config?.tax?.vat_rate ?? config?.vat_rate;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error('VAT rate missing or invalid in config');
+  }
+  return parsed;
 };
 
 function ensureRounding(config: any): RoundingConfig {
@@ -105,12 +123,10 @@ async function getHsCodeTypes(code: string): Promise<Set<'BARANG' | 'JASA'>> {
 
 export const GET = withSession(async (_req: NextRequest, _session: { sessionId: string }, { params }: { params: { id: string } }) => {
   const invoiceId = params.id;
-  const config = loadConfig();
-  const sellerName = config?.queue?.seller_name || 'Seller';
-  const rounding = ensureRounding(config);
 
-  const invoiceRows = await prisma.$queryRaw<{ id: string; invoice_number: string; tax_invoice_date: Date | null; buyer_party_id: string | null }[]>`
-    SELECT id, invoice_number, tax_invoice_date, buyer_party_id
+  // First, get the invoice to find its job_id
+  const invoiceRows = await prisma.$queryRaw<{ id: string; invoice_number: string; tax_invoice_date: Date | null; buyer_party_id: string | null; job_id: string | null }[]>`
+    SELECT id, invoice_number, tax_invoice_date, buyer_party_id, job_id::text as job_id
     FROM tax_invoices
     WHERE id::text = ${invoiceId}
     LIMIT 1
@@ -124,6 +140,41 @@ export const GET = withSession(async (_req: NextRequest, _session: { sessionId: 
   }
 
   const invoice = invoiceRows[0];
+
+  // Get the config name from job_config
+  if (!invoice.job_id) {
+    return NextResponse.json(
+      { error: { code: 'NO_JOB_CONFIG', message: 'Invoice is not linked to any job/config' } },
+      { status: 400 }
+    );
+  }
+
+  const jobConfigRows = await prisma.$queryRaw<{ config_name: string }[]>`
+    SELECT config_name FROM job_config WHERE job_id = ${invoice.job_id}::uuid LIMIT 1
+  `;
+
+  if (jobConfigRows.length === 0) {
+    return NextResponse.json(
+      { error: { code: 'CONFIG_NOT_FOUND', message: `Configuration not found for job ${invoice.job_id}` } },
+      { status: 400 }
+    );
+  }
+
+  const configName = jobConfigRows[0].config_name;
+
+  // Load the config
+  const config = loadConfig(configName);
+  const sellerName = config?.queue?.seller_name || 'Seller';
+  const rounding = ensureRounding(config);
+  let configVatRate: number;
+  try {
+    configVatRate = getVatRate(config);
+  } catch (err) {
+    return NextResponse.json(
+      { error: { code: 'CONFIG_ERROR', message: (err as Error).message || 'VAT rate missing in config' } },
+      { status: 500 }
+    );
+  }
 
   const itemRows = await prisma.$queryRaw<{
     id: string;
@@ -156,7 +207,7 @@ export const GET = withSession(async (_req: NextRequest, _session: { sessionId: 
     hs_code: row.code || '',
     uom: row.unit || '',
     type: normalizeType(row.opt) ?? 'Barang',
-    taxRate: parseFloat(String(row.vat_rate ?? 12)) || 12
+    taxRate: parseFloat(String(row.vat_rate ?? configVatRate)) || configVatRate
   }));
 
   return NextResponse.json({
@@ -234,6 +285,15 @@ export const POST = withSession(async (req: NextRequest, _session: { sessionId: 
 
     const config = loadConfig();
     const rounding = ensureRounding(config);
+    let vatRate: number;
+    try {
+      vatRate = getVatRate(config);
+    } catch (err) {
+      return NextResponse.json(
+        { error: { code: 'CONFIG_ERROR', message: (err as Error).message || 'VAT rate missing in config' } },
+        { status: 500 }
+      );
+    }
 
     const itemErrors: ItemValidationError[] = [];
     const validated: Array<{
@@ -342,8 +402,7 @@ export const POST = withSession(async (req: NextRequest, _session: { sessionId: 
       const roundedQty = roundValue(qty, rounding.qty);
       const roundedUnitPrice = roundValue(unitPrice, rounding.unit_price);
       const taxBase = roundValue(roundedQty * roundedUnitPrice, rounding.tax_base);
-      const otherTaxBase = roundValue((11 / 12) * taxBase, rounding.other_tax_base);
-      const vatRate = 12;
+      const otherTaxBase = roundValue(((vatRate - 1) / vatRate) * taxBase, rounding.other_tax_base);
       const vat = roundValue(otherTaxBase * (vatRate / 100), rounding.vat);
 
       validated.push({

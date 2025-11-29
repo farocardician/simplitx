@@ -102,18 +102,19 @@ def resolve_uom(input_uom: Optional[str], conn) -> Optional[str]:
         return result[0] if result else None
 
 
-def compute_item_calculations(price: Decimal, qty: Decimal) -> Dict[str, Decimal]:
+def compute_item_calculations(price: Decimal, qty: Decimal, vat_rate_pct: Decimal) -> Dict[str, Decimal]:
     """
     Compute tax calculations for an invoice item.
 
     Formula:
         tax_base = price * qty
-        other_tax_base = (11/12) * tax_base
-        vat = (12/100) * other_tax_base
+        other_tax_base = ((vat_rate_pct - 1) / vat_rate_pct) * tax_base
+        vat = (vat_rate_pct/100) * other_tax_base
 
     Args:
         price: Unit price
         qty: Quantity
+        vat_rate_pct: VAT rate percentage (e.g., Decimal('12'))
 
     Returns:
         Dictionary with calculated values:
@@ -123,9 +124,16 @@ def compute_item_calculations(price: Decimal, qty: Decimal) -> Dict[str, Decimal
             'vat': Decimal
         }
     """
+    if vat_rate_pct is None:
+        raise ValueError("VAT rate is required")
+
+    vat_rate_pct = Decimal(str(vat_rate_pct))
+    if vat_rate_pct <= 0:
+        raise ValueError("VAT rate must be positive")
+
     tax_base = price * qty
-    other_tax_base = (Decimal('11') / Decimal('12')) * tax_base
-    vat = (Decimal('12') / Decimal('100')) * other_tax_base
+    other_tax_base = ((vat_rate_pct - Decimal('1')) / vat_rate_pct) * tax_base
+    vat = (vat_rate_pct / Decimal('100')) * other_tax_base
 
     return {
         'tax_base': tax_base,

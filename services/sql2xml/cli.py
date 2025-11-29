@@ -29,7 +29,7 @@ def _write_output(result: ExportResult, output_path: Optional[str]) -> None:
 def run_cli(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Export tax invoices to XML using json2xml mappings")
     parser.add_argument("--invoice-id", action="append", help="Invoice ID (UUID) to export (repeatable or comma-separated)")
-    parser.add_argument("--batch-id", help="Batch ID to export (all invoices in batch)")
+    parser.add_argument("--job-id", help="Job ID to export (all invoices in job)")
     parser.add_argument("--mapping", help="Override mapping JSON path")
     parser.add_argument("--pipeline", help="Pipeline config file (default from env/constant)")
     parser.add_argument("--profile", default="default", help="json2xml profile name (default: default)")
@@ -42,7 +42,7 @@ def run_cli(argv: Optional[list[str]] = None) -> int:
     try:
         result = export_invoices_to_xml(
             invoice_ids=invoice_ids,
-            batch_id=args.batch_id,
+            job_id=args.job_id,
             mapping_override=args.mapping,
             pipeline=args.pipeline,
             profile=args.profile,

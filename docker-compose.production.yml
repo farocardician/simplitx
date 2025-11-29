@@ -6,9 +6,11 @@ services:
       target: production
     volumes:
       - ./services/xls2sql:/xls2sql
+      - ./services/config:/config
     environment:
       - NODE_ENV=production
       - DOCKER_ENV=true
+      - CONFIG_DIR=/config
       - SQL2XML_URL=http://sql2xml:8000
       - SQL2XML_PIPELINE=invoice_pt_sensient.json
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs

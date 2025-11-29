@@ -13,7 +13,37 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Callable
 
-DEFAULT_PIPELINE = os.getenv("PIPELINE_CONFIG") or os.getenv("DEFAULT_PIPELINE") or "invoice_pt_sensient.json"
+def _get_pipeline_name(pipeline_override: Optional[str] = None) -> str:
+    """Get pipeline config name from parameter or environment variables.
+
+    Args:
+        pipeline_override: Optional pipeline name to use instead of env var
+
+    Raises:
+        RuntimeError if no pipeline config name is set
+    """
+    if pipeline_override:
+        return pipeline_override
+
+    pipeline_name = os.getenv("PIPELINE_CONFIG")
+    if pipeline_name:
+        return pipeline_name
+
+    # If no pipeline specified and no env var, this is an error
+    raise RuntimeError(
+        "Pipeline config name required. "
+        "Pass pipeline name as parameter or set PIPELINE_CONFIG environment variable."
+    )
+
+# Lazy-loaded default - will be fetched when needed
+DEFAULT_PIPELINE: Optional[str] = None
+
+def get_default_pipeline() -> str:
+    """Get or initialize the default pipeline name."""
+    global DEFAULT_PIPELINE
+    if DEFAULT_PIPELINE is None:
+        DEFAULT_PIPELINE = _get_pipeline_name()
+    return DEFAULT_PIPELINE
 
 
 def _service_paths() -> Tuple[Path, Path, Path]:
@@ -56,7 +86,8 @@ def find_pipeline_config(filename: str) -> Path:
 
 def load_pipeline_config(pipeline_override: Optional[str] = None) -> Tuple[Dict[str, Any], Path]:
     """Load pipeline JSON (default or override) and return (config, path)."""
-    config_path = find_pipeline_config(pipeline_override or DEFAULT_PIPELINE)
+    pipeline_name = pipeline_override or get_default_pipeline()
+    config_path = find_pipeline_config(pipeline_name)
     try:
         return json.loads(config_path.read_text(encoding="utf-8")), config_path
     except json.JSONDecodeError as exc:
@@ -107,15 +138,37 @@ def resolve_mapping_path(relative_path: str, pipeline_path: Path) -> Path:
     raise FileNotFoundError(f"Mapping file '{relative_path}' not found")
 
 
-def resolve_profile(pipeline_config: Dict[str, Any], profile: str) -> Dict[str, Any]:
+def resolve_profile(
+    pipeline_config: Dict[str, Any],
+    profile: str,
+    *,
+    require_mapping: bool = True,
+    allow_missing: bool = False,
+    default: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     """Get json2xml profile entry from pipeline config."""
     profiles = (pipeline_config.get("json2xml", {}) or {}).get("profiles", {})
     profile_conf = profiles.get(profile)
     if profile_conf is None:
+        if allow_missing:
+            return default or {}
         raise KeyError(f"Profile '{profile}' not found in pipeline config")
-    if "mapping" not in profile_conf:
+    if require_mapping and "mapping" not in profile_conf:
         raise KeyError(f"Profile '{profile}' missing mapping path")
     return profile_conf
+
+
+def resolve_inline_mapping(pipeline_config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Return inline sql2xml mapping from the pipeline config if present."""
+    sql2xml_conf = pipeline_config.get("sql2xml")
+    if not sql2xml_conf:
+        return None
+    mapping = sql2xml_conf.get("mapping")
+    if mapping is None:
+        return None
+    if not isinstance(mapping, dict):
+        raise ValueError("sql2xml.mapping must be an object when provided")
+    return mapping
 
 
 def load_converter(module_name: str, callable_name: str) -> Callable[..., bytes]:

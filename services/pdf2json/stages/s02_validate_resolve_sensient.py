@@ -3,7 +3,7 @@
 Stage s02 - validate and resolve buyers.
 
 Responsibility:
-- Validate imported Sensient rows for a given batch_id.
+- Validate imported Sensient rows for a given job_id.
 - Resolve buyer_party_id from buyer_name using parties in the database (exact + fuzzy).
 - Write buyer_party_id and buyer_match_confidence back to public."temporaryStaging".
 """
@@ -74,12 +74,12 @@ def get_all_parties(conn) -> Dict[str, str]:
         return {normalize_name(name): str(party_id) for party_id, name in parties}
 
 
-def load_batch_rows(conn, batch_id: str) -> pd.DataFrame:
-    """Load rows for a given batch_id from temporaryStaging."""
+def load_job_rows(conn, job_id: str) -> pd.DataFrame:
+    """Load rows for a given job_id from temporaryStaging."""
     query = """
     SELECT
         id,
-        batch_id,
+        job_id,
         buyer_name,
         buyer_party_id,
         invoice,
@@ -87,9 +87,9 @@ def load_batch_rows(conn, batch_id: str) -> pd.DataFrame:
         unit_price,
         amount
     FROM public."temporaryStaging"
-    WHERE batch_id = %s
+    WHERE job_id = %s
     """
-    return pd.read_sql_query(query, conn, params=(batch_id,))
+    return pd.read_sql_query(query, conn, params=(job_id,))
 
 
 def to_number(value) -> float:
@@ -179,13 +179,13 @@ def update_buyer_resolution(conn, updates: List[Tuple[str, int, str]]):
     conn.commit()
 
 
-def process_batch(conn, batch_id: str):
-    """Validate rows and resolve buyers for the provided batch_id."""
+def process_job(conn, job_id: str):
+    """Validate rows and resolve buyers for the provided job_id."""
     ensure_temp_staging_columns(conn)
-    df = load_batch_rows(conn, batch_id)
+    df = load_job_rows(conn, job_id)
 
     if df.empty:
-        print(f"⚠️  No rows found in public.\"temporaryStaging\" for batch_id={batch_id}")
+        print(f"⚠️  No rows found in public.\"temporaryStaging\" for job_id={job_id}")
         return
 
     parties_dict = get_all_parties(conn)
@@ -218,7 +218,7 @@ def process_batch(conn, batch_id: str):
     print("\n" + "=" * 70)
     print("  BATCH VALIDATION & BUYER RESOLUTION SUMMARY")
     print("=" * 70)
-    print(f"Batch ID:                        {batch_id}")
+    print(f"Job ID:                          {job_id}")
     print(f"Rows processed:                  {total_rows}")
     print(f"Rows with validation issues:     {validation_failures}")
     print(f"Resolved buyers (>= {FUZZY_THRESHOLD}%):   {resolved_confident}")
@@ -228,12 +228,12 @@ def process_batch(conn, batch_id: str):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Validate Sensient temporaryStaging data and resolve buyers for a batch_id"
+        description="Validate Sensient temporaryStaging data and resolve buyers for a job_id"
     )
     parser.add_argument(
-        '--batch-id',
+        '--job-id',
         required=True,
-        help='Batch identifier printed by s01_postgreimport_sensient.py'
+        help='Job identifier printed by s01_postgreimport_sensient.py'
     )
     return parser.parse_args()
 
@@ -242,7 +242,7 @@ def main():
     args = parse_args()
     conn = get_db_connection()
     try:
-        process_batch(conn, args.batch_id)
+        process_job(conn, args.job_id)
     except Exception as e:
         print(f"\n❌ Error during validation/resolution: {e}")
         import traceback

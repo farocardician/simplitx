@@ -9,15 +9,15 @@
       {
         "script": "stages/s01_postgreimport_sensient.py",
         "args": ["{xls}"],
-        "outputs": ["batch_id"]
+        "outputs": ["job_id"]
       },
       {
         "script": "stages/s02_validate_resolve_sensient.py",
-        "args": ["--batch-id", "{batch_id}"]
+        "args": ["--job-id", "{job_id}"]
       },
       {
         "script": "stages/s03_build_invoices.py",
-        "args": ["--batch-id", "{batch_id}"]
+        "args": ["--job-id", "{job_id}"]
       }
     ]
   },
@@ -28,11 +28,11 @@
     },
     {
       "script": "stages/s02_validate_resolve_sensient.py",
-      "args": ["--batch-id", "{batch_id}"]
+      "args": ["--job-id", "{job_id}"]
     },
     {
       "script": "stages/s03_build_invoices.py",
-      "args": ["--batch-id", "{batch_id}"]
+      "args": ["--job-id", "{job_id}"]
     }
   ],
   "queue": {
@@ -41,6 +41,13 @@
     "data_source": "tax_invoices",
     "filter": { "tin": "0021164165056000" },
     "seller_name": "PT Sensient Colors Indonesia"
+  },
+  "seller": {
+    "id": "74490aa0-7490-402f-ac9b-42bd823fb6cb",
+    "tax_invoice_opt": "Normal"
+  },
+  "tax": {
+    "vat_rate": 12
   },
   "rounding": {
     "qty": { "scale": 3, "mode": "half_up" },
@@ -54,13 +61,55 @@
     "endpoint": "/api/upload-xls",
     "max_size_mb": 50
   },
-  "json2xml": {
-    "profiles": {
-      "default": {
-        "mapping": "mappings/pt_sil_invoice_v1.json",
-        "converter": {
-          "module": "json2xml.converter",
-          "callable": "convert_json_to_xml"
+  "sql2xml": {
+    "mapping": {
+      "root": {
+        "tag": "TaxInvoiceBulk",
+        "nsmap": {
+          "xsd": "http://www.w3.org/2001/XMLSchema",
+          "xsi": "http://www.w3.org/2001/XMLSchema-instance"
+        }
+      },
+      "structure": {
+        "TIN": "$.data.invoice.tin",
+        "ListOfTaxInvoice": {
+          "TaxInvoice": {
+            "TaxInvoiceDate": "$.data.invoice.tax_invoice_date",
+            "TaxInvoiceOpt": "$.data.invoice.tax_invoice_opt",
+            "TrxCode": "$.data.invoice.trx_code",
+            "AddInfo": "$.data.invoice.add_info",
+            "CustomDoc": "$.data.invoice.custom_doc",
+            "CustomDocMonthYear": "$.data.invoice.custom_doc_month_year",
+            "RefDesc": "$.data.invoice.ref_desc",
+            "FacilityStamp": "$.data.invoice.facility_stamp",
+            "SellerIDTKU": "$.data.invoice.seller_idtku",
+            "BuyerTin": "$.data.buyer.tin",
+            "BuyerDocument": "$.data.buyer.document",
+            "BuyerCountry": "$.data.buyer.country",
+            "BuyerDocumentNumber": "$.data.buyer.document_number",
+            "BuyerName": "$.data.buyer.name",
+            "BuyerAdress": "$.data.buyer.address",
+            "BuyerEmail": "$.data.buyer.email",
+            "BuyerIDTKU": "$.data.buyer.idtku",
+            "ListOfGoodService": {
+              "_array": "$.data.items[*]",
+              "GoodService": {
+                "Opt": "$.opt",
+                "Code": "$.code",
+                "Name": "$.name",
+                "Unit": "$.unit",
+                "Price": { "path": "$.price", "format": { "type": "decimal", "scale": 2 } },
+                "Qty": "$.qty",
+                "TotalDiscount": { "path": "$.total_discount", "format": { "type": "decimal", "scale": 2 } },
+                "TaxBase": { "path": "$.tax_base", "format": { "type": "decimal", "scale": 2 } },
+                "OtherTaxBase": { "path": "$.other_tax_base", "format": { "type": "decimal", "scale": 2 } },
+                "VATRate": "$.vat_rate",
+                "VAT": { "path": "$.vat", "format": { "type": "decimal", "scale": 2 } },
+                "STLGRate": "$.stlg_rate",
+                "STLG": { "path": "$.stlg", "format": { "type": "decimal", "scale": 2 } }
+              }
+            }
+          }
         }
       }
     }

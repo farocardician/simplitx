@@ -15,17 +15,17 @@ Ingest Sensient Excel workbooks into PostgreSQL and populate normalized tax invo
 - Skips non‑data sheets (`Sheet1`, `Data Seller`, `Rittal`, `Simon`, `Silesia`, etc.) and reads data with `skiprows=5`.
 - Required columns: Invoice, Ship Date, Item Description, Input Quantity, Input UOM, Total KG, Unit Price, Amount, Currency. Optional: HS-Code. Must also have Customer Group (captured as `buyer_name_raw`).
 - Normalizes column names (handles HS-Code variants), coerces invoice to string int, numeric columns to numbers, drops rows missing invoice/buyer/qty/price/amount.
-- Adds `batch_id` (UUID) per run, adds placeholder buyer fields, ensures staging columns (`buyer_name_raw`, `buyer_match_confidence`) exist.
-- Output: rows inserted into `public."temporaryStaging"` with the batch_id; prints counts for sheets processed/skipped, unique buyers, rows inserted.
+- Adds `job_id` (UUID) per run, adds placeholder buyer fields, ensures staging columns (`buyer_name_raw`, `buyer_match_confidence`) exist.
+- Output: rows inserted into `public."temporaryStaging"` with the job_id; prints counts for sheets processed/skipped, unique buyers, rows inserted.
 
 2) Stage s02 — validation + buyer resolution
-- Input: `batch_id` against `public."temporaryStaging"`.
+- Input: `job_id` against `public."temporaryStaging"`.
 - Validates required fields and checks `amount` vs `input_quantity * unit_price` with tolerance `max(1%, 0.01)`.
 - Loads `public.parties` and resolves `buyer_party_id` via exact match on normalized name, else fuzzy match (fuzzywuzzy ratio ≥ 70). Writes confidence to `buyer_match_confidence`; low/conflicting matches are stored as NULL.
 - Output: updates staging rows in place; prints counts of validation issues and resolved/unresolved buyers.
 
 3) Stage s03 — build normalized invoices
-- Input: staging rows filtered by `--batch-id` or `--invoice`; skips groups that already exist in `tax_invoices`.
+- Input: staging rows filtered by `--job-id` or `--invoice`; skips groups that already exist in `tax_invoices`.
 - For each (invoice_number, buyer_party_id): fetches buyer details (`public.parties`), staging items, and prepares header data with fixed seller constants (`TIN=0021164165056000`, `seller_idtku=0021164165056000000000`, VAT 12%).
 - HS codes: parsed to `(opt, 6-digit code)`; validates existence in `public.hs_codes` (logs warning if missing). UOM: resolved via `public.uom_aliases` (falls back to original if not found).
 - Economics: uses `unit_price` and `total_kg` as price/qty; computes `tax_base = price*qty`, `other_tax_base = 11/12 * tax_base`, `vat = 12% of other_tax_base`.
@@ -33,7 +33,7 @@ Ingest Sensient Excel workbooks into PostgreSQL and populate normalized tax invo
 
 ## Data Flow
 - Excel → `public."temporaryStaging"` (Stage 1) → validated/resolved staging (Stage 2) → `tax_invoices` + `tax_invoice_items` (Stage 3).
-- Grouping key: `(invoice, buyer_party_id)`; batch_id keeps runs isolated. Stage 3 skips invoices already present for that buyer.
+- Grouping key: `(invoice, buyer_party_id)`; job_id keeps runs isolated. Stage 3 skips invoices already present for that buyer.
 
 ## Configuration & Defaults
 - Column mapping lives in `s01_postgreimport_sensient.py` (`COLUMN_MAPPING`, `REQUIRED_COLUMNS`, `OPTIONAL_COLUMNS`, `SKIP_SHEETS`).
@@ -45,8 +45,8 @@ Ingest Sensient Excel workbooks into PostgreSQL and populate normalized tax invo
 
 ## How to Run
 - Stage 1 (import): `python services/xls2sql/stages/s01_postgreimport_sensient.py <path/to/workbook.xlsx>`
-- Stage 2 (validate/resolve buyers): `python services/xls2sql/stages/s02_validate_resolve_sensient.py --batch-id <uuid-from-stage1>`
-- Stage 3 (build invoices/items): `python services/xls2sql/stages/s03_build_invoices.py --batch-id <uuid>` (or `--invoice <number>`, add `--dry-run` to preview)
+- Stage 2 (validate/resolve buyers): `python services/xls2sql/stages/s02_validate_resolve_sensient.py --job-id <uuid-from-stage1>`
+- Stage 3 (build invoices/items): `python services/xls2sql/stages/s03_build_invoices.py --job-id <uuid>` (or `--invoice <number>`, add `--dry-run` to preview)
 
 ## Testing the Full Workflow
 
@@ -87,15 +87,15 @@ cd /path/to/simplitx/services/xls2sql
 env DB_HOST=localhost DB_PORT=5432 DB_NAME=pdf_jobs DB_USER=postgres DB_PASSWORD=postgres \
   python3 stages/s01_postgreimport_sensient.py training/sen/sensient.xlsx
 
-# Note the Batch ID from output (e.g., ad25c210-2c46-4648-9164-a87088509897)
+# Note the Job ID from output (e.g., ad25c210-2c46-4648-9164-a87088509897)
 
 # Stage 2: Validate and resolve buyers
 env DB_HOST=localhost DB_PORT=5432 DB_NAME=pdf_jobs DB_USER=postgres DB_PASSWORD=postgres \
-  python3 stages/s02_validate_resolve_sensient.py --batch-id <BATCH_ID>
+  python3 stages/s02_validate_resolve_sensient.py --job-id <JOB_ID>
 
 # Stage 3: Build invoices and cleanup staging
 env PGHOST=localhost PGPORT=5432 PGDATABASE=pdf_jobs PGUSER=postgres PGPASSWORD=postgres \
-  python3 stages/s03_build_invoices.py --batch-id <BATCH_ID>
+  python3 stages/s03_build_invoices.py --job-id <JOB_ID>
 ```
 
 ### Verifying Results
@@ -115,7 +115,7 @@ docker exec $(docker ps -q -f name=simplitx-postgres-1) psql -U postgres -d pdf_
 # Delete all invoices
 docker exec $(docker ps -q -f name=simplitx-postgres-1) psql -U postgres -d pdf_jobs -c "DELETE FROM tax_invoices"
 
-# Re-run the full pipeline (Stages 1-3 with new batch_id)
+# Re-run the full pipeline (Stages 1-3 with new job_id)
 # Then check a specific invoice - item count should remain consistent
 docker exec $(docker ps -q -f name=simplitx-postgres-1) psql -U postgres -d pdf_jobs -c \
   "SELECT invoice_number, (SELECT COUNT(*) FROM tax_invoice_items WHERE tax_invoice_id = ti.id) as items \
@@ -125,10 +125,10 @@ docker exec $(docker ps -q -f name=simplitx-postgres-1) psql -U postgres -d pdf_
 ### Staging Cleanup Behavior
 
 **Important**: Stage 3 automatically cleans up `temporaryStaging` rows after successful processing:
-- Cleanup runs ONLY when `--batch-id` is provided (not with `--invoice` mode)
+- Cleanup runs ONLY when `--job-id` is provided (not with `--invoice` mode)
 - Cleanup happens AFTER successful commit
 - Cleanup is skipped in `--dry-run` mode
-- You should see: `✓ Cleaned up X staging rows for batch <batch_id>` in the output
+- You should see: `✓ Cleaned up X staging rows for job <job_id>` in the output
 
 **Why Cleanup Matters**: Without cleanup, staging rows accumulate across uploads. When Stage 3 processes an invoice, it would fetch items from ALL historical batches, causing item duplication (e.g., 1 item becomes 2, then 3, then 4 with each upload).
 
@@ -138,7 +138,7 @@ docker exec $(docker ps -q -f name=simplitx-postgres-1) psql -U postgres -d pdf_
 2. **Environment Variable Names**: Stages 1-2 use `DB_*`, Stage 3 uses `PG*`
 3. **Working Directory**: Run scripts from `services/xls2sql/` directory
 4. **Relative Paths**: XLS file path is relative to working directory: `training/sen/sensient.xlsx`
-5. **Batch ID Reuse**: Each Stage 1 run creates a NEW batch_id; don't reuse old batch_ids
+5. **Job ID Reuse**: Each Stage 1 run creates a NEW job_id; don't reuse old job_ids
 6. **Container Name**: If `simplitx-postgres-1` doesn't exist, check with `docker ps | grep postgres`
 
 ## Environment Requirements

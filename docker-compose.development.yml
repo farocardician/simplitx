@@ -10,15 +10,21 @@ services:
       - web_next:/app/.next
       - ./services/shared:/shared
       - ./services/xls2sql:/xls2sql
+      - ./services/config:/config
     environment:
       - NODE_ENV=development
       - DOCKER_ENV=true
+      - CONFIG_DIR=/config
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
       - KURS_PAJAK_API_BASE=http://kurs_pajak:8000
       - SQL2XML_URL=http://sql2xml:8000
-      - SQL2XML_PIPELINE=invoice_pt_sensient.json
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=pdf_jobs
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
     command: npm run dev
 
   worker:
@@ -74,9 +80,11 @@ services:
     volumes:
       - ./services/xls2sql:/app
       - ./services/xls2sql/training:/training
+      - ./services/config:/config
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
+      - CONFIG_DIR=/config
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=pdf_jobs
@@ -102,7 +110,6 @@ services:
       - PYTHONUNBUFFERED=1
       - CONFIG_DIR=/config
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pdf_jobs
-      - DEFAULT_PIPELINE=invoice_pt_sensient.json
     ports:
       - "8012:8000"
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload

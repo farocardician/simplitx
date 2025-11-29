@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS public.tax_invoice_items (
     other_tax_base NUMERIC NOT NULL,  -- (11/12) * tax_base
     vat_rate NUMERIC DEFAULT 12,  -- Always 12%
     vat NUMERIC NOT NULL,  -- (12/100) * other_tax_base
-    stlg_rate NUMERIC,  -- Optional luxury tax rate
-    stlg NUMERIC,  -- Optional luxury tax amount
+    stlg_rate NUMERIC DEFAULT 0,  -- Optional luxury tax rate
+    stlg NUMERIC DEFAULT 0,  -- Optional luxury tax amount
 
     -- Metadata
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

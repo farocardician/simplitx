@@ -17,6 +17,7 @@ from .pipeline import (
     _service_paths,
     load_converter,
     load_pipeline_config,
+    resolve_inline_mapping,
     resolve_mapping_path,
     resolve_profile,
 )
@@ -63,16 +64,39 @@ class ExportResult:
 
 
 def _build_conninfo() -> str:
-    """Build connection string from environment."""
+    """Build connection string from environment (no fallbacks).
+
+    Raises:
+        RuntimeError if required database environment variables are not set
+    """
     database_url = os.getenv("DATABASE_URL")
     if database_url:
         return database_url
 
-    host = os.getenv("PGHOST") or os.getenv("DB_HOST", "localhost")
-    port = os.getenv("PGPORT") or os.getenv("DB_PORT", "5432")
-    db = os.getenv("PGDATABASE") or os.getenv("DB_NAME", "pdf_jobs")
-    user = os.getenv("PGUSER") or os.getenv("DB_USER", "postgres")
-    password = os.getenv("PGPASSWORD") or os.getenv("DB_PASSWORD", "postgres")
+    host = os.getenv("PGHOST") or os.getenv("DB_HOST")
+    port = os.getenv("PGPORT") or os.getenv("DB_PORT")
+    db = os.getenv("PGDATABASE") or os.getenv("DB_NAME")
+    user = os.getenv("PGUSER") or os.getenv("DB_USER")
+    password = os.getenv("PGPASSWORD") or os.getenv("DB_PASSWORD")
+
+    missing = []
+    if not host:
+        missing.append('PGHOST or DB_HOST')
+    if not port:
+        missing.append('PGPORT or DB_PORT')
+    if not db:
+        missing.append('PGDATABASE or DB_NAME')
+    if not user:
+        missing.append('PGUSER or DB_USER')
+    if not password:
+        missing.append('PGPASSWORD or DB_PASSWORD')
+
+    if missing:
+        raise RuntimeError(
+            f"Missing required database environment variables: {missing}. "
+            f"Set DATABASE_URL or the appropriate environment variable(s)."
+        )
+
     return f"postgresql://{user}:{password}@{host}:{port}/{db}"
 
 
@@ -104,26 +128,26 @@ def normalize_invoice_numbers(raw: Optional[Sequence[str]]) -> List[str]:
 def fetch_invoices(
     conn,
     invoice_ids: Optional[Sequence[str]],
-    batch_id: Optional[str],
+    job_id: Optional[str],
 ) -> List[Dict[str, Any]]:
-    """Fetch tax_invoices filtered by invoice IDs and/or batch_id."""
+    """Fetch tax_invoices filtered by invoice IDs and/or job_id."""
     where = []
     params: List[Any] = []
 
     if invoice_ids:
         where.append("id = ANY(%s)")
         params.append(list(invoice_ids))
-    if batch_id:
-        where.append("batch_id = %s")
-        params.append(batch_id)
+    if job_id:
+        where.append("job_id = %s")
+        params.append(job_id)
 
     if not where:
-        raise InvoiceValidationError("INVALID_FILTER", "At least one filter (invoice IDs or batch) is required")
+        raise InvoiceValidationError("INVALID_FILTER", "At least one filter (invoice IDs or job) is required")
 
     sql = f"""
         SELECT
             id,
-            batch_id,
+            job_id,
             invoice_number,
             buyer_party_id,
             tin,
@@ -207,14 +231,20 @@ def build_invoice_payload(invoice: Dict[str, Any], items: List[Dict[str, Any]]) 
         item_payloads.append(
             {
                 "line_number": item.get("line_number"),
+                "opt": item.get("opt"),
+                "code": item.get("code"),
                 "hs_code": hs_code,
-                "description": item.get("name"),
-                "uom": item.get("unit"),
-                "unit_price": decimal_to_number(item.get("price")),
+                "name": item.get("name"),
+                "unit": item.get("unit"),
+                "price": decimal_to_number(item.get("price")),
                 "qty": decimal_to_number(item.get("qty")),
-                "amount": decimal_to_number(item.get("tax_base")),
+                "tax_base": decimal_to_number(item.get("tax_base")),
                 "other_tax_base": decimal_to_number(item.get("other_tax_base")),
+                "total_discount": decimal_to_number(item.get("total_discount")),
+                "vat_rate": decimal_to_number(item.get("vat_rate")),
                 "vat": decimal_to_number(item.get("vat")),
+                "stlg_rate": decimal_to_number(item.get("stlg_rate")),
+                "stlg": decimal_to_number(item.get("stlg")),
             }
         )
 
@@ -226,8 +256,8 @@ def build_invoice_payload(invoice: Dict[str, Any], items: List[Dict[str, Any]]) 
         "data": {
             "invoice": {
                 "number": invoice.get("invoice_number"),
-                "date": invoice_date,
-                "opt": invoice.get("tax_invoice_opt"),
+                "tax_invoice_date": invoice_date,
+                "tax_invoice_opt": invoice.get("tax_invoice_opt"),
                 "trx_code": invoice.get("trx_code"),
                 "ref_desc": invoice.get("ref_desc") or invoice.get("invoice_number"),
                 "add_info": invoice.get("add_info"),
@@ -406,7 +436,7 @@ def build_merged_filename(mapping_path: Path, count: int) -> str:
 
 def export_invoices_to_xml(
     invoice_ids: Optional[Sequence[str]] = None,
-    batch_id: Optional[str] = None,
+    job_id: Optional[str] = None,
     *,
     mapping_override: Optional[str] = None,
     pipeline: Optional[str] = None,
@@ -418,7 +448,7 @@ def export_invoices_to_xml(
     Export one or many invoices to XML using json2xml mappings.
 
     - invoice_ids: list of invoice UUIDs to export
-    - batch_id: optional batch filter
+    - job_id: optional job filter
     - mapping_override: absolute path to mapping JSON (bypass pipeline mapping)
     - pipeline: pipeline config filename (default from env/constant)
     - profile: json2xml profile name inside the pipeline config
@@ -428,8 +458,14 @@ def export_invoices_to_xml(
     normalized_ids = normalize_invoice_numbers(invoice_ids)
 
     pipeline_config, pipeline_path = load_pipeline_config(pipeline)
-    profile_conf = resolve_profile(pipeline_config, profile)
-    mapping_rel = profile_conf["mapping"]
+    inline_mapping = resolve_inline_mapping(pipeline_config)
+    profile_conf = resolve_profile(
+        pipeline_config,
+        profile,
+        require_mapping=inline_mapping is None and mapping_override is None,
+        allow_missing=inline_mapping is not None or mapping_override is not None,
+    )
+    mapping_rel = profile_conf.get("mapping")
     converter_conf = profile_conf.get("converter", {})
     converter_module = converter_conf.get("module", "json2xml.converter")
     converter_callable = converter_conf.get("callable", "convert_json_to_xml")
@@ -444,15 +480,26 @@ def export_invoices_to_xml(
         mapping_path = Path(mapping_override).expanduser().resolve()
         if not mapping_path.exists():
             raise FileNotFoundError(f"Mapping file '{mapping_override}' not found")
+        mapping = load_mapping(str(mapping_path))
+        mapping_source_desc = str(mapping_path)
+        mapping_for_filename = mapping_path
+    elif inline_mapping is not None:
+        mapping = copy.deepcopy(inline_mapping)
+        mapping_source_desc = f"{pipeline_path}#sql2xml.mapping"
+        mapping_for_filename = Path(mapping_rel) if mapping_rel else pipeline_path
     else:
+        if not mapping_rel:
+            raise KeyError(f"Profile '{profile}' missing mapping path")
         mapping_path = resolve_mapping_path(mapping_rel, pipeline_path)
-    mapping = load_mapping(str(mapping_path))
+        mapping = load_mapping(str(mapping_path))
+        mapping_source_desc = str(mapping_path)
+        mapping_for_filename = mapping_path
 
     with get_db_connection() as conn:
-        if not normalized_ids and not batch_id:
-            raise InvoiceValidationError("INVALID_FILTER", "Provide invoice IDs or batch_id")
+        if not normalized_ids and not job_id:
+            raise InvoiceValidationError("INVALID_FILTER", "Provide invoice IDs or job_id")
 
-        invoices = fetch_invoices(conn, normalized_ids or None, batch_id)
+        invoices = fetch_invoices(conn, normalized_ids or None, job_id)
 
         if not invoices:
             raise InvoiceNotFoundError("No invoices found for provided filters.")
@@ -476,7 +523,7 @@ def export_invoices_to_xml(
         return ExportResult(
             xml_bytes=xml_bytes,
             invoice_numbers=[payloads[0]["data"]["invoice"].get("number") or ""],
-            mapping_path=str(mapping_path),
+            mapping_path=mapping_source_desc,
             merged=False,
             suggested_filename=filename,
         )
@@ -489,12 +536,12 @@ def export_invoices_to_xml(
     bulk_payload = {"data": sorted_payloads}
 
     xml_bytes = converter(bulk_payload, bulk_mapping, params=params_payload, pretty=pretty)
-    filename = build_merged_filename(mapping_path, len(payloads))
+    filename = build_merged_filename(mapping_for_filename, len(payloads))
 
     return ExportResult(
         xml_bytes=xml_bytes,
         invoice_numbers=[p["data"]["invoice"].get("number") or "" for p in sorted_payloads],
-        mapping_path=str(mapping_path),
+        mapping_path=mapping_source_desc,
         merged=True,
         suggested_filename=filename,
     )

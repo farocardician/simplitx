@@ -15,7 +15,7 @@
 - **Why**: JSON expressions can't perform arithmetic on string values
 
 **3. Missing invoice_ids Validation** (`services/sql2xml/main.py:104`)
-- **Problem**: Validation only checked `invoice_numbers` and `batch_id`, ignored `invoice_ids`
+- **Problem**: Validation only checked `invoice_numbers` and `job_id`, ignored `invoice_ids`
 - **Fix**: Updated condition to include `invoice_ids` check
 - **Why**: New ID-based downloads were being incorrectly rejected
 
@@ -30,7 +30,7 @@
 
 **SQL2XML Service** (`services/sql2xml/main.py`)
 - Removed `invoice_numbers` field from `ExportRequest` model
-- Updated validation: "Provide invoiceIds or batchId"
+- Updated validation: "Provide invoiceIds or jobId"
 - Removed `invoice_numbers` from `export_invoices_to_xml()` call
 
 **Exporter** (`services/sql2xml/sql2xml/exporter.py`)

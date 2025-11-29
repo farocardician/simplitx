@@ -161,17 +161,34 @@ export function useUpload(options?: { getTemplate?: () => string; getTemplateMet
 
       // Use XMLHttpRequest for upload progress
       const xhr = new XMLHttpRequest()
-      
+
       return new Promise<void>((resolve, reject) => {
         // Track upload progress
         xhr.upload.addEventListener('progress', (e) => {
           if (e.lengthComputable) {
             const progress = Math.round((e.loaded / e.total) * 100)
-            updateFileProgress({ 
-              fileId, 
-              progress, 
-              status: progress === 100 ? 'completed' : 'uploading' 
-            })
+            // When upload reaches 100%, show "processing" for XLS files (server-side processing)
+            if (progress === 100 && meta.ingestionType === 'xls') {
+              setUploadState(prev => ({
+                ...prev,
+                files: prev.files.map(file =>
+                  file.id === fileId
+                    ? {
+                        ...file,
+                        progress: 100,
+                        status: 'processing' as const,
+                        processingMessage: 'Processing Excel data...'
+                      }
+                    : file
+                )
+              }))
+            } else {
+              updateFileProgress({
+                fileId,
+                progress,
+                status: progress === 100 ? 'completed' : 'uploading'
+              })
+            }
           }
         })
 
@@ -235,13 +252,25 @@ export function useUpload(options?: { getTemplate?: () => string; getTemplateMet
 
             resolve()
           } else {
+            // Parse error response to get detailed error message
+            let errorMessage = `Upload failed: ${xhr.statusText}`
+            try {
+              const errorResponse = JSON.parse(xhr.responseText)
+              if (errorResponse.error?.message) {
+                errorMessage = errorResponse.error.message
+              }
+            } catch (e) {
+              // If parsing fails, use default error message
+              console.error('Failed to parse error response:', e)
+            }
+
             updateFileProgress({
               fileId,
               progress: 0,
               status: 'error',
-              error: `Upload failed: ${xhr.statusText}`
+              error: errorMessage
             })
-            reject(new Error(xhr.statusText))
+            reject(new Error(errorMessage))
           }
         })
 

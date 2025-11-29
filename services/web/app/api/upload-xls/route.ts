@@ -81,8 +81,8 @@ async function runPython(args: string[]) {
   })
 }
 
-function extractBatchId(output: string): string | null {
-  const match = output.match(/Batch ID:\s*([0-9a-fA-F-]{36})/)
+function extractJobId(output: string): string | null {
+  const match = output.match(/Job ID:\s*([0-9a-fA-F-]{36})/)
   return match ? match[1] : null
 }
 
@@ -98,11 +98,19 @@ async function saveUpload(buffer: Buffer, originalName: string) {
 }
 
 export const POST = async (req: NextRequest) => {
+  const startTime = Date.now()
+  console.log('🚀 [XLS Upload] Starting upload process')
+
   const formData = await req.formData()
   const file = formData.get('file') as File | null
+  const template = formData.get('template') as string | null
 
   if (!file) {
     return NextResponse.json({ error: { code: 'NO_FILE', message: 'File is required' } }, { status: 400 })
+  }
+
+  if (!template) {
+    return NextResponse.json({ error: { code: 'NO_TEMPLATE', message: 'Template/config is required' } }, { status: 400 })
   }
 
   if (!isExcelFile(file)) {
@@ -113,58 +121,95 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json({ error: { code: 'TOO_LARGE', message: `File exceeds ${MAX_XLS_MB}MB limit` } }, { status: 413 })
   }
 
+  const t1 = Date.now()
   const buffer = Buffer.from(await file.arrayBuffer())
   const savedPath = await saveUpload(buffer, file.name)
+  console.log(`📁 [XLS Upload] File saved (${file.name}, ${(file.size / 1024).toFixed(2)} KB) in ${Date.now() - t1}ms`)
 
   // Determine script paths (Docker vs local)
   const scriptsBase = process.env.NODE_ENV === 'production' || process.env.DOCKER_ENV
     ? '/xls2sql/stages'
     : 'services/xls2sql/stages'
 
-  // Stage 1: import XLS
-  const stage1 = await runPython([`${scriptsBase}/s01_postgreimport_sensient.py`, savedPath])
+  // Stage 1: import XLS with config
+  const t2 = Date.now()
+  console.log('📊 [Stage 1/3] Importing Excel data...')
+  const stage1 = await runPython([`${scriptsBase}/s01_postgreimport_sensient.py`, savedPath, '--config', template])
+  const stage1Time = Date.now() - t2
   if (stage1.code !== 0) {
+    console.error(`❌ [Stage 1/3] Failed in ${stage1Time}ms:`, stage1.stderr || stage1.stdout)
     return NextResponse.json(
       { error: { code: 'IMPORT_FAILED', message: stage1.stderr || stage1.stdout || 'Import failed' } },
       { status: 500 }
     )
   }
+  // Log Python output for debugging
+  if (stage1.stdout) console.log('[Stage 1 stdout]', stage1.stdout.split('\n').filter(l => l.includes('⏱️')).join('\n'))
+  if (stage1.stderr) console.log('[Stage 1 stderr]', stage1.stderr.split('\n').filter(l => l.includes('⏱️')).join('\n'))
+  console.log(`✅ [Stage 1/3] Import completed in ${stage1Time}ms`)
 
-  const batchId = extractBatchId(stage1.stdout || '')
-  if (!batchId) {
+  const jobId = extractJobId(stage1.stdout || '')
+  if (!jobId) {
     return NextResponse.json(
-      { error: { code: 'NO_BATCH_ID', message: 'Could not extract batch_id from import output' }, logs: stage1.stdout },
+      { error: { code: 'NO_JOB_ID', message: 'Could not extract job_id from import output' }, logs: stage1.stdout },
       { status: 500 }
     )
   }
+  console.log(`🆔 Job ID: ${jobId}`)
 
   // Stage 2: validate/resolve buyers
-  const stage2 = await runPython([`${scriptsBase}/s02_validate_resolve_sensient.py`, '--batch-id', batchId])
+  const t3 = Date.now()
+  console.log('🔍 [Stage 2/3] Validating and resolving buyers...')
+  const stage2 = await runPython([`${scriptsBase}/s02_validate_resolve_sensient.py`, '--job-id', jobId])
+  const stage2Time = Date.now() - t3
   if (stage2.code !== 0) {
+    console.error(`❌ [Stage 2/3] Failed in ${stage2Time}ms:`, stage2.stderr || stage2.stdout)
     return NextResponse.json(
-      { error: { code: 'VALIDATION_FAILED', message: stage2.stderr || stage2.stdout || 'Validation failed' }, batchId },
+      { error: { code: 'VALIDATION_FAILED', message: stage2.stderr || stage2.stdout || 'Validation failed' }, jobId },
       { status: 500 }
     )
   }
+  // Log Python output for debugging
+  if (stage2.stdout) console.log('[Stage 2 stdout]', stage2.stdout.split('\n').filter(l => l.includes('⏱️')).join('\n'))
+  if (stage2.stderr) console.log('[Stage 2 stderr]', stage2.stderr.split('\n').filter(l => l.includes('⏱️')).join('\n'))
+  console.log(`✅ [Stage 2/3] Validation completed in ${stage2Time}ms`)
 
   // Stage 3: build tax_invoices
-  const stage3 = await runPython([`${scriptsBase}/s03_build_invoices.py`, '--batch-id', batchId])
+  const t4 = Date.now()
+  console.log('🏗️  [Stage 3/3] Building tax invoices...')
+  const stage3 = await runPython([`${scriptsBase}/s03_build_invoices.py`, '--job-id', jobId])
+  const stage3Time = Date.now() - t4
   if (stage3.code !== 0) {
+    console.error(`❌ [Stage 3/3] Failed in ${stage3Time}ms:`, stage3.stderr || stage3.stdout)
     return NextResponse.json(
-      { error: { code: 'BUILD_FAILED', message: stage3.stderr || stage3.stdout || 'Invoice build failed' }, batchId },
+      { error: { code: 'BUILD_FAILED', message: stage3.stderr || stage3.stdout || 'Invoice build failed' }, jobId },
       { status: 500 }
     )
   }
+  // Log Python output for debugging
+  if (stage3.stdout) console.log('[Stage 3 stdout]', stage3.stdout.split('\n').filter(l => l.includes('⏱️') || l.includes('✓')).join('\n'))
+  if (stage3.stderr) console.log('[Stage 3 stderr]', stage3.stderr.split('\n').filter(l => l.includes('⏱️') || l.includes('✓')).join('\n'))
+  console.log(`✅ [Stage 3/3] Invoice build completed in ${stage3Time}ms`)
 
+  const t5 = Date.now()
   const invoices = await prisma.$queryRaw<
     { id: string; invoice_number: string; tax_invoice_date: Date | null; trx_code: string | null; buyer_name: string | null }[]
   >(
-    Prisma.sql`SELECT id, invoice_number, tax_invoice_date, trx_code, buyer_name FROM tax_invoices WHERE batch_id = ${batchId}::uuid ORDER BY invoice_number`
+    Prisma.sql`SELECT id, invoice_number, tax_invoice_date, trx_code, buyer_name FROM tax_invoices WHERE job_id = ${jobId}::uuid ORDER BY invoice_number`
   )
+  console.log(`📋 Query invoices: ${invoices.length} invoices found in ${Date.now() - t5}ms`)
+
+  const totalTime = Date.now() - startTime
+  console.log(`✨ [XLS Upload] Total processing time: ${totalTime}ms`)
+  console.log(`   ├─ File save: ${Date.now() - t1}ms`)
+  console.log(`   ├─ Stage 1 (Import): ${stage1Time}ms`)
+  console.log(`   ├─ Stage 2 (Validate): ${stage2Time}ms`)
+  console.log(`   ├─ Stage 3 (Build): ${stage3Time}ms`)
+  console.log(`   └─ Query invoices: ${Date.now() - t5}ms`)
 
   return NextResponse.json({
     status: 'ok',
-    batchId,
+    jobId,
     invoices: invoices.map((inv) => ({
       id: inv.id,
       invoiceNumber: inv.invoice_number,
