@@ -195,7 +195,7 @@ export const POST = async (req: NextRequest) => {
   const invoices = await prisma.$queryRaw<
     { id: string; invoice_number: string; tax_invoice_date: Date | null; trx_code: string | null; buyer_name: string | null }[]
   >(
-    Prisma.sql`SELECT id, invoice_number, tax_invoice_date, trx_code, buyer_name FROM tax_invoices WHERE job_id = ${jobId}::uuid ORDER BY invoice_number`
+    Prisma.sql`SELECT id, invoice_number, tax_invoice_date, trx_code, buyer_name FROM tax_invoices_enriched WHERE job_id = ${jobId}::uuid ORDER BY invoice_number`
   )
   console.log(`📋 Query invoices: ${invoices.length} invoices found in ${Date.now() - t5}ms`)
 

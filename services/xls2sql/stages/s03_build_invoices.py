@@ -129,23 +129,11 @@ def _repo_root() -> Path:
         return Path('/')
 
 
-def _get_config_name_from_job(conn, job_id: str) -> str:
-    """
-    Fetch pipeline config name from job_config table using job_id.
-
-    Args:
-        conn: Database connection
-        job_id: UUID of the job
-
-    Returns:
-        Config name (e.g., 'invoice_pt_client.json')
-
-    Raises:
-        RuntimeError if job_id not found in job_config table
-    """
-    with conn.cursor() as cur:
+def _get_job_config(conn, job_id: str) -> Dict[str, Any]:
+    """Fetch pipeline config metadata from job_config."""
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            "SELECT config_name FROM public.job_config WHERE job_id = %s",
+            "SELECT config_name, seller_id FROM public.job_config WHERE job_id = %s",
             (job_id,)
         )
         row = cur.fetchone()
@@ -156,16 +144,15 @@ def _get_config_name_from_job(conn, job_id: str) -> str:
             "Ensure the job was created with s01_postgreimport_sensient.py --config <config_name>"
         )
 
-    return row[0]
+    return dict(row)
 
 
-def _load_pipeline_config(job_id: str = None, invoice_number: str = None) -> Dict[str, Any]:
+def _load_pipeline_config(config_name: str) -> Dict[str, Any]:
     """
     Load pipeline config to source VAT rate and other knobs.
 
     Args:
-        job_id: Optional job ID to load config for
-        invoice_number: Optional invoice number to find the related job and load config
+        config_name: Pipeline config filename (e.g., invoice_pt_client.json)
 
     Returns:
         Parsed config dictionary
@@ -173,36 +160,6 @@ def _load_pipeline_config(job_id: str = None, invoice_number: str = None) -> Dic
     Raises:
         RuntimeError if config cannot be loaded
     """
-    # Get config name from database
-    conn = None
-    try:
-        conn = psycopg2.connect(**DB_CONFIG)
-
-        # Determine job_id
-        if not job_id and invoice_number:
-            # Find job_id from invoice
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT DISTINCT job_id FROM public.\"temporaryStaging\" WHERE invoice = %s LIMIT 1",
-                    (invoice_number,)
-                )
-                row = cur.fetchone()
-                if not row:
-                    raise RuntimeError(
-                        f"Invoice {invoice_number} not found in temporaryStaging. "
-                        "Cannot determine job_id for config lookup."
-                    )
-                job_id = row[0]
-
-        if not job_id:
-            raise RuntimeError(
-                "Cannot load pipeline config: no job_id or invoice_number provided"
-            )
-
-        config_name = _get_config_name_from_job(conn, job_id)
-    finally:
-        if conn:
-            conn.close()
     # Ensure config_name has .json extension
     if not config_name.endswith('.json'):
         config_name = f"{config_name}.json"
@@ -245,9 +202,8 @@ def _load_pipeline_config(job_id: str = None, invoice_number: str = None) -> Dic
     raise RuntimeError(f"Pipeline config '{config_name}' not found in expected locations: {candidate_paths}")
 
 
-def _load_vat_rate(job_id: str = None, invoice_number: str = None) -> Decimal:
+def _load_vat_rate(config: Dict[str, Any]) -> Decimal:
     """Derive VAT rate from config; require presence to avoid hidden defaults."""
-    config = _load_pipeline_config(job_id=job_id, invoice_number=invoice_number)
     vat_value = None
 
     if isinstance(config, dict):
@@ -265,13 +221,8 @@ def _load_vat_rate(job_id: str = None, invoice_number: str = None) -> Decimal:
     return vat_decimal
 
 
-def _load_seller_config(job_id: str = None, invoice_number: str = None) -> Dict[str, str]:
-    """Load seller configuration from pipeline config.
-
-    Returns dict with keys: id, tax_invoice_opt
-    Raises RuntimeError if any required field is missing.
-    """
-    config = _load_pipeline_config(job_id=job_id, invoice_number=invoice_number)
+def _load_seller_config(config: Dict[str, Any]) -> Dict[str, str]:
+    """Load seller configuration from pipeline config dict."""
     seller_conf = config.get("seller")
 
     if not seller_conf or not isinstance(seller_conf, dict):
@@ -311,15 +262,17 @@ def fetch_seller_party(conn, seller_id: str) -> Dict[str, Any]:
         seller_id: UUID of seller party
 
     Returns:
-        Dict with seller details (tin_normalized, seller_idtku)
+        Dict with seller details (tin_normalized, seller_idtku, tax_invoice_opt)
 
     Raises:
         RuntimeError if seller not found
     """
     query = """
     SELECT
+        id,
         tin_normalized,
-        seller_idtku
+        seller_idtku,
+        tax_invoice_opt
     FROM public.parties
     WHERE id = %s AND deleted_at IS NULL
     LIMIT 1
@@ -448,7 +401,9 @@ def fetch_buyer_party(conn, buyer_party_id: str) -> Optional[Dict[str, Any]]:
         transaction_code,
         address_full,
         email,
-        buyer_idtku
+        buyer_idtku,
+        buyer_document,
+        buyer_document_number
     FROM public.parties
     WHERE id = %s AND deleted_at IS NULL
     """
@@ -526,38 +481,18 @@ def upsert_tax_invoice(
         job_id,
         invoice_number,
         buyer_party_id,
-        tin,
         tax_invoice_date,
         tax_invoice_opt,
-        trx_code,
         ref_desc,
-        seller_idtku,
-        buyer_tin,
-        buyer_document,
-        buyer_country,
-        buyer_name,
-        buyer_address,
-        buyer_email,
-        buyer_idtku,
         is_complete,
         missing_fields
     ) VALUES (
         %(job_id)s,
         %(invoice_number)s,
         %(buyer_party_id)s,
-        %(tin)s,
         %(tax_invoice_date)s,
         %(tax_invoice_opt)s,
-        %(trx_code)s,
         %(ref_desc)s,
-        %(seller_idtku)s,
-        %(buyer_tin)s,
-        %(buyer_document)s,
-        %(buyer_country)s,
-        %(buyer_name)s,
-        %(buyer_address)s,
-        %(buyer_email)s,
-        %(buyer_idtku)s,
         %(is_complete)s,
         %(missing_fields)s
     )
@@ -570,16 +505,7 @@ def upsert_tax_invoice(
         job_id = %(job_id)s,
         tax_invoice_date = %(tax_invoice_date)s,
         tax_invoice_opt = %(tax_invoice_opt)s,
-        trx_code = %(trx_code)s,
         ref_desc = %(ref_desc)s,
-        seller_idtku = %(seller_idtku)s,
-        buyer_tin = %(buyer_tin)s,
-        buyer_document = %(buyer_document)s,
-        buyer_country = %(buyer_country)s,
-        buyer_name = %(buyer_name)s,
-        buyer_address = %(buyer_address)s,
-        buyer_email = %(buyer_email)s,
-        buyer_idtku = %(buyer_idtku)s,
         is_complete = %(is_complete)s,
         missing_fields = %(missing_fields)s,
         updated_at = CURRENT_TIMESTAMP
@@ -711,32 +637,51 @@ def cleanup_staging_job(conn, job_id: str, dry_run: bool = False):
         logger.info(f"✓ Cleaned up {deleted_count} staging rows for job {job_id}")
 
 
-def compute_missing_fields(invoice_data: Dict[str, Any], buyer_name_raw_present: bool) -> List[str]:
-    """Identify missing critical buyer fields for completeness tracking.
-
-    If buyer_name_raw is present (from staging), we keep buyer_name populated from it
-    but still mark other buyer fields (except buyer_name) as missing. If buyer_name_raw
-    is empty, buyer_name is considered missing too.
-    """
-    base_missing = [
-        'buyer_party_id',
-        'trx_code',
-        'buyer_tin',
-        'buyer_document',
-        'buyer_country',
-        'buyer_address',
-        'buyer_idtku',
-    ]
-
+def compute_missing_fields(
+    buyer_party_id: Optional[str],
+    buyer: Optional[Dict[str, Any]],
+    buyer_name_raw_present: bool
+) -> List[str]:
+    """Identify missing critical buyer fields for completeness tracking."""
     missing = []
-    for field in base_missing:
-        val = invoice_data.get(field)
-        if val is None or (isinstance(val, str) and not val.strip()):
-            missing.append(field)
+
+    if not buyer_party_id:
+        missing.append('buyer_party_id')
+
+    buyer_name = None
+    buyer_tin = None
+    buyer_document = None
+    buyer_country = None
+    buyer_address = None
+    buyer_idtku = None
+    trx_code = None
+
+    if buyer:
+        buyer_name = buyer.get('display_name') or buyer.get('name_normalized')
+        buyer_tin = buyer.get('tin_normalized')
+        buyer_document = buyer.get('buyer_document') or 'TIN'
+        buyer_country = buyer.get('country_code')
+        buyer_address = buyer.get('address_full')
+        buyer_idtku = buyer.get('buyer_idtku')
+        trx_code = buyer.get('transaction_code')
+
+    if not trx_code or (isinstance(trx_code, str) and not trx_code.strip()):
+        missing.append('trx_code')
+    if not buyer_tin or (isinstance(buyer_tin, str) and not buyer_tin.strip()):
+        missing.append('buyer_tin')
+    if not buyer_document or (isinstance(buyer_document, str) and not buyer_document.strip()):
+        missing.append('buyer_document')
+    if not buyer_country or (isinstance(buyer_country, str) and not buyer_country.strip()):
+        missing.append('buyer_country')
+    if not buyer_address or (isinstance(buyer_address, str) and not buyer_address.strip()):
+        missing.append('buyer_address')
+    if not buyer_idtku or (isinstance(buyer_idtku, str) and not buyer_idtku.strip()):
+        missing.append('buyer_idtku')
 
     # Handle buyer_name separately based on raw presence
-    if not buyer_name_raw_present:
-        missing.append('buyer_name')
+    if not buyer_name:
+        if not buyer_name_raw_present:
+            missing.append('buyer_name')
 
     return missing
 
@@ -748,8 +693,8 @@ def process_invoice_group(
     ship_date: str,
     job_id: str,
     dry_run: bool = False,
-    seller_config_cache: Optional[Dict] = None,
-    vat_rate_cache: Optional[float] = None,
+    job_config_cache: Optional[Dict] = None,
+    pipeline_config_cache: Optional[Dict] = None,
     seller_cache: Optional[Dict] = None,
     buyers_cache: Optional[Dict] = None
 ) -> bool:
@@ -773,8 +718,8 @@ def process_invoice_group(
         ship_date: Invoice date
         job_id: Job UUID for config lookup
         dry_run: If True, log but don't commit
-        seller_config_cache: Pre-loaded seller config (optimization)
-        vat_rate_cache: Pre-loaded VAT rate (optimization)
+        job_config_cache: Pre-loaded job_config row (optimization)
+        pipeline_config_cache: Pre-loaded pipeline config (optimization)
         seller_cache: Pre-loaded seller party (optimization)
         buyers_cache: Pre-loaded buyers dict (optimization)
 
@@ -784,19 +729,20 @@ def process_invoice_group(
     logger.info(f"Processing invoice: {invoice_number}, buyer: {buyer_party_id}, job: {job_id}")
 
     try:
-        # 0. Load config for this job (use cache if available)
-        if seller_config_cache is not None and vat_rate_cache is not None:
-            seller_config = seller_config_cache
-            vat_rate = vat_rate_cache
-        else:
-            seller_config = _load_seller_config(job_id=job_id)
-            vat_rate = _load_vat_rate(job_id=job_id)
+        # 0. Load config + job metadata (use cache if available)
+        job_config = job_config_cache or _get_job_config(conn, job_id)
+        pipeline_config = pipeline_config_cache or _load_pipeline_config(job_config["config_name"])
+        vat_rate = _load_vat_rate(pipeline_config)
+        seller_id = job_config.get("seller_id") or pipeline_config.get("seller", {}).get("id")
+        if not seller_id:
+            raise RuntimeError(f"No seller_id configured for job {job_id}")
 
         # 1. Fetch seller party info (use cache if available)
-        if seller_cache is not None:
+        seller = None
+        if seller_cache and seller_cache.get("id") == seller_id:
             seller = seller_cache
         else:
-            seller = fetch_seller_party(conn, seller_config['id'])
+            seller = fetch_seller_party(conn, seller_id)
 
         # 2. Fetch buyer party (use cache if available)
         buyer = None
@@ -820,28 +766,24 @@ def process_invoice_group(
         buyer_name_raw = staging_items[0].get('buyer_name_raw')
         buyer_name = None
         if buyer:
-            buyer_name = buyer['name_normalized'] or buyer['display_name']
+            buyer_name = buyer.get('name_normalized') or buyer.get('display_name')
         elif buyer_name_raw:
             buyer_name = str(buyer_name_raw).strip() or None
         invoice_data = {
             'job_id': staging_items[0]['job_id'],
             'invoice_number': invoice_number,
             'buyer_party_id': buyer_party_id,
-            'tin': seller['tin_normalized'],
             'tax_invoice_date': ship_date,
-            'tax_invoice_opt': seller_config['tax_invoice_opt'],
-            'trx_code': buyer['transaction_code'] if buyer else None,
+            'tax_invoice_opt': seller.get('tax_invoice_opt') or pipeline_config.get('seller', {}).get('tax_invoice_opt'),
             'ref_desc': invoice_number,  # Same as invoice_number
-            'seller_idtku': seller['seller_idtku'],
-            'buyer_tin': buyer['tin_normalized'] if buyer else None,
-            'buyer_document': 'TIN' if buyer else None,
-            'buyer_country': buyer['country_code'] if buyer else None,
-            'buyer_name': buyer_name,
-            'buyer_address': buyer['address_full'] if buyer else None,
-            'buyer_email': buyer['email'] if buyer else None,
-            'buyer_idtku': buyer['buyer_idtku'] if buyer else None,
         }
-        missing_fields = compute_missing_fields(invoice_data, bool(buyer_name_raw))
+        if not invoice_data['tax_invoice_opt']:
+            raise RuntimeError("Seller tax_invoice_opt missing in parties or pipeline config")
+        missing_fields = compute_missing_fields(
+            buyer_party_id,
+            buyer,
+            bool(buyer_name_raw)
+        )
         invoice_data['is_complete'] = len(missing_fields) == 0
         invoice_data['missing_fields'] = Json(missing_fields)
 
@@ -1019,21 +961,21 @@ def main():
         # OPTIMIZATION: Pre-load config and seller (same for all invoices in job)
         t_cache = time.time()
         logger.info("⏱️  Pre-loading config and seller...")
+        job_config_cache = None
+        pipeline_config_cache = None
+        seller_cache = None
         if args.job_id:
             try:
-                seller_config_cache = _load_seller_config(job_id=args.job_id)
-                vat_rate_cache = _load_vat_rate(job_id=args.job_id)
-                seller_cache = fetch_seller_party(conn, seller_config_cache['id'])
+                job_config_cache = _get_job_config(conn, args.job_id)
+                pipeline_config_cache = _load_pipeline_config(job_config_cache["config_name"])
+                seller_id = job_config_cache.get("seller_id") or pipeline_config_cache.get("seller", {}).get("id")
+                seller_cache = fetch_seller_party(conn, seller_id) if seller_id else None
                 logger.info(f"✓ Config/seller cached in {(time.time() - t_cache)*1000:.0f}ms")
             except Exception as e:
                 logger.warning(f"Could not cache config/seller: {e}, will load per invoice")
-                seller_config_cache = None
-                vat_rate_cache = None
                 seller_cache = None
-        else:
-            seller_config_cache = None
-            vat_rate_cache = None
-            seller_cache = None
+                job_config_cache = None
+                pipeline_config_cache = None
 
         # OPTIMIZATION: Batch fetch all unique buyers
         t_buyers = time.time()
@@ -1045,7 +987,8 @@ def main():
                 # Cast to UUID array for PostgreSQL
                 cur.execute("""
                     SELECT id, name_normalized, display_name, tin_normalized,
-                           country_code, transaction_code, address_full, email, buyer_idtku
+                           country_code, transaction_code, address_full, email,
+                           buyer_idtku, buyer_document, buyer_document_number
                     FROM public.parties
                     WHERE id = ANY(%s::uuid[]) AND deleted_at IS NULL
                 """, (unique_buyer_ids,))
@@ -1067,8 +1010,8 @@ def main():
                 inv['ship_date'],
                 inv['job_id'],
                 args.dry_run,
-                seller_config_cache=seller_config_cache,
-                vat_rate_cache=vat_rate_cache,
+                job_config_cache=job_config_cache,
+                pipeline_config_cache=pipeline_config_cache,
                 seller_cache=seller_cache,
                 buyers_cache=buyers_cache
             )

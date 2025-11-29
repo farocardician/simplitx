@@ -170,7 +170,7 @@ def fetch_invoices(
             buyer_idtku,
             is_complete,
             missing_fields
-        FROM tax_invoices
+        FROM tax_invoices_enriched
         WHERE {" AND ".join(where)}
         ORDER BY invoice_number
     """

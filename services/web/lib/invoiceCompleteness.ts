@@ -251,7 +251,7 @@ export async function validateInvoiceCompleteness(invoiceId: string): Promise<Co
       buyer_name,
       buyer_address,
       buyer_idtku
-    FROM tax_invoices
+    FROM tax_invoices_enriched
     WHERE id::text = ${invoiceId}
     LIMIT 1
   `;

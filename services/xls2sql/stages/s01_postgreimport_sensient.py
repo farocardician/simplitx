@@ -11,6 +11,8 @@ Responsibility:
 import sys
 import uuid
 import os
+from pathlib import Path
+import json
 from typing import List, Tuple
 import pandas as pd
 import psycopg2
@@ -77,6 +79,37 @@ COLUMN_MAPPING = {
 
 # Sheets to skip (non-data sheets)
 SKIP_SHEETS = ['Sheet1', 'Data Seller', 'Sheet4', 'Sheet1 (1)', 'Rittal', 'Simon', 'Silesia']
+
+
+def _load_pipeline_config(config_name: str) -> dict:
+    """Load the pipeline config JSON to extract seller metadata."""
+    candidates = []
+    provided = Path(config_name)
+    if provided.is_absolute():
+        candidates.append(provided)
+    else:
+        config_dir = os.getenv("CONFIG_DIR")
+        if config_dir:
+            candidates.append(Path(config_dir) / config_name)
+
+        current_file = Path(__file__).resolve()
+        seen = set()
+        for parent in current_file.parents:
+            for candidate in [
+                parent / "config" / config_name,            # parent/config
+                parent / config_name,                       # parent directly
+                parent / "services" / "config" / config_name
+            ]:
+                if candidate in seen:
+                    continue
+                seen.add(candidate)
+                candidates.append(candidate)
+
+    for path in candidates:
+        if path.exists():
+            return json.loads(path.read_text(encoding="utf-8"))
+
+    raise RuntimeError(f"Pipeline config '{config_name}' not found in: {candidates}")
 
 
 def get_db_connection():
@@ -270,6 +303,8 @@ def process_excel_file(file_path: str, config_name: str) -> Tuple[str, int, int,
     """
     # Generate unique job_id
     job_id = str(uuid.uuid4())
+    pipeline_config = _load_pipeline_config(config_name)
+    seller_id = pipeline_config.get("seller", {}).get("id")
 
     # Ensure config_name has .json extension
     if not config_name.endswith('.json'):
@@ -283,11 +318,12 @@ def process_excel_file(file_path: str, config_name: str) -> Tuple[str, int, int,
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO public.job_config (job_id, config_name) VALUES (%s, %s)",
-                (job_id, config_name)
+                "INSERT INTO public.job_config (job_id, config_name, seller_id) VALUES (%s, %s, %s)",
+                (job_id, config_name, seller_id)
             )
         conn.commit()
-        print(f"✓ Registered job {job_id} with config {config_name}")
+        seller_msg = f", seller {seller_id}" if seller_id else ""
+        print(f"✓ Registered job {job_id} with config {config_name}{seller_msg}")
     except Exception as e:
         print(f"❌ Failed to register batch config: {e}")
         conn.close()

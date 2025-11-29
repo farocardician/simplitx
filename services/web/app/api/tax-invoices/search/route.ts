@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       { id: string; invoice_number: string; buyer_name: string | null }[]
     >`
       SELECT id, invoice_number, buyer_name
-      FROM tax_invoices
+      FROM tax_invoices_enriched
       WHERE invoice_number ILIKE ${'%' + query + '%'}
       ORDER BY invoice_number ASC
       LIMIT ${limit}

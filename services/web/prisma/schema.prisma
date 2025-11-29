@@ -98,6 +98,8 @@ model Party {
   buyerDocument       String?   @default("TIN") @map("buyer_document") @db.VarChar(50)
   buyerDocumentNumber String?   @map("buyer_document_number") @db.VarChar(100)
   buyerIdtku          String?   @map("buyer_idtku") @db.VarChar(100)
+  sellerIdtku         String?   @map("seller_idtku")
+  taxInvoiceOpt       String?   @map("tax_invoice_opt")
   sellerId            String?   @map("seller_id") @db.Uuid
   seller              Party?    @relation("PartySellerLink", fields: [sellerId], references: [id], onDelete: SetNull)
   buyers              Party[]   @relation("PartySellerLink")

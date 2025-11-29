@@ -5,15 +5,6 @@ import { Prisma } from '@prisma/client';
 type Snapshot = {
   id: string;
   buyer_party_id: string | null;
-  buyer_name: string | null;
-  buyer_tin: string | null;
-  buyer_document: string | null;
-  buyer_country: string | null;
-  buyer_document_number: string | null;
-  buyer_address: string | null;
-  buyer_email: string | null;
-  buyer_idtku: string | null;
-  trx_code: string | null;
   missing_fields: string[] | null;
   is_complete: boolean | null;
 };
@@ -81,15 +72,6 @@ async function applyLink(partyId: string, invoiceIds: string[]) {
       SELECT
         id,
         buyer_party_id,
-        buyer_name,
-        buyer_tin,
-        buyer_document,
-        buyer_country,
-        buyer_document_number,
-        buyer_address,
-        buyer_email,
-        buyer_idtku,
-        trx_code,
         missing_fields,
         is_complete
       FROM tax_invoices
@@ -101,22 +83,16 @@ async function applyLink(partyId: string, invoiceIds: string[]) {
     return { error: { code: 'NOT_FOUND', message: 'No invoices found for provided ids' }, status: 404 };
   }
 
-  const buyerDocument = party.buyerDocument ?? 'TIN';
-  const displayName = party.displayName || party.nameNormalized;
-
   const updates = invoices.map((inv) => {
-    const resolvedTrxCode = party.transactionCode ?? inv.trx_code ?? null;
-    const buyerName = displayName;
-
     const missingFields = computeMissingFields({
       buyer_party_id: party.id,
-      trx_code: resolvedTrxCode,
+      trx_code: party.transactionCode ?? null,
       buyer_tin: party.tinNormalized,
-      buyer_document: buyerDocument,
+      buyer_document: party.buyerDocument ?? 'TIN',
       buyer_country: party.countryCode ?? null,
       buyer_address: party.addressFull ?? null,
       buyer_idtku: party.buyerIdtku ?? null,
-      buyer_name: buyerName
+      buyer_name: party.displayName || party.nameNormalized
     });
 
     return prisma.$executeRaw(
@@ -124,15 +100,6 @@ async function applyLink(partyId: string, invoiceIds: string[]) {
         UPDATE tax_invoices
         SET
           buyer_party_id = ${party.id}::uuid,
-          buyer_name = ${buyerName},
-          buyer_tin = ${party.tinNormalized},
-          buyer_document = ${buyerDocument},
-          buyer_country = ${party.countryCode},
-          buyer_document_number = ${party.buyerDocumentNumber ?? null},
-          buyer_address = ${party.addressFull},
-          buyer_email = ${party.email},
-          buyer_idtku = ${party.buyerIdtku},
-          trx_code = ${resolvedTrxCode},
           missing_fields = ${JSON.stringify(missingFields)}::jsonb,
           is_complete = ${missingFields.length === 0},
           updated_at = NOW()
@@ -145,7 +112,7 @@ async function applyLink(partyId: string, invoiceIds: string[]) {
 
   return {
     updated: invoices.length,
-    partyName: displayName,
+    partyName: party.displayName || party.nameNormalized,
     undo: invoices
   };
 }
@@ -160,15 +127,6 @@ async function undoLink(previous: Snapshot[]) {
       UPDATE tax_invoices
       SET
         buyer_party_id = ${inv.buyer_party_id}::uuid,
-        buyer_name = ${inv.buyer_name},
-        buyer_tin = ${inv.buyer_tin},
-        buyer_document = ${inv.buyer_document},
-        buyer_country = ${inv.buyer_country},
-        buyer_document_number = ${inv.buyer_document_number},
-        buyer_address = ${inv.buyer_address},
-        buyer_email = ${inv.buyer_email},
-        buyer_idtku = ${inv.buyer_idtku},
-        trx_code = ${inv.trx_code},
         missing_fields = ${inv.missing_fields ? JSON.stringify(inv.missing_fields) : null}::jsonb,
         is_complete = ${inv.is_complete},
         updated_at = NOW()

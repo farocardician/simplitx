@@ -77,7 +77,7 @@ export const GET = async (req: NextRequest) => {
 
   // Count query
   const countResult = await prisma.$queryRaw<[{ count: bigint }]>`
-    SELECT COUNT(*) as count FROM tax_invoices ${whereClause}
+    SELECT COUNT(*) as count FROM tax_invoices_enriched ${whereClause}
   `
   const totalCount = Number(countResult[0]?.count || 0)
 
@@ -112,14 +112,14 @@ export const GET = async (req: NextRequest) => {
       (
         SELECT COUNT(*)::int
         FROM tax_invoice_items ti
-        WHERE ti.tax_invoice_id = tax_invoices.id
+        WHERE ti.tax_invoice_id = t.id
       ) AS item_count,
       (
         SELECT COALESCE(SUM(ti.tax_base), 0)
         FROM tax_invoice_items ti
-        WHERE ti.tax_invoice_id = tax_invoices.id
+        WHERE ti.tax_invoice_id = t.id
       ) AS grand_total
-    FROM tax_invoices
+    FROM tax_invoices_enriched t
     ${whereClause}
     ${orderClause}
     LIMIT ${limit}

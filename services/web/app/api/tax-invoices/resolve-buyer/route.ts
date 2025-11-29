@@ -5,7 +5,6 @@ import { normalizePartyName } from '@/lib/partyResolver';
 
 type InvoiceRow = {
   id: string;
-  trx_code: string | null;
 };
 
 function computeMissingFields(data: {
@@ -73,11 +72,13 @@ export async function POST(req: NextRequest) {
     const normalizedBuyerName = normalizePartyName(buyerName);
     const invoices = await prisma.$queryRaw<InvoiceRow[]>(
       Prisma.sql`
-        SELECT id, trx_code
-        FROM tax_invoices
-        WHERE buyer_party_id IS NULL
-          AND buyer_name IS NOT NULL
-          AND normalize_party_name(buyer_name) = ${normalizedBuyerName}
+        SELECT DISTINCT ti.id
+        FROM tax_invoices ti
+        JOIN public."temporaryStaging" ts
+          ON ts.invoice = ti.invoice_number AND ts.job_id = ti.job_id
+        WHERE ti.buyer_party_id IS NULL
+          AND ts.buyer_name_raw IS NOT NULL
+          AND normalize_party_name(ts.buyer_name_raw) = ${normalizedBuyerName}
       `
     );
 
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
     const buyerDocument = party.buyerDocument ?? 'TIN';
 
     const updates = invoices.map((invoice) => {
-      const resolvedTrxCode = party.transactionCode ?? invoice.trx_code ?? null;
+      const resolvedTrxCode = party.transactionCode ?? null;
       const missingFields = computeMissingFields({
         buyer_party_id: party.id,
         trx_code: resolvedTrxCode,
@@ -108,15 +109,6 @@ export async function POST(req: NextRequest) {
           UPDATE tax_invoices
           SET
             buyer_party_id = ${party.id}::uuid,
-            buyer_name = ${buyerNameForDisplay},
-            buyer_tin = ${party.tinNormalized},
-            buyer_document = ${buyerDocument},
-            buyer_country = ${party.countryCode},
-            buyer_document_number = ${party.buyerDocumentNumber ?? null},
-            buyer_address = ${party.addressFull},
-            buyer_email = ${party.email},
-            buyer_idtku = ${party.buyerIdtku},
-            trx_code = ${resolvedTrxCode},
             missing_fields = ${JSON.stringify(missingFields)}::jsonb,
             is_complete = ${missingFields.length === 0},
             updated_at = NOW()

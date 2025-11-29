@@ -37,7 +37,7 @@ export const POST = async (req: NextRequest) => {
       buyer_name,
       tin,
       job_id::text as job_id
-    FROM tax_invoices
+    FROM tax_invoices_enriched
     WHERE ${filterClause}
   `
 
