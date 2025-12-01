@@ -1,0 +1,7 @@
+Stahl’s import script ingests the FK/OF Excel layout directly into `public."temporaryStaging"`. It expects a job id (you can pass `--job-id auto` to generate one), the Stahl config JSON, and the path to the Excel file.
+
+- **Config use**: The JSON at `services/config/invoice_pt_stahl.json` supplies the static values for `input_uom`, `currency`, and `hs_code`, plus seller metadata stored in `job_config` for downstream stages.
+- **Database prep**: The script connects with the standard `DB_*`/`PG*` environment variables, ensures the buyer-related staging columns exist, and truncates `temporaryStaging` if it already holds data.
+- **Parsing logic**: It reads the workbook with raw rows (no header). `FK` rows carry invoice context; `OF` rows carry line items; `LT` rows are ignored. The first FK/LT/OF rows that contain header tokens are skipped. Each FK context is paired with the following OF rows until the next FK appears. Orphan OF rows are skipped with a warning.
+- **Field mapping**: For every FK+OF pair, it writes one row with `job_id`, invoice number, ship date, item description, quantity/total_kg, unit price, amount, config-driven UOM/currency/HS code, and the buyer name from the FK row. Buyer party resolution is left blank for later stages.
+- **Job tracking and output**: The job id and seller/config name are recorded in `job_config`. A summary reports the job id, config file, invoices seen, distinct buyer names, and rows inserted, mirroring the other importers’ summaries.

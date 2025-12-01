@@ -1,0 +1,131 @@
+{
+  "enabled": true,
+  "document": { "type": "invoice", "vendor": "PT Stahl", "version": "1" },
+  "ingestion": {
+    "type": "xls",
+    "pipeline": "xls2sql",
+    "source": "services/xls2sql",
+    "stages": [
+      {
+        "script": "stages/s01_postgreimport_stahl.py",
+        "args": ["{xls}"],
+        "outputs": ["job_id"]
+      },
+      {
+        "script": "stages/s02_validate_resolve_stahl.py",
+        "args": ["--job-id", "{job_id}"]
+      },
+      {
+        "script": "stages/s03_build_invoices.py",
+        "args": ["--job-id", "{job_id}"]
+      }
+    ]
+  },
+  "stages": [
+    {
+      "script": "stages/s01_postgreimport_stahl.py",
+      "args": ["{xls}"]
+    },
+    {
+      "script": "stages/s02_validate_resolve_stahl.py",
+      "args": ["--job-id", "{job_id}"]
+    },
+    {
+      "script": "stages/s03_build_invoices.py",
+      "args": ["--job-id", "{job_id}"]
+    }
+  ],
+  "queue": {
+    "version": "v2",
+    "page": "/queue-v2",
+    "data_source": "tax_invoices",
+    "filter": { "tin": "0317698223402000" },
+    "seller_name": "PT Stahl Chemicals Indonesia"
+  },
+  "seller": {
+    "id": "7edc8ff9-69c4-4d44-a7ca-f710f5664c78",
+    "tax_invoice_opt": "Normal"
+  },
+  "tax": {
+    "vat_rate": 12
+  },
+  "uom": {
+    "alias": "KG",
+    "code": "UM.0003"
+  },
+  "hs": {
+    "code": 380000
+  }, 
+  "type": {
+    "alias": "Barang",
+    "code": "A"
+  },    
+  "currency": {
+    "code": "IDR"
+  },  
+  "rounding": {
+    "qty": { "scale": 3, "mode": "half_up" },
+    "unit_price": { "scale": 2, "mode": "half_up" },
+    "tax_base": { "scale": 2, "mode": "half_up" },
+    "other_tax_base": { "scale": 2, "mode": "half_up" },
+    "vat": { "scale": 2, "mode": "half_up" }
+  },
+  "upload": {
+    "accept": [".xls", ".xlsx"],
+    "endpoint": "/api/upload-xls",
+    "max_size_mb": 50
+  },
+  "sql2xml": {
+    "mapping": {
+      "root": {
+        "tag": "TaxInvoiceBulk",
+        "nsmap": {
+          "xsd": "http://www.w3.org/2001/XMLSchema",
+          "xsi": "http://www.w3.org/2001/XMLSchema-instance"
+        }
+      },
+      "structure": {
+        "TIN": "$.data.invoice.tin",
+        "ListOfTaxInvoice": {
+          "TaxInvoice": {
+            "TaxInvoiceDate": "$.data.invoice.tax_invoice_date",
+            "TaxInvoiceOpt": "$.data.invoice.tax_invoice_opt",
+            "TrxCode": "$.data.invoice.trx_code",
+            "AddInfo": "$.data.invoice.add_info",
+            "CustomDoc": "$.data.invoice.custom_doc",
+            "CustomDocMonthYear": "$.data.invoice.custom_doc_month_year",
+            "RefDesc": "$.data.invoice.ref_desc",
+            "FacilityStamp": "$.data.invoice.facility_stamp",
+            "SellerIDTKU": "$.data.invoice.seller_idtku",
+            "BuyerTin": "$.data.buyer.tin",
+            "BuyerDocument": "$.data.buyer.document",
+            "BuyerCountry": "$.data.buyer.country",
+            "BuyerDocumentNumber": "$.data.buyer.document_number",
+            "BuyerName": "$.data.buyer.name",
+            "BuyerAdress": "$.data.buyer.address",
+            "BuyerEmail": "$.data.buyer.email",
+            "BuyerIDTKU": "$.data.buyer.idtku",
+            "ListOfGoodService": {
+              "_array": "$.data.items[*]",
+              "GoodService": {
+                "Opt": "$.opt",
+                "Code": "$.code",
+                "Name": "$.name",
+                "Unit": "$.unit",
+                "Price": { "path": "$.price", "format": { "type": "decimal", "scale": 2 } },
+                "Qty": "$.qty",
+                "TotalDiscount": { "path": "$.total_discount", "format": { "type": "decimal", "scale": 2 } },
+                "TaxBase": { "path": "$.tax_base", "format": { "type": "decimal", "scale": 2 } },
+                "OtherTaxBase": { "path": "$.other_tax_base", "format": { "type": "decimal", "scale": 2 } },
+                "VATRate": "$.vat_rate",
+                "VAT": { "path": "$.vat", "format": { "type": "decimal", "scale": 2 } },
+                "STLGRate": "$.stlg_rate",
+                "STLG": { "path": "$.stlg", "format": { "type": "decimal", "scale": 2 } }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

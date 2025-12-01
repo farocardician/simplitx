@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { mkdir, writeFile } from 'fs/promises'
+import { mkdir, writeFile, readFile } from 'fs/promises'
 import { join, extname } from 'path'
 import { randomUUID } from 'crypto'
 import { spawn } from 'child_process'
@@ -97,6 +97,17 @@ async function saveUpload(buffer: Buffer, originalName: string) {
   return fullPath
 }
 
+async function loadConfig(configName: string) {
+  const configDir = process.env.CONFIG_DIR || join(process.cwd(), 'services', 'config')
+  const configPath = join(configDir, configName)
+  try {
+    const content = await readFile(configPath, 'utf-8')
+    return JSON.parse(content)
+  } catch (error) {
+    throw new Error(`Failed to load config ${configName}: ${error}`)
+  }
+}
+
 export const POST = async (req: NextRequest) => {
   const startTime = Date.now()
   console.log('🚀 [XLS Upload] Starting upload process')
@@ -126,15 +137,38 @@ export const POST = async (req: NextRequest) => {
   const savedPath = await saveUpload(buffer, file.name)
   console.log(`📁 [XLS Upload] File saved (${file.name}, ${(file.size / 1024).toFixed(2)} KB) in ${Date.now() - t1}ms`)
 
+  // Load config to get pipeline stages
+  let config: any
+  try {
+    config = await loadConfig(template)
+  } catch (error) {
+    return NextResponse.json(
+      { error: { code: 'CONFIG_ERROR', message: `Failed to load config: ${error}` } },
+      { status: 500 }
+    )
+  }
+
+  const stages = config?.ingestion?.stages
+  if (!stages || !Array.isArray(stages) || stages.length < 3) {
+    return NextResponse.json(
+      { error: { code: 'INVALID_CONFIG', message: 'Config must have at least 3 ingestion stages' } },
+      { status: 500 }
+    )
+  }
+
   // Determine script paths (Docker vs local)
   const scriptsBase = process.env.NODE_ENV === 'production' || process.env.DOCKER_ENV
-    ? '/xls2sql/stages'
-    : 'services/xls2sql/stages'
+    ? '/xls2sql'
+    : 'services/xls2sql'
 
   // Stage 1: import XLS with config
   const t2 = Date.now()
   console.log('📊 [Stage 1/3] Importing Excel data...')
-  const stage1 = await runPython([`${scriptsBase}/s01_postgreimport_sensient.py`, savedPath, '--config', template])
+  const stage1Script = join(scriptsBase, stages[0].script)
+  const stage1Args = stages[0].args.map((arg: string) =>
+    arg.replace('{xls}', savedPath).replace('{config}', template)
+  )
+  const stage1 = await runPython([stage1Script, ...stage1Args, '--config', template])
   const stage1Time = Date.now() - t2
   if (stage1.code !== 0) {
     console.error(`❌ [Stage 1/3] Failed in ${stage1Time}ms:`, stage1.stderr || stage1.stdout)
@@ -160,7 +194,9 @@ export const POST = async (req: NextRequest) => {
   // Stage 2: validate/resolve buyers
   const t3 = Date.now()
   console.log('🔍 [Stage 2/3] Validating and resolving buyers...')
-  const stage2 = await runPython([`${scriptsBase}/s02_validate_resolve_sensient.py`, '--job-id', jobId])
+  const stage2Script = join(scriptsBase, stages[1].script)
+  const stage2Args = stages[1].args.map((arg: string) => arg.replace('{job_id}', jobId))
+  const stage2 = await runPython([stage2Script, ...stage2Args])
   const stage2Time = Date.now() - t3
   if (stage2.code !== 0) {
     console.error(`❌ [Stage 2/3] Failed in ${stage2Time}ms:`, stage2.stderr || stage2.stdout)
@@ -177,7 +213,9 @@ export const POST = async (req: NextRequest) => {
   // Stage 3: build tax_invoices
   const t4 = Date.now()
   console.log('🏗️  [Stage 3/3] Building tax invoices...')
-  const stage3 = await runPython([`${scriptsBase}/s03_build_invoices.py`, '--job-id', jobId])
+  const stage3Script = join(scriptsBase, stages[2].script)
+  const stage3Args = stages[2].args.map((arg: string) => arg.replace('{job_id}', jobId))
+  const stage3 = await runPython([stage3Script, ...stage3Args])
   const stage3Time = Date.now() - t4
   if (stage3.code !== 0) {
     console.error(`❌ [Stage 3/3] Failed in ${stage3Time}ms:`, stage3.stderr || stage3.stdout)
