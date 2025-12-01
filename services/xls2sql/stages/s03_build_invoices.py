@@ -254,6 +254,18 @@ def _load_seller_config(config: Dict[str, Any]) -> Dict[str, str]:
     }
 
 
+def _load_type_config(config: Dict[str, Any]) -> Optional[str]:
+    """Load type configuration from pipeline config dict.
+
+    Returns the type.code value if present, otherwise None.
+    """
+    type_conf = config.get("type")
+    if not type_conf or not isinstance(type_conf, dict):
+        return None
+
+    return type_conf.get("code")
+
+
 def fetch_seller_party(conn, seller_id: str) -> Dict[str, Any]:
     """Fetch seller party details from public.parties.
 
@@ -271,7 +283,7 @@ def fetch_seller_party(conn, seller_id: str) -> Dict[str, Any]:
     SELECT
         id,
         tin_normalized,
-        seller_idtku,
+        buyer_idtku AS seller_idtku,
         tax_invoice_opt
     FROM public.parties
     WHERE id = %s AND deleted_at IS NULL
@@ -297,7 +309,7 @@ def fetch_seller_party(conn, seller_id: str) -> Dict[str, Any]:
     if not seller['seller_idtku']:
         raise RuntimeError(
             f"Seller party {seller_id} has no IDTKU. "
-            "seller_idtku must be set in parties table."
+            "buyer_idtku must be set in parties table."
         )
 
     return seller
@@ -733,6 +745,7 @@ def process_invoice_group(
         job_config = job_config_cache or _get_job_config(conn, job_id)
         pipeline_config = pipeline_config_cache or _load_pipeline_config(job_config["config_name"])
         vat_rate = _load_vat_rate(pipeline_config)
+        type_code = _load_type_config(pipeline_config)  # Optional: for default opt value
         seller_id = job_config.get("seller_id") or pipeline_config.get("seller", {}).get("id")
         if not seller_id:
             raise RuntimeError(f"No seller_id configured for job {job_id}")
@@ -804,14 +817,20 @@ def process_invoice_group(
 
         for idx, staging_item in enumerate(staging_items, start=1):
             # Parse and validate HS code
-            opt, code = parse_hs_code(staging_item['hs_code'])
+            opt_parsed, code = parse_hs_code(staging_item['hs_code'])
+
+            # Use type_code from config if available, otherwise use parsed opt
+            opt = type_code if type_code else opt_parsed
+
             if not code:
                 error_msg = f"  ⚠️  Invalid/missing HS code: {staging_item['hs_code']} (row {staging_item['id']}) - importing with NULL, must be fixed in UI"
                 logger.warning(error_msg)
                 errors.append(error_msg)
                 # Don't skip - import with NULL code so user can fix in UI
                 code = None
-                opt = None
+                # Keep opt from config if available, otherwise set to None
+                if not type_code:
+                    opt = None
                 has_invalid_hs_codes = True  # Mark invoice as incomplete
 
             if code and not dry_run and not validate_hs_code(code, conn):

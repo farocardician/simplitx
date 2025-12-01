@@ -63,7 +63,7 @@ SELECT
     buyer.email AS buyer_email,
     buyer.buyer_idtku AS buyer_idtku,
     seller.tin_normalized AS tin,
-    seller.seller_idtku AS seller_idtku,
+    seller.buyer_idtku::text AS seller_idtku,
     jc.config_name AS config_name,
     jc.seller_id AS seller_id
 FROM public.tax_invoices ti
@@ -71,4 +71,4 @@ LEFT JOIN public.job_config jc ON ti.job_id = jc.job_id
 LEFT JOIN public.parties buyer ON ti.buyer_party_id = buyer.id
 LEFT JOIN public.parties seller ON jc.seller_id = seller.id;
 
-COMMENT ON VIEW public.tax_invoices_enriched IS 'Read-only projection of tax_invoices joined with buyer/seller parties';
+COMMENT ON VIEW public.tax_invoices_enriched IS 'Read-only projection of tax_invoices joined with buyer/seller parties (seller_idtku uses buyer_idtku column)';
