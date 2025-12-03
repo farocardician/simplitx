@@ -3,26 +3,24 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // Common alias mappings for Indonesian UOM codes
+// Based on official Indonesian customs UOM codes (uom.csv)
 const COMMON_ALIASES: Record<string, string[]> = {
-  'UM.0021': ['PCS', 'PC', 'PCE', 'PIECES'],  // Piece
-  'UM.0018': ['EA', 'UN', 'UNIT', 'UNITS'],   // Unit
-  'UM.0001': ['KG', 'KILOGRAM', 'KILOGRAMS'], // Kilogram
-  'UM.0002': ['G', 'GRAM', 'GRAMS'],          // Gram
-  'UM.0003': ['M', 'METER', 'METERS'],        // Meter
-  'UM.0004': ['CM', 'CENTIMETER'],            // Centimeter
-  'UM.0005': ['L', 'LITER', 'LITERS'],        // Liter
-  'UM.0006': ['ML', 'MILLILITER'],            // Milliliter
-  'UM.0007': ['BOX', 'BOXES', 'BX'],          // Box
-  'UM.0008': ['SET', 'SETS'],                 // Set
-  'UM.0009': ['PACK', 'PACKS', 'PK'],         // Pack
-  'UM.0010': ['ROLL', 'ROLLS'],               // Roll
-  'UM.0011': ['SHEET', 'SHEETS', 'SH'],       // Sheet
-  'UM.0012': ['PAIR', 'PAIRS', 'PR'],         // Pair
-  'UM.0013': ['DOZEN', 'DOZ', 'DZ'],          // Dozen
-  'UM.0014': ['CARTON', 'CARTONS', 'CTN'],    // Carton
-  'UM.0015': ['BOTTLE', 'BOTTLES', 'BTL'],    // Bottle
-  'UM.0016': ['CAN', 'CANS'],                 // Can
-  'UM.0017': ['BAG', 'BAGS'],                 // Bag
+  'UM.0001': ['MT', 'METRIC TON', 'TONNE', 'TONNES', 'TON'],           // Metrik Ton
+  'UM.0002': ['WT', 'WET TON', 'WTON'],                                 // Wet Ton
+  'UM.0003': ['KG', 'KILOGRAM', 'KILOGRAMS'],                          // Kilogram
+  'UM.0004': ['G', 'GRAM', 'GRAMS'],                                   // Gram
+  'UM.0005': ['K', 'KARAT', 'CARAT'],                                  // Karat
+  'UM.0006': ['KL', 'KILOLITER', 'KILOLITRE'],                         // Kiloliter
+  'UM.0007': ['L', 'LITER', 'LITERS', 'LITRE', 'LITRES'],             // Liter
+  'UM.0008': ['BBL', 'BARREL', 'BARRELS'],                             // Barrel
+  'UM.0013': ['M', 'METER', 'METERS', 'METRE', 'METRES'],             // Meter
+  'UM.0015': ['CM', 'CENTIMETER', 'CENTIMETRE'],                       // Sentimeter
+  'UM.0017': ['DOZEN', 'DOZ', 'DZ', 'LUSIN'],                          // Lusin
+  'UM.0018': ['UN', 'UNIT', 'UNITS', 'EA', 'EACH'],                    // Unit
+  'UM.0019': ['SET', 'SETS'],                                          // Set
+  'UM.0020': ['SHEET', 'SHEETS', 'SH', 'LEMBAR'],                      // Lembar
+  'UM.0021': ['PCS', 'PC', 'PCE', 'PIECE', 'PIECES'],                  // Piece
+  'UM.0022': ['BOX', 'BOXES', 'BX', 'BOKS', 'CARTON', 'CARTONS', 'CTN'], // Boks
 };
 
 async function main() {

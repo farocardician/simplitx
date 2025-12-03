@@ -33,7 +33,7 @@
             "Opt": {"literal": "A"},
             "Code": {"literal": "330200"},
             "Name": "$.description",
-            "Unit": {"literal": "UM.0003"},
+            "Unit": {"literal": "UM.0004"},
             "Price": {"path": "$.unit_price", "format": {"type": "decimal", "scale": 2}},
             "Qty": "$.qty",
             "TotalDiscount": "0",
@@ -42,7 +42,7 @@
             "VATRate": {"literal": "12"},
             "VAT": {"path": "$.amount", "compute": "vat_amount"},
             "STLGRate": {"literal": "0"},
-            "STLG": {"literal": "0"},
+            "STLG": {"literal": "0"}
           }
         }
       }
