@@ -113,5 +113,34 @@
         }
       }
     }
+  },
+  "sql2csv": {
+    "enabled": true,
+    "mapping": {
+      "columns": [
+        { "header": "opt", "source": "item", "path": "opt", "type": "string" },
+        { "header": "code", "source": "item", "path": "code", "type": "string" },
+        { "header": "name", "source": "item", "path": "name", "type": "string" },
+        { "header": "unit", "source": "item", "path": "unit", "type": "string" },
+        { "header": "price", "source": "item", "path": "price", "type": "decimal", "scale": 2 },
+        { "header": "qty", "source": "item", "path": "qty", "type": "decimal", "scale": 3 },
+        { "header": "total_discount", "source": "item", "path": "total_discount", "type": "decimal", "scale": 2 },
+        { "header": "tax_base", "source": "item", "path": "tax_base", "type": "decimal", "scale": 2 },
+        { "header": "other_tax_base", "source": "item", "path": "other_tax_base", "type": "decimal", "scale": 2 },
+        { "header": "vat_rate", "source": "item", "path": "vat_rate", "type": "decimal", "scale": 0 },
+        { "header": "vat", "source": "item", "path": "vat", "type": "decimal", "scale": 2 },
+        { "header": "stlg_rate", "source": "item", "path": "stlg_rate", "type": "decimal", "scale": 0 },
+        { "header": "stlg", "source": "item", "path": "stlg", "type": "decimal", "scale": 2 },
+        { "header": "grand_total", "source": "item", "path": "grand_total", "type": "expression", "expr": "tax_base + vat + stlg", "scale": 2 },
+        { "header": "invoice_number", "source": "invoice", "path": "number", "type": "string" },
+        { "header": "tax_invoice_date", "source": "invoice", "path": "tax_invoice_date", "type": "date" },
+        { "header": "buyer_name", "source": "buyer", "path": "name", "type": "string" }
+      ],
+      "format": {
+        "delimiter": ",",
+        "quoting": "minimal",
+        "encoding": "utf-8"
+      }
+    }
   }
 }

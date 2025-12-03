@@ -194,8 +194,10 @@ export const POST = async (req: NextRequest) => {
 
   const buffer = Buffer.from(await sql2xmlResponse.arrayBuffer())
   const serviceDisposition = sql2xmlResponse.headers.get('content-disposition')
+  const contentType = sql2xmlResponse.headers.get('content-type') || 'application/xml; charset=utf-8'
+
   const headers = new Headers()
-  headers.set('Content-Type', 'application/xml; charset=utf-8')
+  headers.set('Content-Type', contentType)  // Now supports application/zip for dual export
   headers.set('Content-Disposition', serviceDisposition || `attachment; filename="invoices-${invoiceIds.length}.xml"`)
 
   return new NextResponse(buffer, {
