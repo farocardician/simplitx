@@ -1,0 +1,22 @@
+{
+  "doc_id": "13.pdf",
+  "items": [
+    {
+      "no": 1,
+      "hs_code": 330200,
+      "sku": "000010",
+      "code": null,
+      "description": "1201004994 Silarom Coffee Flavour Flavouring",
+      "type": null,
+      "qty": 25,
+      "uom": "KG",
+      "unit_price": 558780,
+      "discount_amount": null,
+      "discount_percent": 0,
+      "amount": 13969500
+    }
+  ],
+  "stage": "line_items",
+  "version": "silesia-line-items-1.0",
+  "notes": "defaulted discount_percent"
+}

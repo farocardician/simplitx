@@ -92,7 +92,8 @@
         "regex_pattern": [
           "Final\\s+invoice\\s+amount:?\\s*(?:IDR\\s*)?([\\d.,]+)",
           "IDR\\s+([\\d.,]+)",
-          "([\\d.,]+)\\s+IDR"
+          "([\\d.,]+)\\s+IDR",
+          "^([\\d.,]+)\\s+Final"
         ]
       }
     }
@@ -101,7 +102,7 @@
     "buyer_name": {
       "min_len": 3,
       "max_len": 100,
-      "allowed_chars": "A-Za-z\\s\\.\\-\\'/\\&"
+      "allowed_chars": "A-Za-z\\s\\.\\-\\'/\\&,"
     },
     "invoice_number": {
       "min_len": 3,
