@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 
 from .exporter import (
     build_invoice_payload,
+    build_merged_filename,
     fetch_invoices,
     fetch_items,
     get_db_connection,
@@ -24,7 +25,7 @@ from .exporter import (
     validate_same_seller,
     InvoiceValidationError,
 )
-from .pipeline import load_pipeline_config
+from .pipeline import load_pipeline_config, resolve_inline_mapping, resolve_mapping_path
 
 
 @dataclass
@@ -267,11 +268,31 @@ def export_invoices_to_csv(
     encoding = format_opts.get("encoding", "utf-8")
     csv_bytes = output.getvalue().encode(encoding)
 
-    # Build filename
+    # Build filename matching XML naming pattern
     if len(invoices) == 1:
+        # Single invoice: use invoice number
         filename = f"{invoice_numbers[0]}.csv"
     else:
-        filename = f"invoices_{len(invoices)}.csv"
+        # Multiple invoices: match XML merged filename pattern
+        # Get mapping path for filename generation
+        pipeline_config, pipeline_path = load_pipeline_config(pipeline)
+        inline_mapping = resolve_inline_mapping(pipeline_config)
+
+        if inline_mapping is not None:
+            # Using inline mapping from config
+            mapping_for_filename = pipeline_path
+        else:
+            # Using external mapping file
+            profile_conf = pipeline_config.get("json2xml", {}).get("profiles", {}).get("default", {})
+            mapping_rel = profile_conf.get("mapping")
+            if mapping_rel:
+                mapping_for_filename = resolve_mapping_path(mapping_rel, pipeline_path)
+            else:
+                mapping_for_filename = pipeline_path
+
+        # Reuse build_merged_filename and change extension to .csv
+        xml_filename = build_merged_filename(mapping_for_filename, len(invoices))
+        filename = xml_filename.replace('.xml', '.csv')
 
     return CsvExportResult(
         csv_bytes=csv_bytes,

@@ -123,14 +123,13 @@ def _build_zip_response(
 
     zip_bytes = zip_buffer.getvalue()
 
-    # Build filename
-    if invoice_count == 1:
-        # For single invoice, use invoice number
-        invoice_num = xml_result.invoice_numbers[0] if xml_result.invoice_numbers else "invoice"
-        filename = f"{invoice_num}.zip"
+    # Build ZIP filename matching XML pattern but with .zip extension
+    xml_filename = xml_result.suggested_filename
+    if xml_filename.endswith('.xml'):
+        filename = xml_filename.replace('.xml', '.zip')
     else:
-        # For multiple invoices
-        filename = f"invoices_{invoice_count}.zip"
+        # Fallback: append .zip
+        filename = f"{xml_filename}.zip"
 
     headers = {
         "Content-Type": "application/zip",
