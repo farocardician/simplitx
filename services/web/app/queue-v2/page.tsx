@@ -1551,9 +1551,27 @@ export default function QueueV2Page() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const filenameBase = invoiceIds[0] || invoiceNumbers[0] || 'invoices';
-      const requestedCount = invoiceIds.length || invoiceNumbers.length;
-      a.download = requestedCount === 1 ? `${filenameBase}.xml` : `invoices-${requestedCount}.xml`;
+
+      // Extract filename from Content-Disposition header
+      const contentDisposition = res.headers.get('content-disposition');
+      let filename = '';
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (match && match[1]) {
+          filename = match[1].replace(/['"]/g, '');
+        }
+      }
+
+      // Fallback to generated filename if not provided by server
+      if (!filename) {
+        const filenameBase = invoiceIds[0] || invoiceNumbers[0] || 'invoices';
+        const requestedCount = invoiceIds.length || invoiceNumbers.length;
+        const contentType = res.headers.get('content-type') || '';
+        const extension = contentType.includes('application/zip') ? 'zip' : 'xml';
+        filename = requestedCount === 1 ? `${filenameBase}.${extension}` : `invoices-${requestedCount}.${extension}`;
+      }
+
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

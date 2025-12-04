@@ -196,9 +196,14 @@ export const POST = async (req: NextRequest) => {
   const serviceDisposition = sql2xmlResponse.headers.get('content-disposition')
   const contentType = sql2xmlResponse.headers.get('content-type') || 'application/xml; charset=utf-8'
 
+  // Determine fallback filename extension based on content type
+  const isZip = contentType.includes('application/zip')
+  const fallbackExtension = isZip ? 'zip' : 'xml'
+  const fallbackFilename = `invoices-${invoiceIds.length}.${fallbackExtension}`
+
   const headers = new Headers()
   headers.set('Content-Type', contentType)  // Now supports application/zip for dual export
-  headers.set('Content-Disposition', serviceDisposition || `attachment; filename="invoices-${invoiceIds.length}.xml"`)
+  headers.set('Content-Disposition', serviceDisposition || `attachment; filename="${fallbackFilename}"`)
 
   return new NextResponse(buffer, {
     status: 200,
